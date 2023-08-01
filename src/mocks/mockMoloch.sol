@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
+
 import "../interfaces/IMolochDAO.sol";
 
-contract Moloch{
+contract Moloch {
 
     struct Member {
         address delegateKey; // the key responsible for submitting proposals and voting - defaults to member address unless updated
@@ -13,19 +14,16 @@ contract Moloch{
         uint256 jailed; // set to proposalIndex of a passing guild kick proposal for this member, prevents voting on and sponsoring proposals
     }
 
-mapping(address => Member) public members;
+    mapping(address => Member) public members;
 
-constructor() {
+    constructor() {}
 
-}
-
-function addMember(address _newMember) public {
-    Member memory newMember;
-    newMember.delegateKey = _newMember;
-    newMember.shares = 100;
-    newMember.loot = 1000;
-    newMember.exists = true;
-    members[_newMember] = newMember;        
-
-}
+    function addMember(address _newMember) public {
+        Member memory newMember;
+        newMember.delegateKey = _newMember;
+        newMember.shares = 100;
+        newMember.loot = 1000;
+        newMember.exists = true;
+        members[_newMember] = newMember;
+    }
 }

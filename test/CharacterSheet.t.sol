@@ -3,73 +3,37 @@ pragma solidity 0.8.15;
 pragma abicoder v2;
 
 import "forge-std/Test.sol";
-import "../src/CharacterSheetsFactory.sol";
-import "../src/CharacterSheetsImplementation.sol";
-import "../src/interfaces/IMolochDAO.sol";
-import "../src/mocks/mockMoloch.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
-import {ERC6551Registry} from "../src/mocks/ERC6551Registry.sol";
-import {SimpleERC6551Account} from "../src/mocks/ERC6551Implementation.sol";
+import "./helpers/SetUp.sol";
 
 
-contract CharacterSheetsTest is Test {
-    CharacterSheetsFactory characterSheetsFactory;
-    CharacterSheetsImplementation characterSheetsImplementation;
-    CharacterSheetsImplementation characterSheets;
-    address characterSheetsAddress;
-
-    using ClonesUpgradeable for address;
-
-    address admin = address(0xdeadce11);
-    address player1 = address(0xbeef);
-    address player2 = address(0xbabe);
-    Moloch dao;
-
-   
-
-    ERC6551Registry erc6551Registry;
-    SimpleERC6551Account erc6551Implementation;
-
-    function setUp() public {
-        vm.startPrank(admin);
-
-        dao = new Moloch();
-        vm.label(address(dao), 'Moloch');
-
-        characterSheetsFactory= new CharacterSheetsFactory();
-        characterSheetsFactory.initialize();
-
-        vm.label(address(characterSheetsFactory), 'Character factory');
-
-        characterSheetsImplementation = new CharacterSheetsImplementation();
-        vm.label(address(characterSheetsImplementation), 'CharacterSheets Implementation');
-
-        erc6551Registry = new ERC6551Registry();
-        erc6551Implementation = new SimpleERC6551Account();
-
-        dao.addMember(player1);
-        characterSheetsFactory.updateCharacterSheetsImplementation(address(characterSheetsImplementation));
-        
-        bytes memory data = abi.encode(address(dao), admin);
-
-        characterSheetsAddress = characterSheetsFactory.create(data, admin);
-        characterSheets = CharacterSheetsImplementation(characterSheetsAddress);
-        characterSheets.setERC6551Registry(address(erc6551Registry));
-        characterSheets.setERC6551Implementation(address(erc6551Implementation));
-        vm.stopPrank();
-     }
+contract CharacterSheetsTest is Test, SetUp {
 
     function testRollCharacterSheet() public {
-        bytes memory encodedData = abi.encode('Test Name',false);
+        bytes memory encodedData = abi.encode('Test Name', 'test_token_uri/');
         vm.prank(admin);
-        characterSheets.rollCharacterSheet(player1, encodedData );
+        characterSheets.rollCharacterSheet(player1, encodedData);
+        assertEq(characterSheets.tokenURI(2), 'test_base_uri_character_sheets/test_token_uri/');
     }
 
-    function testRollCharacterSheetFail() public {
-        bytes memory encodedData = abi.encode('Test Name',false);
+    function testRollCharacterSheetFailNonMember() public {
+        bytes memory encodedData = abi.encode('Test Name', 'test uri');
         vm.prank(admin);
-        vm.expectRevert("player is not a member of the dao");
+        vm.expectRevert("Player is not a member of the dao");
         characterSheets.rollCharacterSheet(player2, encodedData );
     }
-    
+
+    function testChangeBaseUri() public {
+        string memory newBaseUri = 'new_base_uri/';
+        vm.prank(admin);
+        characterSheets.setBaseUri(newBaseUri);
+        assertEq(characterSheets.tokenURI(1), 'new_base_uri/test_token_uri/');
+    }
+
+    function testChangeBaseUriAccessControlRevert() public {
+        string memory newBaseUri = 'new_base_uri/';
+        vm.prank(player1);
+        vm.expectRevert("AccessControl: account 0x000000000000000000000000000000000000beef is missing role 0x9f5957e014b94f6c4458eb946e74e5d7e489dfaff6e0bddd07dd7d48100ca913");
+        characterSheets.setBaseUri(newBaseUri);
+
+    }
 }
