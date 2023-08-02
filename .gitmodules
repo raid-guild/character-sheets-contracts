@@ -14,3 +14,6 @@
 [submodule "src/lib/hats-protocol"]
 	path = src/lib/hats-protocol
 	url = https://github.com/Hats-Protocol/hats-protocol
+[submodule "lib/murky"]
+	path = lib/murky
+	url = https://github.com/dmfxyz/murky

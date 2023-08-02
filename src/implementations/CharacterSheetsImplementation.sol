@@ -105,7 +105,6 @@ contract CharacterSheetsImplementation is
 
         //calculate ERC6551 account address
         address tba = erc6551Registry.account(erc6551AccountImplementation, block.chainid, address(this), tokenId, 0);
-
         CharacterSheet memory newCharacterSheet;
         newCharacterSheet.name = _newName;
         newCharacterSheet.ERC6551TokenAddress = tba;
@@ -137,12 +136,12 @@ contract CharacterSheetsImplementation is
 
     // returns 0 if false;
     function getPlayerIdByNftAddress(address _nftAddress) public view returns (uint256) {
-        for (uint256 i = 0; i < totalSheets; i++) {
+        for (uint256 i = 1; i <= totalSheets; i++) {
             if (players[i].ERC6551TokenAddress == _nftAddress) {
                 return players[i].tokenId;
             }
         }
-        return 0;
+        revert("NOT AN NPC");
     }
 
     function members(address _member) public returns (Member memory) {

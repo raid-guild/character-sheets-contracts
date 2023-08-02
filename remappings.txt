@@ -7,6 +7,7 @@ forge-std/=lib/forge-std/src/
 hardhat/=node_modules/hardhat/
 hats-module/=lib/hats-module/
 hats-protocol/=lib/hats-protocol/
+murky/=lib/murky/src/
 openzeppelin-contracts/=lib/openzeppelin-contracts/
 openzeppelin/=lib/openzeppelin-contracts/contracts/
 solady/=lib/hats-protocol/lib/solady/src/

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "openzeppelin/utils/cryptography/MerkleProof.sol";
 import "openzeppelin/utils/Strings.sol";
 import "hats-protocol/lib/ERC1155/ERC1155.sol";
 import "hats-protocol/src/Interfaces/IHats.sol";
@@ -21,7 +22,8 @@ struct Item {
     uint256 experienceCost;
     uint256 hatId;
     bool soulbound;
-    bool claimable;
+    // claimable is a merkle root of the whitelisted addresses.
+    bytes32 claimable;
     string cid;
 }
 
@@ -76,10 +78,11 @@ contract ExperienceAndItemsImplementation is
     CharacterSheetsImplementation characterSheets;
     IHats hats;
 
-    event newItemTypeCreated(uint256, uint256, string);
-    event newClassCreated(uint256, uint256, string, string);
-    event classAssigned(address, uint256, address);
-    event itemTransfered(address, uint256, uint256);
+    event NewItemTypeCreated(uint256, uint256, string);
+    event NewClassCreated(uint256, uint256, string, string);
+    event ClassAssigned(address, uint256, address);
+    event ItemTransfered(address, uint256, uint256);
+    event ItemUpdated(Item);
 
     modifier onlyDungeonMaster() {
         require(
@@ -94,6 +97,11 @@ contract ExperienceAndItemsImplementation is
             characterSheets.hasRole(PLAYER, msg.sender),
             "You must be a Player"
         );
+        _;
+    }
+
+    modifier onlyNPC(){
+        require(characterSheets.hasRole(NPC, msg.sender), "Must be an npc");
         _;
     }
 
@@ -147,7 +155,7 @@ contract ExperienceAndItemsImplementation is
         _newItem.tokenId = _tokenId;
         items[_itemId] = _newItem;
 
-        emit newItemTypeCreated(_itemId, _tokenId, _newItem.name);
+        emit NewItemTypeCreated(_itemId, _tokenId, _newItem.name);
 
         _itemsCounter.increment();
         _tokenIdCounter.increment();
@@ -166,7 +174,7 @@ contract ExperienceAndItemsImplementation is
         _newClass.tokenId = _tokenId;
         classes[_classId] = _newClass;
         _setURI(_tokenId, _newClass.cid);
-        emit newClassCreated(_tokenId, _classId, _newClass.name, _newClass.cid);
+        emit NewClassCreated(_tokenId, _classId, _newClass.name, _newClass.cid);
         totalClasses++;
         _classesCounter.increment();
         _tokenIdCounter.increment();
@@ -174,7 +182,7 @@ contract ExperienceAndItemsImplementation is
         return (_tokenId, _classId);
     }
 
-    //returns 0 if item does not exist
+    //reverts if no item found
     function findItemByName(
         string memory _name
     ) public view returns (uint256 tokenId, uint256 itemId) {
@@ -189,10 +197,10 @@ contract ExperienceAndItemsImplementation is
                 return (tokenId, itemId);
             }
         }
-        return (0, 0);
+        revert("No item found.");
     }
 
-    //returns 0 if class doesn't exist;
+    //reverts if no class found;
     function findClassByName(
         string calldata _name
     ) public view returns (uint256 tokenId, uint256 classId) {
@@ -208,7 +216,7 @@ contract ExperienceAndItemsImplementation is
                 return (tokenId, classId);
             }
         }
-        return (0, 0);
+        revert("No class found.");
     }
 
     function getAllClasses() public view returns (Class[] memory) {
@@ -249,7 +257,7 @@ contract ExperienceAndItemsImplementation is
 
         classes[_classId].supply++;
 
-        emit classAssigned(player.memberAddress, _classId, playerNFT);
+        emit ClassAssigned(player.memberAddress, _classId, playerNFT);
     }
 
     function assignClasses(
@@ -273,7 +281,7 @@ contract ExperienceAndItemsImplementation is
     }
 
     /**
-     *
+     * drops loot and/or exp after a completed quest
      * @param memberAddress the player Id's to receive loot
      * @param itemIds the item Id's of the loot to be dropped  exp is allways Item Id 0;
      * @param amounts the amounts of each item to be dropped this must be in sync with the item ids
@@ -317,7 +325,7 @@ contract ExperienceAndItemsImplementation is
         _balanceOf[address(this)][item.tokenId] -= amount;
         _balanceOf[player.ERC6551TokenAddress][item.tokenId] += amount;
 
-        emit itemTransfered(player.ERC6551TokenAddress, itemId, item.tokenId);
+        emit ItemTransfered(player.ERC6551TokenAddress, itemId, item.tokenId);
     }
 
     function _transferItemWithExp(
@@ -349,32 +357,51 @@ contract ExperienceAndItemsImplementation is
             _balanceOf[address(this)][item.tokenId] -= amount;
             _balanceOf[player.ERC6551TokenAddress][item.tokenId] += amount;
 
-            emit itemTransfered(
+            emit ItemTransfered(
                 player.ERC6551TokenAddress,
                 itemId,
                 item.tokenId
             );
         }
     }
+    /**
+     * 
+     * @param itemIds an array of item ids
+     * @param amounts an array of amounts to claim, must match the order of item ids
+     * @param proofs an array of proofs allowing this address to claim the item,  must be in same order as item ids and amounts
+     */
 
     function claimItems(
         uint256[] calldata itemIds,
-        uint256[] calldata amounts
-    ) public onlyPlayer {
-        uint256 playerId = characterSheets.getPlayerIdByMemberAddress(
+        uint256[] calldata amounts,
+        bytes32[][] calldata proofs
+    ) public onlyNPC returns(bool success) {
+        uint256 playerId = characterSheets.getPlayerIdByNftAddress(
             msg.sender
         );
+
         require(playerId > 0, "must be a player");
         for (uint256 i = 0; i < itemIds.length; i++) {
             Item memory claimableItem = items[itemIds[i]];
+
             require(
-                claimableItem.claimable == true,
+                claimableItem.claimable != bytes32(0),
                 "This Item is not claimable."
-            );
+            );  
+
+            bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encodePacked(itemIds[i], msg.sender, amounts[i]))));
+
+            require(MerkleProof.verify(proofs[i], claimableItem.claimable, leaf), "Merkle Proof Failed");
             _transferItemWithExp(playerId, itemIds[i], amounts[i]);
         }
+        success = true;
     }
 
+    function updateItemClaimable(uint256 itemId, bytes32 merkleRoot)public onlyDungeonMaster {
+        items[itemId].claimable = merkleRoot;
+
+        emit ItemUpdated(items[itemId]);
+    }
     // The following functions are overrides required by Solidity.
 
     function setApprovalForAll(

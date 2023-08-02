@@ -35,7 +35,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
     }
 
     function testCreateItemType() public {
-        Item memory newItem = createNewItem("Pirate", false, true);
+        Item memory newItem = createNewItem("Pirate", false, bytes32(0));
         vm.prank(admin);
         (uint256 _tokenId, uint256 _itemId) = experience.createItemType(newItem);
 
@@ -47,7 +47,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
             uint256 experinceCost,
             uint256 hatId,
             bool soulbound,
-            bool claimable,
+            bytes32 claimable,
             string memory cid
         ) = experience.items(_itemId);
 
@@ -59,14 +59,14 @@ contract ExperienceAndItemsTest is Test, SetUp {
         assert(supplied ==0 );
         assert(experinceCost == 100);
         assert(soulbound == false);
-        assert(claimable == true);
+        assert(claimable == bytes32(0));
         assert(keccak256(abi.encode(cid)) == keccak256(abi.encode('test_item_cid/')));
     }
 
     function testDropLoot()public{
 
         vm.startPrank(admin);
-        Item memory newItem = createNewItem("staff", false, true);
+        Item memory newItem = createNewItem("staff", false, bytes32(0));
         (uint256 _tokenId, uint256 _itemId) = experience.createItemType(newItem);
         address[] memory players = new address[](1);
         players[0] = player1;
@@ -94,18 +94,38 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
     }
     function testClaimItem() public {
-        console2.log(experience.uri(1));
-        uint256 tokenId = characterSheets.getPlayerIdByMemberAddress(player1);
-        address nftAddress = characterSheets.getCharacterSheetByPlayerId(tokenId).ERC6551TokenAddress;
+          Item memory newItem = createNewItem("staff", false, bytes32(0));
+          vm.prank(admin);
+        (uint256 _tokenId, uint256 _itemId) = experience.createItemType(newItem);
 
-        dropExp(player1, 100000);
-        uint256[] memory itemIds = new uint256[](1);
-        uint256[] memory amounts = new uint256[](1);
-        itemIds[0] = 1;
+        uint256 playerId = characterSheets.getPlayerIdByMemberAddress(player1);
+
+        address nftAddress = characterSheets.getCharacterSheetByPlayerId(playerId).ERC6551TokenAddress;
+
+        uint256[] memory itemIds = new uint256[](2);
+        itemIds[0] = _itemId;
+        itemIds[1] = 4;
+        address[] memory claimers = new address[](2);
+        claimers[0] = nftAddress;
+        claimers[1] = player2;
+        uint256[] memory amounts = new uint256[](2);
         amounts[0] = 1;
-        vm.prank(player1);
-        experience.claimItems(itemIds, amounts);
-        assertEq(experience.balanceOf(nftAddress, 1), 1, "Balance not equal");
+        amounts[1] = 100;
+
+        (bytes32[] memory proof, bytes32 root) = generateMerkleRootAndProof(itemIds, claimers, amounts, 0);
+        dropExp(player1, 100000);
+        vm.prank(admin);
+        experience.updateItemClaimable(_itemId, root);
+        uint256[] memory itemIds2 = new uint256[](1);
+        bytes32[][] memory proofs = new bytes32[][](1);
+        uint256[] memory amounts2 = new uint256[](1);
+        itemIds2[0] = _itemId;
+        amounts2[0] = 1;
+        proofs[0] = proof;
+
+        vm.prank(nftAddress);
+        experience.claimItems(itemIds2, amounts2, proofs);
+        assertEq(experience.balanceOf(nftAddress, _tokenId), 1, "Balance not equal");
     }
 
     function testFindItemByName() public view {
@@ -114,10 +134,20 @@ contract ExperienceAndItemsTest is Test, SetUp {
         assert(tokenId == 1);
     }
 
+    function testFindItemRevert() public {
+        vm.expectRevert("No item found.");
+        (uint256 tokenId, uint256 itemId) = experience.findItemByName("Test_Item");
+    }
+
     function testFindClassByName() public view {
         (uint256 tokenId, uint256 classId) = experience.findClassByName("test_class");
         assert(classId == 1);
         assert(tokenId == 2);
+    }
+
+    function testFindClassRevert() public {
+                vm.expectRevert("No class found.");
+        (uint256 tokenId, uint256 itemId) = experience.findClassByName("Test_Item");
     }
 
 }

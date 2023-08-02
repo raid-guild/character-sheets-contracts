@@ -9,6 +9,7 @@ import "../../src/implementations/CharacterSheetsImplementation.sol";
 import "../../src/interfaces/IMolochDAO.sol";
 import "../../src/mocks/mockMoloch.sol";
 import "../../src/mocks/MockHats.sol";
+import "murky/Merkle.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
 import {ERC6551Registry} from "../../src/mocks/ERC6551Registry.sol";
 import {SimpleERC6551Account} from "../../src/mocks/ERC6551Implementation.sol";
@@ -22,12 +23,15 @@ contract SetUp is Test {
     MockHats hats;
     address characterSheetsAddress;
 
+    Merkle merkle = new Merkle();
+
 
 
 
     address experienceAddress;
 
     using ClonesUpgradeable for address;
+    using stdJson for string;
 
     address admin = address(0xdeadce11);
     address player1 = address(0xbeef);
@@ -39,7 +43,8 @@ contract SetUp is Test {
 
     function setUp() public {
         
-        Item memory newItem = createNewItem("test_item", false, true);
+
+        Item memory newItem = createNewItem("test_item", false, bytes32(0));
         vm.startPrank(admin);
 
         dao = new Moloch();
@@ -81,7 +86,7 @@ contract SetUp is Test {
         vm.stopPrank();
      }
 
-     function createNewItem(string memory _name, bool _soulbound, bool _claimable)public pure returns(Item memory){
+     function createNewItem(string memory _name, bool _soulbound, bytes32 _claimable)public pure returns(Item memory){
         return Item({tokenId: 0, name: _name, supply: 10**18, supplied: 0, experienceCost: 100, hatId: 0, soulbound: _soulbound, claimable: _claimable, cid: 'test_item_cid/'});
      }
 
@@ -98,6 +103,17 @@ contract SetUp is Test {
         amounts[0] = amount;
         vm.prank(admin);
         experience.dropLoot(players, itemIds, amounts);
+   }
+
+   function generateMerkleRootAndProof(uint256[] memory itemIds, address[] memory claimers, uint256[] memory amounts, uint256 indexOfProof) public view returns(bytes32[] memory proof, bytes32 root) {
+      bytes32[] memory leaves = new bytes32[](itemIds.length);
+      for(uint256 i =0; i< itemIds.length; i++){
+
+         leaves[i] = keccak256(bytes.concat(keccak256(abi.encodePacked(itemIds[i], claimers[i], amounts[i]))));
+               }
+      proof = merkle.getProof(leaves, indexOfProof);
+      root = merkle.getRoot(leaves);
+
    }
      
 }
