@@ -37,8 +37,7 @@ struct Class {
 contract ExperienceAndItemsImplementation is
     ERC1155Holder,
     Initializable,
-    ERC1155,
-    IMolochDAO
+    ERC1155
 {
     using Strings for uint256;
     using Counters for Counters.Counter;
@@ -165,6 +164,13 @@ contract ExperienceAndItemsImplementation is
         return (_tokenId, _itemId);
     }
 
+    /**
+     * 
+     * @param _newClass A class struct with all the class details filled out
+     * @return tokenId the ERC1155 token id
+     * @return classId the location of the class in the classes mapping
+     */
+
     function createClassType(
         Class memory _newClass
     ) public onlyDungeonMaster returns (uint256 tokenId, uint256 classId) {
@@ -182,7 +188,12 @@ contract ExperienceAndItemsImplementation is
         return (_tokenId, _classId);
     }
 
-    //reverts if no item found
+    /**
+     * 
+     * @param _name a string with the name of the item.  is case sensetive so it is preffered that all names are lowercase alphanumeric names enforced in the frontend.
+     * @return tokenId the ERC1155 token id.
+     * @return itemId the location of the item in the items mapping;
+     */
     function findItemByName(
         string memory _name
     ) public view returns (uint256 tokenId, uint256 itemId) {
@@ -200,7 +211,12 @@ contract ExperienceAndItemsImplementation is
         revert("No item found.");
     }
 
-    //reverts if no class found;
+    /**
+     * 
+     * @param _name the name of the class.  is case sensetive.
+     * @return tokenId the ERC1155 token id.
+     * @return classId storage location of the class in the classes mapping
+     */
     function findClassByName(
         string calldata _name
     ) public view returns (uint256 tokenId, uint256 classId) {
@@ -365,7 +381,7 @@ contract ExperienceAndItemsImplementation is
         }
     }
     /**
-     * 
+     * this is to be claimed from the ERC6551 wallet of the player sheet.
      * @param itemIds an array of item ids
      * @param amounts an array of amounts to claim, must match the order of item ids
      * @param proofs an array of proofs allowing this address to claim the item,  must be in same order as item ids and amounts
@@ -409,12 +425,6 @@ contract ExperienceAndItemsImplementation is
         bool approved
     ) public override(ERC1155) onlyDungeonMaster {
         super.setApprovalForAll(operator, approved);
-    }
-
-    function members(
-        address memberAddress
-    ) external override returns (Member memory member) {
-        return molochDao.members(memberAddress);
     }
 
     function supportsInterface(
@@ -468,5 +478,7 @@ contract ExperienceAndItemsImplementation is
     function _setBaseURI(string memory baseURI) internal {
         _baseURI = baseURI;
     }
+
+    //#TODO OVER RIDE TRANSFER FUNCTIONS etc for correct soulbindind of tokens.
 
 }

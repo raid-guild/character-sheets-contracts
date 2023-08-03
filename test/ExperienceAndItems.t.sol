@@ -35,7 +35,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
     }
 
     function testCreateItemType() public {
-        Item memory newItem = createNewItem("Pirate", false, bytes32(0));
+        Item memory newItem = createNewItem("Pirate_Hat", false, bytes32(0));
         vm.prank(admin);
         (uint256 _tokenId, uint256 _itemId) = experience.createItemType(newItem);
 
@@ -52,7 +52,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         ) = experience.items(_itemId);
 
         assert(experience.totalItemTypes() == 2);
-        assert(keccak256(abi.encode(name)) == keccak256(abi.encode("Pirate")));
+        assert(keccak256(abi.encode(name)) == keccak256(abi.encode("Pirate_Hat")));
         assert(tokenId == 3);
         assert(_tokenId == 3);
         assert(supply == 10**18);
@@ -60,7 +60,9 @@ contract ExperienceAndItemsTest is Test, SetUp {
         assert(experinceCost == 100);
         assert(soulbound == false);
         assert(claimable == bytes32(0));
-        assert(keccak256(abi.encode(cid)) == keccak256(abi.encode('test_item_cid/')));
+        assertEq(keccak256(abi.encode(cid)), keccak256(abi.encode('test_item_cid/')));
+        assertEq(keccak256(abi.encode(experience.uri(tokenId))), keccak256(abi.encode('test_base_uri_experience/test_item_cid/')), "uris not right");
+
     }
 
     function testDropLoot()public{

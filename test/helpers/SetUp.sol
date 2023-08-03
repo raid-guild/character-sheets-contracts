@@ -66,7 +66,9 @@ contract SetUp is Test {
         characterSheetsFactory.updateCharacterSheetsImplementation(address(characterSheetsImplementation));
         characterSheetsFactory.updateExperienceAndItemsImplementation(address(experienceAndItemsImplementation));
         characterSheetsFactory.updateHats(address(hats));
-        (characterSheetsAddress, experienceAddress) = characterSheetsFactory.create(admin, address(dao), 'test_base_uri_experience/', 'test_base_uri_character_sheets/');
+        address[] memory dungeonMasters = new address[](1);
+        dungeonMasters[0] = admin;
+        (characterSheetsAddress, experienceAddress) = characterSheetsFactory.create(dungeonMasters, address(dao), 'test_base_uri_experience/', 'test_base_uri_character_sheets/');
         characterSheets = CharacterSheetsImplementation(characterSheetsAddress);
         characterSheets.setERC6551Registry(address(erc6551Registry));
         characterSheets.setERC6551Implementation(address(erc6551Implementation));

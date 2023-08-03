@@ -37,7 +37,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     }
 
     function create(
-        address dungeonMaster,
+        address[] calldata dungeonMasters,
         address dao,
         string calldata experienceBaseuri,
         string calldata characterSheetsBaseUri
@@ -51,9 +51,9 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         address experienceClone = ClonesUpgradeable.cloneDeterministic(experienceAndItemsImplementation, 0);
 
         bytes memory encodedCharacterSheetParameters =
-            abi.encode(dao, dungeonMaster, experienceClone, characterSheetsBaseUri);
+            abi.encode(dao, dungeonMasters, experienceClone, characterSheetsBaseUri);
         bytes memory encodedExperienceParameters =
-            abi.encode(dao, dungeonMaster, characterSheetsClone, hatsAddress, experienceBaseuri);
+            abi.encode(dao, dungeonMasters, characterSheetsClone, hatsAddress, experienceBaseuri);
 
         CharacterSheetsImplementation(characterSheetsClone).initialize(encodedCharacterSheetParameters);
         ExperienceAndItemsImplementation(experienceClone).initialize(encodedExperienceParameters);

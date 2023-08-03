@@ -18,6 +18,8 @@ import "forge-std/console2.sol";
         string name;
         address ERC6551TokenAddress;
         address memberAddress;
+        uint256[] classes;
+        uint256[] items;
     }
 
 contract CharacterSheetsImplementation is
@@ -59,26 +61,44 @@ contract CharacterSheetsImplementation is
     constructor() ERC721("CharacterSheet", "CHAS") {
         _disableInitializers();
     }
-
+    /**
+     * 
+     * @param _encodedParameters encoded parameters must include:
+     * @dev address daoAddress the address of the dao who's member list will be allowed to become players and who will be able to interact with this contract
+     * @dev address[] dungeonMasters an array addresses of the person/persons who are authorized to issue player cards, classes, and items.
+     * @dev string baseURI the default uri of the player card images, arbitrary a different uri can be set when the character sheet is minted.
+     * @dev address experienceImplementation this is the address of the ERC1155 experience contract associated with this contract.  this is assigned at contract creation.
+     */
     function initialize(bytes calldata _encodedParameters) public initializer {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(DUNGEON_MASTER, msg.sender);
 
         address daoAddress;
-        address dungeonMaster;
+        address[] memory dungeonMasters;
         string memory baseUri;
         address experienceImplementation;
 
-        (daoAddress, dungeonMaster, experienceImplementation, baseUri) =
-            abi.decode(_encodedParameters, (address, address, address, string));
+        (daoAddress, dungeonMasters, experienceImplementation, baseUri) =
+            abi.decode(_encodedParameters, (address, address[], address, string));
 
-        _grantRole(DEFAULT_ADMIN_ROLE, dungeonMaster);
-        _grantRole(DUNGEON_MASTER, dungeonMaster);
+        
+        for(uint256 i = 0; i<dungeonMasters.length; i++){
+            _grantRole(DUNGEON_MASTER, dungeonMasters[i]);
+            _grantRole(DEFAULT_ADMIN_ROLE, dungeonMasters[i]);
+        }
+        
         setBaseUri(baseUri);
         _experience = ExperienceAndItemsImplementation(experienceImplementation);
         _dao = IMolochDAO(daoAddress);
         _tokenIdCounter.increment();
     }
+
+    /**
+     * 
+     * @param _to the address of the dao member wallet that will hold the character sheet nft
+     * @param _data encoded data that contains the name of the member and the uri of the base image for the nft.
+     * if no uri is stored then it will revert to the base uri of the contract
+     */
 
     function rollCharacterSheet(address _to, bytes calldata _data) public onlyRole(DUNGEON_MASTER) {
         require(
@@ -101,6 +121,7 @@ contract CharacterSheetsImplementation is
 
         if (bytes(_tokenURI).length > 0) {
             _setTokenURI(tokenId, _tokenURI);
+        } else { _setTokenURI(tokenId, _baseTokenURI);
         }
 
         //calculate ERC6551 account address
@@ -195,5 +216,49 @@ contract CharacterSheetsImplementation is
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
+    }
+
+    /// transfer overrides since these tokens should be soulbound or only transferable by the dungeonMaster
+
+     /**
+     * @dev See {IERC721-approve}.
+     */
+    function approve(address to, uint256 tokenId) public virtual override(ERC721, IERC721){
+        revert("This token can only be transfered by the dungeon master");
+    }
+    
+        /**
+     * @dev See {IERC721-setApprovalForAll}.
+     */
+    function setApprovalForAll(address operator, bool approved) public virtual override(ERC721, IERC721){
+       revert("This token can only be transfered by the dungeon master");
+    }
+
+     /**
+     * @dev See {IERC721-transferFrom}.
+     */
+    function transferFrom(address from, address to, uint256 tokenId) public virtual override(ERC721, IERC721) onlyRole(DUNGEON_MASTER){
+            _transfer(from, to, tokenId);
+    }
+
+    /**
+     * @dev See {IERC721-safeTransferFrom}.
+     */
+    function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override(ERC721, IERC721) onlyRole(DUNGEON_MASTER) {
+        safeTransferFrom(from, to, tokenId, "");
+    }
+
+    /**
+     * @dev See {IERC721-safeTransferFrom}.
+     */
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public virtual override(ERC721, IERC721) onlyRole(DUNGEON_MASTER) {
+        _safeTransfer(from, to, tokenId, data);
+    }
+
+    function renounceSheet(uint256 _playerId)public returns(bool success){
+        address tokenOwner = ownerOf(_playerId);
+        require(msg.sender == tokenOwner, "You cannot renounce a token you don't own");
+        _burn(_playerId);
+        success = true;
     }
 }
