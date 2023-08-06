@@ -61,13 +61,14 @@ contract CharacterSheetsImplementation is
     constructor() ERC721("CharacterSheet", "CHAS") {
         _disableInitializers();
     }
+
     /**
      * 
      * @param _encodedParameters encoded parameters must include:
-     * @dev address daoAddress the address of the dao who's member list will be allowed to become players and who will be able to interact with this contract
-     * @dev address[] dungeonMasters an array addresses of the person/persons who are authorized to issue player cards, classes, and items.
-     * @dev string baseURI the default uri of the player card images, arbitrary a different uri can be set when the character sheet is minted.
-     * @dev address experienceImplementation this is the address of the ERC1155 experience contract associated with this contract.  this is assigned at contract creation.
+     * - address daoAddress the address of the dao who's member list will be allowed to become players and who will be able to interact with this contract
+     * - address[] dungeonMasters an array addresses of the person/persons who are authorized to issue player cards, classes, and items.
+     * - string baseURI the default uri of the player card images, arbitrary a different uri can be set when the character sheet is minted.
+     * - address experienceImplementation this is the address of the ERC1155 experience contract associated with this contract.  this is assigned at contract creation.
      */
     function initialize(bytes calldata _encodedParameters) public initializer {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -155,7 +156,7 @@ contract CharacterSheetsImplementation is
         return players[_playerId].memberAddress;
     }
 
-    // returns 0 if false;
+   
     function getPlayerIdByNftAddress(address _nftAddress) public view returns (uint256) {
         for (uint256 i = 1; i <= totalSheets; i++) {
             if (players[i].ERC6551TokenAddress == _nftAddress) {
@@ -185,6 +186,7 @@ contract CharacterSheetsImplementation is
     function setBaseUri(string memory _uri) public onlyRole(DUNGEON_MASTER) {
         _baseTokenURI = _uri;
     }
+
     // The following functions are overrides required by Solidity.
 
     function _baseURI() internal view virtual override returns (string memory) {
@@ -218,13 +220,14 @@ contract CharacterSheetsImplementation is
         return super.supportsInterface(interfaceId);
     }
 
-    /// transfer overrides since these tokens should be soulbound or only transferable by the dungeonMaster
+    // transfer overrides since these tokens should be soulbound or only transferable by the dungeonMaster
 
      /**
      * @dev See {IERC721-approve}.
      */
+    // solhint-disable-next-line no-unused-vars
     function approve(address to, uint256 tokenId) public virtual override(ERC721, IERC721){
-        revert("This token can only be transfered by the dungeon master");
+        revert("This token can only be approved by the dungeon master");
     }
     
         /**

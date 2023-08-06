@@ -14,3 +14,4 @@ solady/=lib/hats-protocol/lib/solady/src/
 solbase/=lib/hats-protocol/lib/solbase/src/
 solmate/=lib/solmate/src/
 utils/=lib/hats-protocol/lib/utils/
+@prb/test/=lib/prb-test/src/

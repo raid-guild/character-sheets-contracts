@@ -14,6 +14,14 @@ import "../implementations/CharacterSheetsImplementation.sol";
 import "../interfaces/IMolochDAO.sol";
 import "forge-std/console2.sol";
 
+/**
+ * @title Experience and Items
+ * @author MrDeadCe11
+ * @notice this is an ERC1155 that is designed to intereact with the characterSheets contract.
+ * Each item and class is an 1155 token that can soulbound ort not to the erc6551 wallet of each player nft
+ * in the characterSHeets contract.
+ */
+
 struct Item {
     uint256 tokenId;
     string name;
@@ -22,7 +30,8 @@ struct Item {
     uint256 experienceCost;
     uint256 hatId;
     bool soulbound;
-    // claimable is a merkle root of the whitelisted addresses.
+    // if 0 then  items are claimable by anyone, otherwise upload a merkle root 
+    //of all addresses allowed to claim.  if not claimable at all upload any random bytes32.
     bytes32 claimable;
     string cid;
 }
@@ -34,11 +43,17 @@ struct Class {
     string cid;
 }
 
-contract ExperienceAndItemsImplementation is
-    ERC1155Holder,
-    Initializable,
-    ERC1155
+enum Tradeable
 {
+    //unrestricted
+    Tradeable,
+    //SoulBound
+    SoulBound,
+    //transferable by dungeonMaster Only
+    DMOnly
+}
+
+contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
     using Strings for uint256;
     using Counters for Counters.Counter;
 
@@ -50,7 +65,6 @@ contract ExperienceAndItemsImplementation is
     bytes32 public constant PLAYER = keccak256("PLAYER");
     bytes32 public constant NPC = keccak256("NPC");
 
-    bytes4 private constant _INTERFACE_ID_ERC4906 = 0x49064906;
     bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
 
     // Optional base URI
@@ -62,8 +76,7 @@ contract ExperienceAndItemsImplementation is
     //mapping tokenId => item struct for gear and classes;
     mapping(uint256 => Item) public items;
     mapping(uint256 => Class) public classes;
-    mapping(address => mapping(address => uint256))
-        public isApprovedtoTransferItems;
+    mapping(address => mapping(address => uint256)) public isApprovedtoTransferItems;
 
     uint256 public constant EXPERIENCE = 0;
 
@@ -84,22 +97,16 @@ contract ExperienceAndItemsImplementation is
     event ItemUpdated(Item);
 
     modifier onlyDungeonMaster() {
-        require(
-            characterSheets.hasRole(DUNGEON_MASTER, msg.sender),
-            "You must be the Dungeon Master"
-        );
+        require(characterSheets.hasRole(DUNGEON_MASTER, msg.sender), "You must be the Dungeon Master");
         _;
     }
 
     modifier onlyPlayer() {
-        require(
-            characterSheets.hasRole(PLAYER, msg.sender),
-            "You must be a Player"
-        );
+        require(characterSheets.hasRole(PLAYER, msg.sender), "You must be a Player");
         _;
     }
 
-    modifier onlyNPC(){
+    modifier onlyNPC() {
         require(characterSheets.hasRole(NPC, msg.sender), "Must be an npc");
         _;
     }
@@ -110,10 +117,8 @@ contract ExperienceAndItemsImplementation is
         address characterSheetsAddress;
         address hatsAddress;
         string memory baseUri;
-        (dao, owner, characterSheetsAddress, hatsAddress, baseUri) = abi.decode(
-            _encodedData,
-            (address, address, address, address, string)
-        );
+        (dao, owner, characterSheetsAddress, hatsAddress, baseUri) =
+            abi.decode(_encodedData, (address, address, address, address, string));
 
         hats = IHats(hatsAddress);
         _baseURI = baseUri;
@@ -130,24 +135,25 @@ contract ExperienceAndItemsImplementation is
     }
 
     /**
-     * creates a new item
+     * Creates a new item
      * @param _newItem takes an Item struct
      * @return tokenId this is the item id, used to find the item in items mapping
      * @return itemId this is the erc1155 token id
      */
 
-    function createItemType(
-        Item memory _newItem
-    )
+    function createItemType(Item memory _newItem)
         public
         virtual
         onlyDungeonMaster
         returns (uint256 tokenId, uint256 itemId)
     {
+        (bool success, bytes memory __) =
+            address(this).call(abi.encodeWithSignature("findItemByName(string)", _newItem.name));
+
+        require(!success, "Item already exists.");
         uint256 _tokenId = _tokenIdCounter.current();
         uint256 _itemId = _itemsCounter.current();
 
-        require(items[_itemId].supply == 0, "Item already exists.");
         _setURI(_tokenId, _newItem.cid);
         _mint(address(this), _tokenId, _newItem.supply, bytes(_newItem.cid));
 
@@ -165,15 +171,17 @@ contract ExperienceAndItemsImplementation is
     }
 
     /**
-     * 
+     *
      * @param _newClass A class struct with all the class details filled out
      * @return tokenId the ERC1155 token id
      * @return classId the location of the class in the classes mapping
      */
 
-    function createClassType(
-        Class memory _newClass
-    ) public onlyDungeonMaster returns (uint256 tokenId, uint256 classId) {
+    function createClassType(Class memory _newClass)
+        public
+        onlyDungeonMaster
+        returns (uint256 tokenId, uint256 classId)
+    {
         uint256 _classId = _classesCounter.current();
         uint256 _tokenId = _tokenIdCounter.current();
 
@@ -189,20 +197,16 @@ contract ExperienceAndItemsImplementation is
     }
 
     /**
-     * 
+     *
      * @param _name a string with the name of the item.  is case sensetive so it is preffered that all names are lowercase alphanumeric names enforced in the frontend.
      * @return tokenId the ERC1155 token id.
      * @return itemId the location of the item in the items mapping;
      */
-    function findItemByName(
-        string memory _name
-    ) public view returns (uint256 tokenId, uint256 itemId) {
+
+    function findItemByName(string memory _name) public view returns (uint256 tokenId, uint256 itemId) {
         string memory temp = _name;
         for (uint256 i = 0; i <= totalItemTypes; i++) {
-            if (
-                keccak256(abi.encode(items[i].name)) ==
-                keccak256(abi.encode(temp))
-            ) {
+            if (keccak256(abi.encode(items[i].name)) == keccak256(abi.encode(temp))) {
                 itemId = i;
                 tokenId = items[i].tokenId;
                 return (tokenId, itemId);
@@ -212,20 +216,16 @@ contract ExperienceAndItemsImplementation is
     }
 
     /**
-     * 
+     *
      * @param _name the name of the class.  is case sensetive.
      * @return tokenId the ERC1155 token id.
      * @return classId storage location of the class in the classes mapping
      */
-    function findClassByName(
-        string calldata _name
-    ) public view returns (uint256 tokenId, uint256 classId) {
+
+    function findClassByName(string calldata _name) public view returns (uint256 tokenId, uint256 classId) {
         string memory temp = _name;
         for (uint256 i = 0; i <= totalClasses; i++) {
-            if (
-                keccak256(abi.encode(classes[i].name)) ==
-                keccak256(abi.encode(temp))
-            ) {
+            if (keccak256(abi.encode(classes[i].name)) == keccak256(abi.encode(temp))) {
                 //classid, tokenId;
                 tokenId = classes[i].tokenId;
                 classId = i;
@@ -235,6 +235,10 @@ contract ExperienceAndItemsImplementation is
         revert("No class found.");
     }
 
+    /**
+     * returns an array of all Class structs stored in the classes mapping
+     */
+
     function getAllClasses() public view returns (Class[] memory) {
         Class[] memory allClasses = new Class[](totalClasses);
         for (uint256 i = 1; i <= totalClasses; i++) {
@@ -243,6 +247,9 @@ contract ExperienceAndItemsImplementation is
         return allClasses;
     }
 
+    /**
+     * returns an array of all Item structs in the Item's mapping
+     */
     function getAllItems() public view returns (Item[] memory) {
         Item[] memory allItems = new Item[](totalItemTypes);
         for (uint256 i = 1; i <= totalItemTypes; i++) {
@@ -251,21 +258,11 @@ contract ExperienceAndItemsImplementation is
         return allItems;
     }
 
-    function assignClass(
-        uint256 _playerId,
-        uint256 _classId
-    ) public onlyDungeonMaster {
-        CharacterSheet memory player = characterSheets
-            .getCharacterSheetByPlayerId(_playerId);
+    function assignClass(uint256 _playerId, uint256 _classId) public onlyDungeonMaster {
+        CharacterSheet memory player = characterSheets.getCharacterSheetByPlayerId(_playerId);
         Class memory newClass = classes[_classId];
-        require(
-            molochDao.members(player.memberAddress).shares > 0,
-            "This person is not a member"
-        );
-        require(
-            player.memberAddress != address(0x0),
-            "This member is not a player character"
-        );
+        require(molochDao.members(player.memberAddress).shares > 0, "This person is not a member");
+        require(player.memberAddress != address(0x0), "This member is not a player character");
         require(newClass.tokenId > 0, "This class does not exist.");
 
         address playerNFT = player.ERC6551TokenAddress;
@@ -276,10 +273,7 @@ contract ExperienceAndItemsImplementation is
         emit ClassAssigned(player.memberAddress, _classId, playerNFT);
     }
 
-    function assignClasses(
-        uint256 _playerId,
-        uint256[] calldata _classIds
-    ) external onlyDungeonMaster {
+    function assignClasses(uint256 _playerId, uint256[] calldata _classIds) external onlyDungeonMaster {
         for (uint256 i = 0; i < _classIds.length; i++) {
             assignClass(_playerId, _classIds[i]);
         }
@@ -303,15 +297,12 @@ contract ExperienceAndItemsImplementation is
      * @param amounts the amounts of each item to be dropped this must be in sync with the item ids
      */
 
-    function dropLoot(
-        address[] calldata memberAddress,
-        uint256[] calldata itemIds,
-        uint256[] calldata amounts
-    ) public onlyDungeonMaster {
+    function dropLoot(address[] calldata memberAddress, uint256[] calldata itemIds, uint256[] calldata amounts)
+        public
+        onlyDungeonMaster
+    {
         for (uint256 i; i < memberAddress.length; i++) {
-            uint256 playerId = characterSheets.getPlayerIdByMemberAddress(
-                memberAddress[i]
-            );
+            uint256 playerId = characterSheets.getPlayerIdByMemberAddress(memberAddress[i]);
             for (uint256 j; j < itemIds.length; j++) {
                 if (items[itemIds[j]].experienceCost > 0) {
                     _transferItem(playerId, itemIds[j], amounts[j]);
@@ -321,20 +312,18 @@ contract ExperienceAndItemsImplementation is
             }
         }
     }
+    /**
+     * internal function to transfer items.
+     * @param playerId the tokenId of the player Token on the characterSheets
+     * @param itemId the id of the Item in the items mapping.
+     * @param amount the amount of items to be sent to the player token
+     */
 
-    function _transferItem(
-        uint256 playerId,
-        uint256 itemId,
-        uint256 amount
-    ) private {
+    function _transferItem(uint256 playerId, uint256 itemId, uint256 amount) private {
         Item memory item = items[itemId];
-        CharacterSheet memory player = characterSheets
-            .getCharacterSheetByPlayerId(playerId);
+        CharacterSheet memory player = characterSheets.getCharacterSheetByPlayerId(playerId);
 
-        require(
-            player.ERC6551TokenAddress > address(0),
-            "Player does not exist"
-        );
+        require(player.ERC6551TokenAddress > address(0), "Player does not exist");
         require(itemId != 0, "cannot give exp");
         require(item.supply > 0, "Item does not exist");
 
@@ -344,42 +333,28 @@ contract ExperienceAndItemsImplementation is
         emit ItemTransfered(player.ERC6551TokenAddress, itemId, item.tokenId);
     }
 
-    function _transferItemWithExp(
-        uint256 playerId,
-        uint256 itemId,
-        uint256 amount
-    ) private {
+    function _transferItemWithExp(uint256 playerId, uint256 itemId, uint256 amount) private {
         Item memory item = items[itemId];
-        CharacterSheet memory player = characterSheets
-            .getCharacterSheetByPlayerId(playerId);
+        CharacterSheet memory player = characterSheets.getCharacterSheetByPlayerId(playerId);
 
-        require(
-            player.ERC6551TokenAddress > address(0),
-            "Player does not exist"
-        );
+        require(player.ERC6551TokenAddress > address(0), "Player does not exist");
         if (itemId == 0) {
             _giveExp(player.ERC6551TokenAddress, amount);
         } else {
             require(item.supply > 0, "Item does not exist");
             require(
-                balanceOf(player.ERC6551TokenAddress, EXPERIENCE) >=
-                    item.experienceCost * amount,
+                balanceOf(player.ERC6551TokenAddress, EXPERIENCE) >= item.experienceCost * amount,
                 "You do not have enough experience to claim this item."
             );
 
-            _balanceOf[player.ERC6551TokenAddress][EXPERIENCE] -=
-                item.experienceCost *
-                amount;
+            _balanceOf[player.ERC6551TokenAddress][EXPERIENCE] -= item.experienceCost * amount;
             _balanceOf[address(this)][item.tokenId] -= amount;
             _balanceOf[player.ERC6551TokenAddress][item.tokenId] += amount;
 
-            emit ItemTransfered(
-                player.ERC6551TokenAddress,
-                itemId,
-                item.tokenId
-            );
+            emit ItemTransfered(player.ERC6551TokenAddress, itemId, item.tokenId);
         }
     }
+
     /**
      * this is to be claimed from the ERC6551 wallet of the player sheet.
      * @param itemIds an array of item ids
@@ -387,23 +362,17 @@ contract ExperienceAndItemsImplementation is
      * @param proofs an array of proofs allowing this address to claim the item,  must be in same order as item ids and amounts
      */
 
-    function claimItems(
-        uint256[] calldata itemIds,
-        uint256[] calldata amounts,
-        bytes32[][] calldata proofs
-    ) public onlyNPC returns(bool success) {
-        uint256 playerId = characterSheets.getPlayerIdByNftAddress(
-            msg.sender
-        );
+    function claimItems(uint256[] calldata itemIds, uint256[] calldata amounts, bytes32[][] calldata proofs)
+        public
+        onlyNPC
+        returns (bool success)
+    {
+        uint256 playerId = characterSheets.getPlayerIdByNftAddress(msg.sender);
 
-        require(playerId > 0, "must be a player");
         for (uint256 i = 0; i < itemIds.length; i++) {
             Item memory claimableItem = items[itemIds[i]];
 
-            require(
-                claimableItem.claimable != bytes32(0),
-                "This Item is not claimable."
-            );  
+            require(claimableItem.claimable != bytes32(0), "This Item is not claimable.");
 
             bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encodePacked(itemIds[i], msg.sender, amounts[i]))));
 
@@ -413,27 +382,19 @@ contract ExperienceAndItemsImplementation is
         success = true;
     }
 
-    function updateItemClaimable(uint256 itemId, bytes32 merkleRoot)public onlyDungeonMaster {
+    function updateItemClaimable(uint256 itemId, bytes32 merkleRoot) public onlyDungeonMaster {
         items[itemId].claimable = merkleRoot;
 
         emit ItemUpdated(items[itemId]);
     }
     // The following functions are overrides required by Solidity.
 
-    function setApprovalForAll(
-        address operator,
-        bool approved
-    ) public override(ERC1155) onlyDungeonMaster {
+    function setApprovalForAll(address operator, bool approved) public override(ERC1155) onlyDungeonMaster {
         super.setApprovalForAll(operator, approved);
     }
 
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view override(ERC1155Receiver, ERC1155) returns (bool) {
-        return
-            interfaceId == _INTERFACE_ID_ERC4906 ||
-            interfaceId == _INTERFACE_ID_ERC2981 ||
-            super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId) public view override(ERC1155Receiver, ERC1155) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 
     /**
@@ -458,10 +419,7 @@ contract ExperienceAndItemsImplementation is
         string memory tokenURI = _tokenURIs[tokenId];
 
         // If token URI is set, concatenate base URI and tokenURI (via abi.encodePacked).
-        return
-            bytes(tokenURI).length > 0
-                ? string(abi.encodePacked(_baseURI, tokenURI))
-                : _baseURI;
+        return bytes(tokenURI).length > 0 ? string(abi.encodePacked(_baseURI, tokenURI)) : _baseURI;
     }
 
     /**
@@ -479,6 +437,5 @@ contract ExperienceAndItemsImplementation is
         _baseURI = baseURI;
     }
 
-    //#TODO OVER RIDE TRANSFER FUNCTIONS etc for correct soulbindind of tokens.
-
+    //#TODO OVER RIDE TRANSFER FUNCTIONS etc for correct soulbinding of tokens.
 }

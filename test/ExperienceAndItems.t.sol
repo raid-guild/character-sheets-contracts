@@ -56,6 +56,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         assert(tokenId == 3);
         assert(_tokenId == 3);
         assert(supply == 10**18);
+        assertEq(hatId, 0);
         assert(supplied ==0 );
         assert(experinceCost == 100);
         assert(soulbound == false);
@@ -63,6 +64,27 @@ contract ExperienceAndItemsTest is Test, SetUp {
         assertEq(keccak256(abi.encode(cid)), keccak256(abi.encode('test_item_cid/')));
         assertEq(keccak256(abi.encode(experience.uri(tokenId))), keccak256(abi.encode('test_base_uri_experience/test_item_cid/')), "uris not right");
 
+    }
+
+    function testCreateItemTypeRevertItemExists() public {
+        Item memory newItem = createNewItem("Pirate_Hat", false, bytes32(0));
+
+        vm.startPrank(admin);        
+        experience.createItemType(newItem);
+
+        vm.expectRevert("Item already exists.");
+        experience.createItemType(newItem);
+
+        vm.stopPrank();
+    }
+
+    function testCreateItemTypeRevertAccessControl() public {
+        Item memory newItem = createNewItem("Pirate_Hat", false, bytes32(0));
+
+        vm.startPrank(player2);  
+        vm.expectRevert("You must be the Dungeon Master");      
+        experience.createItemType(newItem);
+        vm.stopPrank();
     }
 
     function testDropLoot()public{
@@ -93,8 +115,9 @@ contract ExperienceAndItemsTest is Test, SetUp {
     }
 
     function testDropLootRevert()public{
-
+        
     }
+
     function testClaimItem() public {
           Item memory newItem = createNewItem("staff", false, bytes32(0));
           vm.prank(admin);
@@ -138,7 +161,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
     function testFindItemRevert() public {
         vm.expectRevert("No item found.");
-        (uint256 tokenId, uint256 itemId) = experience.findItemByName("Test_Item");
+        experience.findItemByName("Test_Item");
     }
 
     function testFindClassByName() public view {
@@ -149,7 +172,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
     function testFindClassRevert() public {
                 vm.expectRevert("No class found.");
-        (uint256 tokenId, uint256 itemId) = experience.findClassByName("Test_Item");
+        experience.findClassByName("Test_Item");
     }
 
 }
