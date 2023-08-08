@@ -9,6 +9,7 @@ import "../../src/implementations/CharacterSheetsImplementation.sol";
 import "../../src/interfaces/IMolochDAO.sol";
 import "../../src/mocks/mockMoloch.sol";
 import "../../src/mocks/MockHats.sol";
+import "../../src/lib/Structs.sol";
 import "murky/Merkle.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
 import {ERC6551Registry} from "../../src/mocks/ERC6551Registry.sol";
@@ -63,6 +64,7 @@ contract SetUp is Test {
         erc6551Implementation = new SimpleERC6551Account();
 
         dao.addMember(player1);
+        dao.addMember(admin);
         characterSheetsFactory.updateCharacterSheetsImplementation(address(characterSheetsImplementation));
         characterSheetsFactory.updateExperienceAndItemsImplementation(address(experienceAndItemsImplementation));
         characterSheetsFactory.updateHats(address(hats));

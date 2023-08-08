@@ -26,4 +26,8 @@ contract Moloch {
         newMember.exists = true;
         members[_newMember] = newMember;
     }
+
+    function jailMember(address member) public {
+        members[member].jailed = 100;
+    }
 }

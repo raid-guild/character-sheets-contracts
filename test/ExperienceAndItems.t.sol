@@ -5,6 +5,7 @@ pragma abicoder v2;
 import "forge-std/Test.sol";
 import "../src/implementations/ExperienceAndItemsImplementation.sol";
 import "./helpers/SetUp.sol";
+import "../src/lib/Structs.sol";
 
 contract ExperienceAndItemsTest is Test, SetUp {
 
@@ -12,26 +13,27 @@ contract ExperienceAndItemsTest is Test, SetUp {
         vm.prank(admin);
         (uint256 _tokenId, uint256 _classId) = experience.createClassType(createNewClass("Ballerina"));
         (uint256 tokenId, string memory name, uint256 supply, string memory cid) = experience.classes(_classId);
-        assert(experience.totalClasses() == 2);
-        assert(tokenId == 3);
-        assert(_tokenId == 3);
-        assert(_classId == 2);
-        assert(keccak256(abi.encode(name)) == keccak256(abi.encode("Ballerina")));
-        assert(supply == 0);
-        assert(keccak256(abi.encode(cid)) == keccak256(abi.encode("test_class_cid/")));
+        
+        assertEq(experience.totalClasses(), 2);
+        assertEq(tokenId, 3);
+        assertEq(_tokenId, 3);
+        assertEq(_classId, 2);
+        assertEq(keccak256(abi.encode(name)), keccak256(abi.encode("Ballerina")));
+        assertEq(supply, 0);
+        assertEq(keccak256(abi.encode(cid)), keccak256(abi.encode("test_class_cid/")));
     }
 
     function testAssignClass() public {
+        uint256 playerId = characterSheets.memberAddressToTokenId(player1);
         vm.startPrank(admin);
 
         (uint256 tokenId, uint256 classId) = experience.createClassType(createNewClass("Ballerina"));
-        experience.assignClass(characterSheets.getPlayerIdByMemberAddress(player1), classId);
+
+        CharacterSheet memory player = characterSheets.getCharacterSheetByPlayerId(playerId);
+        experience.assignClass(player.ERC6551TokenAddress, classId);
         vm.stopPrank();
 
-        address playerNft =
-            characterSheets.getCharacterSheetByPlayerId(characterSheets.getPlayerIdByMemberAddress(player1)).ERC6551TokenAddress;
-
-        assert(experience.balanceOf(playerNft, tokenId) == 1);
+        assertEq(experience.balanceOf(player.ERC6551TokenAddress, tokenId), 1);
     }
 
     function testCreateItemType() public {
@@ -91,7 +93,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
         vm.startPrank(admin);
         Item memory newItem = createNewItem("staff", false, bytes32(0));
-        address player1NFT = characterSheets.getCharacterSheetByPlayerId(characterSheets.getPlayerIdByMemberAddress(player1)).ERC6551TokenAddress;
+        address player1NFT = characterSheets.getCharacterSheetByPlayerId(characterSheets.memberAddressToTokenId(player1)).ERC6551TokenAddress;
 
         (uint256 _tokenId, uint256 _itemId) = experience.createItemType(newItem);
         address[] memory players = new address[](1);
@@ -123,7 +125,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
           vm.prank(admin);
         (uint256 _tokenId, uint256 _itemId) = experience.createItemType(newItem);
 
-        uint256 playerId = characterSheets.getPlayerIdByMemberAddress(player1);
+        uint256 playerId = characterSheets.memberAddressToTokenId(player1);
 
         address nftAddress = characterSheets.getCharacterSheetByPlayerId(playerId).ERC6551TokenAddress;
 
@@ -151,7 +153,6 @@ contract ExperienceAndItemsTest is Test, SetUp {
         amounts2[0] = 1;
         proofs[0] = proof;
 
-        console2.log("NFT ADDRESS: ",nftAddress);
         vm.prank(nftAddress);
         experience.claimItems(itemIds2, amounts2, proofs);
 
@@ -162,22 +163,20 @@ contract ExperienceAndItemsTest is Test, SetUp {
         (uint256 tokenId, uint256 itemId) = experience.findItemByName("test_item");
         assertEq(itemId, 1);
         assertEq(tokenId, 1);
+
+        vm.expectRevert("No item found.");
+        experience.findItemByName("no_Item");
     }
 
-    function testFindItemRevert() public {
-        vm.expectRevert("No item found.");
-        experience.findItemByName("Test_Item");
-    }
 
     function testFindClassByName() public {
         (uint256 tokenId, uint256 classId) = experience.findClassByName("test_class");
         assertEq(classId, 1);
         assertEq(tokenId, 2);
+
+        vm.expectRevert("No class found.");
+        experience.findClassByName("no_class");
     }
 
-    function testFindClassRevert() public {
-                vm.expectRevert("No class found.");
-        experience.findClassByName("Test_Item");
-    }
 
 }

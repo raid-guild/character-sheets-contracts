@@ -12,22 +12,9 @@ import "../interfaces/IERC6551Registry.sol";
 import "../interfaces/IMolochDAO.sol";
 import "./ExperienceAndItemsImplementation.sol";
 import "forge-std/console2.sol";
+import "../lib/Structs.sol";
 
-    struct CharacterSheet {
-        string name;
-        address ERC6551TokenAddress;
-        address memberAddress;
-        uint256[] classes;
-        uint256[] items;
-    }
-
-contract CharacterSheetsImplementation is
-    Initializable,
-    IMolochDAO,
-    ERC721,
-    ERC721URIStorage,
-    AccessControl
-{
+contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC721URIStorage, AccessControl {
     using Counters for Counters.Counter;
 
     Counters.Counter private _tokenIdCounter;
@@ -40,8 +27,6 @@ contract CharacterSheetsImplementation is
 
     IMolochDAO internal _dao;
 
-    address private _gearAndAttributesContract;
-
     string private _baseTokenURI;
 
     IERC6551Registry erc6551Registry;
@@ -49,6 +34,10 @@ contract CharacterSheetsImplementation is
 
     event newPlayer(uint256 tokenId, CharacterSheet);
     event playerRemoved(uint256 tokenId);
+    event experienceUpdated(address exp);
+    event classAdded(uint256 playerid, uint256 classId);
+    event itemAdded(uint256 playerId, uint256 itemTokenId);
+    event playerNameUpdated(string oldName, string newName);
 
     // tokenId => characterSheet
     mapping(uint256 => CharacterSheet) public players;
@@ -61,14 +50,19 @@ contract CharacterSheetsImplementation is
         _disableInitializers();
     }
 
+    modifier onlyExpContract() {
+        require(msg.sender == address(_experience), "not the experience contract");
+        _;
+    }
     /**
-     * 
+     *
      * @param _encodedParameters encoded parameters must include:
      * - address daoAddress the address of the dao who's member list will be allowed to become players and who will be able to interact with this contract
      * - address[] dungeonMasters an array addresses of the person/persons who are authorized to issue player cards, classes, and items.
      * - string baseURI the default uri of the player card images, arbitrary a different uri can be set when the character sheet is minted.
      * - address experienceImplementation this is the address of the ERC1155 experience contract associated with this contract.  this is assigned at contract creation.
      */
+
     function initialize(bytes calldata _encodedParameters) public initializer {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(DUNGEON_MASTER, msg.sender);
@@ -81,12 +75,11 @@ contract CharacterSheetsImplementation is
         (daoAddress, dungeonMasters, experienceImplementation, baseUri) =
             abi.decode(_encodedParameters, (address, address[], address, string));
 
-        
-        for(uint256 i = 0; i<dungeonMasters.length; i++){
+        for (uint256 i = 0; i < dungeonMasters.length; i++) {
             _grantRole(DUNGEON_MASTER, dungeonMasters[i]);
             _grantRole(DEFAULT_ADMIN_ROLE, dungeonMasters[i]);
         }
-        
+
         setBaseUri(baseUri);
         _experience = ExperienceAndItemsImplementation(experienceImplementation);
         _dao = IMolochDAO(daoAddress);
@@ -94,7 +87,7 @@ contract CharacterSheetsImplementation is
     }
 
     /**
-     * 
+     *
      * @param _to the address of the dao member wallet that will hold the character sheet nft
      * @param _data encoded data that contains the name of the member and the uri of the base image for the nft.
      * if no uri is stored then it will revert to the base uri of the contract
@@ -114,7 +107,7 @@ contract CharacterSheetsImplementation is
 
         uint256 tokenId = _tokenIdCounter.current();
 
-        require(players[tokenId].ERC6551TokenAddress == address(0x0), "this player is already in the game");
+        require(memberAddressToTokenId[_to] == 0, "this player is already in the game");
 
         _tokenIdCounter.increment();
         _safeMint(_to, tokenId);
@@ -132,6 +125,7 @@ contract CharacterSheetsImplementation is
         newCharacterSheet.name = _newName;
         newCharacterSheet.ERC6551TokenAddress = tba;
         newCharacterSheet.memberAddress = _to;
+        newCharacterSheet.tokenId = tokenId;
         //store info in mappings
         players[tokenId] = newCharacterSheet;
         memberAddressToTokenId[_to] = tokenId;
@@ -142,33 +136,48 @@ contract CharacterSheetsImplementation is
         emit newPlayer(tokenId, newCharacterSheet);
     }
 
+    function addClassToPlayer(uint256 playerId, uint256 classTokenId) external onlyExpContract {
+        players[playerId].classes.push(classTokenId);
+        emit classAdded(playerId, classTokenId);
+    }
+
+    function removeClassFromPlayer(uint256 playerId, uint256 classTokenId) external onlyExpContract returns(bool success){
+        uint256[] memory arr = players[playerId].classes;
+        for (uint256 i = 0; i < arr.length; i++) {
+            if (arr[i] == classTokenId) {
+                for (uint256 j = i; j < arr.length - 1; j++) {
+                    arr[j] = arr[j + 1];
+                }
+                arr[arr.length - 1] = 0;
+                players[playerId].classes = arr;
+                success = true;
+            }
+        }
+        success = false;
+    }
+
+    function addItemToPlayer(uint256 playerId, uint256 itemTokenId) external onlyExpContract {
+        players[playerId].items.push(itemTokenId);
+        emit itemAdded(playerId, itemTokenId);
+    }
+
     function getCharacterSheetByPlayerId(uint256 tokenId) public view returns (CharacterSheet memory) {
         require(players[tokenId].memberAddress > address(0), "This is not a character.");
         return players[tokenId];
     }
 
-    function getPlayerIdByMemberAddress(address _memberAddress) public view returns (uint256) {
-        require(memberAddressToTokenId[_memberAddress] > 0, "This member is not a player character.");
-        return memberAddressToTokenId[_memberAddress];
-    }
-
-    function getMemberByPlayerId(uint256 _playerId) public view returns (address) {
-        return players[_playerId].memberAddress;
-    }
-
-   
     function getPlayerIdByNftAddress(address _nftAddress) public view returns (uint256) {
         for (uint256 i = 1; i <= totalSheets; i++) {
             if (players[i].ERC6551TokenAddress == _nftAddress) {
                 return i;
             }
         }
-        revert("NOT AN NPC");
+        revert("This is not the address of an npc");
     }
 
-    function getNftAddressByPlayerId(uint256 playerId)public view returns (address){
-        require(players[playerId].memberAddress > address(0), "not a player");
-        return players[playerId].ERC6551TokenAddress;
+    function updateExpContract(address expContract) external onlyRole(DUNGEON_MASTER) {
+        _experience = ExperienceAndItemsImplementation(expContract);
+        emit experienceUpdated(expContract);
     }
 
     function members(address _member) public returns (Member memory) {
@@ -182,6 +191,21 @@ contract CharacterSheetsImplementation is
         );
         delete players[_tokenId];
         _burn(_tokenId);
+    }
+
+    function renounceSheet(uint256 _playerId) public returns (bool success) {
+        require(balanceOf(msg.sender) > 0, "you do not have a characterSheet");
+        address tokenOwner = ownerOf(_playerId);
+        require(msg.sender == tokenOwner, "You cannot renounce a token you don't own");
+        _burn(_playerId);
+        success = true;
+    }
+
+    function updatePlayerName(string calldata newName) public onlyRole(PLAYER) {
+        string memory oldName = players[memberAddressToTokenId[msg.sender]].name;
+        players[memberAddressToTokenId[msg.sender]].name = newName;
+
+        emit playerNameUpdated(oldName, newName);
     }
 
     function setExperienceAndGearContract(address experience) public onlyRole(DUNGEON_MASTER) {
@@ -227,46 +251,43 @@ contract CharacterSheetsImplementation is
 
     // transfer overrides since these tokens should be soulbound or only transferable by the dungeonMaster
 
-     /**
+    /**
      * @dev See {IERC721-approve}.
      */
     // solhint-disable-next-line no-unused-vars
-    function approve(address to, uint256 tokenId) public virtual override(ERC721, IERC721){
-        revert("This token can only be approved by the dungeon master");
+    function approve(address to, uint256 tokenId) public virtual override(ERC721, IERC721) {
+        revert("This token cannot be transfered");
     }
-    
-        /**
+
+    /**
      * @dev See {IERC721-setApprovalForAll}.
      */
-    function setApprovalForAll(address operator, bool approved) public virtual override(ERC721, IERC721){
-       revert("This token can only be transfered by the dungeon master");
+    function setApprovalForAll(address operator, bool approved) public virtual override(ERC721, IERC721) {
+        revert("This token cannot be transfered");
     }
 
-     /**
+    /**
      * @dev See {IERC721-transferFrom}.
      */
-    function transferFrom(address from, address to, uint256 tokenId) public virtual override(ERC721, IERC721) onlyRole(DUNGEON_MASTER){
-            _transfer(from, to, tokenId);
+    function transferFrom(address from, address to, uint256 tokenId) public virtual override(ERC721, IERC721) {
+        revert("Cannot transfer characterSheets");
     }
 
     /**
      * @dev See {IERC721-safeTransferFrom}.
      */
-    function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override(ERC721, IERC721) onlyRole(DUNGEON_MASTER) {
-        safeTransferFrom(from, to, tokenId, "");
+    function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override(ERC721, IERC721) {
+        revert("Cannot transfer characterSheets");
     }
 
     /**
      * @dev See {IERC721-safeTransferFrom}.
      */
-    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public virtual override(ERC721, IERC721) onlyRole(DUNGEON_MASTER) {
-        _safeTransfer(from, to, tokenId, data);
-    }
-
-    function renounceSheet(uint256 _playerId)public returns(bool success){
-        address tokenOwner = ownerOf(_playerId);
-        require(msg.sender == tokenOwner, "You cannot renounce a token you don't own");
-        _burn(_playerId);
-        success = true;
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data)
+        public
+        virtual
+        override(ERC721, IERC721)
+    {
+        revert("Cannot transfer characterSheets");
     }
 }
