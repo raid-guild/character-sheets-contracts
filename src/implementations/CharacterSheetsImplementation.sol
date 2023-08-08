@@ -14,7 +14,6 @@ import "./ExperienceAndItemsImplementation.sol";
 import "forge-std/console2.sol";
 
     struct CharacterSheet {
-        uint256 tokenId;
         string name;
         address ERC6551TokenAddress;
         address memberAddress;
@@ -122,16 +121,17 @@ contract CharacterSheetsImplementation is
 
         if (bytes(_tokenURI).length > 0) {
             _setTokenURI(tokenId, _tokenURI);
-        } else { _setTokenURI(tokenId, _baseTokenURI);
+        } else {
+            _setTokenURI(tokenId, _baseTokenURI);
         }
 
         //calculate ERC6551 account address
         address tba = erc6551Registry.account(erc6551AccountImplementation, block.chainid, address(this), tokenId, 0);
+
         CharacterSheet memory newCharacterSheet;
         newCharacterSheet.name = _newName;
         newCharacterSheet.ERC6551TokenAddress = tba;
         newCharacterSheet.memberAddress = _to;
-        newCharacterSheet.tokenId = tokenId;
         //store info in mappings
         players[tokenId] = newCharacterSheet;
         memberAddressToTokenId[_to] = tokenId;
@@ -143,7 +143,7 @@ contract CharacterSheetsImplementation is
     }
 
     function getCharacterSheetByPlayerId(uint256 tokenId) public view returns (CharacterSheet memory) {
-        require(players[tokenId].tokenId > 0, "This is not a character.");
+        require(players[tokenId].memberAddress > address(0), "This is not a character.");
         return players[tokenId];
     }
 
@@ -160,10 +160,15 @@ contract CharacterSheetsImplementation is
     function getPlayerIdByNftAddress(address _nftAddress) public view returns (uint256) {
         for (uint256 i = 1; i <= totalSheets; i++) {
             if (players[i].ERC6551TokenAddress == _nftAddress) {
-                return players[i].tokenId;
+                return i;
             }
         }
         revert("NOT AN NPC");
+    }
+
+    function getNftAddressByPlayerId(uint256 playerId)public view returns (address){
+        require(players[playerId].memberAddress > address(0), "not a player");
+        return players[playerId].ERC6551TokenAddress;
     }
 
     function members(address _member) public returns (Member memory) {

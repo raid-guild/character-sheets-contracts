@@ -51,16 +51,16 @@ contract ExperienceAndItemsTest is Test, SetUp {
             string memory cid
         ) = experience.items(_itemId);
 
-        assert(experience.totalItemTypes() == 2);
-        assert(keccak256(abi.encode(name)) == keccak256(abi.encode("Pirate_Hat")));
-        assert(tokenId == 3);
-        assert(_tokenId == 3);
-        assert(supply == 10**18);
+        assertEq(experience.totalItemTypes(), 2);
+        assertEq(keccak256(abi.encode(name)), keccak256(abi.encode("Pirate_Hat")));
+        assertEq(tokenId, 3);
+        assertEq(_tokenId, 3);
+        assertEq(supply, 10**18);
         assertEq(hatId, 0);
-        assert(supplied ==0 );
-        assert(experinceCost == 100);
-        assert(soulbound == false);
-        assert(claimable == bytes32(0));
+        assertEq(supplied, 0);
+        assertEq(experinceCost,100);
+        assertEq(soulbound, false);
+        assertEq(claimable, bytes32(0));
         assertEq(keccak256(abi.encode(cid)), keccak256(abi.encode('test_item_cid/')));
         assertEq(keccak256(abi.encode(experience.uri(tokenId))), keccak256(abi.encode('test_base_uri_experience/test_item_cid/')), "uris not right");
 
@@ -91,9 +91,11 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
         vm.startPrank(admin);
         Item memory newItem = createNewItem("staff", false, bytes32(0));
+        address player1NFT = characterSheets.getCharacterSheetByPlayerId(characterSheets.getPlayerIdByMemberAddress(player1)).ERC6551TokenAddress;
+
         (uint256 _tokenId, uint256 _itemId) = experience.createItemType(newItem);
         address[] memory players = new address[](1);
-        players[0] = player1;
+        players[0] = player1NFT;
         uint256[] memory itemIds = new uint256[](3);
         itemIds[0] = 0;
         itemIds[1] = 1;
@@ -106,8 +108,6 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
         experience.dropLoot(players, itemIds, amounts);
         vm.stopPrank();
-
-        address player1NFT = characterSheets.getCharacterSheetByPlayerId(characterSheets.getPlayerIdByMemberAddress(player1)).ERC6551TokenAddress;
 
         assertEq(experience.balanceOf(player1NFT, _tokenId), 1, "tokenId 3 not equal");
         assertEq(experience.balanceOf(player1NFT, 0), 10000, "exp not equal");
@@ -138,9 +138,12 @@ contract ExperienceAndItemsTest is Test, SetUp {
         amounts[1] = 100;
 
         (bytes32[] memory proof, bytes32 root) = generateMerkleRootAndProof(itemIds, claimers, amounts, 0);
-        dropExp(player1, 100000);
+        
+        dropExp(nftAddress, 100000);
+
         vm.prank(admin);
         experience.updateItemClaimable(_itemId, root);
+
         uint256[] memory itemIds2 = new uint256[](1);
         bytes32[][] memory proofs = new bytes32[][](1);
         uint256[] memory amounts2 = new uint256[](1);
@@ -148,15 +151,17 @@ contract ExperienceAndItemsTest is Test, SetUp {
         amounts2[0] = 1;
         proofs[0] = proof;
 
+        console2.log("NFT ADDRESS: ",nftAddress);
         vm.prank(nftAddress);
         experience.claimItems(itemIds2, amounts2, proofs);
+
         assertEq(experience.balanceOf(nftAddress, _tokenId), 1, "Balance not equal");
     }
 
-    function testFindItemByName() public view {
+    function testFindItemByName() public {
         (uint256 tokenId, uint256 itemId) = experience.findItemByName("test_item");
-        assert(itemId == 1);
-        assert(tokenId == 1);
+        assertEq(itemId, 1);
+        assertEq(tokenId, 1);
     }
 
     function testFindItemRevert() public {
@@ -164,10 +169,10 @@ contract ExperienceAndItemsTest is Test, SetUp {
         experience.findItemByName("Test_Item");
     }
 
-    function testFindClassByName() public view {
+    function testFindClassByName() public {
         (uint256 tokenId, uint256 classId) = experience.findClassByName("test_class");
-        assert(classId == 1);
-        assert(tokenId == 2);
+        assertEq(classId, 1);
+        assertEq(tokenId, 2);
     }
 
     function testFindClassRevert() public {

@@ -18,7 +18,7 @@ import "forge-std/console2.sol";
  * @title Experience and Items
  * @author MrDeadCe11
  * @notice this is an ERC1155 that is designed to intereact with the characterSheets contract.
- * Each item and class is an 1155 token that can soulbound ort not to the erc6551 wallet of each player nft
+ * Each item and class is an 1155 token that can soulbound or not to the erc6551 wallet of each player nft
  * in the characterSHeets contract.
  */
 
@@ -31,7 +31,7 @@ struct Item {
     uint256 hatId;
     bool soulbound;
     // if 0 then  items are claimable by anyone, otherwise upload a merkle root 
-    //of all addresses allowed to claim.  if not claimable at all upload any random bytes32.
+    //of all addresses allowed to claim.  if not claimable at all use any random bytes32 besides bytes32(0).
     bytes32 claimable;
     string cid;
 }
@@ -43,15 +43,6 @@ struct Class {
     string cid;
 }
 
-enum Tradeable
-{
-    //unrestricted
-    Tradeable,
-    //SoulBound
-    SoulBound,
-    //transferable by dungeonMaster Only
-    DMOnly
-}
 
 contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
     using Strings for uint256;
@@ -76,7 +67,8 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     //mapping tokenId => item struct for gear and classes;
     mapping(uint256 => Item) public items;
     mapping(uint256 => Class) public classes;
-    mapping(address => mapping(address => uint256)) public isApprovedtoTransferItems;
+    mapping(address => uint256[]) public ownedItems;
+    mapping(address => uint256[]) public assignedClasses;
 
     uint256 public constant EXPERIENCE = 0;
 
@@ -280,7 +272,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     }
 
     /**
-     * internal function for DM to give out experience.
+     * private function for DM to give out experience.
      * @param _to player neft address
      * @param _amount the amount of exp to be issued
      */
@@ -291,21 +283,21 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     }
 
     /**
-     * drops loot and/or exp after a completed quest
-     * @param memberAddress the player Id's to receive loot
+     * drops loot and/or exp after a completed quest items dropped through dropLoot do cost exp.
+     * @param nftAddress the tokenbound account of the character npc to receive the item
      * @param itemIds the item Id's of the loot to be dropped  exp is allways Item Id 0;
      * @param amounts the amounts of each item to be dropped this must be in sync with the item ids
      */
 
-    function dropLoot(address[] calldata memberAddress, uint256[] calldata itemIds, uint256[] calldata amounts)
+    function dropLoot(address[] calldata nftAddress, uint256[] calldata itemIds, uint256[] calldata amounts)
         public
         onlyDungeonMaster
     {
-        for (uint256 i; i < memberAddress.length; i++) {
-            uint256 playerId = characterSheets.getPlayerIdByMemberAddress(memberAddress[i]);
+        for (uint256 i; i < nftAddress.length; i++) {
+            uint256 playerId = characterSheets.getPlayerIdByNftAddress(nftAddress[i]);
             for (uint256 j; j < itemIds.length; j++) {
                 if (items[itemIds[j]].experienceCost > 0) {
-                    _transferItem(playerId, itemIds[j], amounts[j]);
+                    _transferItem(nftAddress[i], itemIds[j], amounts[j]);
                 } else {
                     _transferItemWithExp(playerId, itemIds[j], amounts[j]);
                 }
@@ -314,23 +306,22 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     }
     /**
      * internal function to transfer items.
-     * @param playerId the tokenId of the player Token on the characterSheets
+     * @param _to the tokenId of the player Token on the characterSheets
      * @param itemId the id of the Item in the items mapping.
      * @param amount the amount of items to be sent to the player token
      */
 
-    function _transferItem(uint256 playerId, uint256 itemId, uint256 amount) private {
+    function _transferItem(address _to, uint256 itemId, uint256 amount) private {
         Item memory item = items[itemId];
-        CharacterSheet memory player = characterSheets.getCharacterSheetByPlayerId(playerId);
 
-        require(player.ERC6551TokenAddress > address(0), "Player does not exist");
+        require(characterSheets.hasRole(NPC, _to), "Can Only transfer Items to an NPC");
         require(itemId != 0, "cannot give exp");
         require(item.supply > 0, "Item does not exist");
 
         _balanceOf[address(this)][item.tokenId] -= amount;
-        _balanceOf[player.ERC6551TokenAddress][item.tokenId] += amount;
+        _balanceOf[_to][item.tokenId] += amount;
 
-        emit ItemTransfered(player.ERC6551TokenAddress, itemId, item.tokenId);
+        emit ItemTransfered(_to, itemId, item.tokenId);
     }
 
     function _transferItemWithExp(uint256 playerId, uint256 itemId, uint256 amount) private {
@@ -367,17 +358,19 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         onlyNPC
         returns (bool success)
     {
-        uint256 playerId = characterSheets.getPlayerIdByNftAddress(msg.sender);
 
+        uint256 playerId = characterSheets.getPlayerIdByNftAddress(msg.sender);
         for (uint256 i = 0; i < itemIds.length; i++) {
             Item memory claimableItem = items[itemIds[i]];
-
-            require(claimableItem.claimable != bytes32(0), "This Item is not claimable.");
-
+            if(claimableItem.claimable == bytes32(0)){
+            require(characterSheets.hasRole(NPC, msg.sender), "Only an NPC can claim items");
+            _transferItemWithExp(playerId, itemIds[i], amounts[i]);
+            } else {
             bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encodePacked(itemIds[i], msg.sender, amounts[i]))));
 
             require(MerkleProof.verify(proofs[i], claimableItem.claimable, leaf), "Merkle Proof Failed");
             _transferItemWithExp(playerId, itemIds[i], amounts[i]);
+            }
         }
         success = true;
     }
