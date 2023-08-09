@@ -14,6 +14,7 @@ import "../implementations/CharacterSheetsImplementation.sol";
 import "../interfaces/IMolochDAO.sol";
 import "forge-std/console2.sol";
 import "../lib/Structs.sol";
+
 /**
  * @title Experience and Items
  * @author MrDeadCe11
@@ -203,7 +204,8 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         }
         revert("No class found.");
     }
-    //returns 0 if false
+
+    //returns 0 if token Id does not exist
 
     function findClassIdFromTokenId(uint256 tokenId) public view returns (uint256 classId) {
         for (uint256 i = 1; i <= totalClasses; i++) {
@@ -215,6 +217,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         return 0;
     }
 
+    //returns 0 if token id does not exist
     function findItemIdFromTokenId(uint256 tokenId) public view returns (uint256 itemId) {
         for (uint256 i = 1; i <= totalItemTypes; i++) {
             Item memory tempItem = items[i];
@@ -232,7 +235,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     function getAllClasses() public view returns (Class[] memory) {
         Class[] memory allClasses = new Class[](totalClasses);
         for (uint256 i = 1; i <= totalClasses; i++) {
-            allClasses[i] = classes[i];
+            allClasses[i -1] = classes[i];
         }
         return allClasses;
     }
@@ -242,33 +245,61 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      */
     function getAllItems() public view returns (Item[] memory) {
         Item[] memory allItems = new Item[](totalItemTypes);
-        for (uint256 i = 1; i <= totalItemTypes; i++) {
+        for (uint256 i = 0; i <= totalItemTypes; i++) {
             allItems[i] = items[i];
         }
         return allItems;
     }
 
-    function assignClass(address nftAddress, uint256 _classId) public onlyDungeonMaster {
+    /**
+     * gives an npc token a class.  can only assign one of each class type to each NPC
+     * @param playerId the tokenId of the player
+     * @param classId the classId of the class to be assigned
+     */
+    function assignClass(uint256 playerId, uint256 classId) public onlyDungeonMaster {
         CharacterSheet memory player =
-            characterSheets.getCharacterSheetByPlayerId(characterSheets.getPlayerIdByNftAddress(nftAddress));
-        Class memory newClass = classes[_classId];
-        require(molochDao.members(player.memberAddress).shares > 0, "This person is not a member");
+            characterSheets.getCharacterSheetByPlayerId(playerId);
+        Class memory newClass = classes[classId];
+        console2.log("ASSIGN CLASS", newClass.tokenId, newClass.name);
         require(player.memberAddress != address(0x0), "This member is not a player character");
         require(newClass.tokenId > 0, "This class does not exist.");
+        require(balanceOf(player.ERC6551TokenAddress, newClass.tokenId) == 0, "Can only assign a class once.");
 
-        _mint(nftAddress, newClass.tokenId, 1, bytes(newClass.cid));
+        _mint(player.ERC6551TokenAddress, newClass.tokenId, 1, bytes(newClass.cid));
 
-        characterSheets.addClassToPlayer(player.tokenId, newClass.tokenId);
+        characterSheets.addClassToPlayer(playerId, newClass.tokenId);
 
-        classes[_classId].supply++;
+        classes[classId].supply++;
 
-        emit classAssigned(player.memberAddress, _classId);
+        emit classAssigned(player.ERC6551TokenAddress, classId);
     }
 
-    function assignClasses(address nftAddress, uint256[] calldata _classIds) external onlyDungeonMaster {
+
+    function assignClasses(uint256 playerId, uint256[] calldata _classIds) external onlyDungeonMaster {
         for (uint256 i = 0; i < _classIds.length; i++) {
-            assignClass(nftAddress, _classIds[i]);
+            console2.log("CLASS IDS: ", _classIds[i], i);
+            assignClass(playerId, _classIds[i]);
         }
+    }
+
+    /**
+     * removes a class from a player token
+     * @param playerId the token Id of the player who needs a class removed
+     * @param classId the class to be removed
+     */
+
+    function revokeClass(uint256 playerId, uint256 classId) public returns(bool success){
+        CharacterSheet memory sheet =  characterSheets.getCharacterSheetByPlayerId(playerId);
+        uint256 tokenId = classes[classId].tokenId;
+        if(characterSheets.hasRole(DUNGEON_MASTER, msg.sender)){
+            require(characterSheets.removeClassFromPlayer(playerId, tokenId), "Player does not have that class");
+            _burn(sheet.ERC6551TokenAddress, tokenId, 1);
+        } else {
+            require(sheet.memberAddress == msg.sender, "Must be the player to remove a class");
+            require(characterSheets.removeClassFromPlayer(playerId, tokenId), "You do not have that class");
+            _burn(sheet.ERC6551TokenAddress, tokenId, 1);
+        }
+        success = true;
     }
 
     /**

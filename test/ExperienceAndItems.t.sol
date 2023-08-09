@@ -21,6 +21,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         assertEq(keccak256(abi.encode(name)), keccak256(abi.encode("Ballerina")));
         assertEq(supply, 0);
         assertEq(keccak256(abi.encode(cid)), keccak256(abi.encode("test_class_cid/")));
+        assertEq(keccak256(abi.encode(experience.uri(tokenId))), keccak256(abi.encode("test_base_uri_experience/test_class_cid/")), "incorrect token uri");
     }
 
     function testAssignClass() public {
@@ -29,12 +30,61 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
         (uint256 tokenId, uint256 classId) = experience.createClassType(createNewClass("Ballerina"));
 
-        CharacterSheet memory player = characterSheets.getCharacterSheetByPlayerId(playerId);
-        experience.assignClass(player.ERC6551TokenAddress, classId);
+        experience.assignClass(playerId, classId);
         vm.stopPrank();
 
+        CharacterSheet memory player = characterSheets.getCharacterSheetByPlayerId(playerId);
+
         assertEq(experience.balanceOf(player.ERC6551TokenAddress, tokenId), 1);
+        assertEq(player.classes.length, 1);
+        assertEq(player.classes[0], tokenId);
+
+        //add second class
+        vm.prank(admin);
+        experience.assignClass(playerId, 1);
+
+        CharacterSheet memory secondPlayer = characterSheets.getCharacterSheetByPlayerId(playerId);
+
+        assertEq(experience.balanceOf(secondPlayer.ERC6551TokenAddress, 2), 1, "does not own second class");
+        assertEq(secondPlayer.classes.length, 2, "not enough classes");
+        assertEq(secondPlayer.classes[1], 2, 'second class not in player classes array');        
     }
+
+    function testAssignClasses()public {
+        uint256 playerId = characterSheets.memberAddressToTokenId(player1);
+        vm.startPrank(admin);
+
+        (uint256 tokenId, uint256 classId) = experience.createClassType(createNewClass("Ballerina"));
+        Class[] memory allClasses = experience.getAllClasses();
+
+        uint256[] memory classes = new uint256[](2);
+        classes[0] = 1;
+        classes[1] = 2;
+        experience.assignClasses(playerId, classes);
+        vm.stopPrank();
+        CharacterSheet memory player = characterSheets.getCharacterSheetByPlayerId(playerId);
+        assertEq(player.classes.length, 2, "not enough classes assigned");
+        assertEq(player.classes[0], classId);
+        assertEq(player.classes[1], 1);
+    }
+
+    // function testRemoveClass() public {
+    //     uint256 playerId = characterSheets.memberAddressToTokenId(player1);
+
+    //     vm.startPrank(admin);
+    //     (uint256 tokenId, uint256 classId) = experience.createClassType(createNewClass("Ballerina"));
+
+    //     experience.assignClass(playerId, classId);
+    //     vm.stopPrank();
+
+    //     vm.prank(player1);
+    //     experience.revokeClass(playerId, classId);
+
+    //     CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(playerId);
+
+    //     assertEq(experience.balanceOf(sheet.ERC6551TokenAddress, tokenId), 0);
+    //     assertEq(sheet.classes.length, 0);
+    // }
 
     function testCreateItemType() public {
         Item memory newItem = createNewItem("Pirate_Hat", false, bytes32(0));
@@ -69,6 +119,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
     }
 
     function testCreateItemTypeRevertItemExists() public {
+
         Item memory newItem = createNewItem("Pirate_Hat", false, bytes32(0));
 
         vm.startPrank(admin);        
@@ -117,7 +168,27 @@ contract ExperienceAndItemsTest is Test, SetUp {
     }
 
     function testDropLootRevert()public{
-        
+                vm.startPrank(admin);
+        Item memory newItem = createNewItem("staff", false, bytes32(0));
+        address player1NFT = characterSheets.getCharacterSheetByPlayerId(characterSheets.memberAddressToTokenId(player1)).ERC6551TokenAddress;
+
+        (uint256 _tokenId, uint256 _itemId) = experience.createItemType(newItem);
+             vm.stopPrank();
+        address[] memory players = new address[](1);
+        players[0] = player1NFT;
+        uint256[] memory itemIds = new uint256[](3);
+        itemIds[0] = 0;
+        itemIds[1] = 1;
+        itemIds[2] = _itemId;
+
+        uint256[] memory amounts = new uint256[](3);
+        amounts[0] = 10000;
+        amounts[1] = 1;
+        amounts[2] = 1;
+        vm.prank(player1);
+        vm.expectRevert("You must be the Dungeon Master");
+        experience.dropLoot(players, itemIds, amounts);
+   
     }
 
     function testClaimItem() public {
@@ -177,6 +248,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         vm.expectRevert("No class found.");
         experience.findClassByName("no_class");
     }
+
 
 
 }

@@ -175,6 +175,17 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
         revert("This is not the address of an npc");
     }
 
+    function getClassIndex(uint256 playerId, uint256 classId)public view returns(uint256 indexOfClass){
+        CharacterSheet memory sheet = players[playerId];
+        uint256 length = sheet.classes.length;
+        for(uint256 i =0; i<length; i++){
+            if(sheet.classes[i] == classId){
+                indexOfClass = i;
+            }
+        }
+        revert("this player does not have this class");
+    }
+
     function updateExpContract(address expContract) external onlyRole(DUNGEON_MASTER) {
         _experience = ExperienceAndItemsImplementation(expContract);
         emit experienceUpdated(expContract);
