@@ -3,5 +3,6 @@ solc = "0.8.15"
 bytecode_hash = "none"
 optimizer_runs = 1000000
 fs_permissions = [{ access = "read-write", path = "./"}]
+ignored_error_codes = ["license", "code-size", "unused-var"]
 [profile.intense.fuzz]
 runs = 10000

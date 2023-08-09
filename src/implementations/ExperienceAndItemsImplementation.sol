@@ -63,7 +63,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
     event newItemTypeCreated(uint256, uint256, string);
     event newClassCreated(uint256, uint256, string, string);
-    event classAssigned(address, uint256);
+    event classAssigned(address, uint256, uint256);
     event itemTransfered(address, uint256, uint256);
     event itemUpdated(Item);
 
@@ -128,6 +128,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         _mint(address(this), _tokenId, _newItem.supply, bytes(_newItem.cid));
 
         _newItem.tokenId = _tokenId;
+        _newItem.itemId = _itemId;
         items[_itemId] = _newItem;
 
         emit newItemTypeCreated(_itemId, _tokenId, _newItem.name);
@@ -156,6 +157,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         uint256 _tokenId = _tokenIdCounter.current();
 
         _newClass.tokenId = _tokenId;
+        _newClass.classId = _classId;
         classes[_classId] = _newClass;
         _setURI(_tokenId, _newClass.cid);
         emit newClassCreated(_tokenId, _classId, _newClass.name, _newClass.cid);
@@ -177,8 +179,8 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         string memory temp = _name;
         for (uint256 i = 0; i <= totalItemTypes; i++) {
             if (keccak256(abi.encode(items[i].name)) == keccak256(abi.encode(temp))) {
-                itemId = i;
                 tokenId = items[i].tokenId;
+                itemId = items[i].itemId;
                 return (tokenId, itemId);
             }
         }
@@ -198,7 +200,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
             if (keccak256(abi.encode(classes[i].name)) == keccak256(abi.encode(temp))) {
                 //classid, tokenId;
                 tokenId = classes[i].tokenId;
-                classId = i;
+                classId = classes[i].classId;
                 return (tokenId, classId);
             }
         }
@@ -260,24 +262,23 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         CharacterSheet memory player =
             characterSheets.getCharacterSheetByPlayerId(playerId);
         Class memory newClass = classes[classId];
-        console2.log("ASSIGN CLASS", newClass.tokenId, newClass.name);
+
         require(player.memberAddress != address(0x0), "This member is not a player character");
         require(newClass.tokenId > 0, "This class does not exist.");
         require(balanceOf(player.ERC6551TokenAddress, newClass.tokenId) == 0, "Can only assign a class once.");
 
         _mint(player.ERC6551TokenAddress, newClass.tokenId, 1, bytes(newClass.cid));
 
-        characterSheets.addClassToPlayer(playerId, newClass.tokenId);
+        characterSheets.addClassToPlayer(playerId, newClass.classId);
 
         classes[classId].supply++;
 
-        emit classAssigned(player.ERC6551TokenAddress, classId);
+        emit classAssigned(player.ERC6551TokenAddress, classId, newClass.tokenId);
     }
 
 
     function assignClasses(uint256 playerId, uint256[] calldata _classIds) external onlyDungeonMaster {
         for (uint256 i = 0; i < _classIds.length; i++) {
-            console2.log("CLASS IDS: ", _classIds[i], i);
             assignClass(playerId, _classIds[i]);
         }
     }
@@ -292,11 +293,11 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         CharacterSheet memory sheet =  characterSheets.getCharacterSheetByPlayerId(playerId);
         uint256 tokenId = classes[classId].tokenId;
         if(characterSheets.hasRole(DUNGEON_MASTER, msg.sender)){
-            require(characterSheets.removeClassFromPlayer(playerId, tokenId), "Player does not have that class");
+            require(characterSheets.removeClassFromPlayer(playerId, classId), "Player does not have that class");
             _burn(sheet.ERC6551TokenAddress, tokenId, 1);
         } else {
             require(sheet.memberAddress == msg.sender, "Must be the player to remove a class");
-            require(characterSheets.removeClassFromPlayer(playerId, tokenId), "You do not have that class");
+            require(characterSheets.removeClassFromPlayer(playerId, classId), "You do not have that class");
             _burn(sheet.ERC6551TokenAddress, tokenId, 1);
         }
         success = true;

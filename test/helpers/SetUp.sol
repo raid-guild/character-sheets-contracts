@@ -16,6 +16,7 @@ import {ERC6551Registry} from "../../src/mocks/ERC6551Registry.sol";
 import {SimpleERC6551Account} from "../../src/mocks/ERC6551Implementation.sol";
 
 contract SetUp is Test {
+
     ExperienceAndItemsImplementation experienceAndItemsImplementation;
     ExperienceAndItemsImplementation experience;
     CharacterSheetsFactory characterSheetsFactory;
@@ -45,7 +46,7 @@ contract SetUp is Test {
     function setUp() public {
         
 
-        Item memory newItem = createNewItem("test_item", false, bytes32(0));
+
         vm.startPrank(admin);
 
         dao = new Moloch();
@@ -70,8 +71,10 @@ contract SetUp is Test {
         characterSheetsFactory.updateHats(address(hats));
         address[] memory dungeonMasters = new address[](1);
         dungeonMasters[0] = admin;
-        (characterSheetsAddress, experienceAddress) = characterSheetsFactory.create(dungeonMasters, address(dao), 'test_base_uri_experience/', 'test_base_uri_character_sheets/');
+        (characterSheetsAddress, experienceAddress) = characterSheetsFactory.create(dungeonMasters, address(dao), admin,'test_base_uri_experience/', 'test_base_uri_character_sheets/');
         characterSheets = CharacterSheetsImplementation(characterSheetsAddress);
+        experience = ExperienceAndItemsImplementation(experienceAddress);
+
         characterSheets.setERC6551Registry(address(erc6551Registry));
         characterSheets.setERC6551Implementation(address(erc6551Implementation));
 
@@ -84,18 +87,18 @@ contract SetUp is Test {
 
         erc6551Registry = new ERC6551Registry();
         erc6551Implementation = new SimpleERC6551Account();
-        experience = ExperienceAndItemsImplementation(experienceAddress);
-        experience.createItemType(newItem);
+
+        experience.createItemType(createNewItem("test_item", false, bytes32(0)));
         experience.createClassType(createNewClass('test_class'));
         vm.stopPrank();
      }
 
      function createNewItem(string memory _name, bool _soulbound, bytes32 _claimable)public pure returns(Item memory){
-        return Item({tokenId: 0, name: _name, supply: 10**18, supplied: 0, experienceCost: 100, hatId: 0, soulbound: _soulbound, claimable: _claimable, cid: 'test_item_cid/'});
+        return Item({tokenId: 0, itemId: 0, name: _name, supply: 10**18, supplied: 0, experienceCost: 100, hatId: 0, soulbound: _soulbound, claimable: _claimable, cid: 'test_item_cid/'});
      }
 
      function createNewClass(string memory _name)public pure returns(Class memory){
-        return Class({tokenId: 0, name: _name, supply: 0, cid: 'test_class_cid/'});
+        return Class({tokenId: 0, classId: 0, name: _name, supply: 0, cid: 'test_class_cid/'});
      }
 
    function dropExp(address player, uint256 amount)public{
@@ -112,7 +115,6 @@ contract SetUp is Test {
    function generateMerkleRootAndProof(uint256[] memory itemIds, address[] memory claimers, uint256[] memory amounts, uint256 indexOfProof) public view returns(bytes32[] memory proof, bytes32 root) {
       bytes32[] memory leaves = new bytes32[](itemIds.length);
       for(uint256 i =0; i< itemIds.length; i++){
-
          leaves[i] = keccak256(bytes.concat(keccak256(abi.encodePacked(itemIds[i], claimers[i], amounts[i]))));
                }
       proof = merkle.getProof(leaves, indexOfProof);

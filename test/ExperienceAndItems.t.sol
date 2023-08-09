@@ -12,12 +12,13 @@ contract ExperienceAndItemsTest is Test, SetUp {
     function testCreateClass() public {
         vm.prank(admin);
         (uint256 _tokenId, uint256 _classId) = experience.createClassType(createNewClass("Ballerina"));
-        (uint256 tokenId, string memory name, uint256 supply, string memory cid) = experience.classes(_classId);
+        (uint256 tokenId, uint256 classId, string memory name, uint256 supply, string memory cid) = experience.classes(_classId);
         
         assertEq(experience.totalClasses(), 2);
         assertEq(tokenId, 3);
         assertEq(_tokenId, 3);
         assertEq(_classId, 2);
+        assertEq(classId, 2);
         assertEq(keccak256(abi.encode(name)), keccak256(abi.encode("Ballerina")));
         assertEq(supply, 0);
         assertEq(keccak256(abi.encode(cid)), keccak256(abi.encode("test_class_cid/")));
@@ -37,7 +38,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
         assertEq(experience.balanceOf(player.ERC6551TokenAddress, tokenId), 1);
         assertEq(player.classes.length, 1);
-        assertEq(player.classes[0], tokenId);
+        assertEq(player.classes[0], classId);
 
         //add second class
         vm.prank(admin);
@@ -47,7 +48,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
         assertEq(experience.balanceOf(secondPlayer.ERC6551TokenAddress, 2), 1, "does not own second class");
         assertEq(secondPlayer.classes.length, 2, "not enough classes");
-        assertEq(secondPlayer.classes[1], 2, 'second class not in player classes array');        
+        assertEq(secondPlayer.classes[1], 1, 'second class not in player classes array');        
     }
 
     function testAssignClasses()public {
@@ -58,33 +59,40 @@ contract ExperienceAndItemsTest is Test, SetUp {
         Class[] memory allClasses = experience.getAllClasses();
 
         uint256[] memory classes = new uint256[](2);
-        classes[0] = 1;
-        classes[1] = 2;
+        classes[0] = allClasses[0].classId;
+        classes[1] = allClasses[1].classId;
         experience.assignClasses(playerId, classes);
         vm.stopPrank();
         CharacterSheet memory player = characterSheets.getCharacterSheetByPlayerId(playerId);
         assertEq(player.classes.length, 2, "not enough classes assigned");
-        assertEq(player.classes[0], classId);
-        assertEq(player.classes[1], 1);
+        assertEq(player.classes[0], allClasses[0].classId, "wrong classId");
+        assertEq(player.classes[1], allClasses[1].classId, "wrong classid 2");
     }
 
-    // function testRemoveClass() public {
-    //     uint256 playerId = characterSheets.memberAddressToTokenId(player1);
+    function testRevokeClass() public {
+        uint256 playerId = characterSheets.memberAddressToTokenId(player1);
 
-    //     vm.startPrank(admin);
-    //     (uint256 tokenId, uint256 classId) = experience.createClassType(createNewClass("Ballerina"));
+        vm.startPrank(admin);
+        (uint256 tokenId, uint256 classId) = experience.createClassType(createNewClass("Ballerina"));
 
-    //     experience.assignClass(playerId, classId);
-    //     vm.stopPrank();
+        Class[] memory allClasses = experience.getAllClasses();
 
-    //     vm.prank(player1);
-    //     experience.revokeClass(playerId, classId);
+        uint256[] memory classes = new uint256[](2);
+        classes[0] = allClasses[0].classId;
+        classes[1] = allClasses[1].classId;
 
-    //     CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(playerId);
+        experience.assignClasses(playerId, classes);
+        vm.stopPrank();
 
-    //     assertEq(experience.balanceOf(sheet.ERC6551TokenAddress, tokenId), 0);
-    //     assertEq(sheet.classes.length, 0);
-    // }
+        vm.prank(player1);
+        experience.revokeClass(playerId, allClasses[0].classId);
+
+        CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(playerId);
+
+        assertEq(experience.balanceOf(sheet.ERC6551TokenAddress, tokenId), 1, "Incorrect class balance");
+        assertEq(sheet.classes.length, 1, "classes array wrong length.");
+        assertEq(sheet.classes[0], allClasses[1].classId, "wrong remaining id");
+    }
 
     function testCreateItemType() public {
         Item memory newItem = createNewItem("Pirate_Hat", false, bytes32(0));
@@ -93,6 +101,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
         (
             uint256 tokenId,
+            uint256 itemId,
             string memory name,
             uint256 supply,
             uint256 supplied,

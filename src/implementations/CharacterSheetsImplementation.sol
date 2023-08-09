@@ -69,17 +69,17 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
 
         address daoAddress;
         address[] memory dungeonMasters;
+        address owner;
         string memory baseUri;
         address experienceImplementation;
 
-        (daoAddress, dungeonMasters, experienceImplementation, baseUri) =
-            abi.decode(_encodedParameters, (address, address[], address, string));
+        (daoAddress, dungeonMasters, owner, experienceImplementation, baseUri) =
+            abi.decode(_encodedParameters, (address, address[], address, address, string));
 
         for (uint256 i = 0; i < dungeonMasters.length; i++) {
             _grantRole(DUNGEON_MASTER, dungeonMasters[i]);
-            _grantRole(DEFAULT_ADMIN_ROLE, dungeonMasters[i]);
         }
-
+        _grantRole(DEFAULT_ADMIN_ROLE, owner);
         setBaseUri(baseUri);
         _experience = ExperienceAndItemsImplementation(experienceImplementation);
         _dao = IMolochDAO(daoAddress);
@@ -140,20 +140,53 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
         players[playerId].classes.push(classTokenId);
         emit classAdded(playerId, classTokenId);
     }
-
-    function removeClassFromPlayer(uint256 playerId, uint256 classTokenId) external onlyExpContract returns(bool success){
+    /**
+     * removes a class from a character Sheet
+     * @param playerId the id of the character sheet to be modified
+     * @param classId the class Id to be removed
+     */
+    function removeClassFromPlayer(uint256 playerId, uint256 classId) external onlyExpContract returns (bool success) {
         uint256[] memory arr = players[playerId].classes;
         for (uint256 i = 0; i < arr.length; i++) {
-            if (arr[i] == classTokenId) {
-                for (uint256 j = i; j < arr.length - 1; j++) {
-                    arr[j] = arr[j + 1];
+            if (arr[i] == classId) {
+                for (uint256 j = i; j < arr.length; j++) {
+                    if (j + 1 < arr.length) {
+                        arr[j] = arr[j + 1];
+                    } else if (j + 1 >= arr.length) {
+                        arr[j] = 0;
+                    }
                 }
-                arr[arr.length - 1] = 0;
                 players[playerId].classes = arr;
-                success = true;
+                players[playerId].classes.pop();
+
+                return success = true;
             }
         }
-        success = false;
+        return success = false;
+    }
+    /**
+     * removes an itemtype from a character sheet inventory
+     * @param playerId the player to have the item type from their inventory
+     * @param itemId the itemId of the item to be removed
+     */
+       function removeitemFromPlayer(uint256 playerId, uint256 itemId) external onlyExpContract returns (bool success) {
+        uint256[] memory arr = players[playerId].items;
+        for (uint256 i = 0; i < arr.length; i++) {
+            if (arr[i] == itemId) {
+                for (uint256 j = i; j < arr.length; j++) {
+                    if (j + 1 < arr.length) {
+                        arr[j] = arr[j + 1];
+                    } else if (j + 1 >= arr.length) {
+                        arr[j] = 0;
+                    }
+                }
+                players[playerId].items = arr;
+                players[playerId].items.pop();
+
+                return success = true;
+            }
+        }
+        return success = false;
     }
 
     function addItemToPlayer(uint256 playerId, uint256 itemTokenId) external onlyExpContract {
@@ -175,11 +208,11 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
         revert("This is not the address of an npc");
     }
 
-    function getClassIndex(uint256 playerId, uint256 classId)public view returns(uint256 indexOfClass){
+    function getClassIndex(uint256 playerId, uint256 classId) public view returns (uint256 indexOfClass) {
         CharacterSheet memory sheet = players[playerId];
         uint256 length = sheet.classes.length;
-        for(uint256 i =0; i<length; i++){
-            if(sheet.classes[i] == classId){
+        for (uint256 i = 0; i < length; i++) {
+            if (sheet.classes[i] == classId) {
                 indexOfClass = i;
             }
         }
