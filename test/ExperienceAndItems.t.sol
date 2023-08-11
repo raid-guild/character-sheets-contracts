@@ -278,5 +278,5 @@ contract ExperienceAndItemsTest is Test, SetUp {
     function testURI() public {
         string memory _uri = experience.uri(1);
         assertEq(keccak256(abi.encode(_uri)), keccak256(abi.encode("test_base_uri_experience/test_item_cid/")), "incorrect uri returned");
-    } 
+    }
 }

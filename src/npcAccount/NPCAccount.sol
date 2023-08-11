@@ -5,11 +5,18 @@ import "openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 import "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import "openzeppelin-contracts/contracts/interfaces/IERC1271.sol";
 import "openzeppelin-contracts/contracts/utils/cryptography/SignatureChecker.sol";
+import "openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
 import "../interfaces/IERC6551Account.sol";
-import "../lib/ERC6551AccountLib.sol";
+import "../lib/ERC6551AccountLib.sol"; 
 
-contract SimpleERC6551Account is IERC165, IERC1271, IERC6551Account {
+/**
+ * @title NPC Acount
+ * @author Mr DeadCe11
+ * @notice This is a simple ERC6551 account implementation that can hold ERC1155 tokens
+ */
+
+contract NPCAccount is IERC165, IERC1271, IERC6551Account, ERC1155Holder {
     uint256 public nonce;
 
     receive() external payable {}
@@ -54,7 +61,7 @@ contract SimpleERC6551Account is IERC165, IERC1271, IERC6551Account {
         return IERC721(tokenContract).ownerOf(tokenId);
     }
 
-    function supportsInterface(bytes4 interfaceId) public pure returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public pure override(ERC1155Receiver, IERC165) returns (bool) {
         return (interfaceId == type(IERC165).interfaceId ||
             interfaceId == type(IERC6551Account).interfaceId);
     }

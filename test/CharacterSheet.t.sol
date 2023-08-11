@@ -8,12 +8,13 @@ import "./helpers/SetUp.sol";
 
 contract CharacterSheetsTest is Test, SetUp {
 
-    event experienceUpdated(address exp);
+    event ExperienceUpdated(address exp);
 
     function testRollCharacterSheet() public {
         bytes memory encodedData = abi.encode('Test Name', 'test_token_uri/');
         vm.prank(admin);
         characterSheets.rollCharacterSheet(admin, encodedData);
+
         assertEq(characterSheets.tokenURI(2), 'test_base_uri_character_sheets/test_token_uri/');
     }
 
@@ -85,7 +86,7 @@ contract CharacterSheetsTest is Test, SetUp {
 
     function testUpdateExpContract() public {
         vm.expectEmit(false, false, false, true);
-        emit experienceUpdated(player2);
+        emit ExperienceUpdated(player2);
         vm.prank(admin);
         characterSheets.updateExpContract(player2);
     }

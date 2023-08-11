@@ -6,9 +6,11 @@ import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 contract CharacterSheetsFactory is OwnableUpgradeable {
-    address characterSheetsImplementation;
-    address experienceAndItemsImplementation;
-    address hatsAddress;
+    address public characterSheetsImplementation;
+    address public experienceAndItemsImplementation;
+    address public hatsAddress;
+    address public erc6551Registry;
+    address public erc6551AccountImplementation;
 
     address[] public CharacterSheetss;
 
@@ -16,6 +18,11 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     event CharacterSheetsUpdated(address newCharacterSheets);
     event ExperienceUpdated(address newExperience);
     event ExperienceAndItemsCreated(address newExp, address creator);
+    event RegistryUpdated(address newRegistry);
+    event ERC6551AccountImplementationUpdated(address newImplementation);
+    event HatsUpdated(address newHats);
+
+    uint256 private nonce;
 
     function initialize() external initializer {
         __Context_init_unchained();
@@ -32,8 +39,19 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         emit ExperienceUpdated(_experienceImplementation);
     }
 
+    function updateERC6551Registry(address _newRegistry) external onlyOwner{
+        erc6551Registry = _newRegistry;
+        emit RegistryUpdated(erc6551Registry);
+    }
+
+    function updaterERC6551AccountImplementation(address _newImplementation) external onlyOwner {
+        erc6551AccountImplementation = _newImplementation;
+        emit ERC6551AccountImplementationUpdated(_newImplementation);
+    }
+
     function updateHats(address _hats)external onlyOwner{
         hatsAddress = _hats;
+        emit HatsUpdated(hatsAddress);
     }
     /**
      * 
@@ -56,21 +74,25 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
             experienceAndItemsImplementation != address(0) && characterSheetsImplementation != address(0),
             "must update implementation addresses"
         );
+       
+        address characterSheetsClone = ClonesUpgradeable.cloneDeterministic(characterSheetsImplementation, keccak256(abi.encode(nonce)));
 
-        address characterSheetsClone = ClonesUpgradeable.cloneDeterministic(characterSheetsImplementation, 0);
-        address experienceClone = ClonesUpgradeable.cloneDeterministic(experienceAndItemsImplementation, 0);
-
+        address experienceClone = ClonesUpgradeable.cloneDeterministic(experienceAndItemsImplementation, keccak256(abi.encode(nonce)));
+        
+        
         bytes memory encodedCharacterSheetParameters =
-            abi.encode(dao, dungeonMasters, default_admin, experienceClone, characterSheetsBaseUri);
+            abi.encode(dao, dungeonMasters, default_admin, experienceClone, erc6551Registry, erc6551AccountImplementation, characterSheetsBaseUri);
+        
         bytes memory encodedExperienceParameters =
             abi.encode(dao, default_admin, characterSheetsClone, hatsAddress, experienceBaseuri);
 
         CharacterSheetsImplementation(characterSheetsClone).initialize(encodedCharacterSheetParameters);
+
         ExperienceAndItemsImplementation(experienceClone).initialize(encodedExperienceParameters);
 
         emit CharacterSheetsCreated(characterSheetsClone, msg.sender);
         emit ExperienceAndItemsCreated(experienceClone, msg.sender);
-
+        nonce++;
         return (characterSheetsClone, experienceClone);
     }
 }

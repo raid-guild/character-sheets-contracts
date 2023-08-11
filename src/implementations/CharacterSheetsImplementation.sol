@@ -29,15 +29,15 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
 
     string public _baseTokenURI;
 
-    IERC6551Registry erc6551Registry;
+    IERC6551Registry _erc6551Registry;
     address erc6551AccountImplementation;
 
-    event newPlayer(uint256 tokenId, CharacterSheet);
-    event playerRemoved(uint256 tokenId);
-    event experienceUpdated(address exp);
-    event classAdded(uint256 playerid, uint256 classId);
-    event itemAdded(uint256 playerId, uint256 itemTokenId);
-    event playerNameUpdated(string oldName, string newName);
+    event NewPlayer(uint256 tokenId, CharacterSheet);
+    event PlayerRemoved(uint256 tokenId);
+    event ExperienceUpdated(address exp);
+    event ClassAdded(uint256 playerid, uint256 classId);
+    event ItemAdded(uint256 playerId, uint256 itemTokenId);
+    event PlayerNameUpdated(string oldName, string newName);
 
     // tokenId => characterSheet
     mapping(uint256 => CharacterSheet) public players;
@@ -69,11 +69,13 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
         address daoAddress;
         address[] memory dungeonMasters;
         address owner;
+        address NPCAccountImplementation;
+        address erc6551Registry;
         string memory baseUri;
         address experienceImplementation;
 
-        (daoAddress, dungeonMasters, owner, experienceImplementation, baseUri) =
-            abi.decode(_encodedParameters, (address, address[], address, address, string));
+        (daoAddress, dungeonMasters, owner, experienceImplementation, erc6551Registry, NPCAccountImplementation, baseUri) =
+            abi.decode(_encodedParameters, (address, address[], address, address, address, address,string));
         
         _grantRole(DEFAULT_ADMIN_ROLE, owner);
         
@@ -84,6 +86,8 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
         setBaseUri(baseUri);
         _experience = ExperienceAndItemsImplementation(experienceImplementation);
         _dao = IMolochDAO(daoAddress);
+        erc6551AccountImplementation = NPCAccountImplementation;
+        _erc6551Registry = IERC6551Registry(erc6551Registry);
         _tokenIdCounter.increment();
 
         _revokeRole(DUNGEON_MASTER, msg.sender);
@@ -98,7 +102,7 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
 
     function rollCharacterSheet(address _to, bytes calldata _data) public onlyRole(DUNGEON_MASTER) {
         require(
-            erc6551AccountImplementation != address(0) && address(erc6551Registry) != address(0),
+            erc6551AccountImplementation != address(0) && address(_erc6551Registry) != address(0),
             "ERC6551 acount implementation and registry not set"
         );
 
@@ -122,7 +126,7 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
         }
 
         //calculate ERC6551 account address
-        address tba = erc6551Registry.account(erc6551AccountImplementation, block.chainid, address(this), tokenId, 0);
+        address tba = _erc6551Registry.createAccount(erc6551AccountImplementation, block.chainid, address(this), tokenId, 0, "");
 
         CharacterSheet memory newCharacterSheet;
         newCharacterSheet.name = _newName;
@@ -136,7 +140,7 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
         totalSheets++;
         _grantRole(PLAYER, _to);
         _grantRole(NPC, tba);
-        emit newPlayer(tokenId, newCharacterSheet);
+        emit NewPlayer(tokenId, newCharacterSheet);
     }
     /**
      * this adds a class to the classes array of the characterSheet struct in storage
@@ -145,7 +149,7 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
      */
     function addClassToPlayer(uint256 playerId, uint256 classTokenId) external onlyExpContract {
         players[playerId].classes.push(classTokenId);
-        emit classAdded(playerId, classTokenId);
+        emit ClassAdded(playerId, classTokenId);
     }
     /**
      * removes a class from a character Sheet
@@ -198,7 +202,7 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
 
     function addItemToPlayer(uint256 playerId, uint256 itemTokenId) external onlyExpContract {
         players[playerId].items.push(itemTokenId);
-        emit itemAdded(playerId, itemTokenId);
+        emit ItemAdded(playerId, itemTokenId);
     }
 
     function getCharacterSheetByPlayerId(uint256 tokenId) public view returns (CharacterSheet memory) {
@@ -228,7 +232,7 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
 
     function updateExpContract(address expContract) external onlyRole(DUNGEON_MASTER) {
         _experience = ExperienceAndItemsImplementation(expContract);
-        emit experienceUpdated(expContract);
+        emit ExperienceUpdated(expContract);
     }
 
     function members(address _member) public returns (Member memory) {
@@ -256,7 +260,7 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
         string memory oldName = players[memberAddressToTokenId[msg.sender]].name;
         players[memberAddressToTokenId[msg.sender]].name = newName;
 
-        emit playerNameUpdated(oldName, newName);
+        emit PlayerNameUpdated(oldName, newName);
     }
 
     function setExperienceAndGearContract(address experience) public onlyRole(DUNGEON_MASTER) {
@@ -279,7 +283,7 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
 
     /// @dev Sets the address of the ERC6551 registry
     function setERC6551Registry(address registry) public onlyRole(DUNGEON_MASTER) {
-        erc6551Registry = IERC6551Registry(registry);
+        _erc6551Registry = IERC6551Registry(registry);
     }
 
     /// @dev Sets the address of the ERC6551 account implementation
@@ -305,7 +309,7 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
     /**
      * @dev See {IERC721-approve}.
      */
-    // solhint-disable-next-line no-unused-vars
+    // solhint-disable-next-line unused-var
     function approve(address to, uint256 tokenId) public virtual override(ERC721, IERC721) {
         revert("This token cannot be transfered");
     }

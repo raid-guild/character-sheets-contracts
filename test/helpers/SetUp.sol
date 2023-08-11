@@ -13,7 +13,7 @@ import "../../src/lib/Structs.sol";
 import "murky/Merkle.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
 import {ERC6551Registry} from "../../src/mocks/ERC6551Registry.sol";
-import {SimpleERC6551Account} from "../../src/mocks/ERC6551Implementation.sol";
+import {NPCAccount} from "../../src/npcAccount/NPCAccount.sol";
 
 contract SetUp is Test {
 
@@ -42,7 +42,7 @@ contract SetUp is Test {
     Moloch dao;
 
     ERC6551Registry erc6551Registry;
-    SimpleERC6551Account erc6551Implementation;
+    NPCAccount erc6551Implementation;
 
     function setUp() public {
         
@@ -63,7 +63,7 @@ contract SetUp is Test {
         vm.label(address(characterSheetsImplementation), 'CharacterSheets Implementation');
 
         erc6551Registry = new ERC6551Registry();
-        erc6551Implementation = new SimpleERC6551Account();
+        erc6551Implementation = new NPCAccount();
 
         dao.addMember(player1);
         dao.addMember(admin);
@@ -72,12 +72,13 @@ contract SetUp is Test {
         characterSheetsFactory.updateHats(address(hats));
         address[] memory dungeonMasters = new address[](1);
         dungeonMasters[0] = admin;
-        (characterSheetsAddress, experienceAddress) = characterSheetsFactory.create(dungeonMasters, address(dao), rando,'test_base_uri_experience/', 'test_base_uri_character_sheets/');
+        characterSheetsFactory.updateERC6551Registry(address(erc6551Registry));
+        characterSheetsFactory.updaterERC6551AccountImplementation(address(erc6551Implementation));
+        (characterSheetsAddress, experienceAddress) = characterSheetsFactory.create(dungeonMasters, address(dao), rando, 'test_base_uri_experience/', 'test_base_uri_character_sheets/');
         characterSheets = CharacterSheetsImplementation(characterSheetsAddress);
         experience = ExperienceAndItemsImplementation(experienceAddress);
 
         characterSheets.setERC6551Registry(address(erc6551Registry));
-        characterSheets.setERC6551Implementation(address(erc6551Implementation));
 
         bytes memory encodedData = abi.encode('Test Name', 'test_token_uri/');
 
@@ -85,9 +86,6 @@ contract SetUp is Test {
 
       
         vm.label(address(experienceAndItemsImplementation), 'Gear Implementation');
-
-        erc6551Registry = new ERC6551Registry();
-        erc6551Implementation = new SimpleERC6551Account();
 
         experience.createItemType(createNewItem("test_item", false, bytes32(0)));
         experience.createClassType(createNewClass('test_class'));
