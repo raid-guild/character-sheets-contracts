@@ -58,9 +58,9 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
     address private _dao;
 
-    IMolochDAO molochDao;
-    CharacterSheetsImplementation characterSheets;
-    IHats hats;
+    IMolochDAO public molochDao;
+    CharacterSheetsImplementation public characterSheets;
+    IHats public hats;
 
     event newItemTypeCreated(uint256 erc1155TokenId, uint256 itemId, string name);
     event newClassCreated(uint256 erc1155TokenId, uint256 classId, string name);

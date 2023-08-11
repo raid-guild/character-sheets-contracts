@@ -23,7 +23,7 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
     bytes32 public constant PLAYER = keccak256("PLAYER");
     bytes32 public constant NPC = keccak256("NPC");
 
-    ExperienceAndItemsImplementation _experience;
+    ExperienceAndItemsImplementation public experience;
 
     IMolochDAO public _dao;
 
@@ -51,7 +51,7 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
     }
 
     modifier onlyExpContract() {
-        require(msg.sender == address(_experience), "not the experience contract");
+        require(msg.sender == address(experience), "not the experience contract");
         _;
     }
     /**
@@ -84,7 +84,7 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
         }
         
         setBaseUri(baseUri);
-        _experience = ExperienceAndItemsImplementation(experienceImplementation);
+        experience = ExperienceAndItemsImplementation(experienceImplementation);
         _dao = IMolochDAO(daoAddress);
         erc6551AccountImplementation = NPCAccountImplementation;
         _erc6551Registry = IERC6551Registry(erc6551Registry);
@@ -231,7 +231,7 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
     }
 
     function updateExpContract(address expContract) external onlyRole(DUNGEON_MASTER) {
-        _experience = ExperienceAndItemsImplementation(expContract);
+        experience = ExperienceAndItemsImplementation(expContract);
         emit ExperienceUpdated(expContract);
     }
 
@@ -263,8 +263,8 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
         emit PlayerNameUpdated(oldName, newName);
     }
 
-    function setExperienceAndGearContract(address experience) public onlyRole(DUNGEON_MASTER) {
-        _experience = ExperienceAndItemsImplementation(experience);
+    function setExperienceAndGearContract(address _experience) public onlyRole(DUNGEON_MASTER) {
+        experience = ExperienceAndItemsImplementation(_experience);
     }
 
     function setBaseUri(string memory _uri) public onlyRole(DUNGEON_MASTER) {

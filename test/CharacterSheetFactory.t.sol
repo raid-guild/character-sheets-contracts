@@ -69,10 +69,15 @@ contract CharacterSheetsTest is Test, SetUp {
         address[] memory dungeonMasters = new address[](2);
         dungeonMasters[0] = address(1);
         dungeonMasters[1] = address(2);
-
+        //create a bunch of sheets
+        for(uint256 i=0; i< 50; i++){
+            address testAddress = ;
         vm.prank(player1);
         vm.expectEmit(true, true, false, false);
-        emit CharacterSheetsCreated(address(0xc3490135F10a08004F4Ae9408051dB0D54919EeE), player1);
-        characterSheetsFactory.create(dungeonMasters, address(dao), player1, 'new_test_base_uri_experience/', 'new_test_base_uri_character_sheets/');
+        emit CharacterSheetsCreated(address(0), player1);
+        (address sheets, address exp) = characterSheetsFactory.create(dungeonMasters, address(dao), player1, 'new_test_base_uri_experience/', 'new_test_base_uri_character_sheets/');
+        assertEq(address(CharacterSheetsImplementation(sheets).experience()), exp, "wrong experience");
+        assertEq(address(ExperienceAndItemsImplementation(exp).characterSheets()), sheets, "wrong sheets");
+        }
     }
 }
