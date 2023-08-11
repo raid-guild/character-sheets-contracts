@@ -71,7 +71,6 @@ contract CharacterSheetsTest is Test, SetUp {
         dungeonMasters[1] = address(2);
         //create a bunch of sheets
         for(uint256 i=0; i< 50; i++){
-            address testAddress = ;
         vm.prank(player1);
         vm.expectEmit(true, true, false, false);
         emit CharacterSheetsCreated(address(0), player1);
