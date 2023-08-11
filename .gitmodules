@@ -20,3 +20,6 @@
 [submodule "lib/prb-test"]
 	path = lib/prb-test
 	url = https://github.com/PaulRBerg/prb-test
+[submodule "lib/tokenbound"]
+	path = lib/tokenbound
+	url = https://github.com/tokenbound/contracts
