@@ -55,7 +55,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         uint256 playerId = characterSheets.memberAddressToTokenId(player1);
         vm.startPrank(admin);
 
-        (uint256 tokenId, uint256 classId) = experience.createClassType(createNewClass("Ballerina"));
+        experience.createClassType(createNewClass("Ballerina"));
         Class[] memory allClasses = experience.getAllClasses();
 
         uint256[] memory classes = new uint256[](2);
@@ -73,7 +73,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         uint256 playerId = characterSheets.memberAddressToTokenId(player1);
 
         vm.startPrank(admin);
-        (uint256 tokenId, uint256 classId) = experience.createClassType(createNewClass("Ballerina"));
+        (uint256 tokenId, ) = experience.createClassType(createNewClass("Ballerina"));
 
         Class[] memory allClasses = experience.getAllClasses();
 
@@ -124,6 +124,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         assertEq(claimable, bytes32(0));
         assertEq(keccak256(abi.encode(cid)), keccak256(abi.encode('test_item_cid/')));
         assertEq(keccak256(abi.encode(experience.uri(tokenId))), keccak256(abi.encode('test_base_uri_experience/test_item_cid/')), "uris not right");
+        assertEq(itemId, _itemId, "wrong item ids");
 
     }
 
@@ -181,7 +182,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         Item memory newItem = createNewItem("staff", false, bytes32(0));
         address player1NFT = characterSheets.getCharacterSheetByPlayerId(characterSheets.memberAddressToTokenId(player1)).ERC6551TokenAddress;
 
-        (uint256 _tokenId, uint256 _itemId) = experience.createItemType(newItem);
+        (, uint256 _itemId) = experience.createItemType(newItem);
              vm.stopPrank();
         address[] memory players = new address[](1);
         players[0] = player1NFT;
@@ -258,6 +259,24 @@ contract ExperienceAndItemsTest is Test, SetUp {
         experience.findClassByName("no_class");
     }
 
+    function testFindItemIdFromTokenId()public {
+        uint256 itemId = experience.findItemIdFromTokenId(1);
 
+        assertEq(itemId, 1, "incorrect itemId");
 
+        //test that it return 0 with an out of bounds tokenId;
+
+        uint256 shouldBeZero = experience.findItemIdFromTokenId(250);
+
+        assertEq(shouldBeZero, 0, "incorrect out of bounds tokenId");
+
+        //should revert;
+        vm.expectRevert("Exp is not an item");
+        experience.findItemIdFromTokenId(0);
+    }
+
+    function testURI() public {
+        string memory _uri = experience.uri(1);
+        assertEq(keccak256(abi.encode(_uri)), keccak256(abi.encode("test_base_uri_experience/test_item_cid/")), "incorrect uri returned");
+    } 
 }

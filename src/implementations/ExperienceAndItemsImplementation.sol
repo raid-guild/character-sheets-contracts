@@ -44,10 +44,11 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     mapping(uint256 => string) private _tokenURIs;
 
     //mapping tokenId => item struct for gear and classes;
-    mapping(uint256 => Item) public items;
-    mapping(uint256 => Class) public classes;
-    mapping(address => uint256[]) public ownedItems;
-    mapping(address => uint256[]) public assignedClasses;
+    mapping(uint256 => Item)public items;
+    mapping(uint256 => Class)public classes;
+    mapping(address => uint256[])public ownedItems;
+    mapping(address => uint256[])public assignedClasses;
+    mapping(uint256 => uint256)internal tokenIdToItemId;
 
     uint256 public constant EXPERIENCE = 0;
 
@@ -61,10 +62,10 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     CharacterSheetsImplementation characterSheets;
     IHats hats;
 
-    event newItemTypeCreated(uint256, uint256, string);
-    event newClassCreated(uint256, uint256, string, string);
-    event classAssigned(address, uint256, uint256);
-    event itemTransfered(address, uint256, uint256);
+    event newItemTypeCreated(uint256 erc1155TokenId, uint256 itemId, string name);
+    event newClassCreated(uint256 erc1155TokenId, uint256 classId, string name);
+    event classAssigned(address classAssignedTo, uint256 erc1155TokenId, uint256 classId);
+    event itemTransfered(address itemTransferedTo, uint256 erc1155TokenId, uint256 ItemId);
     event itemUpdated(Item);
 
     modifier onlyDungeonMaster() {
@@ -102,11 +103,11 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         _classesCounter.increment();
         _tokenIdCounter.increment();
 
-        hats.mintTopHat(owner, "Dungeon Master hat", baseUri);
+        hats.mintTopHat(owner, "Default Admin hat", baseUri);
     }
 
     /**
-     * Creates a new item
+     * Creates a new type of item
      * @param _newItem takes an Item struct
      * @return tokenId this is the item id, used to find the item in items mapping
      * @return itemId this is the erc1155 token id
@@ -137,7 +138,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         _tokenIdCounter.increment();
 
         totalItemTypes++;
-
+        tokenIdToItemId[_tokenId] = _itemId;
         return (_tokenId, _itemId);
     }
 
@@ -160,7 +161,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         _newClass.classId = _classId;
         classes[_classId] = _newClass;
         _setURI(_tokenId, _newClass.cid);
-        emit newClassCreated(_tokenId, _classId, _newClass.name, _newClass.cid);
+        emit newClassCreated(_tokenId, _classId, _newClass.name);
         totalClasses++;
         _classesCounter.increment();
         _tokenIdCounter.increment();
@@ -220,14 +221,9 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     }
 
     //returns 0 if token id does not exist
-    function findItemIdFromTokenId(uint256 tokenId) public view returns (uint256 itemId) {
-        for (uint256 i = 1; i <= totalItemTypes; i++) {
-            Item memory tempItem = items[i];
-            if (tempItem.tokenId == tokenId) {
-                itemId = i;
-            }
-        }
-        return 0;
+    function findItemIdFromTokenId(uint256 tokenId) public view returns (uint256) {
+          require(tokenId !=0, "Exp is not an item");
+          return tokenIdToItemId[tokenId];
     }
 
     /**
@@ -263,7 +259,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
             characterSheets.getCharacterSheetByPlayerId(playerId);
         Class memory newClass = classes[classId];
 
-        require(player.memberAddress != address(0x0), "This member is not a player character");
+        require(player.memberAddress != address(0x0), "This member is not a player");
         require(newClass.tokenId > 0, "This class does not exist.");
         require(balanceOf(player.ERC6551TokenAddress, newClass.tokenId) == 0, "Can only assign a class once.");
 
@@ -273,7 +269,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
         classes[classId].supply++;
 
-        emit classAssigned(player.ERC6551TokenAddress, classId, newClass.tokenId);
+        emit classAssigned(player.ERC6551TokenAddress, newClass.tokenId, classId);
     }
 
 
@@ -308,7 +304,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      * @param _to player neft address
      * @param _amount the amount of exp to be issued
      */
-    function _giveExp(address _to, uint256 _amount) private returns (uint256) {
+    function _giveExp(address _to, uint256 _amount) internal returns (uint256) {
         _mint(_to, EXPERIENCE, _amount, "");
         totalExperience += _amount;
         return totalExperience;
@@ -322,7 +318,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      */
 
     function dropLoot(address[] calldata nftAddress, uint256[] calldata itemIds, uint256[] calldata amounts)
-        public
+        external
         onlyDungeonMaster
     {
         for (uint256 i; i < nftAddress.length; i++) {
@@ -343,7 +339,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      * @param amount the amount of items to be sent to the player token
      */
 
-    function _transferItem(address _to, uint256 itemId, uint256 amount) private {
+    function _transferItem(address _to, uint256 itemId, uint256 amount) internal {
         Item memory item = items[itemId];
 
         require(characterSheets.hasRole(NPC, _to), "Can Only transfer Items to an NPC");
@@ -356,7 +352,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         characterSheets.addItemToPlayer(characterSheets.getPlayerIdByNftAddress(_to), item.tokenId);
         items[itemId].supplied++;
 
-        emit itemTransfered(_to, itemId, item.tokenId);
+        emit itemTransfered(_to, item.tokenId, itemId);
     }
     /**
      * transfers an item that costs exp.  takes the exp from the npc nft and transfers the item
@@ -383,7 +379,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
             _balanceOf[NFTAddress][item.tokenId] += amount;
             items[itemId].supplied++;
 
-            emit itemTransfered(NFTAddress, itemId, item.tokenId);
+            emit itemTransfered(NFTAddress, item.tokenId, itemId);
         }
     }
 
@@ -399,6 +395,8 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         onlyNPC
         returns (bool success)
     {
+        require(itemIds.length == amounts.length && itemIds.length == proofs.length, "mismatch in array lengths");
+
         for (uint256 i = 0; i < itemIds.length; i++) {
             Item memory claimableItem = items[itemIds[i]];
             if (claimableItem.claimable == bytes32(0)) {

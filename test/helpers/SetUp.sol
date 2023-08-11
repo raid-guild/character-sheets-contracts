@@ -38,6 +38,7 @@ contract SetUp is Test {
     address admin = address(0xdeadce11);
     address player1 = address(0xbeef);
     address player2 = address(0xbabe);
+    address rando = address(0xc0ffee);
     Moloch dao;
 
     ERC6551Registry erc6551Registry;
@@ -71,7 +72,7 @@ contract SetUp is Test {
         characterSheetsFactory.updateHats(address(hats));
         address[] memory dungeonMasters = new address[](1);
         dungeonMasters[0] = admin;
-        (characterSheetsAddress, experienceAddress) = characterSheetsFactory.create(dungeonMasters, address(dao), admin,'test_base_uri_experience/', 'test_base_uri_character_sheets/');
+        (characterSheetsAddress, experienceAddress) = characterSheetsFactory.create(dungeonMasters, address(dao), rando,'test_base_uri_experience/', 'test_base_uri_character_sheets/');
         characterSheets = CharacterSheetsImplementation(characterSheetsAddress);
         experience = ExperienceAndItemsImplementation(experienceAddress);
 
@@ -91,6 +92,10 @@ contract SetUp is Test {
         experience.createItemType(createNewItem("test_item", false, bytes32(0)));
         experience.createClassType(createNewClass('test_class'));
         vm.stopPrank();
+
+        assertTrue(characterSheets.hasRole(keccak256('DUNGEON_MASTER'), admin), "wrong dungeon master role assignment for character sheets");
+        assertTrue(characterSheets.hasRole(bytes32(0), rando), "wrong ADMIN role assignment for character sheets");
+        
      }
 
      function createNewItem(string memory _name, bool _soulbound, bytes32 _claimable)public pure returns(Item memory){

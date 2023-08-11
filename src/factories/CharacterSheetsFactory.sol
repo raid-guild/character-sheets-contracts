@@ -35,7 +35,16 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     function updateHats(address _hats)external onlyOwner{
         hatsAddress = _hats;
     }
-
+    /**
+     * 
+     * @param dungeonMasters an array of addresses that will have the DUNGEON_MASTER role.
+     * @param dao the dao who's member list will be able to mint character sheets.
+     * @param default_admin the default admin of the characterSheets.
+     * @param experienceBaseuri the base uri for the experience and items erc1155 contract.
+     * @param characterSheetsBaseUri the base uri for the characterSheets erc721 contract.
+     * @return the address of the characterSheets clone.
+     * @return the address of the experienceAndItems clone.
+     */
     function create(
         address[] calldata dungeonMasters,
         address dao,

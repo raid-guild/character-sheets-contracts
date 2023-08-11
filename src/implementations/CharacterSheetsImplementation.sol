@@ -25,9 +25,9 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
 
     ExperienceAndItemsImplementation _experience;
 
-    IMolochDAO internal _dao;
+    IMolochDAO public _dao;
 
-    string private _baseTokenURI;
+    string public _baseTokenURI;
 
     IERC6551Registry erc6551Registry;
     address erc6551AccountImplementation;
@@ -64,7 +64,6 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
      */
 
     function initialize(bytes calldata _encodedParameters) public initializer {
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(DUNGEON_MASTER, msg.sender);
 
         address daoAddress;
@@ -75,15 +74,19 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
 
         (daoAddress, dungeonMasters, owner, experienceImplementation, baseUri) =
             abi.decode(_encodedParameters, (address, address[], address, address, string));
-
+        
+        _grantRole(DEFAULT_ADMIN_ROLE, owner);
+        
         for (uint256 i = 0; i < dungeonMasters.length; i++) {
             _grantRole(DUNGEON_MASTER, dungeonMasters[i]);
         }
-        _grantRole(DEFAULT_ADMIN_ROLE, owner);
+        
         setBaseUri(baseUri);
         _experience = ExperienceAndItemsImplementation(experienceImplementation);
         _dao = IMolochDAO(daoAddress);
         _tokenIdCounter.increment();
+
+        _revokeRole(DUNGEON_MASTER, msg.sender);
     }
 
     /**
@@ -135,7 +138,11 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
         _grantRole(NPC, tba);
         emit newPlayer(tokenId, newCharacterSheet);
     }
-
+    /**
+     * this adds a class to the classes array of the characterSheet struct in storage
+     * @param playerId the token id of the player to receive a class
+     * @param classTokenId the class ID of the class to be added
+     */
     function addClassToPlayer(uint256 playerId, uint256 classTokenId) external onlyExpContract {
         players[playerId].classes.push(classTokenId);
         emit classAdded(playerId, classTokenId);
@@ -169,7 +176,7 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
      * @param playerId the player to have the item type from their inventory
      * @param itemId the itemId of the item to be removed
      */
-       function removeitemFromPlayer(uint256 playerId, uint256 itemId) external onlyExpContract returns (bool success) {
+       function removeItemFromPlayer(uint256 playerId, uint256 itemId) external onlyExpContract returns (bool success) {
         uint256[] memory arr = players[playerId].items;
         for (uint256 i = 0; i < arr.length; i++) {
             if (arr[i] == itemId) {
