@@ -39,7 +39,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         emit ExperienceUpdated(_experienceImplementation);
     }
 
-    function updateERC6551Registry(address _newRegistry) external onlyOwner{
+    function updateERC6551Registry(address _newRegistry) external onlyOwner {
         erc6551Registry = _newRegistry;
         emit RegistryUpdated(erc6551Registry);
     }
@@ -49,12 +49,12 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         emit ERC6551AccountImplementationUpdated(_newImplementation);
     }
 
-    function updateHats(address _hats)external onlyOwner{
+    function updateHats(address _hats) external onlyOwner {
         hatsAddress = _hats;
         emit HatsUpdated(hatsAddress);
     }
     /**
-     * 
+     *
      * @param dungeonMasters an array of addresses that will have the DUNGEON_MASTER role.
      * @param dao the dao who's member list will be able to mint character sheets.
      * @param default_admin the default admin of the characterSheets.
@@ -63,6 +63,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
      * @return the address of the characterSheets clone.
      * @return the address of the experienceAndItems clone.
      */
+
     function create(
         address[] calldata dungeonMasters,
         address dao,
@@ -71,18 +72,27 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         string calldata characterSheetsBaseUri
     ) external returns (address, address) {
         require(
-            experienceAndItemsImplementation != address(0) && characterSheetsImplementation != address(0),
+            experienceAndItemsImplementation != address(0) && characterSheetsImplementation != address(0)
+                && erc6551AccountImplementation != address(0),
             "must update implementation addresses"
         );
-       
-        address characterSheetsClone = ClonesUpgradeable.cloneDeterministic(characterSheetsImplementation, keccak256(abi.encode(nonce)));
 
-        address experienceClone = ClonesUpgradeable.cloneDeterministic(experienceAndItemsImplementation, keccak256(abi.encode(nonce)));
-        
-        
-        bytes memory encodedCharacterSheetParameters =
-            abi.encode(dao, dungeonMasters, default_admin, experienceClone, erc6551Registry, erc6551AccountImplementation, characterSheetsBaseUri);
-        
+        address characterSheetsClone =
+            ClonesUpgradeable.cloneDeterministic(characterSheetsImplementation, keccak256(abi.encode(nonce)));
+
+        address experienceClone =
+            ClonesUpgradeable.cloneDeterministic(experienceAndItemsImplementation, keccak256(abi.encode(nonce)));
+
+        bytes memory encodedCharacterSheetParameters = abi.encode(
+            dao,
+            dungeonMasters,
+            default_admin,
+            experienceClone,
+            erc6551Registry,
+            erc6551AccountImplementation,
+            characterSheetsBaseUri
+        );
+
         bytes memory encodedExperienceParameters =
             abi.encode(dao, default_admin, characterSheetsClone, hatsAddress, experienceBaseuri);
 

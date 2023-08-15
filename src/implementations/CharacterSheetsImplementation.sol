@@ -14,7 +14,7 @@ import "./ExperienceAndItemsImplementation.sol";
 import "forge-std/console2.sol";
 import "../lib/Structs.sol";
 
-contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC721URIStorage, AccessControl {
+contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorage, AccessControl {
     using Counters for Counters.Counter;
 
     Counters.Counter private _tokenIdCounter;
@@ -25,14 +25,14 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
 
     ExperienceAndItemsImplementation public experience;
 
-    IMolochDAO public _dao;
+    IMolochDAO public dao;
 
-    string public _baseTokenURI;
+    string public baseTokenURI;
 
     IERC6551Registry _erc6551Registry;
     address erc6551AccountImplementation;
 
-    event NewPlayer(uint256 tokenId, CharacterSheet);
+    event NewPlayer(uint256 tokenId, address memberAddress);
     event PlayerRemoved(uint256 tokenId);
     event ExperienceUpdated(address exp);
     event ClassAdded(uint256 playerid, uint256 classId);
@@ -41,7 +41,7 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
 
     // tokenId => characterSheet
     mapping(uint256 => CharacterSheet) public players;
-    //member address => characterSheet token Id.
+    // member address => characterSheet token Id.
     mapping(address => uint256) public memberAddressToTokenId;
 
     uint256 totalSheets;
@@ -74,18 +74,25 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
         string memory baseUri;
         address experienceImplementation;
 
-        (daoAddress, dungeonMasters, owner, experienceImplementation, erc6551Registry, NPCAccountImplementation, baseUri) =
-            abi.decode(_encodedParameters, (address, address[], address, address, address, address,string));
-        
+        (
+            daoAddress,
+            dungeonMasters,
+            owner,
+            experienceImplementation,
+            erc6551Registry,
+            NPCAccountImplementation,
+            baseUri
+        ) = abi.decode(_encodedParameters, (address, address[], address, address, address, address, string));
+
         _grantRole(DEFAULT_ADMIN_ROLE, owner);
-        
+
         for (uint256 i = 0; i < dungeonMasters.length; i++) {
             _grantRole(DUNGEON_MASTER, dungeonMasters[i]);
         }
-        
+
         setBaseUri(baseUri);
         experience = ExperienceAndItemsImplementation(experienceImplementation);
-        _dao = IMolochDAO(daoAddress);
+        dao = IMolochDAO(daoAddress);
         erc6551AccountImplementation = NPCAccountImplementation;
         _erc6551Registry = IERC6551Registry(erc6551Registry);
         _tokenIdCounter.increment();
@@ -106,7 +113,7 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
             "ERC6551 acount implementation and registry not set"
         );
 
-        require(members(_to).shares > 0, "Player is not a member of the dao");
+        require(dao.members(_to).shares > 0, "Player is not a member of the dao");
 
         string memory _newName;
         string memory _tokenURI;
@@ -122,11 +129,12 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
         if (bytes(_tokenURI).length > 0) {
             _setTokenURI(tokenId, _tokenURI);
         } else {
-            _setTokenURI(tokenId, _baseTokenURI);
+            _setTokenURI(tokenId, baseTokenURI);
         }
 
         //calculate ERC6551 account address
-        address tba = _erc6551Registry.createAccount(erc6551AccountImplementation, block.chainid, address(this), tokenId, 0, "");
+        address tba =
+            _erc6551Registry.createAccount(erc6551AccountImplementation, block.chainid, address(this), tokenId, 0, "");
 
         CharacterSheet memory newCharacterSheet;
         newCharacterSheet.name = _newName;
@@ -140,22 +148,26 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
         totalSheets++;
         _grantRole(PLAYER, _to);
         _grantRole(NPC, tba);
-        emit NewPlayer(tokenId, newCharacterSheet);
+        emit NewPlayer(tokenId, _to);
     }
+
     /**
      * this adds a class to the classes array of the characterSheet struct in storage
      * @param playerId the token id of the player to receive a class
-     * @param classTokenId the class ID of the class to be added
+     * @param classId the class ID of the class to be added
      */
-    function addClassToPlayer(uint256 playerId, uint256 classTokenId) external onlyExpContract {
-        players[playerId].classes.push(classTokenId);
-        emit ClassAdded(playerId, classTokenId);
+
+    function addClassToPlayer(uint256 playerId, uint256 classId) external onlyExpContract {
+        players[playerId].classes.push(classId);
+        emit ClassAdded(playerId, classId);
     }
+    
     /**
      * removes a class from a character Sheet
      * @param playerId the id of the character sheet to be modified
      * @param classId the class Id to be removed
      */
+
     function removeClassFromPlayer(uint256 playerId, uint256 classId) external onlyExpContract returns (bool success) {
         uint256[] memory arr = players[playerId].classes;
         for (uint256 i = 0; i < arr.length; i++) {
@@ -175,15 +187,18 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
         }
         return success = false;
     }
+
     /**
      * removes an itemtype from a character sheet inventory
      * @param playerId the player to have the item type from their inventory
-     * @param itemId the itemId of the item to be removed
+     * @param tokenId the erc1155 token id of the item to be removed
      */
-       function removeItemFromPlayer(uint256 playerId, uint256 itemId) external onlyExpContract returns (bool success) {
+
+    function removeItemFromPlayer(uint256 playerId, uint256 tokenId) external onlyExpContract returns (bool success) {
         uint256[] memory arr = players[playerId].items;
+        require(experience.balanceOf(players[playerId].ERC6551TokenAddress, tokenId) == 0, "empty your inventory first");
         for (uint256 i = 0; i < arr.length; i++) {
-            if (arr[i] == itemId) {
+            if (arr[i] == tokenId) {
                 for (uint256 j = i; j < arr.length; j++) {
                     if (j + 1 < arr.length) {
                         arr[j] = arr[j + 1];
@@ -199,6 +214,12 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
         }
         return success = false;
     }
+
+    /**
+     * adds an item to the items array in the player struct
+     * @param playerId the id of the player receiving the item
+     * @param itemTokenId the itemId of the item
+     */
 
     function addItemToPlayer(uint256 playerId, uint256 itemTokenId) external onlyExpContract {
         players[playerId].items.push(itemTokenId);
@@ -219,6 +240,12 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
         revert("This is not the address of an npc");
     }
 
+    /**
+     * returns the index of the class in the character sheet classes array
+     * @param playerId token id of the character sheet to be modified
+     * @param classId the classId to be indexed
+     * returns the index of the class in the classes
+     */
     function getClassIndex(uint256 playerId, uint256 classId) public view returns (uint256 indexOfClass) {
         CharacterSheet memory sheet = players[playerId];
         uint256 length = sheet.classes.length;
@@ -235,27 +262,40 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
         emit ExperienceUpdated(expContract);
     }
 
-    function members(address _member) public returns (Member memory) {
-        return _dao.members(_member);
-    }
+    /**
+     * Burns a players characterSheet.  can only be done if there is a passing guild kick proposal
+     * @param _tokenId the playerId of the player to be removed.
+     */
 
-    function removePlayer(uint256 _tokenId) public onlyRole(DUNGEON_MASTER) {
+    function removeSheet(uint256 _tokenId) public onlyRole(DUNGEON_MASTER) {
         require(
-            members(getCharacterSheetByPlayerId(_tokenId).memberAddress).jailed > 0,
+            dao.members(getCharacterSheetByPlayerId(_tokenId).memberAddress).jailed > 0,
             "There has been no passing guild kick proposal on this player."
         );
         delete players[_tokenId];
         _burn(_tokenId);
+
+        emit PlayerRemoved(_tokenId);
     }
+
+    /**
+     * this will burn the nft of the player.  only a player can burn their own token.
+     * @param _playerId the token id to be burned
+     */
 
     function renounceSheet(uint256 _playerId) public returns (bool success) {
         require(balanceOf(msg.sender) > 0, "you do not have a characterSheet");
         address tokenOwner = ownerOf(_playerId);
         require(msg.sender == tokenOwner, "You cannot renounce a token you don't own");
         _burn(_playerId);
+        emit PlayerRemoved(_playerId);
         success = true;
     }
 
+    /**
+     * allows a player to update their name in the contract
+     * @param newName the new player name
+     */
     function updatePlayerName(string calldata newName) public onlyRole(PLAYER) {
         string memory oldName = players[memberAddressToTokenId[msg.sender]].name;
         players[memberAddressToTokenId[msg.sender]].name = newName;
@@ -268,13 +308,13 @@ contract CharacterSheetsImplementation is Initializable, IMolochDAO, ERC721, ERC
     }
 
     function setBaseUri(string memory _uri) public onlyRole(DUNGEON_MASTER) {
-        _baseTokenURI = _uri;
+        baseTokenURI = _uri;
     }
 
     // The following functions are overrides required by Solidity.
 
     function _baseURI() internal view virtual override returns (string memory) {
-        return _baseTokenURI;
+        return baseTokenURI;
     }
 
     function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {

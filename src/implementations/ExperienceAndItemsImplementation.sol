@@ -46,8 +46,6 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     //mapping tokenId => item struct for gear and classes;
     mapping(uint256 => Item)public items;
     mapping(uint256 => Class)public classes;
-    mapping(address => uint256[])public ownedItems;
-    mapping(address => uint256[])public assignedClasses;
     mapping(uint256 => uint256)internal tokenIdToItemId;
 
     uint256 public constant EXPERIENCE = 0;
@@ -254,6 +252,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      * @param playerId the tokenId of the player
      * @param classId the classId of the class to be assigned
      */
+
     function assignClass(uint256 playerId, uint256 classId) public onlyDungeonMaster {
         CharacterSheet memory player =
             characterSheets.getCharacterSheetByPlayerId(playerId);
@@ -310,6 +309,15 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         return totalExperience;
     }
 
+    function addItemRequirements(uint256 itemId, ItemRequirement calldata newRequirement)public onlyDungeonMaster returns(bool){
+        items[itemId].requirements.push(newRequirement);
+        return true;
+    }
+    //#TODO fix here;
+    function removeItemRequirment(uint256 itemId, ItemRequirement calldata toBeRemoved)public onlyDungeonMaster returns(bool){
+
+    }
+
     /**
      * drops loot and/or exp after a completed quest items dropped through dropLoot do cost exp.
      * @param nftAddress the tokenbound account of the character npc to receive the item
@@ -323,7 +331,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     {
         for (uint256 i; i < nftAddress.length; i++) {
             for (uint256 j; j < itemIds.length; j++) {
-                if (items[itemIds[j]].experienceCost > 0) {
+                if (items[itemIds[j]].requirements.length > 0) {
                     _transferItem(nftAddress[i], itemIds[j], amounts[j]);
                 } else {
                     _transferItemWithExp(nftAddress[i], itemIds[j], amounts[j]);
@@ -354,6 +362,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
         emit itemTransfered(_to, item.tokenId, itemId);
     }
+
     /**
      * transfers an item that costs exp.  takes the exp from the npc nft and transfers the item
      * @param NFTAddress the address of the token bound account of the player nft
@@ -369,6 +378,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
             _giveExp(NFTAddress, amount);
         } else {
             require(item.supply > 0, "Item does not exist");
+            //#TODO add item requirements instead of experience.
             require(
                 balanceOf(NFTAddress, EXPERIENCE) >= item.experienceCost * amount,
                 "You do not have enough experience to claim this item."
@@ -411,6 +421,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         }
         success = true;
     }
+
     /**
      *
      * @param itemId the item id of the item to be updated
@@ -441,6 +452,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      * - if `_tokenURIs[tokenId]` is NOT set, and if the parents do not have a
      *   uri value set, then the result is empty.
      */
+
     function uri(uint256 tokenId) public view override returns (string memory) {
         string memory tokenURI = _tokenURIs[tokenId];
 
@@ -451,6 +463,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     /**
      * @dev Sets `tokenURI` as the tokenURI of `tokenId`.
      */
+
     function _setURI(uint256 tokenId, string memory tokenURI) internal {
         _tokenURIs[tokenId] = tokenURI;
         emit URI(uri(tokenId), tokenId);
@@ -459,6 +472,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     /**
      * @dev Sets `baseURI` as the `_baseURI` for all tokens
      */
+
     function _setBaseURI(string memory baseURI) internal {
         _baseURI = baseURI;
     }
@@ -503,7 +517,6 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         for (uint256 i = 0; i < ids.length;) {
             id = ids[i];
             uint256 itemId = findItemIdFromTokenId(id);
-            require(itemId > 0, "this item does not exist");
             item = items[itemId];
             require(item.soulbound == false, "This item is soulbound");
             amount = amounts[i];
