@@ -60,7 +60,7 @@ contract CharacterSheetsTest is Test, SetUp {
         characterSheets.addItemToPlayer(1, 1);
 
         CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(1);
-        assertEq(sheet.items[0], 1, "item not assigned");
+        assertEq(sheet.inventory[0], 1, "item not assigned");
     }
 
     function testTransferFromRevert() public {
@@ -114,18 +114,18 @@ contract CharacterSheetsTest is Test, SetUp {
 
         vm.prank(admin);
         vm.expectRevert("There has been no passing guild kick proposal on this player.");
-        characterSheets.removePlayer(1);
+        characterSheets.removeSheet(1);
 
         dao.jailMember(player1);
 
         vm.prank(admin);
-        characterSheets.removePlayer(1);
+        characterSheets.removeSheet(1);
 
         assertEq(characterSheets.balanceOf(player1), 0, "Player has not been removed");
 
         vm.prank(admin);
         vm.expectRevert("This is not a character.");
-        characterSheets.removePlayer(2);
+        characterSheets.removeSheet(2);
     }
 
     function testUpdatePlayerName()public {

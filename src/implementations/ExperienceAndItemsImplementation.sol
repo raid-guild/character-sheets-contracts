@@ -37,34 +37,37 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
     bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
 
-    // Optional base URI
+    /// @dev base URI
     string private _baseURI = "";
 
-    // Optional mapping for token URIs
+    /// @dev individual mapping for token URIs
     mapping(uint256 => string) private _tokenURIs;
 
-    //mapping tokenId => item struct for gear and classes;
-    mapping(uint256 => Item)public items;
-    mapping(uint256 => Class)public classes;
-    mapping(uint256 => uint256)internal tokenIdToItemId;
-
+    /// @dev mapping itemId => item struct for item types.;
+    mapping(uint256 => Item) public items;
+    /// @dev mapping of class token types.  the class Id is the location in this mapping of the class.
+    mapping(uint256 => Class) public classes;
+    /// @dev mapping of the erc1155 tokenId to the itemID.  if the 1155 token is a class it will not be in this mapping.
+    mapping(uint256 => uint256) internal tokenIdToItemId;
+    /// @dev tokenId 0 is experience which is infinite supply and can be minted by any dungeon master or claimed by a player.
     uint256 public constant EXPERIENCE = 0;
-
+    /// @dev the total number of class types that have been created
     uint256 public totalClasses;
+    /// @dev the total number of item types that have been created
     uint256 public totalItemTypes;
+    /// @dev the total amount of experience that has been given out
     uint256 public totalExperience;
 
-    address private _dao;
-
+    /// @dev the interface for the molochDao who's members are allowed character sheets
     IMolochDAO public molochDao;
     CharacterSheetsImplementation public characterSheets;
     IHats public hats;
 
-    event newItemTypeCreated(uint256 erc1155TokenId, uint256 itemId, string name);
-    event newClassCreated(uint256 erc1155TokenId, uint256 classId, string name);
-    event classAssigned(address classAssignedTo, uint256 erc1155TokenId, uint256 classId);
-    event itemTransfered(address itemTransferedTo, uint256 erc1155TokenId, uint256 ItemId);
-    event itemUpdated(Item);
+    event NewItemTypeCreated(uint256 erc1155TokenId, uint256 itemId, string name);
+    event NewClassCreated(uint256 erc1155TokenId, uint256 classId, string name);
+    event ClassAssigned(address classAssignedTo, uint256 erc1155TokenId, uint256 classId);
+    event ItemTransfered(address itemTransferedTo, uint256 erc1155TokenId, uint256 ItemId);
+    event ItemUpdated(uint256 itemId);
 
     modifier onlyDungeonMaster() {
         require(characterSheets.hasRole(DUNGEON_MASTER, msg.sender), "You must be the Dungeon Master");
@@ -93,7 +96,6 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         hats = IHats(hatsAddress);
         _baseURI = baseUri;
 
-        _dao = dao;
         molochDao = IMolochDAO(dao);
         characterSheets = CharacterSheetsImplementation(characterSheetsAddress);
 
@@ -106,31 +108,33 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
     /**
      * Creates a new type of item
-     * @param _newItem takes an Item struct
+     * @param itemData the encoded data to create the item struct
      * @return tokenId this is the item id, used to find the item in items mapping
      * @return itemId this is the erc1155 token id
      */
 
-    function createItemType(Item memory _newItem)
+    function createItemType(bytes calldata itemData)
         public
         virtual
         onlyDungeonMaster
         returns (uint256 tokenId, uint256 itemId)
-    {
-        (bool success,) = address(this).call(abi.encodeWithSignature("findItemByName(string)", _newItem.name));
+        {
+
+        Item memory newItem = createItemStruct(itemData);
+        (bool success,) = address(this).call(abi.encodeWithSignature("findItemByName(string)", newItem.name));
 
         require(!success, "Item already exists.");
         uint256 _tokenId = _tokenIdCounter.current();
         uint256 _itemId = _itemsCounter.current();
 
-        _setURI(_tokenId, _newItem.cid);
-        _mint(address(this), _tokenId, _newItem.supply, bytes(_newItem.cid));
+        _setURI(_tokenId, newItem.cid);
+        _mint(address(this), _tokenId, newItem.supply, bytes(newItem.cid));
 
-        _newItem.tokenId = _tokenId;
-        _newItem.itemId = _itemId;
-        items[_itemId] = _newItem;
+        newItem.tokenId = _tokenId;
+        newItem.itemId = _itemId;
+        items[_itemId] = newItem;
 
-        emit newItemTypeCreated(_itemId, _tokenId, _newItem.name);
+        emit NewItemTypeCreated(_itemId, _tokenId, newItem.name);
 
         _itemsCounter.increment();
         _tokenIdCounter.increment();
@@ -138,6 +142,21 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         totalItemTypes++;
         tokenIdToItemId[_tokenId] = _itemId;
         return (_tokenId, _itemId);
+    }
+
+    function createItemStruct(bytes memory data)internal pure returns(Item memory){
+        string memory name;
+        uint256 supply;
+        uint256[][] memory newRequirements;
+        bool soulbound;
+        bytes32 claimable;
+        string memory cid;
+        {
+        // (_name, _soulbound, 10**18, newRequirements,0, false, _claimable,  'test_item_cid/');
+        (name, supply, newRequirements, soulbound, claimable, cid) = abi.decode(data, (string, uint256, uint256[][], bool, bytes32, string));
+        return Item(0,0, name, supply, 0, newRequirements, soulbound, claimable, cid);
+        }
+        
     }
 
     /**
@@ -159,7 +178,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         _newClass.classId = _classId;
         classes[_classId] = _newClass;
         _setURI(_tokenId, _newClass.cid);
-        emit newClassCreated(_tokenId, _classId, _newClass.name);
+        emit NewClassCreated(_tokenId, _classId, _newClass.name);
         totalClasses++;
         _classesCounter.increment();
         _tokenIdCounter.increment();
@@ -220,8 +239,8 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
     //returns 0 if token id does not exist
     function findItemIdFromTokenId(uint256 tokenId) public view returns (uint256) {
-          require(tokenId !=0, "Exp is not an item");
-          return tokenIdToItemId[tokenId];
+        require(tokenId != 0, "Exp is not an item");
+        return tokenIdToItemId[tokenId];
     }
 
     /**
@@ -231,7 +250,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     function getAllClasses() public view returns (Class[] memory) {
         Class[] memory allClasses = new Class[](totalClasses);
         for (uint256 i = 1; i <= totalClasses; i++) {
-            allClasses[i -1] = classes[i];
+            allClasses[i - 1] = classes[i];
         }
         return allClasses;
     }
@@ -254,8 +273,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      */
 
     function assignClass(uint256 playerId, uint256 classId) public onlyDungeonMaster {
-        CharacterSheet memory player =
-            characterSheets.getCharacterSheetByPlayerId(playerId);
+        CharacterSheet memory player = characterSheets.getCharacterSheetByPlayerId(playerId);
         Class memory newClass = classes[classId];
 
         require(player.memberAddress != address(0x0), "This member is not a player");
@@ -268,9 +286,8 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
         classes[classId].supply++;
 
-        emit classAssigned(player.ERC6551TokenAddress, newClass.tokenId, classId);
+        emit ClassAssigned(player.ERC6551TokenAddress, newClass.tokenId, classId);
     }
-
 
     function assignClasses(uint256 playerId, uint256[] calldata _classIds) external onlyDungeonMaster {
         for (uint256 i = 0; i < _classIds.length; i++) {
@@ -284,10 +301,10 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      * @param classId the class to be removed
      */
 
-    function revokeClass(uint256 playerId, uint256 classId) public returns(bool success){
-        CharacterSheet memory sheet =  characterSheets.getCharacterSheetByPlayerId(playerId);
+    function revokeClass(uint256 playerId, uint256 classId) public returns (bool success) {
+        CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(playerId);
         uint256 tokenId = classes[classId].tokenId;
-        if(characterSheets.hasRole(DUNGEON_MASTER, msg.sender)){
+        if (characterSheets.hasRole(DUNGEON_MASTER, msg.sender)) {
             require(characterSheets.removeClassFromPlayer(playerId, classId), "Player does not have that class");
             _burn(sheet.ERC6551TokenAddress, tokenId, 1);
         } else {
@@ -309,14 +326,31 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         return totalExperience;
     }
 
-    function addItemRequirements(uint256 itemId, ItemRequirement calldata newRequirement)public onlyDungeonMaster returns(bool){
+    function addItemRequirement(uint256 itemId, uint256 requiredItemId, uint256 amount)
+        public
+        onlyDungeonMaster
+        returns (bool)
+    {
+        Item memory modifiedItem = items[itemId];
+        uint256 newRequiredItemId = items[requiredItemId].tokenId;
+        bool duplicate;
+        for (uint256 i = 0; i < modifiedItem.requirements.length; i++) {
+            if (modifiedItem.requirements[i][0] == newRequiredItemId) {
+                duplicate = true;
+            }
+        }
+
+        require(!duplicate, "Cannot add a requirement that has already been added");
+
+        uint256[] memory newRequirement = new uint256[](2);
+        newRequirement[0] = newRequiredItemId;
+        newRequirement[1] = amount;
+
         items[itemId].requirements.push(newRequirement);
         return true;
     }
-    //#TODO fix here;
-    function removeItemRequirment(uint256 itemId, ItemRequirement calldata toBeRemoved)public onlyDungeonMaster returns(bool){
 
-    }
+    function removeItemRequirement(uint256 itemId, uint256 removedItemId) public onlyDungeonMaster returns (bool) {}
 
     /**
      * drops loot and/or exp after a completed quest items dropped through dropLoot do cost exp.
@@ -334,7 +368,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
                 if (items[itemIds[j]].requirements.length > 0) {
                     _transferItem(nftAddress[i], itemIds[j], amounts[j]);
                 } else {
-                    _transferItemWithExp(nftAddress[i], itemIds[j], amounts[j]);
+                    _transferItemWithReq(nftAddress[i], itemIds[j], amounts[j]);
                 }
             }
         }
@@ -360,7 +394,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         characterSheets.addItemToPlayer(characterSheets.getPlayerIdByNftAddress(_to), item.tokenId);
         items[itemId].supplied++;
 
-        emit itemTransfered(_to, item.tokenId, itemId);
+        emit ItemTransfered(_to, item.tokenId, itemId);
     }
 
     /**
@@ -370,26 +404,31 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      * @param amount the number of items to be transfered
      */
 
-    function _transferItemWithExp(address NFTAddress, uint256 itemId, uint256 amount) private {
+    function _transferItemWithReq(address NFTAddress, uint256 itemId, uint256 amount) private {
         Item memory item = items[itemId];
 
-        require(characterSheets.hasRole(NPC, NFTAddress), "NPC does not exist");
+        require(characterSheets.hasRole(NPC, NFTAddress), "Can only transfer Items to an NPC");
         if (itemId == 0) {
             _giveExp(NFTAddress, amount);
         } else {
             require(item.supply > 0, "Item does not exist");
-            //#TODO add item requirements instead of experience.
-            require(
-                balanceOf(NFTAddress, EXPERIENCE) >= item.experienceCost * amount,
-                "You do not have enough experience to claim this item."
-            );
+            uint256[] memory newRequirement;
 
-            _balanceOf[NFTAddress][EXPERIENCE] -= item.experienceCost * amount;
+            for (uint256 i; i < item.requirements.length; i++) {
+                newRequirement = item.requirements[i];
+
+                require(
+                    balanceOf(NFTAddress, newRequirement[0]) >= newRequirement[1] * amount, "Not enough required item."
+                );
+
+                _balanceOf[NFTAddress][newRequirement[0]] -= newRequirement[1] * amount;
+            }
+
             _balanceOf[address(this)][item.tokenId] -= amount;
             _balanceOf[NFTAddress][item.tokenId] += amount;
-            items[itemId].supplied++;
+            items[itemId].supplied += amount;
 
-            emit itemTransfered(NFTAddress, item.tokenId, itemId);
+            emit ItemTransfered(NFTAddress, item.tokenId, itemId);
         }
     }
 
@@ -411,15 +450,19 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
             Item memory claimableItem = items[itemIds[i]];
             if (claimableItem.claimable == bytes32(0)) {
                 require(characterSheets.hasRole(NPC, msg.sender), "Only an NPC can claim items");
-                _transferItemWithExp(msg.sender, itemIds[i], amounts[i]);
+                _transferItemWithReq(msg.sender, itemIds[i], amounts[i]);
             } else {
                 bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encodePacked(itemIds[i], msg.sender, amounts[i]))));
 
                 require(MerkleProof.verify(proofs[i], claimableItem.claimable, leaf), "Merkle Proof Failed");
-                _transferItemWithExp(msg.sender, itemIds[i], amounts[i]);
+                _transferItemWithReq(msg.sender, itemIds[i], amounts[i]);
             }
         }
         success = true;
+    }
+
+    function getItemById(uint256 itemId)public view returns(Item memory){
+        return items[itemId];
     }
 
     /**
@@ -431,7 +474,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     function updateItemClaimable(uint256 itemId, bytes32 merkleRoot) public onlyDungeonMaster {
         items[itemId].claimable = merkleRoot;
 
-        emit itemUpdated(items[itemId]);
+        emit ItemUpdated(itemId);
     }
 
     /**

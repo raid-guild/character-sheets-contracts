@@ -195,7 +195,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
      */
 
     function removeItemFromPlayer(uint256 playerId, uint256 tokenId) external onlyExpContract returns (bool success) {
-        uint256[] memory arr = players[playerId].items;
+        uint256[] memory arr = players[playerId].inventory;
         require(experience.balanceOf(players[playerId].ERC6551TokenAddress, tokenId) == 0, "empty your inventory first");
         for (uint256 i = 0; i < arr.length; i++) {
             if (arr[i] == tokenId) {
@@ -206,8 +206,9 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
                         arr[j] = 0;
                     }
                 }
-                players[playerId].items = arr;
-                players[playerId].items.pop();
+
+                players[playerId].inventory = arr;
+                players[playerId].inventory.pop();
 
                 return success = true;
             }
@@ -218,12 +219,12 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     /**
      * adds an item to the items array in the player struct
      * @param playerId the id of the player receiving the item
-     * @param itemTokenId the itemId of the item
+     * @param itemId the itemId of the item
      */
 
-    function addItemToPlayer(uint256 playerId, uint256 itemTokenId) external onlyExpContract {
-        players[playerId].items.push(itemTokenId);
-        emit ItemAdded(playerId, itemTokenId);
+    function addItemToPlayer(uint256 playerId, uint256 itemId) external onlyExpContract {
+        players[playerId].inventory.push(itemId);
+        emit ItemAdded(playerId, itemId);
     }
 
     function getCharacterSheetByPlayerId(uint256 tokenId) public view returns (CharacterSheet memory) {

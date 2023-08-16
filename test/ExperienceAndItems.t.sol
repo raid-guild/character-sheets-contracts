@@ -99,44 +99,33 @@ contract ExperienceAndItemsTest is Test, SetUp {
     }
 
     function testCreateItemType() public {
-        Item memory newItem = createNewItem("Pirate_Hat", false, bytes32(0));
+        bytes memory newItem = createNewItem("Pirate_Hat", false, bytes32(0));
         vm.prank(admin);
         (uint256 _tokenId, uint256 _itemId) = experience.createItemType(newItem);
 
-        (
-            uint256 tokenId,
-            uint256 itemId,
-            string memory name,
-            uint256 supply,
-            uint256 supplied,
-            uint256 experinceCost,
-            uint256 hatId,
-            bool soulbound,
-            bytes32 claimable,
-            string memory cid
-        ) = experience.items(_itemId);
+        Item memory returnedItem = experience.getItemById(_itemId);
+
 
         assertEq(experience.totalItemTypes(), 2);
-        assertEq(keccak256(abi.encode(name)), keccak256(abi.encode("Pirate_Hat")));
-        assertEq(tokenId, 3);
-        assertEq(_tokenId, 3);
-        assertEq(supply, 10 ** 18);
-        assertEq(hatId, 0);
-        assertEq(supplied, 0);
-        assertEq(experinceCost, 100);
-        assertEq(soulbound, false);
-        assertEq(claimable, bytes32(0));
-        assertEq(keccak256(abi.encode(cid)), keccak256(abi.encode("test_item_cid/")));
+        assertEq(keccak256(abi.encode(returnedItem.name)), keccak256(abi.encode("Pirate_Hat")));
+        assertEq(returnedItem.tokenId, _tokenId);
+        assertEq(returnedItem.tokenId, 3);
+        assertEq(returnedItem.supply, 10 ** 18);
+        assertEq(returnedItem.supplied, 0);
+        assertEq(returnedItem.requirements.length, 1);
+        assertEq(returnedItem.soulbound, false);
+        assertEq(returnedItem.claimable, bytes32(0));
+        assertEq(keccak256(abi.encode(returnedItem.cid)), keccak256(abi.encode("test_item_cid/")));
         assertEq(
-            keccak256(abi.encode(experience.uri(tokenId))),
+            keccak256(abi.encode(experience.uri(returnedItem.tokenId))),
             keccak256(abi.encode("test_base_uri_experience/test_item_cid/")),
             "uris not right"
         );
-        assertEq(itemId, _itemId, "wrong item ids");
+        assertEq(returnedItem.itemId, _itemId, "wrong item ids");
     }
 
     function testCreateItemTypeRevertItemExists() public {
-        Item memory newItem = createNewItem("Pirate_Hat", false, bytes32(0));
+        bytes memory newItem = createNewItem("Pirate_Hat", false, bytes32(0));
 
         vm.startPrank(admin);
         experience.createItemType(newItem);
@@ -148,7 +137,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
     }
 
     function testCreateItemTypeRevertAccessControl() public {
-        Item memory newItem = createNewItem("Pirate_Hat", false, bytes32(0));
+        bytes memory newItem = createNewItem("Pirate_Hat", false, bytes32(0));
 
         vm.startPrank(player2);
         vm.expectRevert("You must be the Dungeon Master");
@@ -158,7 +147,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
     function testDropLoot() public {
         vm.startPrank(admin);
-        Item memory newItem = createNewItem("staff", false, bytes32(0));
+        bytes memory newItem = createNewItem("staff", false, bytes32(0));
         address player1NFT = characterSheets.getCharacterSheetByPlayerId(
             characterSheets.memberAddressToTokenId(player1)
         ).ERC6551TokenAddress;
@@ -186,7 +175,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
     function testDropLootRevert() public {
         vm.startPrank(admin);
-        Item memory newItem = createNewItem("staff", false, bytes32(0));
+        bytes memory newItem = createNewItem("staff", false, bytes32(0));
         address player1NFT = characterSheets.getCharacterSheetByPlayerId(
             characterSheets.memberAddressToTokenId(player1)
         ).ERC6551TokenAddress;
@@ -210,7 +199,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
     }
 
     function testClaimItem() public {
-        Item memory newItem = createNewItem("staff", false, bytes32(0));
+        bytes memory newItem = createNewItem("staff", false, bytes32(0));
         vm.prank(admin);
         (uint256 _tokenId, uint256 _itemId) = experience.createItemType(newItem);
 

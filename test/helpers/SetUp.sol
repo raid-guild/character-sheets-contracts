@@ -96,8 +96,14 @@ contract SetUp is Test {
         
      }
 
-     function createNewItem(string memory _name, bool _soulbound, bytes32 _claimable)public pure returns(Item memory){
-        return Item({tokenId: 0, itemId: 0, name: _name, supply: 10**18, supplied: 0, experienceCost: 100, hatId: 0, soulbound: _soulbound, claimable: _claimable, cid: 'test_item_cid/'});
+     function createNewItem(string memory _name, bool _soulbound, bytes32 _claimable)public pure returns(bytes memory){
+      
+      uint256[][] memory newRequirements = new uint256[][](1);
+      newRequirements[0] = new uint256[](2);
+      newRequirements[0][0] = 0;
+      newRequirements[0][1] = 100; 
+      //   return Item({tokenId: 0, itemId: 0, name: _name, supply: 10**18, supplied: 0, requirements: newRequirements, hatId: 0, soulbound: _soulbound, claimable: _claimable, cid: 'test_item_cid/'});
+      return abi.encode(_name, 10**18, newRequirements, _soulbound, _claimable,  'test_item_cid/');
      }
 
      function createNewClass(string memory _name)public pure returns(Class memory){
