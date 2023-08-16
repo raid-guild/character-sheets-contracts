@@ -130,5 +130,9 @@ contract SetUp is Test {
       root = merkle.getRoot(leaves);
 
    }
-     
+
+   function createNewItemType(string memory name) public returns(uint256 tokenId, uint256 itemId){
+        bytes memory newItem = createNewItem(name, false, bytes32(0));
+        (tokenId, itemId) = experience.createItemType(newItem);
+    }     
 }

@@ -174,14 +174,12 @@ contract ExperienceAndItemsTest is Test, SetUp {
     }
 
     function testDropLootRevert() public {
-        vm.startPrank(admin);
-        bytes memory newItem = createNewItem("staff", false, bytes32(0));
+     
         address player1NFT = characterSheets.getCharacterSheetByPlayerId(
             characterSheets.memberAddressToTokenId(player1)
         ).ERC6551TokenAddress;
-
-        (, uint256 _itemId) = experience.createItemType(newItem);
-        vm.stopPrank();
+        vm.prank(admin);
+        (, uint256 _itemId) = createNewItemType("staff");
         address[] memory players = new address[](1);
         players[0] = player1NFT;
         uint256[] memory itemIds = new uint256[](3);
@@ -199,9 +197,8 @@ contract ExperienceAndItemsTest is Test, SetUp {
     }
 
     function testClaimItem() public {
-        bytes memory newItem = createNewItem("staff", false, bytes32(0));
         vm.prank(admin);
-        (uint256 _tokenId, uint256 _itemId) = experience.createItemType(newItem);
+        (uint256 _tokenId, uint256 _itemId) = createNewItemType("staff");
 
         uint256 playerId = characterSheets.memberAddressToTokenId(player1);
 
@@ -219,7 +216,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
         (bytes32[] memory proof, bytes32 root) = generateMerkleRootAndProof(itemIds, claimers, amounts, 0);
 
-        dropExp(nftAddress, 100000);
+        dropExp(nftAddress, 1000);
 
         vm.prank(admin);
         experience.updateItemClaimable(_itemId, root);
@@ -235,6 +232,8 @@ contract ExperienceAndItemsTest is Test, SetUp {
         experience.claimItems(itemIds2, amounts2, proofs);
 
         assertEq(experience.balanceOf(nftAddress, _tokenId), 1, "Balance not equal");
+
+        assertEq(experience.balanceOf(nftAddress, 0), 900);
     }
 
     function testFindItemByName() public {
@@ -279,4 +278,40 @@ contract ExperienceAndItemsTest is Test, SetUp {
             "incorrect uri returned"
         );
     }
+
+    function testAddItemRequirement() public {
+        vm.prank(admin);
+        (, uint256 hatItemId)=createNewItemType("hat");
+
+        vm.prank(admin);
+        experience.addItemRequirement(1, hatItemId, 100);
+
+        Item memory modifiedItem = experience.getItemById(1);
+
+        assertEq(modifiedItem.requirements.length, 2, "Requirement not added");
+        assertEq(experience.getItemById(1).requirements[1][0], hatItemId, "wrong Id in requirements array");
+    }
+
+    function testRemoveItemRequirement() public {
+        vm.prank(admin);
+        (, uint256 hatItemId) = createNewItemType("hat");
+
+        vm.prank(admin);
+        experience.addItemRequirement(1, hatItemId, 100);
+
+        Item memory modifiedItem = experience.getItemById(1);
+
+        assertEq(modifiedItem.requirements.length, 2, "Requirement not added");
+        assertEq(experience.getItemById(1).requirements[1][0], hatItemId, "wrong Id in requirements array");
+
+        vm.prank(admin);
+        experience.removeItemRequirement(1, hatItemId);
+
+        modifiedItem = experience.getItemById(1);
+        assertEq(modifiedItem.requirements.length, 1, "requirement not removed");
+        assertEq(modifiedItem.requirements[0][0], 0, "wrong requirement removed");
+        assertEq(modifiedItem.requirements[0][1], 100, "Incorrect remaining amount");
+    }
+
+
 }

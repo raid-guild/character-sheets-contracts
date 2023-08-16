@@ -7,7 +7,7 @@ struct Item {
     string name; /// @dev the name of this item
     uint256 supply; /// @dev the number of this item to be created.
     uint256 supplied; /// @dev the number of this item that have been given out or claimed
-    uint256[][] requirements; /// @dev an array of arrays that are two long containing the required erc1155 tokenId and the amount required eg. [[tokenId, amount], [tokenId, amount]]
+    uint256[][] requirements; /// @dev an array of arrays that are two long containing the required itemId and the amount required eg. [[itemId, amount], [itemId, amount]]
     bool soulbound; /// @dev is this item soulbound or not
 
     /// @dev  claimable: if bytes32(0) then  items are claimable by anyone, otherwise upload a merkle root

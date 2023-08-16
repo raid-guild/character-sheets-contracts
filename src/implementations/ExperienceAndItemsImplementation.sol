@@ -325,17 +325,22 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         totalExperience += _amount;
         return totalExperience;
     }
-
+    /**
+     * adds a new required item to the array of requirments in the item type
+     * @param itemId the itemId of the item type to be modified
+     * @param requiredItemId the itemId of the item to be added to the requirements array
+     * @param amount the amount of the required item to be required
+     */
     function addItemRequirement(uint256 itemId, uint256 requiredItemId, uint256 amount)
         public
         onlyDungeonMaster
-        returns (bool)
+        returns (bool success)
     {
         Item memory modifiedItem = items[itemId];
-        uint256 newRequiredItemId = items[requiredItemId].tokenId;
         bool duplicate;
+
         for (uint256 i = 0; i < modifiedItem.requirements.length; i++) {
-            if (modifiedItem.requirements[i][0] == newRequiredItemId) {
+            if (modifiedItem.requirements[i][0] == requiredItemId) {
                 duplicate = true;
             }
         }
@@ -343,14 +348,45 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         require(!duplicate, "Cannot add a requirement that has already been added");
 
         uint256[] memory newRequirement = new uint256[](2);
-        newRequirement[0] = newRequiredItemId;
+        newRequirement[0] = requiredItemId;
         newRequirement[1] = amount;
 
         items[itemId].requirements.push(newRequirement);
-        return true;
+        success = true;
+
+        return success;
     }
 
-    function removeItemRequirement(uint256 itemId, uint256 removedItemId) public onlyDungeonMaster returns (bool) {}
+    /**
+     * 
+     * @param itemId the itemId of the item type to be modified
+     * @param removedItemId the itemId of the requirement that is to be removed.
+     * so if the item requires 2 of itemId 1 to be burnt in order to claim the item then you put in 1
+     *  and it will remove the requirment with itemId 1
+     */
+    function removeItemRequirement(uint256 itemId, uint256 removedItemId) public onlyDungeonMaster returns (bool) {
+        uint256[][] memory arr = items[itemId].requirements;
+        bool success = false;
+        for(uint256 i; i < arr.length; i++){
+                if(arr[i][0] == removedItemId){
+                       for (uint256 j = i; j < arr.length; j++) {
+                    if (j + 1 < arr.length) {
+                        arr[j] = arr[j + 1];
+                    } else if (j + 1 >= arr.length) {
+                        arr[j] = new uint256[](2);
+                    }
+                }
+                    success = true;
+                }
+        }
+
+        if(success == true){
+        items[itemId].requirements = arr;
+        items[itemId].requirements.pop();
+        }
+
+        return success;
+    }
 
     /**
      * drops loot and/or exp after a completed quest items dropped through dropLoot do cost exp.
@@ -381,7 +417,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      * @param amount the amount of items to be sent to the player token
      */
 
-    function _transferItem(address _to, uint256 itemId, uint256 amount) internal {
+    function _transferItem(address _to, uint256 itemId, uint256 amount) private {
         Item memory item = items[itemId];
 
         require(characterSheets.hasRole(NPC, _to), "Can Only transfer Items to an NPC");
@@ -416,12 +452,13 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
             for (uint256 i; i < item.requirements.length; i++) {
                 newRequirement = item.requirements[i];
+                uint256 newTokenId = items[newRequirement[0]].tokenId;
 
                 require(
-                    balanceOf(NFTAddress, newRequirement[0]) >= newRequirement[1] * amount, "Not enough required item."
+                    balanceOf(NFTAddress, newTokenId) >= newRequirement[1] * amount, "Not enough required item."
                 );
 
-                _balanceOf[NFTAddress][newRequirement[0]] -= newRequirement[1] * amount;
+                _balanceOf[NFTAddress][newTokenId] -= newRequirement[1] * amount;
             }
 
             _balanceOf[address(this)][item.tokenId] -= amount;
