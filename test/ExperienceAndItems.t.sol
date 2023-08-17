@@ -268,6 +268,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         //should revert;
         vm.expectRevert("Exp is not an item");
         experience.findItemIdFromTokenId(0);
+
     }
 
     function testURI() public {
@@ -281,31 +282,31 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
     function testAddItemRequirement() public {
         vm.prank(admin);
-        (, uint256 hatItemId)=createNewItemType("hat");
+        (uint256 tokenId, uint256 hatItemId)=createNewItemType("hat");
 
         vm.prank(admin);
-        experience.addItemRequirement(1, hatItemId, 100);
+        experience.addRequirement(1, tokenId, 100);
 
         Item memory modifiedItem = experience.getItemById(1);
 
         assertEq(modifiedItem.requirements.length, 2, "Requirement not added");
-        assertEq(experience.getItemById(1).requirements[1][0], hatItemId, "wrong Id in requirements array");
+        assertEq(experience.getItemById(1).requirements[1][0], tokenId, "wrong Id in requirements array");
     }
 
     function testRemoveItemRequirement() public {
         vm.prank(admin);
-        (, uint256 hatItemId) = createNewItemType("hat");
+        (uint256 tokenId, uint256 hatItemId) = createNewItemType("hat");
 
         vm.prank(admin);
-        experience.addItemRequirement(1, hatItemId, 100);
+        experience.addRequirement(1, tokenId, 100);
 
         Item memory modifiedItem = experience.getItemById(1);
 
         assertEq(modifiedItem.requirements.length, 2, "Requirement not added");
-        assertEq(experience.getItemById(1).requirements[1][0], hatItemId, "wrong Id in requirements array");
+        assertEq(experience.getItemById(1).requirements[1][0], tokenId, "wrong Id in requirements array");
 
         vm.prank(admin);
-        experience.removeItemRequirement(1, hatItemId);
+        experience.removeItemRequirement(1, tokenId);
 
         modifiedItem = experience.getItemById(1);
         assertEq(modifiedItem.requirements.length, 1, "requirement not removed");
@@ -313,5 +314,8 @@ contract ExperienceAndItemsTest is Test, SetUp {
         assertEq(modifiedItem.requirements[0][1], 100, "Incorrect remaining amount");
     }
 
-
+    function testAddClassRequirement()public {
+                vm.prank(admin);
+                experience.addRequirement(1, 2, 100);
+    }
 }

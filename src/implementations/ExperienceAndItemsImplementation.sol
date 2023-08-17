@@ -60,8 +60,10 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
     /// @dev the interface for the molochDao who's members are allowed character sheets
     IMolochDAO public molochDao;
+    /// @dev the interface to the characterSheets erc721 implementation that this is tied to
     CharacterSheetsImplementation public characterSheets;
-    IHats public hats;
+    IHats public hats; // not implemented
+
 
     event NewItemTypeCreated(uint256 erc1155TokenId, uint256 itemId, string name);
     event NewClassCreated(uint256 erc1155TokenId, uint256 classId, string name);
@@ -328,27 +330,31 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     /**
      * adds a new required item to the array of requirments in the item type
      * @param itemId the itemId of the item type to be modified
-     * @param requiredItemId the itemId of the item to be added to the requirements array
+     * @param requiredTokenId the erc1155 token Id of the item to be added to the requirements array
      * @param amount the amount of the required item to be required
      */
-    function addItemRequirement(uint256 itemId, uint256 requiredItemId, uint256 amount)
+    function addRequirement(uint256 itemId, uint256 requiredTokenId, uint256 amount)
         public
         onlyDungeonMaster
         returns (bool success)
     {
+        console2.log(requiredTokenId, tokenIdToItemId[requiredTokenId]);
+        if(tokenIdToItemId[requiredTokenId] == 0){
+            require(amount == 1, "NPC can only have one class token");
+        }
+
         Item memory modifiedItem = items[itemId];
         bool duplicate;
 
         for (uint256 i = 0; i < modifiedItem.requirements.length; i++) {
-            if (modifiedItem.requirements[i][0] == requiredItemId) {
+            if (modifiedItem.requirements[i][0] == requiredTokenId) {
                 duplicate = true;
             }
         }
 
         require(!duplicate, "Cannot add a requirement that has already been added");
-
         uint256[] memory newRequirement = new uint256[](2);
-        newRequirement[0] = requiredItemId;
+        newRequirement[0] = requiredTokenId;
         newRequirement[1] = amount;
 
         items[itemId].requirements.push(newRequirement);
@@ -439,12 +445,13 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      * @param itemId the Id of the item to be transfered
      * @param amount the number of items to be transfered
      */
-
+    //#TODO fix this to work with required classes
     function _transferItemWithReq(address NFTAddress, uint256 itemId, uint256 amount) private {
         Item memory item = items[itemId];
+        console2.log(item.name);
 
         require(characterSheets.hasRole(NPC, NFTAddress), "Can only transfer Items to an NPC");
-        if (itemId == 0) {
+        if (itemId == 0 && amount > 0) {
             _giveExp(NFTAddress, amount);
         } else {
             require(item.supply > 0, "Item does not exist");
@@ -452,11 +459,13 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
             for (uint256 i; i < item.requirements.length; i++) {
                 newRequirement = item.requirements[i];
+
                 uint256 newTokenId = items[newRequirement[0]].tokenId;
 
                 require(
                     balanceOf(NFTAddress, newTokenId) >= newRequirement[1] * amount, "Not enough required item."
                 );
+
 
                 _balanceOf[NFTAddress][newTokenId] -= newRequirement[1] * amount;
             }
