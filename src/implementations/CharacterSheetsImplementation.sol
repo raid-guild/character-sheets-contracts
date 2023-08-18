@@ -18,9 +18,11 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     using Counters for Counters.Counter;
 
     Counters.Counter private _tokenIdCounter;
-
+    /// @dev the admin of the contract
     bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
+    /// @dev the EOA of the dao member who owns a character sheet
     bytes32 public constant PLAYER = keccak256("PLAYER");
+    /// @dev the tokenbound account of the character sheet nft
     bytes32 public constant NPC = keccak256("NPC");
 
     ExperienceAndItemsImplementation public experience;
