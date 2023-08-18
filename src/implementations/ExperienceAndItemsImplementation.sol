@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "openzeppelin/utils/cryptography/MerkleProof.sol";
-import "openzeppelin/utils/Strings.sol";
-import "hats-protocol/lib/ERC1155/ERC1155.sol";
-import "hats-protocol/src/Interfaces/IHats.sol";
-import "openzeppelin/token/ERC721/IERC721.sol";
-import "openzeppelin/token/ERC1155/utils/ERC1155Holder.sol";
-import "openzeppelin/utils/Counters.sol";
+import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import 'openzeppelin/utils/cryptography/MerkleProof.sol';
+import 'openzeppelin/utils/Strings.sol';
+import 'hats-protocol/lib/ERC1155/ERC1155.sol';
+import 'hats-protocol/src/Interfaces/IHats.sol';
+import 'openzeppelin/token/ERC721/IERC721.sol';
+import 'openzeppelin/token/ERC1155/utils/ERC1155Holder.sol';
+import 'openzeppelin/utils/Counters.sol';
 
-import "../implementations/CharacterSheetsImplementation.sol";
-import "../interfaces/IMolochDAO.sol";
-import "forge-std/console2.sol";
-import "../lib/Structs.sol";
+import '../implementations/CharacterSheetsImplementation.sol';
+import '../interfaces/IMolochDAO.sol';
+import 'forge-std/console2.sol';
+import '../lib/Structs.sol';
 
 /**
  * @title Experience and Items
@@ -31,14 +31,14 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     Counters.Counter private _classesCounter;
     Counters.Counter private _tokenIdCounter;
 
-    bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
-    bytes32 public constant PLAYER = keccak256("PLAYER");
-    bytes32 public constant NPC = keccak256("NPC");
+    bytes32 public constant DUNGEON_MASTER = keccak256('DUNGEON_MASTER');
+    bytes32 public constant PLAYER = keccak256('PLAYER');
+    bytes32 public constant NPC = keccak256('NPC');
 
     bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
 
     /// @dev base URI
-    string private _baseURI = "";
+    string private _baseURI = '';
 
     /// @dev individual mapping for token URIs
     mapping(uint256 => string) private _tokenURIs;
@@ -73,17 +73,17 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     event ItemUpdated(uint256 itemId);
 
     modifier onlyDungeonMaster() {
-        require(characterSheets.hasRole(DUNGEON_MASTER, msg.sender), "You must be the Dungeon Master");
+        require(characterSheets.hasRole(DUNGEON_MASTER, msg.sender), 'You must be the Dungeon Master');
         _;
     }
 
     modifier onlyPlayer() {
-        require(characterSheets.hasRole(PLAYER, msg.sender), "You must be a Player");
+        require(characterSheets.hasRole(PLAYER, msg.sender), 'You must be a Player');
         _;
     }
 
     modifier onlyNPC() {
-        require(characterSheets.hasRole(NPC, msg.sender), "Must be an npc");
+        require(characterSheets.hasRole(NPC, msg.sender), 'Must be an npc');
         _;
     }
 
@@ -106,7 +106,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         _classesCounter.increment();
         _tokenIdCounter.increment();
 
-        hats.mintTopHat(owner, "Default Admin hat", baseUri);
+        hats.mintTopHat(owner, 'Default Admin hat', baseUri);
     }
 
     /**
@@ -123,9 +123,9 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         returns (uint256 tokenId, uint256 itemId)
     {
         Item memory newItem = createItemStruct(itemData);
-        (bool success,) = address(this).call(abi.encodeWithSignature("findItemByName(string)", newItem.name));
+        (bool success,) = address(this).call(abi.encodeWithSignature('findItemByName(string)', newItem.name));
 
-        require(!success, "Item already exists.");
+        require(!success, 'Item already exists.');
         uint256 _tokenId = _tokenIdCounter.current();
         uint256 _itemId = _itemsCounter.current();
 
@@ -205,7 +205,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
                 return (tokenId, itemId);
             }
         }
-        revert("No item found.");
+        revert('No item found.');
     }
 
     /**
@@ -225,7 +225,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
                 return (tokenId, classId);
             }
         }
-        revert("No class found.");
+        revert('No class found.');
     }
 
     /**
@@ -246,7 +246,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
             return (itemOrClassId, isClass);
         } else {
             itemOrClassId = tokenIdToClassId[tokenId];
-            require(itemOrClassId > 0, "this tokenId is not an item or a class");
+            require(itemOrClassId > 0, 'this tokenId is not an item or a class');
             isClass = true;
             return (itemOrClassId, isClass);
         }
@@ -285,9 +285,9 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         CharacterSheet memory player = characterSheets.getCharacterSheetByPlayerId(playerId);
         Class memory newClass = classes[classId];
 
-        require(player.memberAddress != address(0x0), "This member is not a player");
-        require(newClass.tokenId > 0, "This class does not exist.");
-        require(balanceOf(player.ERC6551TokenAddress, newClass.tokenId) == 0, "Can only assign a class once.");
+        require(player.memberAddress != address(0x0), 'This member is not a player');
+        require(newClass.tokenId > 0, 'This class does not exist.');
+        require(balanceOf(player.ERC6551TokenAddress, newClass.tokenId) == 0, 'Can only assign a class once.');
 
         _mint(player.ERC6551TokenAddress, newClass.tokenId, 1, bytes(newClass.cid));
 
@@ -313,13 +313,13 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     function revokeClass(uint256 playerId, uint256 classId) public returns (bool success) {
         CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(playerId);
         uint256 tokenId = classes[classId].tokenId;
-        require(tokenId > 0, "this is not a class");
+        require(tokenId > 0, 'this is not a class');
         if (characterSheets.hasRole(DUNGEON_MASTER, msg.sender)) {
-            require(characterSheets.removeClassFromPlayer(playerId, classId), "Player does not have that class");
+            require(characterSheets.removeClassFromPlayer(playerId, classId), 'Player does not have that class');
             _burn(sheet.ERC6551TokenAddress, tokenId, 1);
         } else {
-            require(sheet.memberAddress == msg.sender, "Must be the player to remove a class");
-            require(characterSheets.removeClassFromPlayer(playerId, classId), "You do not have that class");
+            require(sheet.memberAddress == msg.sender, 'Must be the player to remove a class');
+            require(characterSheets.removeClassFromPlayer(playerId, classId), 'You do not have that class');
             _burn(sheet.ERC6551TokenAddress, tokenId, 1);
         }
         success = true;
@@ -331,7 +331,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      * @param _amount the amount of exp to be issued
      */
     function _giveExp(address _to, uint256 _amount) private returns (uint256) {
-        _mint(_to, EXPERIENCE, _amount, "");
+        _mint(_to, EXPERIENCE, _amount, '');
         totalExperience += _amount;
         return totalExperience;
     }
@@ -349,7 +349,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     {
         (, bool isClass) = findItemOrClassIdFromTokenId(requiredTokenId);
         if (isClass) {
-            require(amount == 1, "NPC can only have one class token");
+            require(amount == 1, 'NPC can only have one class token');
         }
 
         Item memory modifiedItem = items[itemId];
@@ -361,7 +361,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
             }
         }
 
-        require(!duplicate, "Cannot add a requirement that has already been added");
+        require(!duplicate, 'Cannot add a requirement that has already been added');
         uint256[] memory newRequirement = new uint256[](2);
         newRequirement[0] = requiredTokenId;
         newRequirement[1] = amount;
@@ -415,7 +415,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         onlyDungeonMaster
         returns (bool success)
     {
-        require(itemIds.length == amounts.length, "LENGTH MISMATCH");
+        require(itemIds.length == amounts.length, 'LENGTH MISMATCH');
         for (uint256 i; i < nftAddress.length; i++) {
             for (uint256 j; j < itemIds.length; j++) {
                 if (itemIds[i][j] == 0 && amounts[i][j] > 0) {
@@ -443,13 +443,13 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     function _transferItem(address _to, uint256 tokenId, uint256 amount) private {
         (uint256 itemId, bool isClass) = findItemOrClassIdFromTokenId(tokenId);
 
-        require(itemId != 0 || isClass == false, "cannot transfer exp or classes");
+        require(itemId != 0 || isClass == false, 'cannot transfer exp or classes');
 
         Item memory item = items[itemId];
 
-        require(characterSheets.hasRole(NPC, _to), "Can Only transfer Items to an NPC");
+        require(characterSheets.hasRole(NPC, _to), 'Can Only transfer Items to an NPC');
 
-        require(item.supply > 0, "Item does not exist");
+        require(item.supply > 0, 'Item does not exist');
 
         _balanceOf[address(this)][item.tokenId] -= amount;
         _balanceOf[_to][item.tokenId] += amount;
@@ -468,9 +468,9 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      */
     //#TODO fix this to work with required classes
     function _transferItemWithReq(address NFTAddress, uint256 tokenId, uint256 amount) private returns (bool success) {
-        require(characterSheets.hasRole(NPC, NFTAddress), "Can only transfer Items to an NPC");
+        require(characterSheets.hasRole(NPC, NFTAddress), 'Can only transfer Items to an NPC');
 
-        require(amount > 0, "Cannot transfer 0 of anything");
+        require(amount > 0, 'Cannot transfer 0 of anything');
         
         if (tokenId == 0 && amount > 0) {
             _giveExp(NFTAddress, amount);
@@ -480,10 +480,10 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
         (uint256 itemOrClassId, bool isClass) = findItemOrClassIdFromTokenId(tokenId);
 
-        require(!isClass, "Cannot transfer classes");
+        require(!isClass, 'Cannot transfer classes');
 
         Item memory item = items[itemOrClassId];
-        require(item.supply > 0, "Item does not exist");
+        require(item.supply > 0, 'Item does not exist');
         uint256[] memory newRequirement;
 
         for (uint256 i; i < item.requirements.length; i++) {
@@ -492,12 +492,12 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
             (, bool requiredIsClass) = findItemOrClassIdFromTokenId(newRequirement[0]);
             if (!requiredIsClass) {
                 require(
-                    balanceOf(NFTAddress, newRequirement[0]) >= newRequirement[1] * amount, "Not enough required item."
+                    balanceOf(NFTAddress, newRequirement[0]) >= newRequirement[1] * amount, 'Not enough required item.'
                 );
 
                 _balanceOf[NFTAddress][newRequirement[0]] -= newRequirement[1] * amount;
             } else if (requiredIsClass) {
-                require(balanceOf(NFTAddress, newRequirement[0]) == 1, "Character does not have this class");
+                require(balanceOf(NFTAddress, newRequirement[0]) == 1, 'Character does not have this class');
             }
         }
 
@@ -522,23 +522,23 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         onlyNPC
         returns (bool success)
     {
-        require(itemIds.length == amounts.length && itemIds.length == proofs.length, "mismatch in array lengths");
+        require(itemIds.length == amounts.length && itemIds.length == proofs.length, 'mismatch in array lengths');
 
         for (uint256 i = 0; i < itemIds.length; i++) {
             if (itemIds[i] == 0) {
                 _giveExp(msg.sender, amounts[i]);
             } else if (items[itemIds[i]].tokenId == 0) {
-                revert("can only claim Items");
+                revert('can only claim Items');
             } else {
                 Item memory claimableItem = items[itemIds[i]];
                 if (claimableItem.claimable == bytes32(0)) {
-                    require(characterSheets.hasRole(NPC, msg.sender), "Only an NPC can claim items");
+                    require(characterSheets.hasRole(NPC, msg.sender), 'Only an NPC can claim items');
                     _transferItemWithReq(msg.sender, claimableItem.tokenId, amounts[i]);
                 } else {
                     bytes32 leaf =
                         keccak256(bytes.concat(keccak256(abi.encodePacked(itemIds[i], msg.sender, amounts[i]))));
 
-                    require(MerkleProof.verify(proofs[i], claimableItem.claimable, leaf), "Merkle Proof Failed");
+                    require(MerkleProof.verify(proofs[i], claimableItem.claimable, leaf), 'Merkle Proof Failed');
                     _transferItemWithReq(msg.sender, claimableItem.tokenId, amounts[i]);
                 }
             }
@@ -557,7 +557,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      */
 
     function updateItemClaimable(uint256 itemId, bytes32 merkleRoot) public onlyDungeonMaster {
-        require(items[itemId].tokenId != 0, "this is not a registered item");
+        require(items[itemId].tokenId != 0, 'this is not a registered item');
         items[itemId].claimable = merkleRoot;
 
         emit ItemUpdated(itemId);
@@ -621,9 +621,9 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         override
     {
         (uint256 itemId, bool isClass) = findItemOrClassIdFromTokenId(id);
-        require(itemId > 0 && !isClass, "this item does not exist");
+        require(itemId > 0 && !isClass, 'this item does not exist');
         Item memory item = items[itemId];
-        require(item.soulbound == false, "This item is soulbound");
+        require(item.soulbound == false, 'This item is soulbound');
         super.safeTransferFrom(from, to, id, amount, data);
     }
 
@@ -634,9 +634,9 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         uint256[] calldata amounts,
         bytes calldata data
     ) public override {
-        require(ids.length == amounts.length, "LENGTH_MISMATCH");
+        require(ids.length == amounts.length, 'LENGTH_MISMATCH');
 
-        require(msg.sender == from || isApprovedForAll[from][msg.sender], "NOT_AUTHORIZED");
+        require(msg.sender == from || isApprovedForAll[from][msg.sender], 'NOT_AUTHORIZED');
 
         // Storing these outside the loop saves ~15 gas per iteration.
         uint256 id;
@@ -653,7 +653,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
                 ? to != address(0)
                 : ERC1155TokenReceiver(to).onERC1155BatchReceived(msg.sender, from, ids, amounts, data)
                     == ERC1155TokenReceiver.onERC1155BatchReceived.selector,
-            "UNSAFE_RECIPIENT"
+            'UNSAFE_RECIPIENT'
         );
     }
 }

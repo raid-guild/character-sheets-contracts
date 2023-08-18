@@ -2,18 +2,18 @@
 pragma solidity 0.8.15;
 pragma abicoder v2;
 
-import "forge-std/Test.sol";
-import "../../src/implementations/ExperienceAndItemsImplementation.sol";
-import "../../src/factories/CharacterSheetsFactory.sol";
-import "../../src/implementations/CharacterSheetsImplementation.sol";
-import "../../src/interfaces/IMolochDAO.sol";
-import "../../src/mocks/mockMoloch.sol";
-import "../../src/mocks/MockHats.sol";
-import "../../src/lib/Structs.sol";
-import "murky/Merkle.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
-import {ERC6551Registry} from "../../src/mocks/ERC6551Registry.sol";
-import {NPCAccount} from "../../src/npcAccount/NPCAccount.sol";
+import 'forge-std/Test.sol';
+import '../../src/implementations/ExperienceAndItemsImplementation.sol';
+import '../../src/factories/CharacterSheetsFactory.sol';
+import '../../src/implementations/CharacterSheetsImplementation.sol';
+import '../../src/interfaces/IMolochDAO.sol';
+import '../../src/mocks/mockMoloch.sol';
+import '../../src/mocks/MockHats.sol';
+import '../../src/lib/Structs.sol';
+import 'murky/Merkle.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol';
+import {ERC6551Registry} from '../../src/mocks/ERC6551Registry.sol';
+import {NPCAccount} from '../../src/npcAccount/NPCAccount.sol';
 
 contract SetUp is Test {
 
@@ -56,7 +56,7 @@ contract SetUp is Test {
         vm.startPrank(admin);
 
         dao = new Moloch();
-        hats = new MockHats("mockhat", "mockHat_img/");
+        hats = new MockHats('mockhat', 'mockHat_img/');
         vm.label(address(dao), 'Moloch');
 
         characterSheetsFactory= new CharacterSheetsFactory();
@@ -92,12 +92,12 @@ contract SetUp is Test {
       
         vm.label(address(experienceAndItemsImplementation), 'Gear Implementation');
 
-        (testItemTokenId, testItemId) = experience.createItemType(createNewItem("test_item", false, bytes32(0)));
+        (testItemTokenId, testItemId) = experience.createItemType(createNewItem('test_item', false, bytes32(0)));
         (testClassTokenId, testClassId) = experience.createClassType(createNewClass('test_class'));
         vm.stopPrank();
 
-        assertTrue(characterSheets.hasRole(keccak256('DUNGEON_MASTER'), admin), "wrong dungeon master role assignment for character sheets");
-        assertTrue(characterSheets.hasRole(bytes32(0), rando), "wrong ADMIN role assignment for character sheets");
+        assertTrue(characterSheets.hasRole(keccak256('DUNGEON_MASTER'), admin), 'wrong dungeon master role assignment for character sheets');
+        assertTrue(characterSheets.hasRole(bytes32(0), rando), 'wrong ADMIN role assignment for character sheets');
         
      }
 

@@ -2,15 +2,15 @@
 pragma solidity 0.8.15;
 pragma abicoder v2;
 
-import "forge-std/Test.sol";
-import "../src/implementations/ExperienceAndItemsImplementation.sol";
-import "./helpers/SetUp.sol";
-import "../src/lib/Structs.sol";
+import 'forge-std/Test.sol';
+import '../src/implementations/ExperienceAndItemsImplementation.sol';
+import './helpers/SetUp.sol';
+import '../src/lib/Structs.sol';
 
 contract ExperienceAndItemsTest is Test, SetUp {
     function testCreateClass() public {
         vm.prank(admin);
-        (uint256 _tokenId, uint256 _classId) = experience.createClassType(createNewClass("Ballerina"));
+        (uint256 _tokenId, uint256 _classId) = experience.createClassType(createNewClass('Ballerina'));
         (uint256 tokenId, uint256 classId, string memory name, uint256 supply, string memory cid) =
             experience.classes(_classId);
 
@@ -19,13 +19,13 @@ contract ExperienceAndItemsTest is Test, SetUp {
         assertEq(_tokenId, 3);
         assertEq(_classId, 2);
         assertEq(classId, 2);
-        assertEq(keccak256(abi.encode(name)), keccak256(abi.encode("Ballerina")));
+        assertEq(keccak256(abi.encode(name)), keccak256(abi.encode('Ballerina')));
         assertEq(supply, 0);
-        assertEq(keccak256(abi.encode(cid)), keccak256(abi.encode("test_class_cid/")));
+        assertEq(keccak256(abi.encode(cid)), keccak256(abi.encode('test_class_cid/')));
         assertEq(
             keccak256(abi.encode(experience.uri(tokenId))),
-            keccak256(abi.encode("test_base_uri_experience/test_class_cid/")),
-            "incorrect token uri"
+            keccak256(abi.encode('test_base_uri_experience/test_class_cid/')),
+            'incorrect token uri'
         );
     }
 
@@ -33,7 +33,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         uint256 playerId = characterSheets.memberAddressToTokenId(player1);
         vm.startPrank(admin);
 
-        (uint256 tokenId, uint256 classId) = experience.createClassType(createNewClass("Ballerina"));
+        (uint256 tokenId, uint256 classId) = experience.createClassType(createNewClass('Ballerina'));
 
         experience.assignClass(playerId, classId);
         vm.stopPrank();
@@ -50,16 +50,16 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
         CharacterSheet memory secondPlayer = characterSheets.getCharacterSheetByPlayerId(playerId);
 
-        assertEq(experience.balanceOf(secondPlayer.ERC6551TokenAddress, 2), 1, "does not own second class");
-        assertEq(secondPlayer.classes.length, 2, "not enough classes");
-        assertEq(secondPlayer.classes[1], 1, "second class not in player classes array");
+        assertEq(experience.balanceOf(secondPlayer.ERC6551TokenAddress, 2), 1, 'does not own second class');
+        assertEq(secondPlayer.classes.length, 2, 'not enough classes');
+        assertEq(secondPlayer.classes[1], 1, 'second class not in player classes array');
     }
 
     function testAssignClasses() public {
         uint256 playerId = characterSheets.memberAddressToTokenId(player1);
         vm.startPrank(admin);
 
-        experience.createClassType(createNewClass("Ballerina"));
+        experience.createClassType(createNewClass('Ballerina'));
         Class[] memory allClasses = experience.getAllClasses();
 
         uint256[] memory classes = new uint256[](2);
@@ -68,16 +68,16 @@ contract ExperienceAndItemsTest is Test, SetUp {
         experience.assignClasses(playerId, classes);
         vm.stopPrank();
         CharacterSheet memory player = characterSheets.getCharacterSheetByPlayerId(playerId);
-        assertEq(player.classes.length, 2, "not enough classes assigned");
-        assertEq(player.classes[0], allClasses[0].classId, "wrong classId");
-        assertEq(player.classes[1], allClasses[1].classId, "wrong classid 2");
+        assertEq(player.classes.length, 2, 'not enough classes assigned');
+        assertEq(player.classes[0], allClasses[0].classId, 'wrong classId');
+        assertEq(player.classes[1], allClasses[1].classId, 'wrong classid 2');
     }
 
     function testRevokeClass() public {
         uint256 playerId = characterSheets.memberAddressToTokenId(player1);
 
         vm.startPrank(admin);
-        (uint256 tokenId,) = experience.createClassType(createNewClass("Ballerina"));
+        (uint256 tokenId,) = experience.createClassType(createNewClass('Ballerina'));
 
         Class[] memory allClasses = experience.getAllClasses();
 
@@ -93,13 +93,13 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
         CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(playerId);
 
-        assertEq(experience.balanceOf(sheet.ERC6551TokenAddress, tokenId), 1, "Incorrect class balance");
-        assertEq(sheet.classes.length, 1, "classes array wrong length.");
-        assertEq(sheet.classes[0], allClasses[1].classId, "wrong remaining id");
+        assertEq(experience.balanceOf(sheet.ERC6551TokenAddress, tokenId), 1, 'Incorrect class balance');
+        assertEq(sheet.classes.length, 1, 'classes array wrong length.');
+        assertEq(sheet.classes[0], allClasses[1].classId, 'wrong remaining id');
     }
 
     function testCreateItemType() public {
-        bytes memory newItem = createNewItem("Pirate_Hat", false, bytes32(0));
+        bytes memory newItem = createNewItem('Pirate_Hat', false, bytes32(0));
         vm.prank(admin);
         (uint256 _tokenId, uint256 _itemId) = experience.createItemType(newItem);
 
@@ -107,7 +107,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
 
         assertEq(experience.totalItemTypes(), 2);
-        assertEq(keccak256(abi.encode(returnedItem.name)), keccak256(abi.encode("Pirate_Hat")));
+        assertEq(keccak256(abi.encode(returnedItem.name)), keccak256(abi.encode('Pirate_Hat')));
         assertEq(returnedItem.tokenId, _tokenId);
         assertEq(returnedItem.tokenId, 3);
         assertEq(returnedItem.supply, 10 ** 18);
@@ -115,39 +115,39 @@ contract ExperienceAndItemsTest is Test, SetUp {
         assertEq(returnedItem.requirements.length, 1);
         assertEq(returnedItem.soulbound, false);
         assertEq(returnedItem.claimable, bytes32(0));
-        assertEq(keccak256(abi.encode(returnedItem.cid)), keccak256(abi.encode("test_item_cid/")));
+        assertEq(keccak256(abi.encode(returnedItem.cid)), keccak256(abi.encode('test_item_cid/')));
         assertEq(
             keccak256(abi.encode(experience.uri(returnedItem.tokenId))),
-            keccak256(abi.encode("test_base_uri_experience/test_item_cid/")),
-            "uris not right"
+            keccak256(abi.encode('test_base_uri_experience/test_item_cid/')),
+            'uris not right'
         );
-        assertEq(returnedItem.itemId, _itemId, "wrong item ids");
+        assertEq(returnedItem.itemId, _itemId, 'wrong item ids');
     }
 
     function testCreateItemTypeRevertItemExists() public {
-        bytes memory newItem = createNewItem("Pirate_Hat", false, bytes32(0));
+        bytes memory newItem = createNewItem('Pirate_Hat', false, bytes32(0));
 
         vm.startPrank(admin);
         experience.createItemType(newItem);
 
-        vm.expectRevert("Item already exists.");
+        vm.expectRevert('Item already exists.');
         experience.createItemType(newItem);
 
         vm.stopPrank();
     }
 
     function testCreateItemTypeRevertAccessControl() public {
-        bytes memory newItem = createNewItem("Pirate_Hat", false, bytes32(0));
+        bytes memory newItem = createNewItem('Pirate_Hat', false, bytes32(0));
 
         vm.startPrank(player2);
-        vm.expectRevert("You must be the Dungeon Master");
+        vm.expectRevert('You must be the Dungeon Master');
         experience.createItemType(newItem);
         vm.stopPrank();
     }
 
     function testDropLoot() public {
         vm.startPrank(admin);
-        bytes memory newItem = createNewItem("staff", false, bytes32(0));
+        bytes memory newItem = createNewItem('staff', false, bytes32(0));
 
         (uint256 _tokenId, uint256 _itemId) = experience.createItemType(newItem);
         address[] memory players = new address[](1);
@@ -167,14 +167,14 @@ contract ExperienceAndItemsTest is Test, SetUp {
         experience.dropLoot(players, itemIds, amounts);
         vm.stopPrank();
 
-        assertEq(experience.balanceOf(npc1, _tokenId), 1, "tokenId 3 not equal");
-        assertEq(experience.balanceOf(npc1, 0), 10000, "exp not equal");
-        assertEq(experience.balanceOf(npc1, 1), 1, "token id 1 not equal");
+        assertEq(experience.balanceOf(npc1, _tokenId), 1, 'tokenId 3 not equal');
+        assertEq(experience.balanceOf(npc1, 0), 10000, 'exp not equal');
+        assertEq(experience.balanceOf(npc1, 1), 1, 'token id 1 not equal');
     }
 
     function testDropLootRevert() public {
         vm.prank(admin);
-        (, uint256 _itemId) = createNewItemType("staff");
+        (, uint256 _itemId) = createNewItemType('staff');
         address[] memory players = new address[](1);
         players[0] = npc1;
         uint256[][] memory itemIds =new uint256[][](3);
@@ -189,14 +189,14 @@ contract ExperienceAndItemsTest is Test, SetUp {
         amounts[0][1] = 1;
         amounts[0][2] = 1;
         vm.prank(player1);
-        vm.expectRevert("You must be the Dungeon Master");
+        vm.expectRevert('You must be the Dungeon Master');
         experience.dropLoot(players, itemIds, amounts);
 
     }
 
     function testClaimItem() public {
         vm.startPrank(admin);
-        (uint256 _tokenId, uint256 _itemId) = createNewItemType("staff");
+        (uint256 _tokenId, uint256 _itemId) = createNewItemType('staff');
         
         experience.addItemOrClassRequirement(_itemId, testClassTokenId, 1);
         uint256[] memory itemIds = new uint256[](2);
@@ -222,13 +222,13 @@ contract ExperienceAndItemsTest is Test, SetUp {
         vm.stopPrank();
         
         vm.prank(npc1);
-        vm.expectRevert("Not enough required item.");
+        vm.expectRevert('Not enough required item.');
         experience.claimItems(itemIds2, amounts2, proofs);
 
         dropExp(npc1, 1000);
 
         vm.prank(npc1);
-        vm.expectRevert("Character does not have this class");
+        vm.expectRevert('Character does not have this class');
         experience.claimItems(itemIds2, amounts2, proofs);
         
         vm.prank(admin);
@@ -238,7 +238,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         experience.claimItems(itemIds2, amounts2, proofs);
 
         
-        assertEq(experience.balanceOf(npc1, _tokenId), 1, "Balance not equal");
+        assertEq(experience.balanceOf(npc1, _tokenId), 1, 'Balance not equal');
 
         assertEq(experience.balanceOf(npc1, 0), 900);
     }
@@ -248,42 +248,42 @@ contract ExperienceAndItemsTest is Test, SetUp {
     }
 
     function testFindItemByName() public {
-        (uint256 tokenId, uint256 itemId) = experience.findItemByName("test_item");
+        (uint256 tokenId, uint256 itemId) = experience.findItemByName('test_item');
         assertEq(itemId, 1);
         assertEq(tokenId, 1);
 
-        vm.expectRevert("No item found.");
-        experience.findItemByName("no_Item");
+        vm.expectRevert('No item found.');
+        experience.findItemByName('no_Item');
     }
 
     function testFindClassByName() public {
-        (uint256 tokenId, uint256 classId) = experience.findClassByName("test_class");
+        (uint256 tokenId, uint256 classId) = experience.findClassByName('test_class');
         assertEq(classId, 1);
         assertEq(tokenId, 2);
 
-        vm.expectRevert("No class found.");
-        experience.findClassByName("no_class");
+        vm.expectRevert('No class found.');
+        experience.findClassByName('no_class');
     }
 
     function testFindItemIdOrClassFromTokenId() public {
         (uint256 itemId,) = experience.findItemOrClassIdFromTokenId(1);
 
-        assertEq(itemId, 1, "incorrect itemId");
+        assertEq(itemId, 1, 'incorrect itemId');
 
         //test that it revert;
-        vm.expectRevert("this tokenId is not an item or a class");
+        vm.expectRevert('this tokenId is not an item or a class');
         experience.findItemOrClassIdFromTokenId(250);
 
         //should return 0, false for exp;
 
         (uint256 itemOrClassId, bool isClass) = experience.findItemOrClassIdFromTokenId(0);
-        assertEq(itemOrClassId, 0, "exp id wrong");
-        assertEq(isClass, false, "isClass wrong");
+        assertEq(itemOrClassId, 0, 'exp id wrong');
+        assertEq(isClass, false, 'isClass wrong');
 
         (uint256 itemId2, bool isAlsoClass ) = experience.findItemOrClassIdFromTokenId(2);
 
-        assertEq(itemId2, 1, "Wrong Class Id");
-        assertEq(isAlsoClass, true, "Wrong class bool");
+        assertEq(itemId2, 1, 'Wrong Class Id');
+        assertEq(isAlsoClass, true, 'Wrong class bool');
 
     }
 
@@ -291,43 +291,43 @@ contract ExperienceAndItemsTest is Test, SetUp {
         string memory _uri = experience.uri(1);
         assertEq(
             keccak256(abi.encode(_uri)),
-            keccak256(abi.encode("test_base_uri_experience/test_item_cid/")),
-            "incorrect uri returned"
+            keccak256(abi.encode('test_base_uri_experience/test_item_cid/')),
+            'incorrect uri returned'
         );
     }
 
     function testAddItemOrClassRequirement() public {
         vm.prank(admin);
-        (uint256 tokenId,) = createNewItemType("hat");
+        (uint256 tokenId,) = createNewItemType('hat');
 
         vm.prank(admin);
         experience.addItemOrClassRequirement(1, tokenId, 100);
 
         Item memory modifiedItem = experience.getItemById(1);
 
-        assertEq(modifiedItem.requirements.length, 2, "Requirement not added");
-        assertEq(experience.getItemById(1).requirements[1][0], tokenId, "wrong Id in requirements array");
+        assertEq(modifiedItem.requirements.length, 2, 'Requirement not added');
+        assertEq(experience.getItemById(1).requirements[1][0], tokenId, 'wrong Id in requirements array');
     }
 
     function testRemoveItemRequirement() public {
         vm.prank(admin);
-        (uint256 tokenId,) = createNewItemType("hat");
+        (uint256 tokenId,) = createNewItemType('hat');
 
         vm.prank(admin);
         experience.addItemOrClassRequirement(1, tokenId, 100);
 
         Item memory modifiedItem = experience.getItemById(1);
 
-        assertEq(modifiedItem.requirements.length, 2, "Requirement not added");
-        assertEq(experience.getItemById(1).requirements[1][0], tokenId, "wrong Id in requirements array");
+        assertEq(modifiedItem.requirements.length, 2, 'Requirement not added');
+        assertEq(experience.getItemById(1).requirements[1][0], tokenId, 'wrong Id in requirements array');
 
         vm.prank(admin);
         experience.removeItemOrClassRequirement(1, tokenId);
 
         modifiedItem = experience.getItemById(1);
-        assertEq(modifiedItem.requirements.length, 1, "requirement not removed");
-        assertEq(modifiedItem.requirements[0][0], 0, "wrong requirement removed");
-        assertEq(modifiedItem.requirements[0][1], 100, "Incorrect remaining amount");
+        assertEq(modifiedItem.requirements.length, 1, 'requirement not removed');
+        assertEq(modifiedItem.requirements[0][0], 0, 'wrong requirement removed');
+        assertEq(modifiedItem.requirements[0][1], 100, 'Incorrect remaining amount');
     }
 
 }

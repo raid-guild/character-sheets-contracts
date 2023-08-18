@@ -2,8 +2,8 @@
 pragma solidity 0.8.15;
 pragma abicoder v2;
 
-import "forge-std/Test.sol";
-import "./helpers/SetUp.sol";
+import 'forge-std/Test.sol';
+import './helpers/SetUp.sol';
 
 
 contract CharacterSheetsTest is Test, SetUp {
@@ -21,14 +21,14 @@ contract CharacterSheetsTest is Test, SetUp {
     function testRollCharacterSheetFailNonMember() public {
         bytes memory encodedData = abi.encode('Test Name', 'test uri');
         vm.prank(admin);
-        vm.expectRevert("Player is not a member of the dao");
+        vm.expectRevert('Player is not a member of the dao');
         characterSheets.rollCharacterSheet(player2, encodedData );
     }
 
     function testRollCharacterSheetRevertAlreadyACharacter() public {
         bytes memory encodedData = abi.encode('Test Name', 'test uri');
         vm.prank(admin);
-        vm.expectRevert("this player is already in the game");
+        vm.expectRevert('this player is already in the game');
         characterSheets.rollCharacterSheet(player1, encodedData );
     }
 
@@ -42,7 +42,7 @@ contract CharacterSheetsTest is Test, SetUp {
     function testChangeBaseUriAccessControlRevert() public {
         string memory newBaseUri = 'new_base_uri/';
         vm.prank(player1);
-        vm.expectRevert("AccessControl: account 0x000000000000000000000000000000000000beef is missing role 0x9f5957e014b94f6c4458eb946e74e5d7e489dfaff6e0bddd07dd7d48100ca913");
+        vm.expectRevert('AccessControl: account 0x000000000000000000000000000000000000beef is missing role 0x9f5957e014b94f6c4458eb946e74e5d7e489dfaff6e0bddd07dd7d48100ca913');
         characterSheets.setBaseUri(newBaseUri);
 
     }
@@ -52,7 +52,7 @@ contract CharacterSheetsTest is Test, SetUp {
         characterSheets.addClassToPlayer(1, 1);
 
         CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(1);
-        assertEq(sheet.classes[0], 1, "class not assigned");
+        assertEq(sheet.classes[0], 1, 'class not assigned');
     }
 
         function testAddItemToPlayer() public {
@@ -60,7 +60,7 @@ contract CharacterSheetsTest is Test, SetUp {
         characterSheets.addItemToPlayer(1, 1);
 
         CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(1);
-        assertEq(sheet.inventory[0], 1, "item not assigned");
+        assertEq(sheet.inventory[0], 1, 'item not assigned');
     }
 
     function testTransferFromRevert() public {
@@ -95,7 +95,7 @@ contract CharacterSheetsTest is Test, SetUp {
         CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(1);
         assertEq(sheet.memberAddress, player1);
 
-        vm.expectRevert("This is not a character.");
+        vm.expectRevert('This is not a character.');
         characterSheets.getCharacterSheetByPlayerId(5); 
     }
 
@@ -104,16 +104,16 @@ contract CharacterSheetsTest is Test, SetUp {
 
         uint256 playerId = characterSheets.getPlayerIdByNftAddress(sheet.ERC6551TokenAddress);
 
-        assertEq(playerId, 1, "Incorrect playerId");
+        assertEq(playerId, 1, 'Incorrect playerId');
 
-        vm.expectRevert("This is not the address of an npc");
+        vm.expectRevert('This is not the address of an npc');
         characterSheets.getPlayerIdByNftAddress(player2);
     }
 
     function testRemovePlayer() public {
 
         vm.prank(admin);
-        vm.expectRevert("There has been no passing guild kick proposal on this player.");
+        vm.expectRevert('There has been no passing guild kick proposal on this player.');
         characterSheets.removeSheet(1);
 
         dao.jailMember(player1);
@@ -121,22 +121,22 @@ contract CharacterSheetsTest is Test, SetUp {
         vm.prank(admin);
         characterSheets.removeSheet(1);
 
-        assertEq(characterSheets.balanceOf(player1), 0, "Player has not been removed");
+        assertEq(characterSheets.balanceOf(player1), 0, 'Player has not been removed');
 
         vm.prank(admin);
-        vm.expectRevert("This is not a character.");
+        vm.expectRevert('This is not a character.');
         characterSheets.removeSheet(2);
     }
 
     function testUpdatePlayerName()public {
         vm.prank(player1);
-        characterSheets.updatePlayerName("Regard");
+        characterSheets.updatePlayerName('Regard');
         CharacterSheet memory player = characterSheets.getCharacterSheetByPlayerId(1);
-        assertEq(player.name, "Regard", "This player is not regarded");
+        assertEq(player.name, 'Regard', 'This player is not regarded');
 
         vm.prank(player2);
-        vm.expectRevert("AccessControl: account 0x000000000000000000000000000000000000babe is missing role 0x0f98b3a5774fbfdf19646dba94a6c08f13f4c341502334a57724de46497192c3");
-        characterSheets.updatePlayerName("Regard");
+        vm.expectRevert('AccessControl: account 0x000000000000000000000000000000000000babe is missing role 0x0f98b3a5774fbfdf19646dba94a6c08f13f4c341502334a57724de46497192c3');
+        characterSheets.updatePlayerName('Regard');
     }
 
     //#TODO add remove class / item from player tests and functions.

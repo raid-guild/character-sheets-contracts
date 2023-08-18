@@ -1,9 +1,9 @@
 pragma solidity ^0.8.0;
 // SPDX-License-Identifier: MIT
 
-import "../implementations/CharacterSheetsImplementation.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import '../implementations/CharacterSheetsImplementation.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 
 contract CharacterSheetsFactory is OwnableUpgradeable {
     address public characterSheetsImplementation;
@@ -74,7 +74,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         require(
             experienceAndItemsImplementation != address(0) && characterSheetsImplementation != address(0)
                 && erc6551AccountImplementation != address(0),
-            "must update implementation addresses"
+            'must update implementation addresses'
         );
 
         address characterSheetsClone =
