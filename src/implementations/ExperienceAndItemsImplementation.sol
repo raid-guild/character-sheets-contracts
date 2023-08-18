@@ -228,18 +228,6 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         revert("No class found.");
     }
 
-    //returns 0 if token Id does not exist
-
-    function findClassIdFromTokenId(uint256 tokenId) public view returns (uint256 classId) {
-        for (uint256 i = 1; i <= totalClasses; i++) {
-            Class memory tempClass = classes[i];
-            if (tempClass.tokenId == tokenId) {
-                classId = i;
-            }
-        }
-        return 0;
-    }
-
     /**
      *
      * @param tokenId the ERC1155 token id of the item  or class to be found
@@ -354,7 +342,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      * @param amount the amount of the required item to be required
      */
 
-    function addItemRequirement(uint256 itemId, uint256 requiredTokenId, uint256 amount)
+    function addItemOrClassRequirement(uint256 itemId, uint256 requiredTokenId, uint256 amount)
         public
         onlyDungeonMaster
         returns (bool success)
@@ -391,7 +379,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      * so if the item requires 2 of itemId 1 to be burnt in order to claim the item then you put in 1
      *  and it will remove the requirment with itemId 1
      */
-    function removeItemRequirement(uint256 itemId, uint256 removedItemId) public onlyDungeonMaster returns (bool) {
+    function removeItemOrClassRequirement(uint256 itemId, uint256 removedItemId) public onlyDungeonMaster returns (bool) {
         uint256[][] memory arr = items[itemId].requirements;
         bool success = false;
         for (uint256 i; i < arr.length; i++) {
@@ -491,7 +479,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         }
 
         (uint256 itemOrClassId, bool isClass) = findItemOrClassIdFromTokenId(tokenId);
-        
+
         require(!isClass, "Cannot transfer classes");
 
         Item memory item = items[itemOrClassId];

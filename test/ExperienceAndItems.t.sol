@@ -198,7 +198,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         vm.startPrank(admin);
         (uint256 _tokenId, uint256 _itemId) = createNewItemType("staff");
         
-        experience.addItemRequirement(_itemId, testClassTokenId, 1);
+        experience.addItemOrClassRequirement(_itemId, testClassTokenId, 1);
         uint256[] memory itemIds = new uint256[](2);
         itemIds[0] = _itemId;
         itemIds[1] = 4;
@@ -296,12 +296,12 @@ contract ExperienceAndItemsTest is Test, SetUp {
         );
     }
 
-    function testAddItemRequirement() public {
+    function testAddItemOrClassRequirement() public {
         vm.prank(admin);
         (uint256 tokenId,) = createNewItemType("hat");
 
         vm.prank(admin);
-        experience.addItemRequirement(1, tokenId, 100);
+        experience.addItemOrClassRequirement(1, tokenId, 100);
 
         Item memory modifiedItem = experience.getItemById(1);
 
@@ -314,7 +314,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         (uint256 tokenId,) = createNewItemType("hat");
 
         vm.prank(admin);
-        experience.addItemRequirement(1, tokenId, 100);
+        experience.addItemOrClassRequirement(1, tokenId, 100);
 
         Item memory modifiedItem = experience.getItemById(1);
 
@@ -322,7 +322,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         assertEq(experience.getItemById(1).requirements[1][0], tokenId, "wrong Id in requirements array");
 
         vm.prank(admin);
-        experience.removeItemRequirement(1, tokenId);
+        experience.removeItemOrClassRequirement(1, tokenId);
 
         modifiedItem = experience.getItemById(1);
         assertEq(modifiedItem.requirements.length, 1, "requirement not removed");
@@ -330,17 +330,4 @@ contract ExperienceAndItemsTest is Test, SetUp {
         assertEq(modifiedItem.requirements[0][1], 100, "Incorrect remaining amount");
     }
 
-    function testAddClassRequirement()public {
-                vm.prank(admin);
-                experience.addItemRequirement(1, 2, 1);
-
-            Item memory newReq = experience.getItemById(1);
-
-            assertEq(newReq.requirements.length, 2, "not enough requirements");
-            assertEq(newReq.requirements[1][0], 2, "wrong tokenId");
-    }
-
-    function testClassRequirement() public {
-        
-    }
 }
