@@ -39,6 +39,11 @@ contract SetUp is Test {
     address player1 = address(0xbeef);
     address player2 = address(0xbabe);
     address rando = address(0xc0ffee);
+    address npc1;
+    uint256 testClassId;
+    uint256 testClassTokenId;
+    uint256 testItemId;
+    uint256 testItemTokenId;
     Moloch dao;
 
     ERC6551Registry erc6551Registry;
@@ -82,13 +87,13 @@ contract SetUp is Test {
 
         bytes memory encodedData = abi.encode('Test Name', 'test_token_uri/');
 
-        characterSheets.rollCharacterSheet(player1, encodedData);
-
+        uint256 tokenId1 = characterSheets.rollCharacterSheet(player1, encodedData);
+        npc1 = characterSheets.getCharacterSheetByPlayerId(tokenId1).ERC6551TokenAddress;
       
         vm.label(address(experienceAndItemsImplementation), 'Gear Implementation');
 
-        experience.createItemType(createNewItem("test_item", false, bytes32(0)));
-        experience.createClassType(createNewClass('test_class'));
+        (testItemTokenId, testItemId) = experience.createItemType(createNewItem("test_item", false, bytes32(0)));
+        (testClassTokenId, testClassId) = experience.createClassType(createNewClass('test_class'));
         vm.stopPrank();
 
         assertTrue(characterSheets.hasRole(keccak256('DUNGEON_MASTER'), admin), "wrong dungeon master role assignment for character sheets");
@@ -113,10 +118,12 @@ contract SetUp is Test {
    function dropExp(address player, uint256 amount)public{
         address[] memory players = new address[](1);
         players[0] = player;
-        uint256[] memory itemIds = new uint256[](3);
-        itemIds[0] = 0;
-        uint256[] memory amounts = new uint256[](3);
-        amounts[0] = amount;
+        uint256[][] memory itemIds = new uint256[][](1);
+        itemIds[0] = new uint256[](1);
+        itemIds[0][0] = 0;
+        uint256[][] memory amounts = new uint256[][](1);
+        amounts[0] = new uint256[](1);
+        amounts[0][0] = amount;
         vm.prank(admin);
         experience.dropLoot(players, itemIds, amounts);
    }

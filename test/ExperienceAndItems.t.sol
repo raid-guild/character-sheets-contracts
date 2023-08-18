@@ -40,7 +40,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
         CharacterSheet memory player = characterSheets.getCharacterSheetByPlayerId(playerId);
 
-        assertEq(experience.balanceOf(player.ERC6551TokenAddress, tokenId), 1);
+        assertEq(experience.balanceOf(npc1, tokenId), 1);
         assertEq(player.classes.length, 1);
         assertEq(player.classes[0], classId);
 
@@ -148,67 +148,62 @@ contract ExperienceAndItemsTest is Test, SetUp {
     function testDropLoot() public {
         vm.startPrank(admin);
         bytes memory newItem = createNewItem("staff", false, bytes32(0));
-        address player1NFT = characterSheets.getCharacterSheetByPlayerId(
-            characterSheets.memberAddressToTokenId(player1)
-        ).ERC6551TokenAddress;
 
         (uint256 _tokenId, uint256 _itemId) = experience.createItemType(newItem);
         address[] memory players = new address[](1);
-        players[0] = player1NFT;
-        uint256[] memory itemIds = new uint256[](3);
-        itemIds[0] = 0;
-        itemIds[1] = 1;
-        itemIds[2] = _itemId;
+        players[0] = npc1;
+        uint256[][] memory itemIds = new uint256[][](3);
+        itemIds[0] = new uint256[](3);
+        itemIds[0][0] = 0;
+        itemIds[0][1] = 1;
+        itemIds[0][2] = _itemId;
 
-        uint256[] memory amounts = new uint256[](3);
-        amounts[0] = 10000;
-        amounts[1] = 1;
-        amounts[2] = 1;
+        uint256[][] memory amounts = new uint256[][](3);
+        amounts[0] = new uint256[](3);
+        amounts[0][0] = 10000;
+        amounts[0][1] = 1;
+        amounts[0][2] = 1;
 
         experience.dropLoot(players, itemIds, amounts);
         vm.stopPrank();
 
-        assertEq(experience.balanceOf(player1NFT, _tokenId), 1, "tokenId 3 not equal");
-        assertEq(experience.balanceOf(player1NFT, 0), 10000, "exp not equal");
-        assertEq(experience.balanceOf(player1NFT, 1), 1, "token id 1 not equal");
+        assertEq(experience.balanceOf(npc1, _tokenId), 1, "tokenId 3 not equal");
+        assertEq(experience.balanceOf(npc1, 0), 10000, "exp not equal");
+        assertEq(experience.balanceOf(npc1, 1), 1, "token id 1 not equal");
     }
 
     function testDropLootRevert() public {
-     
-        address player1NFT = characterSheets.getCharacterSheetByPlayerId(
-            characterSheets.memberAddressToTokenId(player1)
-        ).ERC6551TokenAddress;
         vm.prank(admin);
         (, uint256 _itemId) = createNewItemType("staff");
         address[] memory players = new address[](1);
-        players[0] = player1NFT;
-        uint256[] memory itemIds = new uint256[](3);
-        itemIds[0] = 0;
-        itemIds[1] = 1;
-        itemIds[2] = _itemId;
+        players[0] = npc1;
+        uint256[][] memory itemIds =new uint256[][](3);
+        itemIds[0] = new uint256[](3);
+        itemIds[0][0] = 0;
+        itemIds[0][1] = 1;
+        itemIds[0][2] = _itemId;
 
-        uint256[] memory amounts = new uint256[](3);
-        amounts[0] = 10000;
-        amounts[1] = 1;
-        amounts[2] = 1;
+        uint256[][] memory amounts = new uint256[][](3);
+        amounts[0] = new uint256[](3);
+        amounts[0][0] = 10000;
+        amounts[0][1] = 1;
+        amounts[0][2] = 1;
         vm.prank(player1);
         vm.expectRevert("You must be the Dungeon Master");
         experience.dropLoot(players, itemIds, amounts);
+
     }
 
     function testClaimItem() public {
-        vm.prank(admin);
+        vm.startPrank(admin);
         (uint256 _tokenId, uint256 _itemId) = createNewItemType("staff");
-
-        uint256 playerId = characterSheets.memberAddressToTokenId(player1);
-
-        address nftAddress = characterSheets.getCharacterSheetByPlayerId(playerId).ERC6551TokenAddress;
-
+        
+        experience.addItemRequirement(_itemId, testClassTokenId, 1);
         uint256[] memory itemIds = new uint256[](2);
         itemIds[0] = _itemId;
         itemIds[1] = 4;
         address[] memory claimers = new address[](2);
-        claimers[0] = nftAddress;
+        claimers[0] = npc1;
         claimers[1] = player2;
         uint256[] memory amounts = new uint256[](2);
         amounts[0] = 1;
@@ -216,9 +211,6 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
         (bytes32[] memory proof, bytes32 root) = generateMerkleRootAndProof(itemIds, claimers, amounts, 0);
 
-        dropExp(nftAddress, 1000);
-
-        vm.prank(admin);
         experience.updateItemClaimable(_itemId, root);
 
         uint256[] memory itemIds2 = new uint256[](1);
@@ -227,13 +219,32 @@ contract ExperienceAndItemsTest is Test, SetUp {
         itemIds2[0] = _itemId;
         amounts2[0] = 1;
         proofs[0] = proof;
-
-        vm.prank(nftAddress);
+        vm.stopPrank();
+        
+        vm.prank(npc1);
+        vm.expectRevert("Not enough required item.");
         experience.claimItems(itemIds2, amounts2, proofs);
 
-        assertEq(experience.balanceOf(nftAddress, _tokenId), 1, "Balance not equal");
+        dropExp(npc1, 1000);
 
-        assertEq(experience.balanceOf(nftAddress, 0), 900);
+        vm.prank(npc1);
+        vm.expectRevert("Character does not have this class");
+        experience.claimItems(itemIds2, amounts2, proofs);
+        
+        vm.prank(admin);
+        experience.assignClass(1, testClassId);
+
+        vm.prank(npc1);
+        experience.claimItems(itemIds2, amounts2, proofs);
+
+        
+        assertEq(experience.balanceOf(npc1, _tokenId), 1, "Balance not equal");
+
+        assertEq(experience.balanceOf(npc1, 0), 900);
+    }
+
+    function testClaimItemWithClassRequirement() public {
+
     }
 
     function testFindItemByName() public {
@@ -254,20 +265,25 @@ contract ExperienceAndItemsTest is Test, SetUp {
         experience.findClassByName("no_class");
     }
 
-    function testFindItemIdFromTokenId() public {
-        uint256 itemId = experience.findItemIdFromTokenId(1);
+    function testFindItemIdOrClassFromTokenId() public {
+        (uint256 itemId,) = experience.findItemOrClassIdFromTokenId(1);
 
         assertEq(itemId, 1, "incorrect itemId");
 
-        //test that it return 0 with an out of bounds tokenId;
+        //test that it revert;
+        vm.expectRevert("this tokenId is not an item or a class");
+        experience.findItemOrClassIdFromTokenId(250);
 
-        uint256 shouldBeZero = experience.findItemIdFromTokenId(250);
+        //should return 0, false for exp;
 
-        assertEq(shouldBeZero, 0, "incorrect out of bounds tokenId");
+        (uint256 itemOrClassId, bool isClass) = experience.findItemOrClassIdFromTokenId(0);
+        assertEq(itemOrClassId, 0, "exp id wrong");
+        assertEq(isClass, false, "isClass wrong");
 
-        //should revert;
-        vm.expectRevert("Exp is not an item");
-        experience.findItemIdFromTokenId(0);
+        (uint256 itemId2, bool isAlsoClass ) = experience.findItemOrClassIdFromTokenId(2);
+
+        assertEq(itemId2, 1, "Wrong Class Id");
+        assertEq(isAlsoClass, true, "Wrong class bool");
 
     }
 
@@ -282,10 +298,10 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
     function testAddItemRequirement() public {
         vm.prank(admin);
-        (uint256 tokenId, uint256 hatItemId)=createNewItemType("hat");
+        (uint256 tokenId,) = createNewItemType("hat");
 
         vm.prank(admin);
-        experience.addRequirement(1, tokenId, 100);
+        experience.addItemRequirement(1, tokenId, 100);
 
         Item memory modifiedItem = experience.getItemById(1);
 
@@ -295,10 +311,10 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
     function testRemoveItemRequirement() public {
         vm.prank(admin);
-        (uint256 tokenId, uint256 hatItemId) = createNewItemType("hat");
+        (uint256 tokenId,) = createNewItemType("hat");
 
         vm.prank(admin);
-        experience.addRequirement(1, tokenId, 100);
+        experience.addItemRequirement(1, tokenId, 100);
 
         Item memory modifiedItem = experience.getItemById(1);
 
@@ -316,6 +332,15 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
     function testAddClassRequirement()public {
                 vm.prank(admin);
-                experience.addRequirement(1, 2, 100);
+                experience.addItemRequirement(1, 2, 1);
+
+            Item memory newReq = experience.getItemById(1);
+
+            assertEq(newReq.requirements.length, 2, "not enough requirements");
+            assertEq(newReq.requirements[1][0], 2, "wrong tokenId");
+    }
+
+    function testClassRequirement() public {
+        
     }
 }

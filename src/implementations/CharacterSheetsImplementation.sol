@@ -107,7 +107,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
      * if no uri is stored then it will revert to the base uri of the contract
      */
 
-    function rollCharacterSheet(address _to, bytes calldata _data) public onlyRole(DUNGEON_MASTER) {
+    function rollCharacterSheet(address _to, bytes calldata _data) public onlyRole(DUNGEON_MASTER) returns(uint256){
         require(
             erc6551AccountImplementation != address(0) && address(_erc6551Registry) != address(0),
             "ERC6551 acount implementation and registry not set"
@@ -149,6 +149,8 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         _grantRole(PLAYER, _to);
         _grantRole(NPC, tba);
         emit NewPlayer(tokenId, _to);
+
+        return tokenId;
     }
 
     /**

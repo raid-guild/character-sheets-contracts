@@ -49,6 +49,8 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     mapping(uint256 => Class) public classes;
     /// @dev mapping of the erc1155 tokenId to the itemID.  if the 1155 token is a class it will not be in this mapping.
     mapping(uint256 => uint256) internal tokenIdToItemId;
+    /// @dev mapping of erc1155 tokenID of a class to the class Id;
+    mapping(uint256 => uint256) internal tokenIdToClassId;
     /// @dev tokenId 0 is experience which is infinite supply and can be minted by any dungeon master or claimed by a player.
     uint256 public constant EXPERIENCE = 0;
     /// @dev the total number of class types that have been created
@@ -63,7 +65,6 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
     CharacterSheetsImplementation public characterSheets;
     IHats public hats; // not implemented
-
 
     event NewItemTypeCreated(uint256 erc1155TokenId, uint256 itemId, string name);
     event NewClassCreated(uint256 erc1155TokenId, uint256 classId, string name);
@@ -120,8 +121,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         virtual
         onlyDungeonMaster
         returns (uint256 tokenId, uint256 itemId)
-        {
-
+    {
         Item memory newItem = createItemStruct(itemData);
         (bool success,) = address(this).call(abi.encodeWithSignature("findItemByName(string)", newItem.name));
 
@@ -146,7 +146,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         return (_tokenId, _itemId);
     }
 
-    function createItemStruct(bytes memory data)internal pure returns(Item memory){
+    function createItemStruct(bytes memory data) internal pure returns (Item memory) {
         string memory name;
         uint256 supply;
         uint256[][] memory newRequirements;
@@ -154,11 +154,11 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         bytes32 claimable;
         string memory cid;
         {
-        // (_name, _soulbound, 10**18, newRequirements,0, false, _claimable,  'test_item_cid/');
-        (name, supply, newRequirements, soulbound, claimable, cid) = abi.decode(data, (string, uint256, uint256[][], bool, bytes32, string));
-        return Item(0,0, name, supply, 0, newRequirements, soulbound, claimable, cid);
+            // (_name, _soulbound, 10**18, newRequirements,0, false, _claimable,  'test_item_cid/');
+            (name, supply, newRequirements, soulbound, claimable, cid) =
+                abi.decode(data, (string, uint256, uint256[][], bool, bytes32, string));
+            return Item(0, 0, name, supply, 0, newRequirements, soulbound, claimable, cid);
         }
-        
     }
 
     /**
@@ -179,6 +179,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         _newClass.tokenId = _tokenId;
         _newClass.classId = _classId;
         classes[_classId] = _newClass;
+        tokenIdToClassId[_tokenId] = _classId;
         _setURI(_tokenId, _newClass.cid);
         emit NewClassCreated(_tokenId, _classId, _newClass.name);
         totalClasses++;
@@ -239,10 +240,28 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         return 0;
     }
 
-    //returns 0 if token id does not exist
-    function findItemIdFromTokenId(uint256 tokenId) public view returns (uint256) {
-        require(tokenId != 0, "Exp is not an item");
-        return tokenIdToItemId[tokenId];
+    /**
+     *
+     * @param tokenId the ERC1155 token id of the item  or class to be found
+     * @return itemOrClassId the itemId or classId found
+     * @return isClass true if the token is a class, false if It's an item
+     */
+    function findItemOrClassIdFromTokenId(uint256 tokenId) public view returns (uint256 itemOrClassId, bool isClass) {
+        if (tokenId == 0) {
+            itemOrClassId = 0;
+            isClass = false;
+            return (itemOrClassId, isClass);
+        }
+        if (tokenIdToItemId[tokenId] > 0) {
+            itemOrClassId = tokenIdToItemId[tokenId];
+            isClass = false;
+            return (itemOrClassId, isClass);
+        } else {
+            itemOrClassId = tokenIdToClassId[tokenId];
+            require(itemOrClassId > 0, "this tokenId is not an item or a class");
+            isClass = true;
+            return (itemOrClassId, isClass);
+        }
     }
 
     /**
@@ -306,6 +325,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     function revokeClass(uint256 playerId, uint256 classId) public returns (bool success) {
         CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(playerId);
         uint256 tokenId = classes[classId].tokenId;
+        require(tokenId > 0, "this is not a class");
         if (characterSheets.hasRole(DUNGEON_MASTER, msg.sender)) {
             require(characterSheets.removeClassFromPlayer(playerId, classId), "Player does not have that class");
             _burn(sheet.ERC6551TokenAddress, tokenId, 1);
@@ -322,7 +342,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      * @param _to player neft address
      * @param _amount the amount of exp to be issued
      */
-    function _giveExp(address _to, uint256 _amount) internal returns (uint256) {
+    function _giveExp(address _to, uint256 _amount) private returns (uint256) {
         _mint(_to, EXPERIENCE, _amount, "");
         totalExperience += _amount;
         return totalExperience;
@@ -333,13 +353,14 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      * @param requiredTokenId the erc1155 token Id of the item to be added to the requirements array
      * @param amount the amount of the required item to be required
      */
-    function addRequirement(uint256 itemId, uint256 requiredTokenId, uint256 amount)
+
+    function addItemRequirement(uint256 itemId, uint256 requiredTokenId, uint256 amount)
         public
         onlyDungeonMaster
         returns (bool success)
     {
-        console2.log(requiredTokenId, tokenIdToItemId[requiredTokenId]);
-        if(tokenIdToItemId[requiredTokenId] == 0){
+        (, bool isClass) = findItemOrClassIdFromTokenId(requiredTokenId);
+        if (isClass) {
             require(amount == 1, "NPC can only have one class token");
         }
 
@@ -364,7 +385,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     }
 
     /**
-     * 
+     *
      * @param itemId the itemId of the item type to be modified
      * @param removedItemId the itemId of the requirement that is to be removed.
      * so if the item requires 2 of itemId 1 to be burnt in order to claim the item then you put in 1
@@ -373,22 +394,22 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     function removeItemRequirement(uint256 itemId, uint256 removedItemId) public onlyDungeonMaster returns (bool) {
         uint256[][] memory arr = items[itemId].requirements;
         bool success = false;
-        for(uint256 i; i < arr.length; i++){
-                if(arr[i][0] == removedItemId){
-                       for (uint256 j = i; j < arr.length; j++) {
+        for (uint256 i; i < arr.length; i++) {
+            if (arr[i][0] == removedItemId) {
+                for (uint256 j = i; j < arr.length; j++) {
                     if (j + 1 < arr.length) {
                         arr[j] = arr[j + 1];
                     } else if (j + 1 >= arr.length) {
                         arr[j] = new uint256[](2);
                     }
                 }
-                    success = true;
-                }
+                success = true;
+            }
         }
 
-        if(success == true){
-        items[itemId].requirements = arr;
-        items[itemId].requirements.pop();
+        if (success == true) {
+            items[itemId].requirements = arr;
+            items[itemId].requirements.pop();
         }
 
         return success;
@@ -401,33 +422,45 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      * @param amounts the amounts of each item to be dropped this must be in sync with the item ids
      */
 
-    function dropLoot(address[] calldata nftAddress, uint256[] calldata itemIds, uint256[] calldata amounts)
+    function dropLoot(address[] calldata nftAddress, uint256[][] calldata itemIds, uint256[][] calldata amounts)
         external
         onlyDungeonMaster
+        returns (bool success)
     {
+        require(itemIds.length == amounts.length, "LENGTH MISMATCH");
         for (uint256 i; i < nftAddress.length; i++) {
             for (uint256 j; j < itemIds.length; j++) {
-                if (items[itemIds[j]].requirements.length > 0) {
-                    _transferItem(nftAddress[i], itemIds[j], amounts[j]);
+                if (itemIds[i][j] == 0 && amounts[i][j] > 0) {
+                    _giveExp(nftAddress[i], amounts[i][j]);
                 } else {
-                    _transferItemWithReq(nftAddress[i], itemIds[j], amounts[j]);
+                    Item memory newItem = items[itemIds[i][j]];
+                    if (newItem.requirements.length > 0) {
+                        _transferItem(nftAddress[i], newItem.tokenId, amounts[i][j]);
+                    } else {
+                        _transferItemWithReq(nftAddress[i], newItem.tokenId, amounts[i][j]);
+                    }
                 }
             }
         }
+        success = true;
     }
 
     /**
      * internal function to transfer items.
      * @param _to the token bound account to receive the item;
-     * @param itemId the id of the Item in the items mapping.
+     * @param tokenId the erc1155 id of the Item in the items mapping.
      * @param amount the amount of items to be sent to the player token
      */
 
-    function _transferItem(address _to, uint256 itemId, uint256 amount) private {
+    function _transferItem(address _to, uint256 tokenId, uint256 amount) private {
+        (uint256 itemId, bool isClass) = findItemOrClassIdFromTokenId(tokenId);
+
+        require(itemId != 0 || isClass == false, "cannot transfer exp or classes");
+
         Item memory item = items[itemId];
 
         require(characterSheets.hasRole(NPC, _to), "Can Only transfer Items to an NPC");
-        require(itemId != 0, "cannot give exp");
+
         require(item.supply > 0, "Item does not exist");
 
         _balanceOf[address(this)][item.tokenId] -= amount;
@@ -442,40 +475,51 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     /**
      * transfers an item that costs exp.  takes the exp from the npc nft and transfers the item
      * @param NFTAddress the address of the token bound account of the player nft
-     * @param itemId the Id of the item to be transfered
+     * @param tokenId the erc1155 Id of the item to be transfered
      * @param amount the number of items to be transfered
      */
     //#TODO fix this to work with required classes
-    function _transferItemWithReq(address NFTAddress, uint256 itemId, uint256 amount) private {
-        Item memory item = items[itemId];
-        console2.log(item.name);
-
+    function _transferItemWithReq(address NFTAddress, uint256 tokenId, uint256 amount) private returns (bool success) {
         require(characterSheets.hasRole(NPC, NFTAddress), "Can only transfer Items to an NPC");
-        if (itemId == 0 && amount > 0) {
+
+        require(amount > 0, "Cannot transfer 0 of anything");
+        
+        if (tokenId == 0 && amount > 0) {
             _giveExp(NFTAddress, amount);
-        } else {
-            require(item.supply > 0, "Item does not exist");
-            uint256[] memory newRequirement;
+            success = true;
+            return success;
+        }
 
-            for (uint256 i; i < item.requirements.length; i++) {
-                newRequirement = item.requirements[i];
+        (uint256 itemOrClassId, bool isClass) = findItemOrClassIdFromTokenId(tokenId);
+        
+        require(!isClass, "Cannot transfer classes");
 
-                uint256 newTokenId = items[newRequirement[0]].tokenId;
+        Item memory item = items[itemOrClassId];
+        require(item.supply > 0, "Item does not exist");
+        uint256[] memory newRequirement;
 
+        for (uint256 i; i < item.requirements.length; i++) {
+            newRequirement = item.requirements[i];
+
+            (, bool requiredIsClass) = findItemOrClassIdFromTokenId(newRequirement[0]);
+            if (!requiredIsClass) {
                 require(
-                    balanceOf(NFTAddress, newTokenId) >= newRequirement[1] * amount, "Not enough required item."
+                    balanceOf(NFTAddress, newRequirement[0]) >= newRequirement[1] * amount, "Not enough required item."
                 );
 
-
-                _balanceOf[NFTAddress][newTokenId] -= newRequirement[1] * amount;
+                _balanceOf[NFTAddress][newRequirement[0]] -= newRequirement[1] * amount;
+            } else if (requiredIsClass) {
+                require(balanceOf(NFTAddress, newRequirement[0]) == 1, "Character does not have this class");
             }
-
-            _balanceOf[address(this)][item.tokenId] -= amount;
-            _balanceOf[NFTAddress][item.tokenId] += amount;
-            items[itemId].supplied += amount;
-
-            emit ItemTransfered(NFTAddress, item.tokenId, itemId);
         }
+
+        _balanceOf[address(this)][item.tokenId] -= amount;
+        _balanceOf[NFTAddress][item.tokenId] += amount;
+        items[itemOrClassId].supplied += amount;
+
+        emit ItemTransfered(NFTAddress, item.tokenId, itemOrClassId);
+
+        success = true;
     }
 
     /**
@@ -493,21 +537,28 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         require(itemIds.length == amounts.length && itemIds.length == proofs.length, "mismatch in array lengths");
 
         for (uint256 i = 0; i < itemIds.length; i++) {
-            Item memory claimableItem = items[itemIds[i]];
-            if (claimableItem.claimable == bytes32(0)) {
-                require(characterSheets.hasRole(NPC, msg.sender), "Only an NPC can claim items");
-                _transferItemWithReq(msg.sender, itemIds[i], amounts[i]);
+            if (itemIds[i] == 0) {
+                _giveExp(msg.sender, amounts[i]);
+            } else if (items[itemIds[i]].tokenId == 0) {
+                revert("can only claim Items");
             } else {
-                bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encodePacked(itemIds[i], msg.sender, amounts[i]))));
+                Item memory claimableItem = items[itemIds[i]];
+                if (claimableItem.claimable == bytes32(0)) {
+                    require(characterSheets.hasRole(NPC, msg.sender), "Only an NPC can claim items");
+                    _transferItemWithReq(msg.sender, claimableItem.tokenId, amounts[i]);
+                } else {
+                    bytes32 leaf =
+                        keccak256(bytes.concat(keccak256(abi.encodePacked(itemIds[i], msg.sender, amounts[i]))));
 
-                require(MerkleProof.verify(proofs[i], claimableItem.claimable, leaf), "Merkle Proof Failed");
-                _transferItemWithReq(msg.sender, itemIds[i], amounts[i]);
+                    require(MerkleProof.verify(proofs[i], claimableItem.claimable, leaf), "Merkle Proof Failed");
+                    _transferItemWithReq(msg.sender, claimableItem.tokenId, amounts[i]);
+                }
             }
         }
         success = true;
     }
 
-    function getItemById(uint256 itemId)public view returns(Item memory){
+    function getItemById(uint256 itemId) public view returns (Item memory) {
         return items[itemId];
     }
 
@@ -518,6 +569,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      */
 
     function updateItemClaimable(uint256 itemId, bytes32 merkleRoot) public onlyDungeonMaster {
+        require(items[itemId].tokenId != 0, "this is not a registered item");
         items[itemId].claimable = merkleRoot;
 
         emit ItemUpdated(itemId);
@@ -580,8 +632,8 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         public
         override
     {
-        uint256 itemId = findItemIdFromTokenId(id);
-        require(itemId > 0, "this item does not exist");
+        (uint256 itemId, bool isClass) = findItemOrClassIdFromTokenId(id);
+        require(itemId > 0 && !isClass, "this item does not exist");
         Item memory item = items[itemId];
         require(item.soulbound == false, "This item is soulbound");
         super.safeTransferFrom(from, to, id, amount, data);
@@ -601,23 +653,9 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         // Storing these outside the loop saves ~15 gas per iteration.
         uint256 id;
         uint256 amount;
-        Item memory item;
 
         for (uint256 i = 0; i < ids.length;) {
-            id = ids[i];
-            uint256 itemId = findItemIdFromTokenId(id);
-            item = items[itemId];
-            require(item.soulbound == false, "This item is soulbound");
-            amount = amounts[i];
-
-            _balanceOf[from][id] -= amount;
-            _balanceOf[to][id] += amount;
-
-            // An array can't have a total length
-            // larger than the max uint256 value.
-            unchecked {
-                ++i;
-            }
+            safeTransferFrom(from, to, id, amount, data);
         }
 
         emit TransferBatch(msg.sender, from, to, ids, amounts);
