@@ -19,8 +19,7 @@ pragma solidity >=0.8.13;
 import "hats-protocol/src/Hats.sol";
 
 contract MockHats {
-
-        struct Hat {
+    struct Hat {
         // 1st storage slot
         address eligibility; // ─┐ 20
         uint32 maxSupply; //     │ 4
@@ -34,8 +33,8 @@ contract MockHats {
         string imageURI;
     }
 
-    uint256 hatIds =1;
-    mapping(address => mapping(uint256=> uint256))_balanceOf;
+    uint256 hatIds = 1;
+    mapping(address => mapping(uint256 => uint256)) _balanceOf;
 
     /*//////////////////////////////////////////////////////////////
                               HATS STORAGE
@@ -180,5 +179,4 @@ contract MockHats {
 
         // emit TransferSingle(msg.sender, address(0), _wearer, _hatId, 1);
     }
-
 }

@@ -11,20 +11,9 @@ interface IERC6551Account {
 
     receive() external payable;
 
-    function executeCall(
-        address to,
-        uint256 value,
-        bytes calldata data
-    ) external payable returns (bytes memory);
+    function executeCall(address to, uint256 value, bytes calldata data) external payable returns (bytes memory);
 
-    function token()
-        external
-        view
-        returns (
-            uint256 chainId,
-            address tokenContract,
-            uint256 tokenId
-        );
+    function token() external view returns (uint256 chainId, address tokenContract, uint256 tokenId);
 
     function owner() external view returns (address);
 

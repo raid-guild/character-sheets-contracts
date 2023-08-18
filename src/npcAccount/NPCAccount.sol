@@ -8,7 +8,7 @@ import "openzeppelin-contracts/contracts/utils/cryptography/SignatureChecker.sol
 import "openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
 import "../interfaces/IERC6551Account.sol";
-import "../lib/ERC6551AccountLib.sol"; 
+import "../lib/ERC6551AccountLib.sol";
 
 /**
  * @title NPC Acount
@@ -21,11 +21,11 @@ contract NPCAccount is IERC165, IERC1271, IERC6551Account, ERC1155Holder {
 
     receive() external payable {}
 
-    function executeCall(
-        address to,
-        uint256 value,
-        bytes calldata data
-    ) external payable returns (bytes memory result) {
+    function executeCall(address to, uint256 value, bytes calldata data)
+        external
+        payable
+        returns (bytes memory result)
+    {
         require(msg.sender == owner(), "Not token owner");
 
         ++nonce;
@@ -42,15 +42,7 @@ contract NPCAccount is IERC165, IERC1271, IERC6551Account, ERC1155Holder {
         }
     }
 
-    function token()
-        external
-        view
-        returns (
-            uint256,
-            address,
-            uint256
-        )
-    {
+    function token() external view returns (uint256, address, uint256) {
         return ERC6551AccountLib.token();
     }
 
@@ -62,15 +54,10 @@ contract NPCAccount is IERC165, IERC1271, IERC6551Account, ERC1155Holder {
     }
 
     function supportsInterface(bytes4 interfaceId) public pure override(ERC1155Receiver, IERC165) returns (bool) {
-        return (interfaceId == type(IERC165).interfaceId ||
-            interfaceId == type(IERC6551Account).interfaceId);
+        return (interfaceId == type(IERC165).interfaceId || interfaceId == type(IERC6551Account).interfaceId);
     }
 
-    function isValidSignature(bytes32 hash, bytes memory signature)
-        external
-        view
-        returns (bytes4 magicValue)
-    {
+    function isValidSignature(bytes32 hash, bytes memory signature) external view returns (bytes4 magicValue) {
         bool isValid = SignatureChecker.isValidSignatureNow(owner(), hash, signature);
 
         if (isValid) {
