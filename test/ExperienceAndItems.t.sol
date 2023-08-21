@@ -41,8 +41,6 @@ contract ExperienceAndItemsTest is Test, SetUp {
         CharacterSheet memory player = characterSheets.getCharacterSheetByPlayerId(playerId);
 
         assertEq(experience.balanceOf(npc1, tokenId), 1);
-        assertEq(player.classes.length, 1);
-        assertEq(player.classes[0], classId);
 
         //add second class
         vm.prank(admin);
@@ -51,15 +49,13 @@ contract ExperienceAndItemsTest is Test, SetUp {
         CharacterSheet memory secondPlayer = characterSheets.getCharacterSheetByPlayerId(playerId);
 
         assertEq(experience.balanceOf(secondPlayer.ERC6551TokenAddress, 2), 1, 'does not own second class');
-        assertEq(secondPlayer.classes.length, 2, 'not enough classes');
-        assertEq(secondPlayer.classes[1], 1, 'second class not in player classes array');
     }
 
     function testAssignClasses() public {
         uint256 playerId = characterSheets.memberAddressToTokenId(player1);
         vm.startPrank(admin);
 
-        experience.createClassType(createNewClass('Ballerina'));
+        (uint256 tokenId, uint256 classId) = experience.createClassType(createNewClass('Ballerina'));
         Class[] memory allClasses = experience.getAllClasses();
 
         uint256[] memory classes = new uint256[](2);
@@ -68,9 +64,8 @@ contract ExperienceAndItemsTest is Test, SetUp {
         experience.assignClasses(playerId, classes);
         vm.stopPrank();
         CharacterSheet memory player = characterSheets.getCharacterSheetByPlayerId(playerId);
-        assertEq(player.classes.length, 2, 'not enough classes assigned');
-        assertEq(player.classes[0], allClasses[0].classId, 'wrong classId');
-        assertEq(player.classes[1], allClasses[1].classId, 'wrong classid 2');
+        assertEq(experience.balanceOf(player.ERC6551TokenAddress, allClasses[0].tokenId), 1, 'incorrect balance');
+        assertEq(experience.balanceOf(player.ERC6551TokenAddress, allClasses[1].tokenId), 1, 'incorrect balance token 2');
     }
 
     function testRevokeClass() public {
@@ -94,8 +89,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(playerId);
 
         assertEq(experience.balanceOf(sheet.ERC6551TokenAddress, tokenId), 1, 'Incorrect class balance');
-        assertEq(sheet.classes.length, 1, 'classes array wrong length.');
-        assertEq(sheet.classes[0], allClasses[1].classId, 'wrong remaining id');
+
     }
 
     function testCreateItemType() public {

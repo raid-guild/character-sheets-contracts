@@ -12,7 +12,7 @@ struct Item {
     uint256 supply; 
     /// @dev the number of this item that have been given out or claimed
     uint256 supplied; 
-    /// @dev an array of arrays that are two long containing the required itemId and the amount required eg. [[itemId, amount], [itemId, amount]]
+    /// @dev an array of arrays with length of 2. containing the required itemId and the amount required eg. [[itemId, amount], [itemId, amount]]
     uint256[][] requirements;
     /// @dev is this item soulbound or not
     bool soulbound; 
@@ -46,8 +46,8 @@ struct CharacterSheet {
     address ERC6551TokenAddress; 
     /// @dev the EOA of the member who owns this character sheet
     address memberAddress; 
-    /// @dev the classId of the class assigned to this player
+    /// @dev the classId of the class equipped to this player
     uint256[] classes; 
-    /// @dev the itemId of the items in this chars inventory
+    /// @dev the itemId of the equipped items in this chars inventory
     uint256[] inventory;  
 }

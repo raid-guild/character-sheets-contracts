@@ -47,17 +47,17 @@ contract CharacterSheetsTest is Test, SetUp {
 
     }
 
-    function testAddClassToPlayer() public {
+    function testEquipClassToNPC() public {
         vm.prank(address(experience));
-        characterSheets.addClassToPlayer(1, 1);
+        characterSheets.equipClassToNPC(1, 1);
 
         CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(1);
         assertEq(sheet.classes[0], 1, 'class not assigned');
     }
 
-        function testAddItemToPlayer() public {
+        function testEquipItemToNPC() public {
         vm.prank(address(experience));
-        characterSheets.addItemToPlayer(1, 1);
+        characterSheets.equipItemToNPC(1, 1);
 
         CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(1);
         assertEq(sheet.inventory[0], 1, 'item not assigned');
