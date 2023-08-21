@@ -143,20 +143,37 @@ contract ExperienceAndItemsTest is Test, SetUp {
         vm.startPrank(admin);
         bytes memory newItem = createNewItem('staff', false, bytes32(0));
 
+        dao.addMember(player2);
+
+        uint256 player2Id = characterSheets.rollCharacterSheet(player2, abi.encode('player 2', 'test_token_uri1/'));
+        address player2NPC = characterSheets.getCharacterSheetByPlayerId(player2Id).ERC6551TokenAddress;
         (uint256 _tokenId, uint256 _itemId) = experience.createItemType(newItem);
-        address[] memory players = new address[](1);
+
+        address[] memory players = new address[](2);
         players[0] = npc1;
-        uint256[][] memory itemIds = new uint256[][](3);
+        players[1] = player2NPC;
+
+        uint256[][] memory itemIds = new uint256[][](2);
         itemIds[0] = new uint256[](3);
         itemIds[0][0] = 0;
         itemIds[0][1] = 1;
         itemIds[0][2] = _itemId;
 
-        uint256[][] memory amounts = new uint256[][](3);
+        itemIds[1] = new uint256[](3);
+        itemIds[1][0] = 0;
+        itemIds[1][1] = 1;
+        itemIds[1][2] = _itemId;
+
+        uint256[][] memory amounts = new uint256[][](2);
         amounts[0] = new uint256[](3);
         amounts[0][0] = 10000;
         amounts[0][1] = 1;
         amounts[0][2] = 1;
+        amounts[1] = new uint256[](3);
+        amounts[1][0] = 10001;
+        amounts[1][1] = 2;
+        amounts[1][2] = 2;
+
 
         experience.dropLoot(players, itemIds, amounts);
         vm.stopPrank();
@@ -164,6 +181,11 @@ contract ExperienceAndItemsTest is Test, SetUp {
         assertEq(experience.balanceOf(npc1, _tokenId), 1, 'tokenId 3 not equal');
         assertEq(experience.balanceOf(npc1, 0), 10000, 'exp not equal');
         assertEq(experience.balanceOf(npc1, 1), 1, 'token id 1 not equal');
+
+        assertEq(experience.balanceOf(player2NPC, _tokenId), 2, '2: tokenId 3 not equal');
+        assertEq(experience.balanceOf(player2NPC, 0), 10001, '2: exp not equal');
+        assertEq(experience.balanceOf(player2NPC, 1), 2, '2: token id 1 not equal');
+
     }
 
     function testDropLootRevert() public {

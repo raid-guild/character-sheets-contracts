@@ -457,16 +457,22 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         onlyDungeonMaster
         returns (bool success)
     {
-        require(itemIds.length == amounts.length, "LENGTH MISMATCH");
+        require(itemIds.length == amounts.length || nftAddress.length == itemIds.length, "LENGTH MISMATCH");
         for (uint256 i; i < nftAddress.length; i++) {
-            for (uint256 j; j < itemIds.length; j++) {
+    
+            for (uint256 j; j < itemIds[i].length; j++) {
+               
                 if (itemIds[i][j] == 0 && amounts[i][j] > 0) {
+
                     _giveExp(nftAddress[i], amounts[i][j]);
                 } else {
                     Item memory newItem = items[itemIds[i][j]];
+
                     if (newItem.requirements.length > 0) {
+
                         _transferItem(nftAddress[i], newItem.tokenId, amounts[i][j]);
                     } else {
+
                         _transferItemWithReq(nftAddress[i], newItem.tokenId, amounts[i][j]);
                     }
                 }
