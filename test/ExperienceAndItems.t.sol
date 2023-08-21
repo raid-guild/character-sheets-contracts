@@ -273,10 +273,6 @@ contract ExperienceAndItemsTest is Test, SetUp {
         assertEq(experience.balanceOf(npc1, 0), 900);
     }
 
-    function testClaimItemWithClassRequirement() public {
-
-    }
-
     function testFindItemByName() public {
         (uint256 tokenId, uint256 itemId) = experience.findItemByName('test_item');
         assertEq(itemId, 1);

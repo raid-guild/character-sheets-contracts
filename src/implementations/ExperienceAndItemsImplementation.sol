@@ -122,7 +122,8 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         onlyDungeonMaster
         returns (uint256 tokenId, uint256 itemId)
     {
-        Item memory newItem = createItemStruct(itemData);
+        Item memory newItem = _createItemStruct(itemData);
+        
         (bool success,) = address(this).call(abi.encodeWithSignature("findItemByName(string)", newItem.name));
 
         require(!success, "Item already exists.");
@@ -146,7 +147,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         return (_tokenId, _itemId);
     }
 
-    function createItemStruct(bytes memory data) internal pure returns (Item memory) {
+    function _createItemStruct(bytes memory data) internal pure returns (Item memory) {
         string memory name;
         uint256 supply;
         uint256[][] memory newRequirements;
@@ -154,7 +155,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         bytes32 claimable;
         string memory cid;
         {
-            // (_name, _soulbound, 10**18, newRequirements,0, false, _claimable,  'test_item_cid/');
+
             (name, supply, newRequirements, soulbound, claimable, cid) =
                 abi.decode(data, (string, uint256, uint256[][], bool, bytes32, string));
             return Item(0, 0, name, supply, 0, newRequirements, soulbound, claimable, cid);
@@ -493,18 +494,14 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
         require(itemId != 0 || isClass == false, "cannot transfer exp or classes");
 
-        Item memory item = items[itemId];
-
         require(characterSheets.hasRole(CHARACTER, _to), "Can Only transfer Items to an CHARACTER");
 
-        require(item.supply > 0, "Item does not exist");
-
-        _balanceOf[address(this)][item.tokenId] -= amount;
-        _balanceOf[_to][item.tokenId] += amount;
+        _balanceOf[address(this)][tokenId] -= amount;
+        _balanceOf[_to][tokenId] += amount;
 
         items[itemId].supplied++;
 
-        emit ItemTransfered(_to, item.tokenId, itemId);
+        emit ItemTransfered(_to, tokenId, itemId);
     }
 
     /**
