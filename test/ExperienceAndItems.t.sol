@@ -38,7 +38,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         experience.assignClass(playerId, classId);
         vm.stopPrank();
 
-        CharacterSheet memory player = characterSheets.getCharacterSheetByPlayerId(playerId);
+        CharacterSheet memory player = characterSheets.getCharacterSheetByCharacterId(playerId);
 
         assertEq(experience.balanceOf(npc1, tokenId), 1);
 
@@ -46,7 +46,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         vm.prank(admin);
         experience.assignClass(playerId, 1);
 
-        CharacterSheet memory secondPlayer = characterSheets.getCharacterSheetByPlayerId(playerId);
+        CharacterSheet memory secondPlayer = characterSheets.getCharacterSheetByCharacterId(playerId);
 
         assertEq(experience.balanceOf(secondPlayer.ERC6551TokenAddress, 2), 1, 'does not own second class');
     }
@@ -63,7 +63,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         classes[1] = allClasses[1].classId;
         experience.assignClasses(playerId, classes);
         vm.stopPrank();
-        CharacterSheet memory player = characterSheets.getCharacterSheetByPlayerId(playerId);
+        CharacterSheet memory player = characterSheets.getCharacterSheetByCharacterId(playerId);
         assertEq(experience.balanceOf(player.ERC6551TokenAddress, allClasses[0].tokenId), 1, 'incorrect balance');
         assertEq(experience.balanceOf(player.ERC6551TokenAddress, allClasses[1].tokenId), 1, 'incorrect balance token 2');
     }
@@ -86,7 +86,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         vm.prank(player1);
         experience.revokeClass(playerId, allClasses[0].classId);
 
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(playerId);
+        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(playerId);
 
         assertEq(experience.balanceOf(sheet.ERC6551TokenAddress, tokenId), 1, 'Incorrect class balance');
 
@@ -146,7 +146,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         dao.addMember(player2);
 
         uint256 player2Id = characterSheets.rollCharacterSheet(player2, abi.encode('player 2', 'test_token_uri1/'));
-        address player2NPC = characterSheets.getCharacterSheetByPlayerId(player2Id).ERC6551TokenAddress;
+        address player2NPC = characterSheets.getCharacterSheetByCharacterId(player2Id).ERC6551TokenAddress;
         (uint256 _tokenId, uint256 _itemId) = experience.createItemType(newItem);
 
         address[] memory players = new address[](2);

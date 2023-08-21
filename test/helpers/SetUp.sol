@@ -88,7 +88,7 @@ contract SetUp is Test {
         bytes memory encodedData = abi.encode('Test Name', 'test_token_uri/');
 
         uint256 tokenId1 = characterSheets.rollCharacterSheet(player1, encodedData);
-        npc1 = characterSheets.getCharacterSheetByPlayerId(tokenId1).ERC6551TokenAddress;
+        npc1 = characterSheets.getCharacterSheetByCharacterId(tokenId1).ERC6551TokenAddress;
       
         vm.label(address(experienceAndItemsImplementation), 'Gear Implementation');
 

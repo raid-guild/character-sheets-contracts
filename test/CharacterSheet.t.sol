@@ -47,19 +47,19 @@ contract CharacterSheetsTest is Test, SetUp {
 
     }
 
-    function testEquipClassToNPC() public {
+    function testEquipClassToCharacter() public {
         vm.prank(address(experience));
-        characterSheets.equipClassToNPC(1, 1);
+        characterSheets.equipClassToCharacter(1, 1);
 
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(1);
+        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(1);
         assertEq(sheet.classes[0], 1, 'class not assigned');
     }
 
-        function testEquipItemToNPC() public {
+        function testEquipItemToCharacter() public {
         vm.prank(address(experience));
-        characterSheets.equipItemToNPC(1, 1);
+        characterSheets.equipItemToCharacter(1, 1);
 
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(1);
+        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(1);
         assertEq(sheet.inventory[0], 1, 'item not assigned');
     }
 
@@ -91,23 +91,23 @@ contract CharacterSheetsTest is Test, SetUp {
         characterSheets.updateExpContract(player2);
     }
 
-    function testGetCharacterSheetByPlayerId() public {
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(1);
+    function testGetCharacterSheetByCharacterId() public {
+        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(1);
         assertEq(sheet.memberAddress, player1);
 
         vm.expectRevert('This is not a character.');
-        characterSheets.getCharacterSheetByPlayerId(5); 
+        characterSheets.getCharacterSheetByCharacterId(5); 
     }
 
     function testGetPlayerIdFromNftAddress() public {
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(1);
+        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(1);
 
-        uint256 playerId = characterSheets.getPlayerIdByNftAddress(sheet.ERC6551TokenAddress);
+        uint256 playerId = characterSheets.getCharacterIdByNftAddress(sheet.ERC6551TokenAddress);
 
         assertEq(playerId, 1, 'Incorrect playerId');
 
-        vm.expectRevert('This is not the address of an npc');
-        characterSheets.getPlayerIdByNftAddress(player2);
+        vm.expectRevert('This is not the address of an Character');
+        characterSheets.getCharacterIdByNftAddress(player2);
     }
 
     function testRemovePlayer() public {
@@ -131,7 +131,7 @@ contract CharacterSheetsTest is Test, SetUp {
     function testUpdatePlayerName()public {
         vm.prank(player1);
         characterSheets.updatePlayerName('Regard');
-        CharacterSheet memory player = characterSheets.getCharacterSheetByPlayerId(1);
+        CharacterSheet memory player = characterSheets.getCharacterSheetByCharacterId(1);
         assertEq(player.name, 'Regard', 'This player is not regarded');
 
         vm.prank(player2);

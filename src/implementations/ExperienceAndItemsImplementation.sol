@@ -33,7 +33,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
     bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
     bytes32 public constant PLAYER = keccak256("PLAYER");
-    bytes32 public constant NPC = keccak256("NPC");
+    bytes32 public constant CHARACTER = keccak256("CHARACTER");
 
     bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
 
@@ -82,8 +82,8 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         _;
     }
 
-    modifier onlyNPC() {
-        require(characterSheets.hasRole(NPC, msg.sender), "Must be an npc");
+    modifier onlyCharacter() {
+        require(characterSheets.hasRole(CHARACTER, msg.sender), "Must be an CHARACTER");
         _;
     }
 
@@ -276,13 +276,13 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     }
 
     /**
-     * gives an npc token a class.  can only assign one of each class type to each NPC
-     * @param playerId the tokenId of the player
+     * gives an CHARACTER token a class.  can only assign one of each class type to each CHARACTER
+     * @param characterId the tokenId of the player
      * @param classId the classId of the class to be assigned
      */
 
-    function assignClass(uint256 playerId, uint256 classId) public onlyDungeonMaster {
-        CharacterSheet memory player = characterSheets.getCharacterSheetByPlayerId(playerId);
+    function assignClass(uint256 characterId, uint256 classId) public onlyDungeonMaster {
+        CharacterSheet memory player = characterSheets.getCharacterSheetByCharacterId(characterId);
         Class memory newClass = classes[classId];
 
         require(player.memberAddress != address(0x0), "This member is not a player");
@@ -296,67 +296,67 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         emit ClassAssigned(player.ERC6551TokenAddress, newClass.tokenId, classId);
     }
 
-    function equipClass(uint256 playerId, uint256 classId) external onlyNPC returns (bool) {
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(playerId);
+    function equipClass(uint256 characterId, uint256 classId) external onlyCharacter returns (bool) {
+        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(characterId);
         Class memory class = classes[classId];
-        require(balanceOf(sheet.ERC6551TokenAddress, class.tokenId) == 1, "NPC has not been assigned this class.");
-        require(msg.sender == sheet.ERC6551TokenAddress, "Incorrect NPC");
-        characterSheets.equipClassToNPC(playerId, classId);
+        require(balanceOf(sheet.ERC6551TokenAddress, class.tokenId) == 1, "CHARACTER has not been assigned this class.");
+        require(msg.sender == sheet.ERC6551TokenAddress, "Incorrect CHARACTER");
+        characterSheets.equipClassToCharacter(characterId, classId);
         return true;
     }
 
-    function equipItem(uint256 playerId, uint256 itemId) external onlyNPC returns (bool) {
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(playerId);
+    function equipItem(uint256 characterId, uint256 itemId) external onlyCharacter returns (bool) {
+        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(characterId);
         Item memory item = items[itemId];
-        require(balanceOf(sheet.ERC6551TokenAddress, item.tokenId) >= 1, "NPC has not been assigned this class.");
-        require(msg.sender == sheet.ERC6551TokenAddress, "Incorrect NPC");
-        characterSheets.equipItemToNPC(playerId, itemId);
+        require(balanceOf(sheet.ERC6551TokenAddress, item.tokenId) >= 1, "CHARACTER has not been assigned this class.");
+        require(msg.sender == sheet.ERC6551TokenAddress, "Incorrect CHARACTER");
+        characterSheets.equipItemToCharacter(characterId, itemId);
         return true;
     }
 
-    function unequipItem(uint256 playerId, uint256 itemId) external onlyNPC returns (bool) {
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(playerId);
+    function unequipItem(uint256 characterId, uint256 itemId) external onlyCharacter returns (bool) {
+        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(characterId);
         Item memory item = items[itemId];
-        require(balanceOf(sheet.ERC6551TokenAddress, item.tokenId) >= 1, "NPC has not been assigned this class.");
-        require(msg.sender == sheet.ERC6551TokenAddress, "Incorrect NPC");
-        characterSheets.unequipItemFromNPC(playerId, itemId);
+        require(balanceOf(sheet.ERC6551TokenAddress, item.tokenId) >= 1, "CHARACTER has not been assigned this class.");
+        require(msg.sender == sheet.ERC6551TokenAddress, "Incorrect CHARACTER");
+        characterSheets.unequipItemFromCharacter(characterId, itemId);
         return true;
     }
 
-    function unequipClass(uint256 playerId, uint256 classId) external onlyNPC returns (bool) {
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(playerId);
+    function unequipClass(uint256 characterId, uint256 classId) external onlyCharacter returns (bool) {
+        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(characterId);
         Class memory class = classes[classId];
-        require(balanceOf(sheet.ERC6551TokenAddress, class.tokenId) == 1, "NPC has not been assigned this class.");
-        require(msg.sender == sheet.ERC6551TokenAddress, "Incorrect NPC");
-        characterSheets.equipClassToNPC(playerId, classId);
+        require(balanceOf(sheet.ERC6551TokenAddress, class.tokenId) == 1, "CHARACTER has not been assigned this class.");
+        require(msg.sender == sheet.ERC6551TokenAddress, "Incorrect CHARACTER");
+        characterSheets.equipClassToCharacter(characterId, classId);
         return true;
     }
 
-    function assignClasses(uint256 playerId, uint256[] calldata _classIds) external onlyDungeonMaster {
+    function assignClasses(uint256 characterId, uint256[] calldata _classIds) external onlyDungeonMaster {
         for (uint256 i = 0; i < _classIds.length; i++) {
-            assignClass(playerId, _classIds[i]);
+            assignClass(characterId, _classIds[i]);
         }
     }
 
     /**
      * removes a class from a player token
-     * @param playerId the token Id of the player who needs a class removed
+     * @param characterId the token Id of the player who needs a class removed
      * @param classId the class to be removed
      */
 
-    function revokeClass(uint256 playerId, uint256 classId) public returns (bool success) {
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByPlayerId(playerId);
+    function revokeClass(uint256 characterId, uint256 classId) public returns (bool success) {
+        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(characterId);
         uint256 tokenId = classes[classId].tokenId;
         require(tokenId > 0, "this is not a class");
         if (characterSheets.hasRole(DUNGEON_MASTER, msg.sender)) {
-            if(characterSheets.isClassEquipped(playerId, classId)){
-            require(characterSheets.unequipClassFromNPC(playerId, classId), "Player does not have that class");
+            if(characterSheets.isClassEquipped(characterId, classId)){
+            require(characterSheets.unequipClassFromCharacter(characterId, classId), "Player does not have that class");
             }
             _burn(sheet.ERC6551TokenAddress, tokenId, 1);
         } else {
-            require(sheet.memberAddress == msg.sender || sheet.ERC6551TokenAddress == msg.sender, "Must be the player or NPC to remove a class");
-            if(characterSheets.isClassEquipped(playerId, classId)){
-            require(characterSheets.unequipClassFromNPC(playerId, classId), "You do not have that class");
+            require(sheet.memberAddress == msg.sender || sheet.ERC6551TokenAddress == msg.sender, "Must be the player or CHARACTER to remove a class");
+            if(characterSheets.isClassEquipped(characterId, classId)){
+            require(characterSheets.unequipClassFromCharacter(characterId, classId), "You do not have that class");
             }
             _burn(sheet.ERC6551TokenAddress, tokenId, 1);
         }
@@ -387,7 +387,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     {
         (, bool isClass) = findItemOrClassIdFromTokenId(requiredTokenId);
         if (isClass) {
-            require(amount == 1, "NPC can only have one class token");
+            require(amount == 1, "CHARACTER can only have one class token");
         }
 
         Item memory modifiedItem = items[itemId];
@@ -447,7 +447,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
     /**
      * drops loot and/or exp after a completed quest items dropped through dropLoot do cost exp.
-     * @param nftAddress the tokenbound account of the character npc to receive the item
+     * @param nftAddress the tokenbound account of the character CHARACTER to receive the item
      * @param itemIds the item Id's of the loot to be dropped  exp is allways Item Id 0;
      * @param amounts the amounts of each item to be dropped this must be in sync with the item ids
      */
@@ -495,7 +495,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
         Item memory item = items[itemId];
 
-        require(characterSheets.hasRole(NPC, _to), "Can Only transfer Items to an NPC");
+        require(characterSheets.hasRole(CHARACTER, _to), "Can Only transfer Items to an CHARACTER");
 
         require(item.supply > 0, "Item does not exist");
 
@@ -508,14 +508,14 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     }
 
     /**
-     * transfers an item that costs exp.  takes the exp from the npc nft and transfers the item
+     * transfers an item that has requirements.
      * @param NFTAddress the address of the token bound account of the player nft
      * @param tokenId the erc1155 Id of the item to be transfered
      * @param amount the number of items to be transfered
      */
 
     function _transferItemWithReq(address NFTAddress, uint256 tokenId, uint256 amount) private returns (bool success) {
-        require(characterSheets.hasRole(NPC, NFTAddress), "Can only transfer Items to an NPC");
+        require(characterSheets.hasRole(CHARACTER, NFTAddress), "Can only transfer Items to an CHARACTER");
 
         require(amount > 0, "Cannot transfer 0 of anything");
 
@@ -566,7 +566,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
     function claimItems(uint256[] calldata itemIds, uint256[] calldata amounts, bytes32[][] calldata proofs)
         public
-        onlyNPC
+        onlyCharacter
         returns (bool success)
     {
         require(itemIds.length == amounts.length && itemIds.length == proofs.length, "mismatch in array lengths");
@@ -579,7 +579,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
             } else {
                 Item memory claimableItem = items[itemIds[i]];
                 if (claimableItem.claimable == bytes32(0)) {
-                    require(characterSheets.hasRole(NPC, msg.sender), "Only an NPC can claim items");
+                    require(characterSheets.hasRole(CHARACTER, msg.sender), "Only an CHARACTER can claim items");
                     _transferItemWithReq(msg.sender, claimableItem.tokenId, amounts[i]);
                 } else {
                     bytes32 leaf =
