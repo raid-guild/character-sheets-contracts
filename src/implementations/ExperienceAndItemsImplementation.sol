@@ -457,7 +457,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         onlyDungeonMaster
         returns (bool success)
     {
-        require(itemIds.length == amounts.length || nftAddress.length == itemIds.length, "LENGTH MISMATCH");
+        require( nftAddress.length == itemIds.length && itemIds.length == amounts.length, "LENGTH MISMATCH");
         for (uint256 i; i < nftAddress.length; i++) {
     
             for (uint256 j; j < itemIds[i].length; j++) {

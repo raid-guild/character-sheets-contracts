@@ -193,21 +193,35 @@ contract ExperienceAndItemsTest is Test, SetUp {
         (, uint256 _itemId) = createNewItemType('staff');
         address[] memory players = new address[](1);
         players[0] = npc1;
-        uint256[][] memory itemIds =new uint256[][](3);
+        uint256[][] memory itemIds =new uint256[][](2);
         itemIds[0] = new uint256[](3);
         itemIds[0][0] = 0;
         itemIds[0][1] = 1;
         itemIds[0][2] = _itemId;
+        itemIds[1] = new uint256[](3);
+        itemIds[1][0] = 0;
+        itemIds[1][1] = 1;
+        itemIds[1][2] = _itemId;
 
-        uint256[][] memory amounts = new uint256[][](3);
+        uint256[][] memory amounts = new uint256[][](2);
         amounts[0] = new uint256[](3);
         amounts[0][0] = 10000;
         amounts[0][1] = 1;
         amounts[0][2] = 1;
+
+        amounts[1] = new uint256[](3);
+        amounts[1][0] = 1111;
+        amounts[1][1] = 11;
+        amounts[1][2] = 11;
+
+
         vm.prank(player1);
         vm.expectRevert('You must be the Dungeon Master');
         experience.dropLoot(players, itemIds, amounts);
 
+        vm.prank(admin);
+        vm.expectRevert('LENGTH MISMATCH');
+        experience.dropLoot(players, itemIds, amounts);
     }
 
     function testClaimItem() public {
