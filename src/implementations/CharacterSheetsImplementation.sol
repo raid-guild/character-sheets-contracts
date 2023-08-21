@@ -20,9 +20,9 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     Counters.Counter private _tokenIdCounter;
     /// @dev the admin of the contract
     bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
-    /// @dev the EOA of the dao member who owns a character sheet
+    /// @dev the EOA of the dao member who owns a sheet
     bytes32 public constant PLAYER = keccak256("PLAYER");
-    /// @dev the tokenbound account of the character sheet nft
+    /// @dev the tokenbound account of the sheet nft
     bytes32 public constant CHARACTER = keccak256("CHARACTER");
 
     ExperienceAndItemsImplementation public experience;
@@ -30,7 +30,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     IMolochDAO public dao;
 
     string public baseTokenURI;
-
+    
     IERC6551Registry _erc6551Registry;
     address erc6551AccountImplementation;
 
@@ -38,7 +38,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     event PlayerRemoved(uint256 tokenId);
     event ExperienceUpdated(address exp);
     event ClassEquipped(uint256 characterId, uint256 classId);
-    event ItemAdded(uint256 characterId, uint256 itemTokenId);
+    event ItemEquipped(uint256 characterId, uint256 itemTokenId);
     event PlayerNameUpdated(string oldName, string newName);
 
     // tokenId => characterSheet
@@ -231,7 +231,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
 
     function equipItemToCharacter(uint256 characterId, uint256 itemId) external onlyExpContract {
         sheets[characterId].inventory.push(itemId);
-        emit ItemAdded(characterId, itemId);
+        emit ItemEquipped(characterId, itemId);
     }
 
     function getCharacterSheetByCharacterId(uint256 tokenId) public view returns (CharacterSheet memory) {

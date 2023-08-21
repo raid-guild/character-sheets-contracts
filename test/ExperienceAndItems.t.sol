@@ -38,7 +38,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         experience.assignClass(playerId, classId);
         vm.stopPrank();
 
-        CharacterSheet memory player = characterSheets.getCharacterSheetByCharacterId(playerId);
+        characterSheets.getCharacterSheetByCharacterId(playerId);
 
         assertEq(experience.balanceOf(npc1, tokenId), 1);
 
