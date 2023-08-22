@@ -57,7 +57,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         uint256 playerId = characterSheets.memberAddressToTokenId(player1);
         vm.startPrank(admin);
 
-        (uint256 tokenId, uint256 classId) = experience.createClassType(createNewClass('Ballerina'));
+        experience.createClassType(createNewClass('Ballerina'));
         Class[] memory allClasses = experience.getAllClasses();
 
         uint256[] memory classes = new uint256[](2);

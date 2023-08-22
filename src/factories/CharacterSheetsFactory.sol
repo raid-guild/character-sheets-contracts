@@ -1,9 +1,10 @@
 pragma solidity ^0.8.0;
 // SPDX-License-Identifier: MIT
 
-import '../implementations/CharacterSheetsImplementation.sol';
-import '@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import {CharacterSheetsImplementation} from "../implementations/CharacterSheetsImplementation.sol";
+import {ClonesUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ExperienceAndItemsImplementation} from "../implementations/ExperienceAndItemsImplementation.sol";
 
 contract CharacterSheetsFactory is OwnableUpgradeable {
     address public characterSheetsImplementation;
@@ -12,8 +13,8 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     address public erc6551Registry;
     address public erc6551AccountImplementation;
 
-    address[] public CharacterSheetss;
-
+    address[] public characterSheets;
+    uint256 private _nonce;
     event CharacterSheetsCreated(address newCharacterSheets, address creator);
     event CharacterSheetsUpdated(address newCharacterSheets);
     event ExperienceUpdated(address newExperience);
@@ -22,7 +23,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     event ERC6551AccountImplementationUpdated(address newImplementation);
     event HatsUpdated(address newHats);
 
-    uint256 private nonce;
+    
 
     function initialize() external initializer {
         __Context_init_unchained();
@@ -56,8 +57,8 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     /**
      *
      * @param dungeonMasters an array of addresses that will have the DUNGEON_MASTER role.
-     * @param dao the dao who's member list will be able to mint character sheets.
-     * @param default_admin the default admin of the characterSheets.
+     * @param dao the dao who"s member list will be able to mint character sheets.
+     * @param defaultAdmin the default admin of the characterSheets.
      * @param experienceBaseuri the base uri for the experience and items erc1155 contract.
      * @param characterSheetsBaseUri the base uri for the characterSheets erc721 contract.
      * @return the address of the characterSheets clone.
@@ -67,26 +68,26 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     function create(
         address[] calldata dungeonMasters,
         address dao,
-        address default_admin,
+        address defaultAdmin,
         string calldata experienceBaseuri,
         string calldata characterSheetsBaseUri
     ) external returns (address, address) {
         require(
             experienceAndItemsImplementation != address(0) && characterSheetsImplementation != address(0)
                 && erc6551AccountImplementation != address(0),
-            'must update implementation addresses'
+            "update implementation addresses"
         );
 
         address characterSheetsClone =
-            ClonesUpgradeable.cloneDeterministic(characterSheetsImplementation, keccak256(abi.encode(nonce)));
+            ClonesUpgradeable.cloneDeterministic(characterSheetsImplementation, keccak256(abi.encode(_nonce)));
 
         address experienceClone =
-            ClonesUpgradeable.cloneDeterministic(experienceAndItemsImplementation, keccak256(abi.encode(nonce)));
+            ClonesUpgradeable.cloneDeterministic(experienceAndItemsImplementation, keccak256(abi.encode(_nonce)));
 
         bytes memory encodedCharacterSheetParameters = abi.encode(
             dao,
             dungeonMasters,
-            default_admin,
+            defaultAdmin,
             experienceClone,
             erc6551Registry,
             erc6551AccountImplementation,
@@ -94,7 +95,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         );
 
         bytes memory encodedExperienceParameters =
-            abi.encode(dao, default_admin, characterSheetsClone, hatsAddress, experienceBaseuri);
+            abi.encode(dao, defaultAdmin, characterSheetsClone, hatsAddress, experienceBaseuri);
 
         CharacterSheetsImplementation(characterSheetsClone).initialize(encodedCharacterSheetParameters);
 
@@ -102,7 +103,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
         emit CharacterSheetsCreated(characterSheetsClone, msg.sender);
         emit ExperienceAndItemsCreated(experienceClone, msg.sender);
-        nonce++;
+        _nonce++;
         return (characterSheetsClone, experienceClone);
     }
 }

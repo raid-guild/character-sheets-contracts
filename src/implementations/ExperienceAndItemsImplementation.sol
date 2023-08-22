@@ -17,7 +17,6 @@ import {Item, Class, CharacterSheet} from "../lib/Structs.sol";
 
 //solhint-disable-next-line
 import "../lib/Errors.sol";
-import "forge-std/console2.sol";
 
 /**
  * @title Experience and Items
@@ -51,9 +50,9 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     /// @dev mapping of class token types.  the class Id is the location in this mapping of the class.
     mapping(uint256 => Class) public classes;
     /// @dev mapping of the erc1155 tokenId to the itemID.  if the 1155 token is a class it will not be in this mapping.
-    mapping(uint256 => uint256) internal tokenIdToItemId;
+    mapping(uint256 => uint256) internal _tokenIdToItemId;
     /// @dev mapping of erc1155 tokenID of a class to the class Id;
-    mapping(uint256 => uint256) internal tokenIdToClassId;
+    mapping(uint256 => uint256) internal _tokenIdToClassId;
     /// @dev tokenId 0 is experience which is infinite supply and can be minted by any dungeon master or claimed
     /// by a player.
     uint256 public constant EXPERIENCE = 0;
@@ -155,7 +154,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         _tokenIdCounter.increment();
 
         totalItemTypes++;
-        tokenIdToItemId[_tokenId] = _itemId;
+        _tokenIdToItemId[_tokenId] = _itemId;
         return (_tokenId, _itemId);
     }
 
@@ -181,7 +180,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         _newClass.tokenId = _tokenId;
         _newClass.classId = _classId;
         classes[_classId] = _newClass;
-        tokenIdToClassId[_tokenId] = _classId;
+        _tokenIdToClassId[_tokenId] = _classId;
         _setURI(_tokenId, _newClass.cid);
         emit NewClassCreated(_tokenId, _classId, _newClass.name);
         totalClasses++;
@@ -573,12 +572,12 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
             isClass = false;
             return (itemOrClassId, isClass);
         }
-        if (tokenIdToItemId[tokenId] > 0) {
-            itemOrClassId = tokenIdToItemId[tokenId];
+        if (_tokenIdToItemId[tokenId] > 0) {
+            itemOrClassId = _tokenIdToItemId[tokenId];
             isClass = false;
             return (itemOrClassId, isClass);
         } else {
-            itemOrClassId = tokenIdToClassId[tokenId];
+            itemOrClassId = _tokenIdToClassId[tokenId];
             if(itemOrClassId == 0){
                 revert Errors.ItemError();
             }

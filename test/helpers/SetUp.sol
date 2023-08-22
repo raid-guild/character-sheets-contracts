@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 pragma abicoder v2;
-   //solhint-disable
+//solhint-disable
 import "forge-std/Test.sol";
 import "../../src/implementations/ExperienceAndItemsImplementation.sol";
 import "../../src/factories/CharacterSheetsFactory.sol";
@@ -10,7 +10,7 @@ import "../../src/interfaces/IMolochDAO.sol";
 import "../../src/mocks/mockMoloch.sol";
 import "../../src/mocks/MockHats.sol";
 import "../../src/lib/Structs.sol";
-import "murky/Merkle.sol";
+import "../../lib/murky/src/Merkle.sol";
 import {ERC6551Registry} from "../../src/mocks/ERC6551Registry.sol";
 import {NPCAccount} from "../../src/npcAccount/NPCAccount.sol";
 
@@ -86,7 +86,7 @@ contract SetUp is Test {
         bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
         uint256 tokenId1 = characterSheets.rollCharacterSheet(player1, encodedData);
         npc1 = characterSheets.getCharacterSheetByCharacterId(tokenId1).ERC6551TokenAddress;
-        
+
 
         vm.label(address(experienceAndItemsImplementation), "Gear Implementation");
 

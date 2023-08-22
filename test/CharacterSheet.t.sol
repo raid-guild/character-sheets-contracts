@@ -6,7 +6,6 @@ pragma abicoder v2;
 import 'forge-std/Test.sol';
 import './helpers/SetUp.sol';
 import '../src/lib/Errors.sol';
-import './helpers/ErrorSelectors.sol';
 
 import 'forge-std/console2.sol';
 
