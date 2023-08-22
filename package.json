@@ -2,7 +2,8 @@
 	"dependencies": {
 		"@openzeppelin/contracts": "^4.9.2",
 		"@openzeppelin/contracts-upgradeable": "^4.9.2",
-		"@openzeppelin/merkle-tree": "^1.0.5"
+		"@openzeppelin/merkle-tree": "^1.0.5",
+		"solhint-plugin-prettier": "^0.0.5"
 	},
 	"devDependencies": {
 		"@nomicfoundation/hardhat-chai-matchers": "^2.0.0",

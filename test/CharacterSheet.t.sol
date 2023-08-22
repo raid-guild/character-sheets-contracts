@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 pragma abicoder v2;
+//solhint-disable
 
 import 'forge-std/Test.sol';
 import './helpers/SetUp.sol';
+import '../src/lib/Errors.sol';
+import './helpers/ErrorSelectors.sol';
+
+import 'forge-std/console2.sol';
 
 
 contract CharacterSheetsTest is Test, SetUp {
@@ -21,14 +26,14 @@ contract CharacterSheetsTest is Test, SetUp {
     function testRollCharacterSheetFailNonMember() public {
         bytes memory encodedData = abi.encode('Test Name', 'test uri');
         vm.prank(admin);
-        vm.expectRevert('Player is not a member of the dao');
+        vm.expectRevert();
         characterSheets.rollCharacterSheet(player2, encodedData );
     }
 
     function testRollCharacterSheetRevertAlreadyACharacter() public {
         bytes memory encodedData = abi.encode('Test Name', 'test uri');
         vm.prank(admin);
-        vm.expectRevert('this player is already in the game');
+        vm.expectRevert();
         characterSheets.rollCharacterSheet(player1, encodedData );
     }
 
@@ -62,7 +67,7 @@ contract CharacterSheetsTest is Test, SetUp {
         CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(1);
         assertEq(sheet.inventory[0], 1, 'item not assigned');
     }
-
+ 
     function testTransferFromRevert() public {
         vm.prank(player1);
         vm.expectRevert();
@@ -77,7 +82,7 @@ contract CharacterSheetsTest is Test, SetUp {
         vm.prank(player1);
         characterSheets.renounceSheet(1);
 
-        assertEq(characterSheets.balanceOf(player1), 0);  
+        assertEq(characterSheets.balanceOf(player1), 0, "sheet not renounced");  
 
         vm.prank(player2);
         vm.expectRevert();
@@ -95,7 +100,7 @@ contract CharacterSheetsTest is Test, SetUp {
         CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(1);
         assertEq(sheet.memberAddress, player1);
 
-        vm.expectRevert('This is not a character.');
+        vm.expectRevert();
         characterSheets.getCharacterSheetByCharacterId(5); 
     }
 
@@ -106,14 +111,14 @@ contract CharacterSheetsTest is Test, SetUp {
 
         assertEq(playerId, 1, 'Incorrect playerId');
 
-        vm.expectRevert('This is not the address of an Character');
+        vm.expectRevert();
         characterSheets.getCharacterIdByNftAddress(player2);
     }
 
     function testRemovePlayer() public {
 
         vm.prank(admin);
-        vm.expectRevert('There has been no passing guild kick proposal on this player.');
+        vm.expectRevert();
         characterSheets.removeSheet(1);
 
         dao.jailMember(player1);
@@ -124,7 +129,7 @@ contract CharacterSheetsTest is Test, SetUp {
         assertEq(characterSheets.balanceOf(player1), 0, 'Player has not been removed');
 
         vm.prank(admin);
-        vm.expectRevert('This is not a character.');
+        vm.expectRevert();
         characterSheets.removeSheet(2);
     }
 

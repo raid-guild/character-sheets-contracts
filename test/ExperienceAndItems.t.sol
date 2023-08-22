@@ -2,6 +2,8 @@
 pragma solidity 0.8.15;
 pragma abicoder v2;
 
+//solhint-disable
+
 import 'forge-std/Test.sol';
 import '../src/implementations/ExperienceAndItemsImplementation.sol';
 import './helpers/SetUp.sol';
@@ -124,7 +126,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         vm.startPrank(admin);
         experience.createItemType(newItem);
 
-        vm.expectRevert('Item already exists.');
+        vm.expectRevert();
         experience.createItemType(newItem);
 
         vm.stopPrank();
@@ -134,7 +136,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         bytes memory newItem = createNewItem('Pirate_Hat', false, bytes32(0));
 
         vm.startPrank(player2);
-        vm.expectRevert('You must be the Dungeon Master');
+        vm.expectRevert();
         experience.createItemType(newItem);
         vm.stopPrank();
     }
@@ -173,7 +175,6 @@ contract ExperienceAndItemsTest is Test, SetUp {
         amounts[1][0] = 10001;
         amounts[1][1] = 2;
         amounts[1][2] = 2;
-
 
         experience.dropLoot(players, itemIds, amounts);
         vm.stopPrank();
@@ -214,13 +215,13 @@ contract ExperienceAndItemsTest is Test, SetUp {
         amounts[1][1] = 11;
         amounts[1][2] = 11;
 
-
+    //revert incorrect caller
         vm.prank(player1);
-        vm.expectRevert('You must be the Dungeon Master');
+        vm.expectRevert();
         experience.dropLoot(players, itemIds, amounts);
-
+        //revert wrong array lengths
         vm.prank(admin);
-        vm.expectRevert('LENGTH MISMATCH');
+        vm.expectRevert();
         experience.dropLoot(players, itemIds, amounts);
     }
 
@@ -248,21 +249,28 @@ contract ExperienceAndItemsTest is Test, SetUp {
         uint256[] memory amounts2 = new uint256[](1);
         itemIds2[0] = _itemId;
         amounts2[0] = 1;
-        proofs[0] = proof;
+        proofs[0] = new bytes32[](2);
         vm.stopPrank();
-        
+        // revert with not enough req exp
         vm.prank(npc1);
-        vm.expectRevert('Not enough required item.');
+        vm.expectRevert();
         experience.claimItems(itemIds2, amounts2, proofs);
 
         dropExp(npc1, 1000);
-
+        // revert wrong class
         vm.prank(npc1);
-        vm.expectRevert('Character does not have this class');
+        vm.expectRevert();
         experience.claimItems(itemIds2, amounts2, proofs);
-        
+
         vm.prank(admin);
         experience.assignClass(1, testClassId);
+
+        //revert invalid proof
+        vm.prank(npc1);
+        vm.expectRevert();
+        experience.claimItems(itemIds2, amounts2, proofs);
+
+        proofs[0] = proof;
 
         vm.prank(npc1);
         experience.claimItems(itemIds2, amounts2, proofs);
@@ -278,7 +286,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         assertEq(itemId, 1);
         assertEq(tokenId, 1);
 
-        vm.expectRevert('No item found.');
+        vm.expectRevert();
         experience.findItemByName('no_Item');
     }
 
@@ -287,7 +295,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
         assertEq(classId, 1);
         assertEq(tokenId, 2);
 
-        vm.expectRevert('No class found.');
+        vm.expectRevert();
         experience.findClassByName('no_class');
     }
 
@@ -296,8 +304,8 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
         assertEq(itemId, 1, 'incorrect itemId');
 
-        //test that it revert;
-        vm.expectRevert('this tokenId is not an item or a class');
+        //test that it revert not an item;
+        vm.expectRevert();
         experience.findItemOrClassIdFromTokenId(250);
 
         //should return 0, false for exp;

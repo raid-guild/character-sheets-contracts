@@ -2,8 +2,8 @@
 pragma solidity 0.8.15;
 pragma abicoder v2;
 
-import 'forge-std/Test.sol';
-import './helpers/SetUp.sol';
+import "forge-std/Test.sol";
+import "./helpers/SetUp.sol";
 
 contract CharacterSheetsTest is Test, SetUp {
     event CharacterSheetsCreated(address newCharacterSheets, address creator);
@@ -21,11 +21,12 @@ contract CharacterSheetsTest is Test, SetUp {
         address _erc6551Registry = characterSheetsFactory.erc6551Registry();
         address _erc6551AccountImplementation = characterSheetsFactory.erc6551AccountImplementation();
 
-        assertEq(_characterSheetsImplementation, address(characterSheetsImplementation), 'wrong character sheets');
-        assertEq(_experienceAndItemsImplementation, address(experienceAndItemsImplementation), 'wrong experience');
-        assertEq(_hatsAddress, address(hats), 'wrong hats');
-        assertEq(_erc6551Registry, address(erc6551Registry), 'wrong registry');
-        assertEq(_erc6551AccountImplementation, address(erc6551Implementation), 'wrong erc6551 account implementation.');
+        assertEq(_characterSheetsImplementation, address(characterSheetsImplementation), "wrong character sheets");
+        assertEq(_experienceAndItemsImplementation, address(experienceAndItemsImplementation), "wrong experience");
+        assertEq(_hatsAddress, address(hats), "wrong hats");
+        assertEq(_erc6551Registry, address(erc6551Registry), "wrong registry");
+        assertEq(_erc6551AccountImplementation, address(erc6551Implementation),
+        "wrong erc6551 account implementation.");
     }
 
     function testUpdateCharacterSheetsImplementation() public {
@@ -76,11 +77,11 @@ contract CharacterSheetsTest is Test, SetUp {
                 dungeonMasters,
                 address(dao),
                 player1,
-                'new_test_base_uri_experience/',
-                'new_test_base_uri_character_sheets/'
+                "new_test_base_uri_experience/",
+                "new_test_base_uri_character_sheets/"
             );
-            assertEq(address(CharacterSheetsImplementation(sheets).experience()), exp, 'wrong experience');
-            assertEq(address(ExperienceAndItemsImplementation(exp).characterSheets()), sheets, 'wrong sheets');
+            assertEq(address(CharacterSheetsImplementation(sheets).experience()), exp, "wrong experience");
+            assertEq(address(ExperienceAndItemsImplementation(exp).characterSheets()), sheets, "wrong sheets");
         }
     }
 }

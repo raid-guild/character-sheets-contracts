@@ -13,13 +13,15 @@ struct Item {
     uint256 supply; 
     /// @dev the number of this item that have been given out or claimed
     uint256 supplied; 
-    /// @dev an array of arrays with length of 2. containing the required itemId and the amount required eg. [[itemId, amount], [itemId, amount]]
+    /// @dev an array of arrays with length of 2. containing the required itemId and the amount required 
+    /// eg. [[itemId, amount], [itemId, amount]]
     uint256[][] requirements;
     /// @dev is this item soulbound or not
     bool soulbound; 
 
     /// @dev  claimable: if bytes32(0) then  items are claimable by anyone, otherwise upload a merkle root
-    /// of all addresses allowed to claim.  if not claimable at all use any random bytes32(n) besides bytes32(0) so all merkle proofs will fail.
+    /// of all addresses allowed to claim.  if not claimable at all use any random bytes32(n) besides bytes32(0)
+    /// so all merkle proofs will fail.
     bytes32 claimable; 
     /// @dev this item's image/metadata uri
     string cid; 
