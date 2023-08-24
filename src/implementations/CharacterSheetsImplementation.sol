@@ -44,6 +44,8 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     // member address => characterSheet token Id.
     mapping(address => uint256) public memberAddressToTokenId;
 
+    mapping(address => bool)public jailed;
+
     uint256 public totalSheets;
 
     event NewPlayer(uint256 tokenId, address memberAddress);
@@ -51,7 +53,8 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     event ExperienceUpdated(address exp);
     event ClassEquipped(uint256 characterId, uint256 classId);
     event ItemEquipped(uint256 characterId, uint256 itemTokenId);
-    event PlayerNameUpdated(string oldName, string newName);
+    event CharacterNameUpdated(string oldName, string newName);
+    event PlayerJailed(address playerAddress, bool thrownInJail);
 
     modifier onlyExpContract() {
         require(msg.sender == address(experience), "not the experience contract");
@@ -125,16 +128,23 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
 
     function rollCharacterSheet(address _to, bytes calldata _data)
         external
-        onlyRole(DUNGEON_MASTER)
         returns (uint256)
     {
         if (erc6551AccountImplementation == address(0) || address(_erc6551Registry) == address(0)) {
             revert Errors.VariableNotSet();
         }
 
-        if (dao.members(_to).shares == 0){ 
+        if (dao.members(_to).shares > 100){ 
             revert Errors.DaoError();
             }
+        
+        if(_to != msg.sender){
+            revert Errors.PlayerOnly();
+        }
+
+        if(jailed[msg.sender]){
+            revert Errors.Jailed();
+        }
 
         string memory _newName;
         string memory _tokenURI;
@@ -284,11 +294,16 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
      * allows a player to update their name in the contract
      * @param newName the new player name
      */
-    function updatePlayerName(string calldata newName) public onlyRole(PLAYER) {
+    function updateCharacterName(string calldata newName) public onlyRole(PLAYER) {
         string memory oldName = sheets[memberAddressToTokenId[msg.sender]].name;
         sheets[memberAddressToTokenId[msg.sender]].name = newName;
 
-        emit PlayerNameUpdated(oldName, newName);
+        emit CharacterNameUpdated(oldName, newName);
+    }
+
+    function jailPlayer(address playerAddress, bool throwInJail)public onlyRole(DUNGEON_MASTER){
+        jailed[playerAddress] = throwInJail;
+        emit PlayerJailed(playerAddress, throwInJail);
     }
 
     function setExperienceAndGearContract(address _experience) public onlyRole(DUNGEON_MASTER) {

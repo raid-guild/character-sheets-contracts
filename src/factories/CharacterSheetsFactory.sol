@@ -45,7 +45,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         emit RegistryUpdated(erc6551Registry);
     }
 
-    function updaterERC6551AccountImplementation(address _newImplementation) external onlyOwner {
+    function updateERC6551AccountImplementation(address _newImplementation) external onlyOwner {
         erc6551AccountImplementation = _newImplementation;
         emit ERC6551AccountImplementationUpdated(_newImplementation);
     }

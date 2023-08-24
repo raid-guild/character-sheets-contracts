@@ -132,15 +132,15 @@ contract CharacterSheetsTest is Test, SetUp {
         characterSheets.removeSheet(2);
     }
 
-    function testUpdatePlayerName()public {
+    function testUpdateCharacterName()public {
         vm.prank(player1);
-        characterSheets.updatePlayerName('Regard');
+        characterSheets.updateCharacterName('Regard');
         CharacterSheet memory player = characterSheets.getCharacterSheetByCharacterId(1);
         assertEq(player.name, 'Regard', 'This player is not regarded');
 
         vm.prank(player2);
         vm.expectRevert('AccessControl: account 0x000000000000000000000000000000000000babe is missing role 0x0f98b3a5774fbfdf19646dba94a6c08f13f4c341502334a57724de46497192c3');
-        characterSheets.updatePlayerName('Regard');
+        characterSheets.updateCharacterName('Regard');
     }
     
 }

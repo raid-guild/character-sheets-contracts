@@ -12,7 +12,7 @@ import "../../src/mocks/MockHats.sol";
 import "../../src/lib/Structs.sol";
 import "../../lib/murky/src/Merkle.sol";
 import {ERC6551Registry} from "../../src/mocks/ERC6551Registry.sol";
-import {NPCAccount} from "../../src/npcAccount/NPCAccount.sol";
+import {CharacterAccount} from "../../src/characterAccount/CharacterAccount.sol";
 
 import "forge-std/console2.sol";
 
@@ -46,7 +46,7 @@ contract SetUp is Test {
     
 
     ERC6551Registry erc6551Registry;
-    NPCAccount erc6551Implementation;
+    CharacterAccount erc6551Implementation;
 
     function setUp() public {
         vm.startPrank(admin);
@@ -64,7 +64,7 @@ contract SetUp is Test {
         vm.label(address(characterSheetsImplementation), "CharacterSheets Implementation");
 
         erc6551Registry = new ERC6551Registry();
-        erc6551Implementation = new NPCAccount();
+        erc6551Implementation = new CharacterAccount();
 
         dao.addMember(player1);
         dao.addMember(admin);
@@ -74,7 +74,7 @@ contract SetUp is Test {
         address[] memory dungeonMasters = new address[](1);
         dungeonMasters[0] = admin;
         characterSheetsFactory.updateERC6551Registry(address(erc6551Registry));
-        characterSheetsFactory.updaterERC6551AccountImplementation(address(erc6551Implementation));
+        characterSheetsFactory.updateERC6551AccountImplementation(address(erc6551Implementation));
         (characterSheetsAddress, experienceAddress) = characterSheetsFactory.create(
             dungeonMasters, address(dao), rando, "test_base_uri_experience/", "test_base_uri_character_sheets/"
         );
@@ -82,17 +82,19 @@ contract SetUp is Test {
         characterSheets = CharacterSheetsImplementation(characterSheetsAddress);
         experience = ExperienceAndItemsImplementation(experienceAddress);
         characterSheets.setERC6551Registry(address(erc6551Registry));
-
+        (testItemTokenId, testItemId) = experience.createItemType(createNewItem("test_item", false, bytes32(0)));
+        (testClassTokenId, testClassId) = experience.createClassType(createNewClass("test_class"));
+         vm.stopPrank();
+         
         bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
+        vm.prank(player1);
         uint256 tokenId1 = characterSheets.rollCharacterSheet(player1, encodedData);
         npc1 = characterSheets.getCharacterSheetByCharacterId(tokenId1).ERC6551TokenAddress;
 
 
         vm.label(address(experienceAndItemsImplementation), "Gear Implementation");
 
-        (testItemTokenId, testItemId) = experience.createItemType(createNewItem("test_item", false, bytes32(0)));
-        (testClassTokenId, testClassId) = experience.createClassType(createNewClass("test_class"));
-        vm.stopPrank();
+       
 
         assertTrue(
             characterSheets.hasRole(keccak256("DUNGEON_MASTER"), admin),

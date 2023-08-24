@@ -54,7 +54,7 @@ contract CharacterSheetsTest is Test, SetUp {
         vm.prank(admin);
         vm.expectEmit(false, false, false, false);
         emit ERC6551AccountImplementationUpdated(address(1));
-        characterSheetsFactory.updaterERC6551AccountImplementation(address(1));
+        characterSheetsFactory.updateERC6551AccountImplementation(address(1));
     }
 
     function testUpdateHats() public {
