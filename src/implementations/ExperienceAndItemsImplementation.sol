@@ -6,13 +6,11 @@ import {MerkleProof} from "openzeppelin/utils/cryptography/MerkleProof.sol";
 import {Strings} from "openzeppelin/utils/Strings.sol";
 import {ERC1155Receiver} from "openzeppelin/token/ERC1155/utils/ERC1155Receiver.sol";
 import {ERC1155, ERC1155TokenReceiver} from "hats-protocol/lib/ERC1155/ERC1155.sol";
-import {IHats} from "hats-protocol/src/Interfaces/IHats.sol";
 import {IERC721} from "openzeppelin/token/ERC721/IERC721.sol";
 import {ERC1155Holder} from "openzeppelin/token/ERC1155/utils/ERC1155Holder.sol";
 import {Counters} from "openzeppelin/utils/Counters.sol";
 
 import {CharacterSheetsImplementation} from "../implementations/CharacterSheetsImplementation.sol";
-import {IMolochDAO} from "../interfaces/IMolochDAO.sol";
 import {Item, Class, CharacterSheet} from "../lib/Structs.sol";
 
 //solhint-disable-next-line
@@ -29,8 +27,6 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     using Strings for uint256;
     using Counters for Counters.Counter;
 
-    Counters.Counter private _itemsCounter;
-    Counters.Counter private _classesCounter;
     Counters.Counter private _tokenIdCounter;
 
     bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
@@ -47,31 +43,20 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
     /// @dev mapping itemId => item struct for item types.;
     mapping(uint256 => Item) public items;
-    /// @dev mapping of class token types.  the class Id is the location in this mapping of the class.
-    mapping(uint256 => Class) public classes;
-    /// @dev mapping of the erc1155 tokenId to the itemID.  if the 1155 token is a class it will not be in this mapping.
-    mapping(uint256 => uint256) internal _tokenIdToItemId;
-    /// @dev mapping of erc1155 tokenID of a class to the class Id;
-    mapping(uint256 => uint256) internal _tokenIdToClassId;
+
     /// @dev tokenId 0 is experience which is infinite supply and can be minted by any dungeon master or claimed
     /// by a player.
     uint256 public constant EXPERIENCE = 0;
-    /// @dev the total number of class types that have been created
-    uint256 public totalClasses;
+
     /// @dev the total number of item types that have been created
     uint256 public totalItemTypes;
     /// @dev the total amount of experience that has been given out
     uint256 public totalExperience;
 
-    /// @dev the interface for the molochDao who's members are allowed character sheets
-    IMolochDAO public molochDao;
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
     CharacterSheetsImplementation public characterSheets;
-    IHats public hats; // not implemented
 
     event NewItemTypeCreated(uint256 erc1155TokenId, uint256 itemId, string name);
-    event NewClassCreated(uint256 erc1155TokenId, uint256 classId, string name);
-    event ClassAssigned(address classAssignedTo, uint256 erc1155TokenId, uint256 classId);
     event ItemTransfered(address itemTransferedTo, uint256 erc1155TokenId, uint256 itemId);
     event ItemUpdated(uint256 itemId);
 
@@ -98,24 +83,15 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
     function initialize(bytes calldata _encodedData) external initializer {
         address owner;
-        address dao;
         address characterSheetsAddress;
         address hatsAddress;
         string memory baseUri;
-        (dao, owner, characterSheetsAddress, hatsAddress, baseUri) =
-            abi.decode(_encodedData, (address, address, address, address, string));
-
-        hats = IHats(hatsAddress);
+        (owner, characterSheetsAddress, hatsAddress, baseUri) =
+            abi.decode(_encodedData, (address, address, address, string));
         _baseURI = baseUri;
-
-        molochDao = IMolochDAO(dao);
         characterSheets = CharacterSheetsImplementation(characterSheetsAddress);
 
-        _itemsCounter.increment();
-        _classesCounter.increment();
         _tokenIdCounter.increment();
-
-        // hats.mintTopHat(owner, "Default Admin hat", baseUri);
     }
 
     /**
@@ -139,69 +115,19 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
             revert Errors.DuplicateError();
         }
         uint256 _tokenId = _tokenIdCounter.current();
-        uint256 _itemId = _itemsCounter.current();
 
         _setURI(_tokenId, newItem.cid);
         _mint(address(this), _tokenId, newItem.supply, bytes(newItem.cid));
 
         newItem.tokenId = _tokenId;
-        newItem.itemId = _itemId;
-        items[_itemId] = newItem;
+        items[_tokenId] = newItem;
 
-        emit NewItemTypeCreated(_itemId, _tokenId, newItem.name);
+        emit NewItemTypeCreated(_tokenId, newItem.name);
 
-        _itemsCounter.increment();
         _tokenIdCounter.increment();
 
         totalItemTypes++;
-        _tokenIdToItemId[_tokenId] = _itemId;
-        return (_tokenId, _itemId);
-    }
-
-    /**
-     *
-     * @param classData encoded class data includes
-     - string name
-     - uint256 supply
-     - string cid
-     * @return tokenId the ERC1155 token id
-     * @return classId the location of the class struct in the classes mapping
-     */
-
-    function createClassType(bytes calldata classData)
-        external
-        onlyDungeonMaster
-        returns (uint256 tokenId, uint256 classId)
-    {
-        Class memory _newClass = _createClassStruct(classData);
-        uint256 _classId = _classesCounter.current();
-        uint256 _tokenId = _tokenIdCounter.current();
-
-        _newClass.tokenId = _tokenId;
-        _newClass.classId = _classId;
-        classes[_classId] = _newClass;
-        _tokenIdToClassId[_tokenId] = _classId;
-        _setURI(_tokenId, _newClass.cid);
-        emit NewClassCreated(_tokenId, _classId, _newClass.name);
-        totalClasses++;
-        _classesCounter.increment();
-        _tokenIdCounter.increment();
-
-        return (_tokenId, _classId);
-    }
-
-
-    function equipClass(uint256 characterId, uint256 classId) external onlyCharacter returns (bool) {
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(characterId);
-        Class memory class = classes[classId];
-        if(balanceOf(sheet.ERC6551TokenAddress, class.tokenId) != 1){
-            revert Errors.ClassError();
-        }
-        if(msg.sender != sheet.ERC6551TokenAddress){
-            revert Errors.CharacterOnly();
-        }
-        characterSheets.equipClassToCharacter(characterId, classId);
-        return true;
+        return _tokenId;
     }
 
     function equipItem(uint256 characterId, uint256 itemId) external onlyCharacter returns (bool) {
@@ -230,24 +156,9 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         return true;
     }
 
-    function unequipClass(uint256 characterId, uint256 classId) external onlyCharacter returns (bool) {
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(characterId);
-        Class memory class = classes[classId];
-        if(balanceOf(sheet.ERC6551TokenAddress, class.tokenId) != 1){
-            revert Errors.ClassError();
-        }
-        if(msg.sender != sheet.ERC6551TokenAddress){
-            revert Errors.CharacterOnly();
-        }
-        characterSheets.equipClassToCharacter(characterId, classId);
-        return true;
-    }
 
-    function assignClasses(uint256 characterId, uint256[] calldata _classIds) external onlyDungeonMaster {
-        for (uint256 i = 0; i < _classIds.length; i++) {
-            assignClass(characterId, _classIds[i]);
-        }
-    }
+
+ 
 
     /**
      * drops loot and/or exp after a completed quest items dropped through dropLoot do cost exp.
@@ -318,66 +229,8 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         success = true;
     }
 
-    /**
-     * gives an CHARACTER token a class.  can only assign one of each class type to each CHARACTER
-     * @param characterId the tokenId of the player
-     * @param classId the classId of the class to be assigned
-     */
 
-    function assignClass(uint256 characterId, uint256 classId) public onlyDungeonMaster {
-        CharacterSheet memory player = characterSheets.getCharacterSheetByCharacterId(characterId);
-        Class memory newClass = classes[classId];
-
-        if(player.memberAddress == address(0x0)){
-            revert Errors.PlayerError();
-        }
-        if(newClass.tokenId == 0){
-            revert Errors.ClassError();
-        }
-        if(balanceOf(player.ERC6551TokenAddress, newClass.tokenId) != 0){
-            revert Errors.ClassError();
-        }
-
-        _mint(player.ERC6551TokenAddress, newClass.tokenId, 1, bytes(newClass.cid));
-
-        classes[classId].supply++;
-
-        emit ClassAssigned(player.ERC6551TokenAddress, newClass.tokenId, classId);
-    }
-
-    /**
-     * removes a class from a player token
-     * @param characterId the token Id of the player who needs a class removed
-     * @param classId the class to be removed
-     */
-
-    function revokeClass(uint256 characterId, uint256 classId) public returns (bool success) {
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(characterId);
-        uint256 tokenId = classes[classId].tokenId;
-        if(tokenId == 0){
-            revert Errors.ClassError();
-        }
-        if (characterSheets.hasRole(DUNGEON_MASTER, msg.sender)) {
-            if (characterSheets.isClassEquipped(characterId, classId)) {
-                if(
-                    !characterSheets.unequipClassFromCharacter(characterId, classId)){
-                        revert Errors.ClassError();
-                    }
-            }
-            _burn(sheet.ERC6551TokenAddress, tokenId, 1);
-        } else {
-            if(sheet.memberAddress != msg.sender && sheet.ERC6551TokenAddress != msg.sender){
-                revert Errors.OwnershipError();
-            }
-            if (characterSheets.isClassEquipped(characterId, classId)) {
-                if(!characterSheets.unequipClassFromCharacter(characterId, classId)){
-                    revert Errors.ClassError();
-                }
-            }
-            _burn(sheet.ERC6551TokenAddress, tokenId, 1);
-        }
-        success = true;
-    }
+    
 
     /**
      * adds a new required item to the array of requirments in the item type
@@ -386,18 +239,12 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      * @param amount the amount of the required item to be required
      */
 
-    function addItemOrClassRequirement(uint256 itemId, uint256 requiredTokenId, uint256 amount)
+    function addItemRequirement(uint256 itemId, uint256 requiredTokenId, uint256 amount)
         public
         onlyDungeonMaster
         returns (bool success)
     {
-        (, bool isClass) = findItemOrClassIdFromTokenId(requiredTokenId);
-        if (isClass) {
-            if(amount != 1){
-                revert Errors.ClassError();
-            }
-        }
-
+ 
         Item memory modifiedItem = items[itemId];
         bool duplicate;
 

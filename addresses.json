@@ -15,8 +15,8 @@
     "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
     "Dao": "",
     "CharacterSheetsFactory": "",
-    "CharacterSheetsImplementation": "",
+    "CharacterSheetsImplementation": "0x0C3Ea548002E5AF4c54318af2764D33eDf596287",
     "ExperienceAndItemsImplementation": "",
-    "CharacterAccount": "0x6Ea60E4A7BCf8A49D363Ab685a3052cFf3f95963"
+    "CharacterAccount": "0xe7C1EF9Df47C7599bF5fcF688165b4C143a79cF7"
   }
 }

@@ -95,7 +95,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         );
 
         bytes memory encodedExperienceParameters =
-            abi.encode(dao, defaultAdmin, characterSheetsClone, hatsAddress, experienceBaseuri);
+            abi.encode(defaultAdmin, characterSheetsClone, hatsAddress, experienceBaseuri);
 
         CharacterSheetsImplementation(characterSheetsClone).initialize(encodedCharacterSheetParameters);
 
