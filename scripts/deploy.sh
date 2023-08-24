@@ -47,35 +47,21 @@ fi
 CALLDATA=$(cast calldata "run(string)" $1)
 PRIVATE_KEY=$PRIVATE_KEY forge script scripts/$2.s.sol:Deploy$2 -s $CALLDATA --rpc-url $NETWORK
 
-# ADDRESS=$(echo "$DEPLOYMENT" | grep "Contract Address:" | sed -n 's/.*: \(0x[0-9a-hA-H]\{40\}\)/\1/p')
-
 read -p "Please verify the data and confirm the deployment (y/n):" CONFIRMATION
 
 if [[ $CONFIRMATION == "y" || $CONFIRMATION == "Y" ]]
     then
-        echo "Verifying..."
+        echo "Deploying..."
 
         if [[ $3 == "--verify"  ]]
             then
-            if [[  $2 == "CharacterAccount" ]]
-            then
-            echo "Verifying deployment at: $ADDRESS"
-                FORGE_OUTPUT=$(forge script scripts/$2.s.sol:Deploy$2 --broadcast -s $CALLDATA --rpc-url $NETWORK  --verify)
+
+            FORGE_OUTPUT=$(forge script scripts/$2.s.sol:Deploy$2 --broadcast -s $CALLDATA --rpc-url $NETWORK  --verify)
            
-            elif [[ $2 == "CharacterSheetsImplementation" || $2 == "ExperienceAndItemsImplementation" ]]
-             then
-             echo "Verifying deployment at: $ADDRESS"
-                FORGE_OUTPUT=$(forge verify-contract --etherscan-api-key $ETHERSCAN_API_KEY $ADDRESS src/implementations/$2.sol:$2 )
-           
-            elif [[ $2 == "CharacterSheetsFactory" ]]
-            then
-             echo "Verifying deployment at: $ADDRESS"
-                FORGE_OUTPUT=$(forge verify-contract --etherscan-api-key $ETHERSCAN_API_KEY $ADDRESS src/factories/$2.sol:$2 )
-          
             else
-             echo "else"
-                FORGE_OUTPUT=$(PRIVATE_KEY=$PRIVATE_KEY forge script scripts/$2.s.sol:Deploy$2 -s $CALLDATA --rpc-url $NETWORK -g 160 --legacy --broadcast)
-            fi
+
+            FORGE_OUTPUT=$(PRIVATE_KEY=$PRIVATE_KEY forge script scripts/$2.s.sol:Deploy$2 -s $CALLDATA --rpc-url $NETWORK -g 160 --legacy --broadcast)
+
         fi
         echo "$FORGE_OUTPUT"
 
