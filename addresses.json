@@ -1,0 +1,22 @@
+{
+  "gnosis": {
+    "chainId": "0x64",
+    "network": "gnosis",
+    "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
+    "Dao": "0xfe1084bC16427e5EB7f13Fc19bCD4E641F7d571f",
+    "CharacterSheetsFactory": "",
+    "CharacterSheetsImplementation": "",
+    "ExperienceAndItemsImplementation": "",
+    "Erc6551AccountImplementation": ""
+  },
+  "sepolia": {
+    "chainId": "11155111",
+    "network": "sepolia",
+    "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
+    "Dao": "",
+    "CharacterSheetsFactory": "",
+    "CharacterSheetsImplementation": "",
+    "ExperienceAndItemsImplementation": "",
+    "CharacterAccount": "0x6Ea60E4A7BCf8A49D363Ab685a3052cFf3f95963"
+  }
+}
