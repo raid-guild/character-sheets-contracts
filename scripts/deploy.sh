@@ -48,39 +48,47 @@ CALLDATA=$(cast calldata "run(string)" $1)
 PRIVATE_KEY=$PRIVATE_KEY forge script scripts/$2.s.sol:Deploy$2 -s $CALLDATA --rpc-url $NETWORK
 
 read -p "Please verify the data and confirm the deployment (y/n):" CONFIRMATION
-
 if [[ $CONFIRMATION == "y" || $CONFIRMATION == "Y" ]]
-    then
-        echo "Deploying..."
+then
+FORGE_OUTPUT=$(forge script scripts/$2.s.sol:Deploy$2 --broadcast -s $CALLDATA --rpc-url $NETWORK)
 
-        if [[ $3 == "--verify"  ]]
-            then
-
-            FORGE_OUTPUT=$(forge script scripts/$2.s.sol:Deploy$2 --broadcast -s $CALLDATA --rpc-url $NETWORK  --verify)
-           
-            else
-
-            FORGE_OUTPUT=$(PRIVATE_KEY=$PRIVATE_KEY forge script scripts/$2.s.sol:Deploy$2 -s $CALLDATA --rpc-url $NETWORK -g 160 --legacy --broadcast)
-
-        fi
-        echo "$FORGE_OUTPUT"
-
-        DEPLOYED_ADDRESS=$(echo "$FORGE_OUTPUT" | grep "Contract Address:" | sed -n 's/.*: \(0x[0-9a-hA-H]\{40\}\)/\1/p')
-
-        if [[ $DEPLOYED_ADDRESS == "" ]]
-            then
-                echo "Cannot find Deployed address of $2 in foundry logs. Terminating"
-                exit 1
-        fi
-
-        node script/helpers/saveAddress.js $1 $2 $DEPLOYED_ADDRESS
-
-        CONSTRUCTOR_ARGS=$(echo "$FORGE_OUTPUT" | awk '/Constructor arguments:/{getline; gsub(/ /,""); print}')
-        echo "($CONSTRUCTOR_ARGS)"
-
-        echo ""
-    else
-        echo "Deployment cancelled. Execution terminated."
+DEPLOYED_ADDRESS=$(echo "$FORGE_OUTPUT" | grep "Contract Address:" | sed -n 's/.*: \(0x[0-9a-hA-H]\{40\}\)/\1/p')
 fi
+# read -p "Would you like to verify the contracts? (y/n):" CONFIRMATION
+
+
+# if [[ $CONFIRMATION == "y" || $CONFIRMATION == "Y" ]]
+#     then
+#         echo "Deploying..."
+
+#         if [[ $3 == "--verify"  ]]
+#             then
+
+#             FORGE_OUTPUT=$(forge script scripts/$2.s.sol:Deploy$2 --broadcast -s $CALLDATA --rpc-url $NETWORK  --verify)
+           
+#             else
+
+#             FORGE_OUTPUT=$(PRIVATE_KEY=$PRIVATE_KEY forge script scripts/$2.s.sol:Deploy$2 -s $CALLDATA --rpc-url $NETWORK -g 160 --legacy --broadcast)
+
+#         fi
+#         echo "$FORGE_OUTPUT"
+
+#         DEPLOYED_ADDRESS=$(echo "$FORGE_OUTPUT" | grep "Contract Address:" | sed -n 's/.*: \(0x[0-9a-hA-H]\{40\}\)/\1/p')
+
+#         if [[ $DEPLOYED_ADDRESS == "" ]]
+#             then
+#                 echo "Cannot find Deployed address of $2 in foundry logs. Terminating"
+#                 exit 1
+#         fi
+
+        node scripts/helpers/saveAddress.js $1 $2 $DEPLOYED_ADDRESS
+
+        # CONSTRUCTOR_ARGS=$(echo "$FORGE_OUTPUT" | awk '/Constructor arguments:/{getline; gsub(/ /,""); print}')
+        # echo "($CONSTRUCTOR_ARGS)"
+
+#         echo ""
+#     else
+#         echo "Deployment cancelled. Execution terminated."
+# fi
 
     echo "Deployment completed: $DEPLOYED_ADDRESS"

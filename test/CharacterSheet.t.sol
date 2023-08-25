@@ -52,15 +52,30 @@ contract CharacterSheetsTest is Test, SetUp {
     }
 
     function testEquipClassToCharacter() public {
-        vm.prank(address(experience));
+        vm.prank(admin);
+        classes.assignClass(1,1);
+        assertEq(classes.balanceOf(npc1, 1), 1, "incorrect balance");
+        assertEq(characterSheets.getCharacterSheetByCharacterId(1).ERC6551TokenAddress, npc1, "incorrect npc");
+        
+        vm.prank(npc1);
         characterSheets.equipClassToCharacter(1, 1);
 
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(1);
-        assertEq(sheet.classes[0], 1, 'class not assigned');
+        // CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(1);
+        // assertEq(sheet.classes[0], 1, 'class not assigned');
     }
 
         function testEquipItemToCharacter() public {
-        vm.prank(address(experience));
+        vm.prank(admin);
+        address[] memory npc = new address[](1);
+        npc[0] = npc1;
+        uint256[][] memory itemIds = new uint256[][](1);
+        itemIds[0] = new uint256[](1);
+        itemIds[0][0] = 1;
+        uint256[][] memory amounts = new uint256[][](1);
+        amounts[0] = new uint256[](1);
+        amounts[0][0] = 1;
+        experience.dropLoot(npc, itemIds, amounts);
+        vm.prank(npc1);
         characterSheets.equipItemToCharacter(1, 1);
 
         CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(1);

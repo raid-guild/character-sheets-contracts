@@ -19,4 +19,5 @@ error ItemError();
 error LengthMismatch();
 error InvalidProof();
 error Jailed();
+error InsufficientBalance();
 }

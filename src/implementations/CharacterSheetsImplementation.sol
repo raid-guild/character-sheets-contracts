@@ -12,10 +12,13 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
 import {IMolochDAO} from "../interfaces/IMolochDAO.sol";
 import {ExperienceAndItemsImplementation} from "./ExperienceAndItemsImplementation.sol";
+import {ClassesImplementation} from "./ClassesImplementation.sol";
 import {Item, Class, CharacterSheet} from "../lib/Structs.sol";
+
 
 //solhint-disable-next-line
 import "../lib/Errors.sol";
+import "forge-std/console2.sol";
 
 
 
@@ -31,6 +34,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     bytes32 public constant CHARACTER = keccak256("CHARACTER");
 
     ExperienceAndItemsImplementation public experience;
+    ClassesImplementation public classes;
 
     IMolochDAO public dao;
 
@@ -49,6 +53,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     uint256 public totalSheets;
 
     event NewPlayer(uint256 tokenId, address memberAddress);
+    event NewCharacter(uint256 tokenId,address tba);
     event PlayerRemoved(uint256 tokenId);
     event ExperienceUpdated(address exp);
     event ClassEquipped(uint256 characterId, uint256 classId);
@@ -60,6 +65,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         require(msg.sender == address(experience), "not the experience contract");
         _;
     }
+
     //solhint-disable-next-line
     constructor() ERC721("CharacterSheet", "CHAS") {
         _disableInitializers();
@@ -88,20 +94,23 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         address daoAddress;
         address[] memory dungeonMasters;
         address owner;
-        address characterAccountImplementation;
-        address erc6551Registry;
-        string memory baseUri;
+        address classesImplementation;
         address experienceImplementation;
+        address erc6551Registry;
+        address characterAccountImplementation;
+        string memory baseUri;
+        
 
         (
             daoAddress,
             dungeonMasters,
             owner,
+            classesImplementation,
             experienceImplementation,
             erc6551Registry,
             characterAccountImplementation,
             baseUri
-        ) = abi.decode(_encodedParameters, (address, address[], address, address, address, address, string));
+        ) = abi.decode(_encodedParameters, (address, address[], address, address, address, address, address, string));
 
         _grantRole(DEFAULT_ADMIN_ROLE, owner);
 
@@ -111,6 +120,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
 
         setBaseUri(baseUri);
         experience = ExperienceAndItemsImplementation(experienceImplementation);
+        classes = ClassesImplementation(classesImplementation);
         dao = IMolochDAO(daoAddress);
         erc6551AccountImplementation = characterAccountImplementation;
         _erc6551Registry = IERC6551Registry(erc6551Registry);
@@ -182,6 +192,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         _grantRole(PLAYER, _to);
         _grantRole(CHARACTER, tba);
         emit NewPlayer(tokenId, _to);
+        emit NewCharacter(tokenId, tba);
 
         return tokenId;
     }
@@ -192,7 +203,11 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
      * @param classId the class ID of the class to be added
      */
 
-    function equipClassToCharacter(uint256 characterId, uint256 classId) external onlyExpContract {
+    function equipClassToCharacter(uint256 characterId, uint256 classId) external onlyRole(CHARACTER) {
+        if(classes.balanceOf(msg.sender, classId) < 1){
+            console2.log("BALANCEOF: ", classes.balanceOf(msg.sender, classId), msg.sender);
+            revert Errors.InsufficientBalance();
+        }
         sheets[characterId].classes.push(classId);
         emit ClassEquipped(characterId, classId);
     }
@@ -205,7 +220,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
 
     function unequipClassFromCharacter(uint256 characterId, uint256 classId)
         external
-        onlyExpContract
+        onlyRole(CHARACTER)
         returns (bool success)
     {
         uint256[] memory arr = sheets[characterId].classes;
@@ -235,7 +250,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
 
     function unequipItemFromCharacter(uint256 characterId, uint256 tokenId)
         external
-        onlyExpContract
+        onlyRole(CHARACTER)
         returns (bool success)
     {
         uint256[] memory arr = sheets[characterId].inventory;
@@ -267,7 +282,10 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
      * @param itemId the itemId of the item
      */
 
-    function equipItemToCharacter(uint256 characterId, uint256 itemId) external onlyExpContract {
+    function equipItemToCharacter(uint256 characterId, uint256 itemId) external onlyRole(CHARACTER) {
+        if(experience.balanceOf(msg.sender, itemId) < 1){
+            revert Errors.InsufficientBalance();
+        }
         sheets[characterId].inventory.push(itemId);
         emit ItemEquipped(characterId, itemId);
     }
@@ -369,7 +387,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         if (sheet.classes.length == 0) {
             return false;
         }
-        uint256 tokenId = experience.getClassById(classId).tokenId;
+        uint256 tokenId = classes.getClassById(classId).tokenId;
         require(tokenId != 0, "Class does not exist");
         for (uint256 i; i < sheet.classes.length; i++) {
             if (sheet.classes[i] == tokenId) {

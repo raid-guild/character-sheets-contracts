@@ -4,6 +4,9 @@ pragma abicoder v2;
 
 import "forge-std/Test.sol";
 import "./helpers/SetUp.sol";
+import "../src/implementations/ExperienceAndItemsImplementation.sol";
+
+// import "forge-std/console2.sol";
 
 contract CharacterSheetsTest is Test, SetUp {
     event CharacterSheetsCreated(address newCharacterSheets, address creator);
@@ -12,18 +15,18 @@ contract CharacterSheetsTest is Test, SetUp {
     event ExperienceAndItemsCreated(address newExp, address creator);
     event RegistryUpdated(address newRegistry);
     event ERC6551AccountImplementationUpdated(address newImplementation);
-    event HatsUpdated(address newHats);
+    event ClassesImplementationUpdated(address newClasses);
 
     function testDeployment() public {
         address _characterSheetsImplementation = characterSheetsFactory.characterSheetsImplementation();
         address _experienceAndItemsImplementation = characterSheetsFactory.experienceAndItemsImplementation();
-        address _hatsAddress = characterSheetsFactory.hatsAddress();
+        address _classesImplementation = characterSheetsFactory.classesImplementation();
         address _erc6551Registry = characterSheetsFactory.erc6551Registry();
         address _erc6551AccountImplementation = characterSheetsFactory.erc6551AccountImplementation();
 
-        assertEq(_characterSheetsImplementation, address(characterSheetsImplementation), "wrong character sheets");
-        assertEq(_experienceAndItemsImplementation, address(experienceAndItemsImplementation), "wrong experience");
-        assertEq(_hatsAddress, address(hats), "wrong hats");
+        assertEq(_characterSheetsImplementation, address(stored.characterSheetsImplementation), "wrong character sheets");
+        assertEq(_experienceAndItemsImplementation, address(stored.experienceImplementation), "wrong experience");
+        assertEq(_classesImplementation, address(stored.classesImplementation), "wrong Classes");
         assertEq(_erc6551Registry, address(erc6551Registry), "wrong registry");
         assertEq(_erc6551AccountImplementation, address(erc6551Implementation),
         "wrong erc6551 account implementation.");
@@ -34,6 +37,7 @@ contract CharacterSheetsTest is Test, SetUp {
         vm.expectEmit(true, false, false, false);
         emit CharacterSheetsUpdated(address(1));
         characterSheetsFactory.updateCharacterSheetsImplementation(address(1));
+        assertEq(characterSheetsFactory.characterSheetsImplementation(), address(1));
     }
 
     function testUpdateExperienceAndItemsImplementation() public {
@@ -41,6 +45,7 @@ contract CharacterSheetsTest is Test, SetUp {
         vm.expectEmit(true, false, false, false);
         emit ExperienceUpdated(address(1));
         characterSheetsFactory.updateExperienceAndItemsImplementation(address(1));
+        assertEq(characterSheetsFactory.experienceAndItemsImplementation(), address(1));
     }
 
     function testUpdateERC6551Registry() public {
@@ -48,6 +53,7 @@ contract CharacterSheetsTest is Test, SetUp {
         vm.expectEmit(false, false, false, false);
         emit RegistryUpdated(address(1));
         characterSheetsFactory.updateERC6551Registry(address(1));
+        assertEq(characterSheetsFactory.erc6551Registry(), address(1));
     }
 
     function testUpdaterERC6551AccountImplementation() public {
@@ -55,13 +61,17 @@ contract CharacterSheetsTest is Test, SetUp {
         vm.expectEmit(false, false, false, false);
         emit ERC6551AccountImplementationUpdated(address(1));
         characterSheetsFactory.updateERC6551AccountImplementation(address(1));
+        assertEq(characterSheetsFactory.erc6551AccountImplementation(), address(1));
     }
 
-    function testUpdateHats() public {
-        vm.prank(admin);
+    function testUpdateClassesImplementation() public {
+        vm.startPrank(admin);
         vm.expectEmit(false, false, false, false);
-        emit HatsUpdated(address(1));
-        characterSheetsFactory.updateHats(address(1));
+        emit ClassesImplementationUpdated(address(1));        
+        characterSheetsFactory.updateClassesImplementation(address(1));
+        vm.stopPrank();
+
+        assertEq(characterSheetsFactory.classesImplementation(), address(1));
     }
 
     function testCreate() public {
@@ -69,19 +79,25 @@ contract CharacterSheetsTest is Test, SetUp {
         dungeonMasters[0] = address(1);
         dungeonMasters[1] = address(2);
         //create a bunch of sheets
-        for (uint256 i = 0; i < 50; i++) {
+        for (uint256 i = 0; i < 10; i++) {
             vm.prank(player1);
             vm.expectEmit(true, true, false, false);
             emit CharacterSheetsCreated(address(0), player1);
-            (address sheets, address exp) = characterSheetsFactory.create(
-                dungeonMasters,
-                address(dao),
-                player1,
-                "new_test_base_uri_experience/",
-                "new_test_base_uri_character_sheets/"
-            );
+        bytes memory baseUriData = abi.encode("test_base_uri_character_sheets/", "test_base_uri_experience/", "test_base_uri_classes/");
+
+        (address sheets, address exp, address class) = characterSheetsFactory.create(
+            dungeonMasters, address(dao), baseUriData
+        );
+
             assertEq(address(CharacterSheetsImplementation(sheets).experience()), exp, "wrong experience");
             assertEq(address(ExperienceAndItemsImplementation(exp).characterSheets()), sheets, "wrong sheets");
+            assertEq(address(ExperienceAndItemsImplementation(exp).classes()), class, "wrong classes");
+            assertEq(CharacterSheetsImplementation(sheets).baseTokenURI(), "test_base_uri_character_sheets/", "Wrong character sheets base uri");
+            assertEq(ExperienceAndItemsImplementation(exp).getBaseURI(), "test_base_uri_experience/", "Wrong exp base uri");
+            assertEq(ClassesImplementation(class).getBaseURI(), "test_base_uri_classes/", "Wrong classes base uri");
+            assertTrue(CharacterSheetsImplementation(sheets).hasRole(keccak256("DUNGEON_MASTER"), address(1)), "incorrect dungeon master 1 ");
+            assertTrue(CharacterSheetsImplementation(sheets).hasRole(keccak256("DUNGEON_MASTER"), address(2)), "incorrect dungeon master 2 ");
+            assertEq(address(CharacterSheetsImplementation(sheets).erc6551AccountImplementation()), address(erc6551Implementation), "incorrect 6551 account");
         }
     }
 }

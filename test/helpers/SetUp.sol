@@ -4,33 +4,38 @@ pragma abicoder v2;
 //solhint-disable
 import "forge-std/Test.sol";
 import "../../src/implementations/ExperienceAndItemsImplementation.sol";
-import "../../src/factories/CharacterSheetsFactory.sol";
+import "../../src/CharacterSheetsFactory.sol";
 import "../../src/implementations/CharacterSheetsImplementation.sol";
+import "../../src/implementations/ClassesImplementation.sol";
 import "../../src/interfaces/IMolochDAO.sol";
 import "../../src/mocks/mockMoloch.sol";
 import "../../src/mocks/MockHats.sol";
 import "../../src/lib/Structs.sol";
 import "../../lib/murky/src/Merkle.sol";
 import {ERC6551Registry} from "../../src/mocks/ERC6551Registry.sol";
-import {CharacterAccount} from "../../src/characterAccount/CharacterAccount.sol";
+import {CharacterAccount} from "../../src/CharacterAccount.sol";
 
 import "forge-std/console2.sol";
 
+struct StoredAddresses{
+    address characterSheetsImplementation;
+    address experienceImplementation;
+    address classesImplementation;
+    address createdCharacterSheets;
+    address createdExperience;
+    address createdClasses;
+    address factory;
+}
 contract SetUp is Test {
     using ClonesUpgradeable for address;
     using stdJson for string;
 
-    ExperienceAndItemsImplementation experienceAndItemsImplementation;
     ExperienceAndItemsImplementation experience;
     CharacterSheetsFactory characterSheetsFactory;
-    CharacterSheetsImplementation characterSheetsImplementation;
     CharacterSheetsImplementation characterSheets;
-    MockHats hats;
-    address characterSheetsAddress;
+    ClassesImplementation classes;
 
-    Merkle merkle = new Merkle();
-
-    address experienceAddress;
+    StoredAddresses public stored;
 
     address admin = address(0xdeadce11);
     address player1 = address(0xbeef);
@@ -38,11 +43,10 @@ contract SetUp is Test {
     address rando = address(0xc0ffee);
     address npc1;
     uint256 testClassId;
-    uint256 testClassTokenId;
     uint256 testItemId;
-    uint256 testItemTokenId;
     Moloch dao;
 
+    Merkle merkle = new Merkle();
     
 
     ERC6551Registry erc6551Registry;
@@ -52,55 +56,61 @@ contract SetUp is Test {
         vm.startPrank(admin);
 
         dao = new Moloch();
-        hats = new MockHats("mockhat", "mockHat_img/");
         vm.label(address(dao), "Moloch");
 
         characterSheetsFactory = new CharacterSheetsFactory();
-        experienceAndItemsImplementation = new ExperienceAndItemsImplementation();
-        characterSheetsImplementation = new CharacterSheetsImplementation();
+        experience = new ExperienceAndItemsImplementation();
+        classes = new ClassesImplementation();
+        characterSheets = new CharacterSheetsImplementation();
         characterSheetsFactory.initialize();
 
-        vm.label(address(characterSheetsFactory), "Character factory");
-        vm.label(address(characterSheetsImplementation), "CharacterSheets Implementation");
+        stored.experienceImplementation = address(experience);
+        stored.factory = address(characterSheetsFactory);
+        stored.classesImplementation = address(classes);
+        stored.characterSheetsImplementation = address(characterSheets);
 
         erc6551Registry = new ERC6551Registry();
         erc6551Implementation = new CharacterAccount();
 
         dao.addMember(player1);
         dao.addMember(admin);
-        characterSheetsFactory.updateCharacterSheetsImplementation(address(characterSheetsImplementation));
-        characterSheetsFactory.updateExperienceAndItemsImplementation(address(experienceAndItemsImplementation));
-        characterSheetsFactory.updateHats(address(hats));
+
+        characterSheetsFactory.updateCharacterSheetsImplementation(address(stored.characterSheetsImplementation));
+        characterSheetsFactory.updateExperienceAndItemsImplementation(address(stored.experienceImplementation));
+        characterSheetsFactory.updateClassesImplementation(address(stored.classesImplementation));
         address[] memory dungeonMasters = new address[](1);
         dungeonMasters[0] = admin;
         characterSheetsFactory.updateERC6551Registry(address(erc6551Registry));
         characterSheetsFactory.updateERC6551AccountImplementation(address(erc6551Implementation));
-        (characterSheetsAddress, experienceAddress) = characterSheetsFactory.create(
-            dungeonMasters, address(dao), rando, "test_base_uri_experience/", "test_base_uri_character_sheets/"
+
+        bytes memory baseUriData = abi.encode("test_base_uri_character_sheets/","test_base_uri_experience/", "test_base_uri_classes/");
+        (stored.createdCharacterSheets, stored.createdExperience, stored.createdClasses) = characterSheetsFactory.create(
+            dungeonMasters, address(dao), baseUriData
         );
 
-        characterSheets = CharacterSheetsImplementation(characterSheetsAddress);
-        experience = ExperienceAndItemsImplementation(experienceAddress);
+        
+
+        characterSheets = CharacterSheetsImplementation(stored.createdCharacterSheets);
+        assertEq(address(characterSheets.classes()), stored.createdClasses, "incorrect classes address in setup");
+        experience = ExperienceAndItemsImplementation(stored.createdExperience);
+        classes = ClassesImplementation(stored.createdClasses);
         characterSheets.setERC6551Registry(address(erc6551Registry));
-        (testItemTokenId, testItemId) = experience.createItemType(createNewItem("test_item", false, bytes32(0)));
-        (testClassTokenId, testClassId) = experience.createClassType(createNewClass("test_class"));
-         vm.stopPrank();
-         
+        
+        testClassId = classes.createClassType(createNewClass("test_class"));
+
+        testItemId = experience.createItemType(createNewItem("test_item", false, bytes32(0)));
+
+        vm.stopPrank();
         bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
         vm.prank(player1);
         uint256 tokenId1 = characterSheets.rollCharacterSheet(player1, encodedData);
         npc1 = characterSheets.getCharacterSheetByCharacterId(tokenId1).ERC6551TokenAddress;
 
-
-        vm.label(address(experienceAndItemsImplementation), "Gear Implementation");
-
-       
-
         assertTrue(
             characterSheets.hasRole(keccak256("DUNGEON_MASTER"), admin),
             "wrong dungeon master role assignment for character sheets"
         );
-        assertTrue(characterSheets.hasRole(bytes32(0), rando), "wrong ADMIN role assignment for character sheets");
+        assertTrue(characterSheets.hasRole(bytes32(0), admin), "wrong ADMIN role assignment for character sheets");
     }
 
     function dropExp(address player, uint256 amount) public {
@@ -116,9 +126,9 @@ contract SetUp is Test {
         experience.dropLoot(players, itemIds, amounts);
     }
 
-    function createNewItemType(string memory name) public returns (uint256 tokenId, uint256 itemId) {
+    function createNewItemType(string memory name) public returns (uint256 itemId) {
         bytes memory newItem = createNewItem(name, false, bytes32(0));
-        (tokenId, itemId) = experience.createItemType(newItem);
+        itemId = experience.createItemType(newItem);
     }
 
     function generateMerkleRootAndProof(
@@ -140,14 +150,17 @@ contract SetUp is Test {
         pure
         returns (bytes memory)
     {
-        uint256[][] memory newRequirements = new uint256[][](1);
-        newRequirements[0] = new uint256[](2);
-        newRequirements[0][0] = 0;
-        newRequirements[0][1] = 100;
-        return abi.encode(_name, 10 ** 18, newRequirements, _soulbound, _claimable, "test_item_cid/");
+        uint256[][] memory newItemRequirements = new uint256[][](1);
+        newItemRequirements[0] = new uint256[](2);
+        newItemRequirements[0][0] = 0;
+        newItemRequirements[0][1] = 100;
+
+        uint256[] memory newClassRequirements;
+        // newClassRequirements[0] = testClassId;
+        return abi.encode(_name, 10 ** 18, newItemRequirements, newClassRequirements, _soulbound, _claimable, "test_item_cid/");
     }
 
     function createNewClass(string memory _name) public pure returns (bytes memory data) {
-        return abi.encode(_name, 0, "test_class_cid/");
+        return abi.encode(_name, "test_class_cid/");
     }
 }
