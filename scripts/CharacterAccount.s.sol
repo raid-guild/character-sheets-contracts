@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import {CharacterAccount} from "../src/characterAccount/CharacterAccount.sol";
+import {CharacterAccount} from "../src/CharacterAccount.sol";
 
 import {BaseDeployer} from "./BaseDeployer.sol";
 //solhint-disable

@@ -13,8 +13,6 @@ import {Counters} from "openzeppelin/utils/Counters.sol";
 import {CharacterSheetsImplementation} from "../implementations/CharacterSheetsImplementation.sol";
 import {Item, Class, CharacterSheet} from "../lib/Structs.sol";
 
-//solhint-disable-next-line
-import "forge-std/console2.sol";
 import {Errors} from "../lib/Errors.sol";
 
 /**
@@ -119,32 +117,6 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
         for (uint256 i = 0; i < _classIds.length; i++) {
             assignClass(characterId, _classIds[i]);
         }
-    }
-
-    function equipClass(uint256 characterId, uint256 classId) external onlyCharacter returns (bool) {
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(characterId);
-        Class memory class = classes[classId];
-        if (balanceOf(sheet.ERC6551TokenAddress, class.tokenId) != 1) {
-            revert Errors.ClassError();
-        }
-        if (msg.sender != sheet.ERC6551TokenAddress) {
-            revert Errors.CharacterOnly();
-        }
-        characterSheets.equipClassToCharacter(characterId, classId);
-        return true;
-    }
-
-    function unequipClass(uint256 characterId, uint256 classId) external onlyCharacter returns (bool) {
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(characterId);
-        Class memory class = classes[classId];
-        if (balanceOf(sheet.ERC6551TokenAddress, class.tokenId) != 1) {
-            revert Errors.ClassError();
-        }
-        if (msg.sender != sheet.ERC6551TokenAddress) {
-            revert Errors.CharacterOnly();
-        }
-        characterSheets.equipClassToCharacter(characterId, classId);
-        return true;
     }
 
     /**

@@ -4,7 +4,7 @@ pragma abicoder v2;
 //solhint-disable
 import "forge-std/Test.sol";
 import "../../src/implementations/ExperienceAndItemsImplementation.sol";
-import "../../src/factories/CharacterSheetsFactory.sol";
+import "../../src/CharacterSheetsFactory.sol";
 import "../../src/implementations/CharacterSheetsImplementation.sol";
 import "../../src/implementations/ClassesImplementation.sol";
 import "../../src/interfaces/IMolochDAO.sol";
@@ -13,7 +13,7 @@ import "../../src/mocks/MockHats.sol";
 import "../../src/lib/Structs.sol";
 import "../../lib/murky/src/Merkle.sol";
 import {ERC6551Registry} from "../../src/mocks/ERC6551Registry.sol";
-import {CharacterAccount} from "../../src/characterAccount/CharacterAccount.sol";
+import {CharacterAccount} from "../../src/CharacterAccount.sol";
 
 import "forge-std/console2.sol";
 
@@ -91,6 +91,7 @@ contract SetUp is Test {
         
 
         characterSheets = CharacterSheetsImplementation(stored.createdCharacterSheets);
+        assertEq(address(characterSheets.classes()), stored.createdClasses, "incorrect classes address in setup");
         experience = ExperienceAndItemsImplementation(stored.createdExperience);
         classes = ClassesImplementation(stored.createdClasses);
         characterSheets.setERC6551Registry(address(erc6551Registry));

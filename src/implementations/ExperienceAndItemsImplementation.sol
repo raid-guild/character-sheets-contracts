@@ -3,7 +3,6 @@ pragma solidity ^0.8.9;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {MerkleProof} from "openzeppelin/utils/cryptography/MerkleProof.sol";
-import {Strings} from "openzeppelin/utils/Strings.sol";
 import {ERC1155Receiver} from "openzeppelin/token/ERC1155/utils/ERC1155Receiver.sol";
 import {ERC1155, ERC1155TokenReceiver} from "hats-protocol/lib/ERC1155/ERC1155.sol";
 import {IERC721} from "openzeppelin/token/ERC721/IERC721.sol";
@@ -13,11 +12,10 @@ import {Counters} from "openzeppelin/utils/Counters.sol";
 import {CharacterSheetsImplementation} from "./CharacterSheetsImplementation.sol";
 import {ClassesImplementation} from "./ClassesImplementation.sol";
 import {Item, Class, CharacterSheet} from "../lib/Structs.sol";
+// import {RequirementsManager} from "../RequirementsManager.sol";
 
-//solhint-disable-next-line
-import "../lib/Errors.sol";
+import {Errors} from "../lib/Errors.sol";
 
-import "forge-std/console2.sol";
 
 /**
  * @title Experience and Items
@@ -27,7 +25,6 @@ import "forge-std/console2.sol";
  * in the characterSheets contract.
  */
 contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
-    using Strings for uint256;
     using Counters for Counters.Counter;
 
     Counters.Counter private _itemIdCounter;
@@ -58,7 +55,6 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
     CharacterSheetsImplementation public characterSheets;
-
     ClassesImplementation public classes;
 
     event NewItemTypeCreated(uint256 itemId, string name);
@@ -132,32 +128,6 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
         totalItemTypes++;
         return _tokenId;
-    }
-
-    function equipItem(uint256 characterId, uint256 itemId) external onlyCharacter returns (bool) {
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(characterId);
-        Item memory item = items[itemId];
-        if (balanceOf(sheet.ERC6551TokenAddress, item.tokenId) == 0) {
-            revert Errors.ItemError();
-        }
-        if (msg.sender != sheet.ERC6551TokenAddress) {
-            revert Errors.CharacterOnly();
-        }
-        characterSheets.equipItemToCharacter(characterId, itemId);
-        return true;
-    }
-
-    function unequipItem(uint256 characterId, uint256 itemId) external onlyCharacter returns (bool) {
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(characterId);
-        Item memory item = items[itemId];
-        if (balanceOf(sheet.ERC6551TokenAddress, item.tokenId) == 0) {
-            revert Errors.ItemError();
-        }
-        if (msg.sender != sheet.ERC6551TokenAddress) {
-            revert Errors.CharacterOnly();
-        }
-        characterSheets.unequipItemFromCharacter(characterId, itemId);
-        return true;
     }
 
     /**
@@ -241,17 +211,8 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         onlyDungeonMaster
         returns (bool success)
     {
-        Item memory modifiedItem = items[itemId];
-        bool duplicate;
-        if(modifiedItem.itemRequirements.length > 0){
-        for (uint256 i = 0; i < modifiedItem.itemRequirements.length; i++) {
-            if (modifiedItem.itemRequirements[i][0] == requiredItemId) {
-                duplicate = true;
-            }
-        }
-        }
-        if (duplicate == true) {
-            revert Errors.DuplicateError();
+        if(items[requiredItemId].supply == 0){
+            revert Errors.ItemError();
         }
         uint256[] memory newRequirement = new uint256[](2);
         newRequirement[0] = requiredItemId;
@@ -268,20 +229,9 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         onlyDungeonMaster
         returns (bool success)
     {
-        Item memory modifiedItem = items[itemId];
-        bool duplicate;
-        if(modifiedItem.classRequirements.length > 0){
-        for (uint256 i = 0; i < modifiedItem.classRequirements.length; i++) {
-            if (modifiedItem.classRequirements[i] == requiredClassId) {
-
-                duplicate = true;
-            }
+        if(classes.getClassById(requiredClassId).tokenId == 0){
+            revert Errors.ClassError();
         }
-        }
-        if (duplicate) {
-            revert Errors.DuplicateError();
-        }
-
         items[itemId].classRequirements.push(requiredClassId);
         success = true;
 
