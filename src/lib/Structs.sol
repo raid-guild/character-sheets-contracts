@@ -5,8 +5,6 @@ pragma solidity ^0.8.0;
 struct Item {
     /// @dev erc1155 token id
     uint256 tokenId; 
-    /// @dev location in the items mapping
-    uint256 itemId; 
     /// @dev the name of this item
     string name; 
     /// @dev the number of this item to be created.
@@ -15,7 +13,9 @@ struct Item {
     uint256 supplied; 
     /// @dev an array of arrays with length of 2. containing the required itemId and the amount required 
     /// eg. [[itemId, amount], [itemId, amount]]
-    uint256[][] requirements;
+    uint256[][] itemRequirements;
+    /// @dev this is the array of classes required to transfer this item
+    uint256[] classRequirements;
     /// @dev is this item soulbound or not
     bool soulbound; 
 
@@ -30,8 +30,6 @@ struct Item {
 struct Class {
     /// @dev erc1155 token id
     uint256 tokenId;
-    /// @dev location in the classes mapping 
-    uint256 classId; 
     /// @dev class name
     string name; 
     /// @dev the number of this class that have been minted

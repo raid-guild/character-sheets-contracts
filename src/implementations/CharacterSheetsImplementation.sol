@@ -12,6 +12,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
 import {IMolochDAO} from "../interfaces/IMolochDAO.sol";
 import {ExperienceAndItemsImplementation} from "./ExperienceAndItemsImplementation.sol";
+import {ClassesImplementation} from "./ClassesImplementation.sol";
 import {Item, Class, CharacterSheet} from "../lib/Structs.sol";
 
 //solhint-disable-next-line
@@ -31,6 +32,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     bytes32 public constant CHARACTER = keccak256("CHARACTER");
 
     ExperienceAndItemsImplementation public experience;
+    ClassesImplementation public classes;
 
     IMolochDAO public dao;
 
@@ -60,6 +62,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         require(msg.sender == address(experience), "not the experience contract");
         _;
     }
+
     //solhint-disable-next-line
     constructor() ERC721("CharacterSheet", "CHAS") {
         _disableInitializers();
@@ -88,20 +91,23 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         address daoAddress;
         address[] memory dungeonMasters;
         address owner;
-        address characterAccountImplementation;
-        address erc6551Registry;
-        string memory baseUri;
+        address classesImplementation;
         address experienceImplementation;
+        address erc6551Registry;
+        address characterAccountImplementation;
+        string memory baseUri;
+        
 
         (
             daoAddress,
             dungeonMasters,
             owner,
+            classesImplementation,
             experienceImplementation,
             erc6551Registry,
             characterAccountImplementation,
             baseUri
-        ) = abi.decode(_encodedParameters, (address, address[], address, address, address, address, string));
+        ) = abi.decode(_encodedParameters, (address, address[], address, address, address, address, address, string));
 
         _grantRole(DEFAULT_ADMIN_ROLE, owner);
 
@@ -369,7 +375,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         if (sheet.classes.length == 0) {
             return false;
         }
-        uint256 tokenId = experience.getClassById(classId).tokenId;
+        uint256 tokenId = classes.getClassById(classId).tokenId;
         require(tokenId != 0, "Class does not exist");
         for (uint256 i; i < sheet.classes.length; i++) {
             if (sheet.classes[i] == tokenId) {
