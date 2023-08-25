@@ -10,8 +10,7 @@ clean  :; forge clean
 # Remove modules
 remove :; rm -rf .gitmodules && rm -rf .git/modules/* && rm -rf lib && touch .gitmodules && git add . && git commit -m "modules"
 
-install :; forge install foundry-rs/forge-std && forge install allo-protocol/contracts
-
+install :; forge install foundry-rs/forge-std && forge install openzeppelin/openzeppelin-contracts && git submodule add https://github.com/Hats-Protocol/hats-protocol.git lib/hats && git submodule add https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable.git lib/openzeppelin-contracts-upgradeable
 # Update Dependencies
 update:; forge update
 
