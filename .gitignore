@@ -7,7 +7,6 @@ coverage
 coverage.json
 typechain
 typechain-types
-/lib
 /broadcast
 
 # Hardhat files
