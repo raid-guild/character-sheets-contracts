@@ -81,7 +81,9 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         }
         _;
     }
-
+    constructor(){
+        _disableInitializers();
+    }
     function initialize(bytes calldata _encodedData) external initializer {
         address characterSheetsAddress;
         address classesAddress;

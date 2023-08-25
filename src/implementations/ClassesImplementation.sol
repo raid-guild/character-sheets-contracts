@@ -73,6 +73,10 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
         _;
     }
 
+    constructor () {
+        _disableInitializers();
+    }
+
     function initialize(bytes calldata _encodedData) external initializer {
 
         address characterSheetsAddress;

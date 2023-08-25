@@ -38,12 +38,14 @@ deploy-gnosis :; ./scripts/deploy.sh gnosis ${contract} --verify
 deploy-contracts :; make deploy-${network} contract=CharacterAccount && \
 	make deploy-${network} contract=CharacterSheetsImplementation && \
 	make deploy-${network} contract=ExperienceAndItemsImplementation && \
+	make deploy-${network} contract=ClassesImplementation && \
 	make deploy-${network} contract=CharacterSheetsFactory;
 
 deploy-all :; make deploy-contracts ${network}&& \
 	make deploy-${network} contract=CharacterAccount && \
 	make deploy-${network} contract=CharacterSheetsImplementation && \
 	make deploy-${network} contract=ExperienceAndItemsImplementation && \
+	make deploy-${network} contract=ClassesImplementation && \
 	make deploy-${network} contract=CharacterSheetsFactory;
 
 # execute commands
