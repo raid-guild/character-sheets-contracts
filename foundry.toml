@@ -3,6 +3,7 @@ solc = "0.8.20"
 bytecode_hash = "none"
 optimizer_runs = 1000000
 fs_permissions = [{ access = "read-write", path = "./addresses.json" }]
+libs = ["node_modules", "lib"]
 [profile.intense.fuzz]
 runs = 10000
 
