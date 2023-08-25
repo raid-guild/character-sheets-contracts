@@ -1,26 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {CharacterAccount} from "../src/CharacterAccount.sol";
+import {ClassesImplementation} from "../src/implementations/ClassesImplementation.sol";
 
 import {BaseDeployer} from "./BaseDeployer.sol";
 //solhint-disable
 import "../lib/forge-std/src/Script.sol";
 import "../lib/forge-std/src/StdJson.sol";
 
-contract DeployCharacterAccount is BaseDeployer {
+contract DeployClassesImplementation is BaseDeployer {
   using stdJson for string;
 
-  CharacterAccount public characterAccount;
+  ClassesImplementation public classesImplementation;
 
   function deploy() internal override returns (address) {
     vm.startBroadcast(deployerPrivateKey);
 
-    characterAccount = new CharacterAccount();
-
+    classesImplementation = new ClassesImplementation();
+    
     
     vm.stopBroadcast();
 
-    return address(characterAccount);
+    return address(classesImplementation);
   }
 }

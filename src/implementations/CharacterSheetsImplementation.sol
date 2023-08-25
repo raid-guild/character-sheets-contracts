@@ -7,7 +7,7 @@ import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol
 import {ERC721URIStorage} from "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import {AccessControl} from "openzeppelin-contracts/contracts/access/AccessControl.sol";
 import {Counters} from "openzeppelin-contracts/contracts/utils/Counters.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {Initializable} from "openzeppelin/proxy/utils/Initializable.sol";
 
 import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
 import {IMolochDAO} from "../interfaces/IMolochDAO.sol";
@@ -15,12 +15,9 @@ import {ExperienceAndItemsImplementation} from "./ExperienceAndItemsImplementati
 import {ClassesImplementation} from "./ClassesImplementation.sol";
 import {Item, Class, CharacterSheet} from "../lib/Structs.sol";
 
-
 //solhint-disable-next-line
 import "../lib/Errors.sol";
 import "forge-std/console2.sol";
-
-
 
 contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorage, AccessControl {
     using Counters for Counters.Counter;
@@ -48,12 +45,12 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     // member address => characterSheet token Id.
     mapping(address => uint256) public memberAddressToTokenId;
 
-    mapping(address => bool)public jailed;
+    mapping(address => bool) public jailed;
 
     uint256 public totalSheets;
 
     event NewPlayer(uint256 tokenId, address memberAddress);
-    event NewCharacter(uint256 tokenId,address tba);
+    event NewCharacter(uint256 tokenId, address tba);
     event PlayerRemoved(uint256 tokenId);
     event ExperienceUpdated(address exp);
     event ClassEquipped(uint256 characterId, uint256 classId);
@@ -99,7 +96,6 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         address erc6551Registry;
         address characterAccountImplementation;
         string memory baseUri;
-        
 
         (
             daoAddress,
@@ -136,23 +132,20 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
      * if no uri is stored then it will revert to the base uri of the contract
      */
 
-    function rollCharacterSheet(address _to, bytes calldata _data)
-        external
-        returns (uint256)
-    {
+    function rollCharacterSheet(address _to, bytes calldata _data) external returns (uint256) {
         if (erc6551AccountImplementation == address(0) || address(_erc6551Registry) == address(0)) {
             revert Errors.VariableNotSet();
         }
 
-        if (dao.members(_to).shares > 100){ 
+        if (dao.members(_to).shares > 100) {
             revert Errors.DaoError();
-            }
-        
-        if(_to != msg.sender){
+        }
+
+        if (_to != msg.sender) {
             revert Errors.PlayerOnly();
         }
 
-        if(jailed[msg.sender]){
+        if (jailed[msg.sender]) {
             revert Errors.Jailed();
         }
 
@@ -204,8 +197,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
      */
 
     function equipClassToCharacter(uint256 characterId, uint256 classId) external onlyRole(CHARACTER) {
-        if(classes.balanceOf(msg.sender, classId) < 1){
-            console2.log("BALANCEOF: ", classes.balanceOf(msg.sender, classId), msg.sender);
+        if (classes.balanceOf(msg.sender, classId) < 1) {
             revert Errors.InsufficientBalance();
         }
         sheets[characterId].classes.push(classId);
@@ -283,7 +275,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
      */
 
     function equipItemToCharacter(uint256 characterId, uint256 itemId) external onlyRole(CHARACTER) {
-        if(experience.balanceOf(msg.sender, itemId) < 1){
+        if (experience.balanceOf(msg.sender, itemId) < 1) {
             revert Errors.InsufficientBalance();
         }
         sheets[characterId].inventory.push(itemId);
@@ -319,7 +311,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         emit CharacterNameUpdated(oldName, newName);
     }
 
-    function jailPlayer(address playerAddress, bool throwInJail)public onlyRole(DUNGEON_MASTER){
+    function jailPlayer(address playerAddress, bool throwInJail) public onlyRole(DUNGEON_MASTER) {
         jailed[playerAddress] = throwInJail;
         emit PlayerJailed(playerAddress, throwInJail);
     }

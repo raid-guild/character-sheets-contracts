@@ -15,10 +15,10 @@
     "network": "sepolia",
     "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
     "Dao": "",
-    "CharacterSheetsFactory": "0x9FFC3d2a36f76a7392E4e60be6be2beE554565f7",
-    "CharacterSheetsImplementation": "0x6F39bdA89a0A9eD9a1522B7816800dfbf58491D4",
-    "CharacterAccount": "0x2DE2971818a466346616811fC17eb4577917e388",
-    "ExperienceAndItemsImplementation": "0xe57594882b2125eF0A9cbf5c35CdAa26Bc640550",
-    "ClassesImplementation": "0xe4D808Fa511bC48A0Afd8C3E79E8B3f1F94B8936"
+    "CharacterSheetsFactory": "0xa6bea583f03E812A807EA86202B17292763F9852",
+    "CharacterSheetsImplementation": "0x95633C67524a1BF1dC997B86Cf8EF36028C58072",
+    "CharacterAccount": "0xbE648cd0A00E4dB2aA1f633d74Cd6C244F1623e7",
+    "ExperienceAndItemsImplementation": "0x61Ab91Dfd36D8fF18699c686aB9b1Fd85309928A",
+    "ClassesImplementation": "0x4720981471d9a89E673723bdc6A10359AD6768c4"
   }
 }
