@@ -57,9 +57,9 @@ fi
 if [[ $2 == *"Implementation"* ]]
 then
     # FORGE_OUTPUT=$(forge verify-contract $SAVED_ADDRESS src/implementations/$2.sol:$2\ --chain-id $CHAIN_ID)
-    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.15+commit.e14f2714 --etherscan-api-key $ETHERSCAN_API_KEY $SAVED_ADDRESS src/implementations/$2.sol:$2 
+    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $ETHERSCAN_API_KEY --num-of-optimizations 1000000 $SAVED_ADDRESS src/implementations/$2.sol:$2 
 else
-    FORGE_OUTPUT=$(forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.15+commit.e14f2714 --etherscan-api-key $ETHERSCAN_API_KEY  $SAVED_ADDRESS src/$2.sol:$2)
+    FORGE_OUTPUT=$(forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $ETHERSCAN_API_KEY  --num-of-optimizations 1000000 $SAVED_ADDRESS src/$2.sol:$2)
 fi
 
 echo "end verification"
