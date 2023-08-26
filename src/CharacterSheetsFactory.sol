@@ -1,12 +1,11 @@
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.19;
 // SPDX-License-Identifier: MIT
 
 import {CharacterSheetsImplementation} from "./implementations/CharacterSheetsImplementation.sol";
 import {ClassesImplementation} from "./implementations/ClassesImplementation.sol";
-import {ClonesUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ClonesUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/proxy/ClonesUpgradeable.sol";
+import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {ExperienceAndItemsImplementation} from "./implementations/ExperienceAndItemsImplementation.sol";
-
 
 // import "forge-std/console2.sol";
 contract CharacterSheetsFactory is OwnableUpgradeable {
@@ -30,7 +29,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
     function initialize() external initializer {
         __Context_init_unchained();
-        __Ownable_init_unchained();
+        __Ownable_init_unchained(msg.sender);
     }
 
     function updateCharacterSheetsImplementation(address _sheetImplementation) external onlyOwner {
@@ -84,12 +83,14 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
         address classesClone =
             ClonesUpgradeable.cloneDeterministic(classesImplementation, keccak256(abi.encode(_nonce)));
-        
 
-        
-        CharacterSheetsImplementation(characterSheetsClone).initialize(_encodeCharacterInitData(dao, dungeonMasters, experienceClone, classesClone, data));
+        CharacterSheetsImplementation(characterSheetsClone).initialize(
+            _encodeCharacterInitData(dao, dungeonMasters, experienceClone, classesClone, data)
+        );
 
-        ExperienceAndItemsImplementation(experienceClone).initialize(_encodeExpData(characterSheetsClone, classesClone, data));
+        ExperienceAndItemsImplementation(experienceClone).initialize(
+            _encodeExpData(characterSheetsClone, classesClone, data)
+        );
 
         ClassesImplementation(classesClone).initialize(_encodeClassesData(characterSheetsClone, data));
 
@@ -101,7 +102,6 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
         return (characterSheetsClone, experienceClone, classesClone);
     }
-
 
     function _initializeContracts(
         address characterSheetsClone,
@@ -118,7 +118,6 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         ClassesImplementation(classesClone).initialize(encodedClassesParams);
     }
 
-
     function _encodeCharacterInitData(
         address dao,
         address[] memory dungeonMasters,
@@ -126,7 +125,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         address classesClone,
         bytes memory data
     ) private view returns (bytes memory) {
-        (string memory characterSheetsBaseUri, , ) = _decodeStrings(data);
+        (string memory characterSheetsBaseUri,,) = _decodeStrings(data);
 
         bytes memory encodedCharacterSheetParameters = abi.encode(
             dao,
@@ -142,23 +141,24 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         return (encodedCharacterSheetParameters);
     }
 
-    function _encodeExpData(address characterSheetsClone, address classesClone,bytes memory data)private pure returns(bytes memory){
-        (, string memory experienceBaseUri, ) = _decodeStrings(data);
-            
+    function _encodeExpData(address characterSheetsClone, address classesClone, bytes memory data)
+        private
+        pure
+        returns (bytes memory)
+    {
+        (, string memory experienceBaseUri,) = _decodeStrings(data);
+
         return abi.encode(characterSheetsClone, classesClone, experienceBaseUri);
     }
 
-    function _encodeClassesData(address characterSheetsClone, bytes memory data)private pure returns(bytes memory){
-         (, ,string memory classesBaseUri ) = _decodeStrings(data);
-         return abi.encode(characterSheetsClone, classesBaseUri);
-         
+    function _encodeClassesData(address characterSheetsClone, bytes memory data) private pure returns (bytes memory) {
+        (,, string memory classesBaseUri) = _decodeStrings(data);
+        return abi.encode(characterSheetsClone, classesBaseUri);
     }
 
-    function _decodeStrings(bytes memory data)private pure returns(string memory, string memory, string memory){
-
+    function _decodeStrings(bytes memory data) private pure returns (string memory, string memory, string memory) {
         (string memory characterSheetsBaseUri, string memory experienceBaseUri, string memory classesBaseUri) =
             abi.decode(data, (string, string, string));
-        return(characterSheetsBaseUri, experienceBaseUri, classesBaseUri);
+        return (characterSheetsBaseUri, experienceBaseUri, classesBaseUri);
     }
-
 }

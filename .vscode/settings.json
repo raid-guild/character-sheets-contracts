@@ -1,10 +1,16 @@
 {
   "solidity.packageDefaultDependenciesContractsDirectory": "src",
   "solidity.packageDefaultDependenciesDirectory": "lib",
-  "solidity.compileUsingRemoteVersion": "v0.8.15+commit.e14f2714",
-  "solidity.formatter": "forge",
+  "solidity.compileUsingRemoteVersion": "v0.8.20+commit.a1b79de6",
   "search.exclude": { "lib": true },
   "files.associations": {
     ".gas-snapshot": "julia"
-  }
+  },
+
+  "editor.formatOnSave": true,
+  "[solidity]": {
+    "editor.defaultFormatter": "JuanBlanco.solidity"
+  },
+  "solidity.formatter": "forge",
+  "solidity.defaultCompiler": "localFile"
 }

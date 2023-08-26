@@ -7,15 +7,18 @@
     "CharacterSheetsFactory": "",
     "CharacterSheetsImplementation": "",
     "ExperienceAndItemsImplementation": "",
-    "Erc6551AccountImplementation": ""
+    "Erc6551AccountImplementation": "",
+    "ClassesImplementation": ""
   },
   "sepolia": {
     "chainId": "11155111",
     "network": "sepolia",
     "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
     "Dao": "",
-    "CharacterSheetsFactory": "",
-    "CharacterSheetsImplementation": "0x255D9DBEeC7FD04368070f45d09Cd70352263334",
-    "CharacterAccount": "0x890726e13DDde77856b1774ba55C187f7a331Ce1"
+    "CharacterSheetsFactory": "0xb271d3501CfEd30616Ebf83bbcE693b2eE93CE25",
+    "CharacterSheetsImplementation": "0x17c6e273709532585c4F5EA322d90B15f4D66D29",
+    "CharacterAccount": "0x0f6fbE92d5131299c0d80aC508192F226b0AD140",
+    "ExperienceAndItemsImplementation": "0x024417e9Caea813F83CA9BF29938802B18005755",
+    "ClassesImplementation": "0x5c0b6d591b00ABdFbb0B6d432D92e552f206a482"
   }
 }

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {Initializable} from "openzeppelin/proxy/utils/Initializable.sol";
 import {MerkleProof} from "openzeppelin/utils/cryptography/MerkleProof.sol";
 import {Strings} from "openzeppelin/utils/Strings.sol";
 import {ERC1155Receiver} from "openzeppelin/token/ERC1155/utils/ERC1155Receiver.sol";
-import {ERC1155} from "hats-protocol/lib/ERC1155/ERC1155.sol";
+import {ERC1155} from "hats/lib/ERC1155/ERC1155.sol";
 import {IERC721} from "openzeppelin/token/ERC721/IERC721.sol";
 import {ERC1155Holder} from "openzeppelin/token/ERC1155/utils/ERC1155Holder.sol";
 import {Counters} from "openzeppelin/utils/Counters.sol";
@@ -73,8 +73,11 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
         _;
     }
 
-    function initialize(bytes calldata _encodedData) external initializer {
+    constructor() {
+        _disableInitializers();
+    }
 
+    function initialize(bytes calldata _encodedData) external initializer {
         address characterSheetsAddress;
         string memory baseUri;
         (characterSheetsAddress, baseUri) = abi.decode(_encodedData, (address, string));
@@ -94,7 +97,6 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
      */
 
     function createClassType(bytes calldata classData) external onlyDungeonMaster returns (uint256 tokenId) {
-
         Class memory _newClass = _createClassStruct(classData);
 
         uint256 _tokenId = _classIdCounter.current();
@@ -110,9 +112,8 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
         _classIdCounter.increment();
 
         return _tokenId;
-
     }
-    
+
     function assignClasses(uint256 characterId, uint256[] calldata _classIds) external onlyDungeonMaster {
         for (uint256 i = 0; i < _classIds.length; i++) {
             assignClass(characterId, _classIds[i]);
@@ -237,13 +238,12 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
      */
 
     function uri(uint256 tokenId) public view override returns (string memory) {
-
         string memory tokenURI = _classURIs[tokenId];
         // If token URI is set, concatenate base URI and tokenURI (via abi.encodePacked).
         return bytes(tokenURI).length > 0 ? string(abi.encodePacked(_baseURI, tokenURI)) : _baseURI;
     }
-    
-     function getBaseURI()public view returns(string memory){
+
+    function getBaseURI() public view returns (string memory) {
         return _baseURI;
     }
     /**
@@ -254,8 +254,6 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
         _classURIs[tokenId] = tokenURI;
         emit URI(uri(tokenId), tokenId);
     }
-
-   
 
     function _createClassStruct(bytes calldata classData) private pure returns (Class memory) {
         (string memory name, string memory cid) = abi.decode(classData, (string, string));

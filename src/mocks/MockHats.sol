@@ -16,7 +16,7 @@
 
 pragma solidity >=0.8.13;
 
-import "hats-protocol/src/Hats.sol";
+import "../../lib/hats/src/Hats.sol";
 
 contract MockHats {
     struct Hat {

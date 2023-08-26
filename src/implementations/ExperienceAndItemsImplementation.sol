@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {Initializable} from "openzeppelin/proxy/utils/Initializable.sol";
 import {MerkleProof} from "openzeppelin/utils/cryptography/MerkleProof.sol";
 import {ERC1155Receiver} from "openzeppelin/token/ERC1155/utils/ERC1155Receiver.sol";
-import {ERC1155, ERC1155TokenReceiver} from "hats-protocol/lib/ERC1155/ERC1155.sol";
+import {ERC1155, ERC1155TokenReceiver} from "hats/lib/ERC1155/ERC1155.sol";
 import {IERC721} from "openzeppelin/token/ERC721/IERC721.sol";
 import {ERC1155Holder} from "openzeppelin/token/ERC1155/utils/ERC1155Holder.sol";
 import {Counters} from "openzeppelin/utils/Counters.sol";
@@ -12,10 +12,8 @@ import {Counters} from "openzeppelin/utils/Counters.sol";
 import {CharacterSheetsImplementation} from "./CharacterSheetsImplementation.sol";
 import {ClassesImplementation} from "./ClassesImplementation.sol";
 import {Item, Class, CharacterSheet} from "../lib/Structs.sol";
-// import {RequirementsManager} from "../RequirementsManager.sol";
 
 import {Errors} from "../lib/Errors.sol";
-
 
 /**
  * @title Experience and Items
@@ -82,12 +80,15 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         _;
     }
 
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(bytes calldata _encodedData) external initializer {
         address characterSheetsAddress;
         address classesAddress;
         string memory baseUri;
-        (characterSheetsAddress, classesAddress, baseUri) =
-            abi.decode(_encodedData, (address, address, string));
+        (characterSheetsAddress, classesAddress, baseUri) = abi.decode(_encodedData, (address, address, string));
         _baseURI = baseUri;
         characterSheets = CharacterSheetsImplementation(characterSheetsAddress);
         classes = ClassesImplementation(classesAddress);
@@ -100,12 +101,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      * @return tokenId the ERC1155 tokenId
      */
 
-    function createItemType(bytes calldata itemData)
-        external
-        virtual
-        onlyDungeonMaster
-        returns (uint256 tokenId)
-    {
+    function createItemType(bytes calldata itemData) external virtual onlyDungeonMaster returns (uint256 tokenId) {
         Item memory newItem = _createItemStruct(itemData);
 
         //solhint-disable-next-line
@@ -211,7 +207,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         onlyDungeonMaster
         returns (bool success)
     {
-        if(items[requiredItemId].supply == 0){
+        if (items[requiredItemId].supply == 0) {
             revert Errors.ItemError();
         }
         uint256[] memory newRequirement = new uint256[](2);
@@ -229,7 +225,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         onlyDungeonMaster
         returns (bool success)
     {
-        if(classes.getClassById(requiredClassId).tokenId == 0){
+        if (classes.getClassById(requiredClassId).tokenId == 0) {
             revert Errors.ClassError();
         }
         items[itemId].classRequirements.push(requiredClassId);
@@ -245,7 +241,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      * so if the item requires 2 of itemId 1 to be burnt in order to claim the item then you put in 1
      *  and it will remove the requirment with itemId 1
      */
-    function removeItemRequirement(uint256 itemId, uint256 removedItemId) public onlyDungeonMaster returns(bool) {
+    function removeItemRequirement(uint256 itemId, uint256 removedItemId) public onlyDungeonMaster returns (bool) {
         uint256[][] memory arr = items[itemId].itemRequirements;
         bool success = false;
         for (uint256 i; i < arr.length; i++) {
@@ -273,7 +269,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      * @param itemId the itemId of the item type to be modified
      * @param removedClassId the classId of the requirement that is to be removed.
      */
-    function removeClassRequirement(uint256 itemId, uint256 removedClassId) public onlyDungeonMaster returns(bool) {
+    function removeClassRequirement(uint256 itemId, uint256 removedClassId) public onlyDungeonMaster returns (bool) {
         uint256[] memory arr = items[itemId].classRequirements;
         bool success = false;
         for (uint256 i; i < arr.length; i++) {
@@ -420,7 +416,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         return bytes(tokenURI).length > 0 ? string(abi.encodePacked(_baseURI, tokenURI)) : _baseURI;
     }
 
-    function getBaseURI()public view returns(string memory){
+    function getBaseURI() public view returns (string memory) {
         return _baseURI;
     }
     // The following functions are overrides required by Solidity.
@@ -541,7 +537,6 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         return success;
     }
 
-
     function _checkItemRequirements(address nftAddress, uint256[][] memory itemRequirements, uint256 amount)
         private
         returns (bool)
@@ -563,7 +558,11 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         return true;
     }
 
-    function _checkClassRequirements(address nftAddress, uint256[] memory classRequirements) private view returns (bool) {
+    function _checkClassRequirements(address nftAddress, uint256[] memory classRequirements)
+        private
+        view
+        returns (bool)
+    {
         if (classRequirements.length == 0) {
             return true;
         }
@@ -574,5 +573,4 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         }
         return false;
     }
-
 }

@@ -7,12 +7,12 @@ if [[ $1 == "" || $2 == "" || $3 == "" ]]
     then
         echo "Usage:"
         echo "  execute.sh [target environment] [contractName] [actionName]"
-        echo "    where target environment (required): mainnet / testnet / sandbox"
+        echo "    where target environment (required): gnosis / sepolia"
         echo "    where contractName (required): contract name you want to execute the action from"
         echo "    where actionName (required): action name you want to execute"
         echo ""
         echo "Example:"
-        echo "  execute.sh sandbox RoundFactory RoundCreate"
+        echo "  execute.sh sepolia CharacterSheetsFactory create"
         exit 1
 fi
 
@@ -32,7 +32,7 @@ fi
 CALLDATA=$(cast calldata "run(string)" $1)
 PRIVATE_KEY=$PRIVATE_KEY forge script script/$2.s.sol:Execute$3 -s $CALLDATA --rpc-url $NETWORK
 
-read -p "Please verify the data and confirm the execution (y/n):" CONFIRMATION
+read -p "Please verify the data and confirm the verification (y/n):" CONFIRMATION
 
 if [[ $CONFIRMATION == "y" || $CONFIRMATION == "Y" ]]
     then
