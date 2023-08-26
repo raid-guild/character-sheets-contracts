@@ -15,7 +15,6 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     address public erc6551Registry;
     address public erc6551AccountImplementation;
 
-    address[] public characterSheets;
     uint256 private _nonce;
 
     event CharacterSheetsCreated(address newCharacterSheets, address creator);

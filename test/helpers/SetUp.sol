@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 pragma abicoder v2;
 //solhint-disable
+
 import "forge-std/Test.sol";
 import "../../src/implementations/ExperienceAndItemsImplementation.sol";
 import "../../src/CharacterSheetsFactory.sol";
@@ -9,7 +10,7 @@ import "../../src/implementations/CharacterSheetsImplementation.sol";
 import "../../src/implementations/ClassesImplementation.sol";
 import "../../src/interfaces/IMolochDAO.sol";
 import "../../src/mocks/mockMoloch.sol";
-import "../../src/mocks/MockHats.sol";
+// import "../../src/mocks/MockHats.sol";
 import "../../src/lib/Structs.sol";
 import "../../lib/murky/src/Merkle.sol";
 import {ERC6551Registry} from "../../src/mocks/ERC6551Registry.sol";
@@ -17,7 +18,7 @@ import {CharacterAccount} from "../../src/CharacterAccount.sol";
 
 import "forge-std/console2.sol";
 
-struct StoredAddresses{
+struct StoredAddresses {
     address characterSheetsImplementation;
     address experienceImplementation;
     address classesImplementation;
@@ -26,6 +27,7 @@ struct StoredAddresses{
     address createdClasses;
     address factory;
 }
+
 contract SetUp is Test {
     using ClonesUpgradeable for address;
     using stdJson for string;
@@ -47,7 +49,6 @@ contract SetUp is Test {
     Moloch dao;
 
     Merkle merkle = new Merkle();
-    
 
     ERC6551Registry erc6551Registry;
     CharacterAccount erc6551Implementation;
@@ -83,19 +84,17 @@ contract SetUp is Test {
         characterSheetsFactory.updateERC6551Registry(address(erc6551Registry));
         characterSheetsFactory.updateERC6551AccountImplementation(address(erc6551Implementation));
 
-        bytes memory baseUriData = abi.encode("test_base_uri_character_sheets/","test_base_uri_experience/", "test_base_uri_classes/");
-        (stored.createdCharacterSheets, stored.createdExperience, stored.createdClasses) = characterSheetsFactory.create(
-            dungeonMasters, address(dao), baseUriData
-        );
-
-        
+        bytes memory baseUriData =
+            abi.encode("test_base_uri_character_sheets/", "test_base_uri_experience/", "test_base_uri_classes/");
+        (stored.createdCharacterSheets, stored.createdExperience, stored.createdClasses) =
+            characterSheetsFactory.create(dungeonMasters, address(dao), baseUriData);
 
         characterSheets = CharacterSheetsImplementation(stored.createdCharacterSheets);
         assertEq(address(characterSheets.classes()), stored.createdClasses, "incorrect classes address in setup");
         experience = ExperienceAndItemsImplementation(stored.createdExperience);
         classes = ClassesImplementation(stored.createdClasses);
         characterSheets.setERC6551Registry(address(erc6551Registry));
-        
+
         testClassId = classes.createClassType(createNewClass("test_class"));
 
         testItemId = experience.createItemType(createNewItem("test_item", false, bytes32(0)));
@@ -157,7 +156,9 @@ contract SetUp is Test {
 
         uint256[] memory newClassRequirements;
         // newClassRequirements[0] = testClassId;
-        return abi.encode(_name, 10 ** 18, newItemRequirements, newClassRequirements, _soulbound, _claimable, "test_item_cid/");
+        return abi.encode(
+            _name, 10 ** 18, newItemRequirements, newClassRequirements, _soulbound, _claimable, "test_item_cid/"
+        );
     }
 
     function createNewClass(string memory _name) public pure returns (bytes memory data) {

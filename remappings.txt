@@ -1,12 +1,13 @@
 @openzeppelin/contracts/=lib/openzeppelin-contracts-upgradeable/contracts/
 ERC1155/=lib/hats/lib/ERC1155/
 ds-test/=lib/forge-std/lib/ds-test/src/
-erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/
+erc4626-tests/=lib/openzeppelin-contracts-upgradeable/lib/erc4626-tests/
 forge-std/=lib/forge-std/src/
 hats/=lib/hats/
+murky/=lib/murky/src/
 openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/
 openzeppelin-contracts/=lib/openzeppelin-contracts/
 openzeppelin/=lib/openzeppelin-contracts/contracts/
-solady/=lib/hats/lib/solady/
+solady/=lib/hats/lib/solady/src
 solbase/=lib/hats/lib/solbase/src/
 utils/=lib/hats/lib/utils/

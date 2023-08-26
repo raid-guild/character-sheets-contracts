@@ -37,3 +37,5 @@ make deploy-contracts network=<sepolia/gnosis>
 ```sh
 make verify-contracts network=<sepolia/gnosis>
 ```
+
+### TODO Add scripts to create items etc.

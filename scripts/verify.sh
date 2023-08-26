@@ -6,13 +6,13 @@ set -e
 if [[ $1 == "" || $2 == "" ]]
     then
         echo "Usage:"
-        echo "  verify.sh [target environment] [contractName] [actionName]"
+        echo "  verify.sh [target environment] [contractName]"
         echo "    where target environment (required): gnosis / sepolia"
-        echo "    where contractName (required): contract name you want to execute the action from"
-        echo "    where actionName (required): action name you want to execute"
+        echo "    where contractName (required): contract name you want to verify the action from"
+        echo "    where actionName (required): action name you want to verify"
         echo ""
         echo "Example:"
-        echo "  execute.sh sepolia CharacterSheetsFactory create"
+        echo "  verify.sh sepolia CharacterSheetsFactory"
         exit 1
 fi
 
@@ -56,35 +56,10 @@ fi
 
 if [[ $2 == *"Implementation"* ]]
 then
-    # FORGE_OUTPUT=$(forge verify-contract $SAVED_ADDRESS src/implementations/$2.sol:$2\ --chain-id $CHAIN_ID)
+
     forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $ETHERSCAN_API_KEY --num-of-optimizations 1000000 $SAVED_ADDRESS src/implementations/$2.sol:$2 
 else
-    FORGE_OUTPUT=$(forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $ETHERSCAN_API_KEY  --num-of-optimizations 1000000 $SAVED_ADDRESS src/$2.sol:$2)
+    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $ETHERSCAN_API_KEY  --num-of-optimizations 1000000 $SAVED_ADDRESS src/$2.sol:$2
 fi
 
 echo "end verification"
-# SUCCESS=$(FORGE_OUTPUT | grep "success")
-
-
-# PRIVATE_KEY=$PRIVATE_KEY forge verify-contract $SAVED_ADDRESS /$2.s.sol:Execute$3 -s $CALLDATA --rpc-url $NETWORK
-
-# read -p "Please verify the data and confirm the execution (y/n):" CONFIRMATION
-
-# if [[ $CONFIRMATION == "y" || $CONFIRMATION == "Y" ]]
-#     then
-#         echo "Executing..."
-
-#         FORGE_OUTPUT=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/$2.s.sol:Execute$3 -s $CALLDATA --rpc-url $NETWORK --broadcast)
-#         echo "$FORGE_OUTPUT"
-
-#         DEPLOYED_ADDRESS=$(echo "$FORGE_OUTPUT" | grep "Contract Address:" | sed -n 's/.*: \(0x[0-9a-hA-H]\{40\}\)/\1/p')
-
-#         if [[ $DEPLOYED_ADDRESS != "" ]]
-#             then
-#                 echo "Found Deployed address of $2 in foundry logs: "
-#                 echo $DEPLOYED_ADDRESS
-#                 exit 1
-#         fi
-#     else
-#         echo "Deployment cancelled. Execution terminated."
-# fi
