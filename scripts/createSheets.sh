@@ -18,7 +18,7 @@ function makeNewDMList(){
 network=$1
 while true; do
     echo "==============================================================="
-        read -p "Please enter a dungeon master address: " INPUT
+        read -p "Please enter a DUNGEON MASTER address: " INPUT
     echo "==============================================================="
         read -p "Would you like to enter another address? (y/n) " CONFIRMATION
 
@@ -28,17 +28,14 @@ while true; do
         then 
             break
     fi
-
-
-
 done
+
 for item in "${DUNGEON_MASTERS[@]}"; do
 node scripts/helpers/saveCreationData.js $network DungeonMasters $item
 done
 }
 
 
-# if [[ $1 == "" || $2 == "" || $3 == "" || $4 == "" || $5 == "" ]]
 if [[ $1 == "" ]]
     then
         echo "Usage:"
@@ -87,7 +84,7 @@ if [[ $DMLENGTH != 0 ]]
                 makeNewDMList $1
         fi
     else
-    makeNewDMList $1
+        makeNewDMList $1
 fi
 
 DAO=$(node scripts/helpers/readAddress.js $1 Dao)
@@ -121,10 +118,10 @@ if [[ $CHARACTERSHEETSBASEURI != '' ]]
         echo ""
     if [[ $SHEETSCONF == "y" || $SHEETSCONF == "Y" ]]
         then
-        echo "==============================================================="
-            read -p "Enter new CHARACTER SHEETS base uri: " NEWSHEETSURI
+            echo "==============================================================="
+                read -p "Enter new CHARACTER SHEETS base uri: " NEWSHEETSURI
 
-        node scripts/helpers/saveCreationData.js $1 CharacterSheetsBaseUri $NEWSHEETSURI
+            node scripts/helpers/saveCreationData.js $1 CharacterSheetsBaseUri $NEWSHEETSURI
     fi
     else     
         echo "==============================================================="   
