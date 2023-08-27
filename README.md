@@ -38,4 +38,9 @@ make deploy-contracts network=<sepolia/gnosis>
 make verify-contracts network=<sepolia/gnosis>
 ```
 
-### TODO Add scripts to create items etc.
+### Create new characterSheets and sub contracts
+
+```sh
+make create-sheets network=<sepolia/gnosis>
+
+```
