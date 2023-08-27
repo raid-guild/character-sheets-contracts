@@ -21,7 +21,7 @@ test :; forge test
 
 snapshot :; forge snapshot
 
-slither :; slither ./src
+slither :; slither --config-file slither.config.json src/.
 
 format :; prettier --write src/**/*.sol && prettier --write src/*.sol
 
