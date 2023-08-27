@@ -8,8 +8,9 @@ set -e
 function makeNewDMList(){
 network=$1
 while true; do
+echo "=================================================="
     read -p "Please enter a dungeon master address: " INPUT
-    echo "================================================"
+    echo "=================================================="
     read -p "Would you like to enter another address? (y/n) " CONFIRMATION
 
     DUNGEON_MASTERS+=($INPUT)
@@ -68,6 +69,7 @@ DMLENGTH=$(echo -n "$DUNGEON_MASTERS"| sed 's/[][]//g; s/,/ /g' | wc -w)
 if [[ $DMLENGTH != 0 ]]
     then
         echo "Stored Dungeon masters have been found."
+        echo "=================================================="
         read -p "Would you like to create a new Dungeon Masters List? (y/n) "  MAKENEWLIST
         if [[ $MAKENEWLIST == "y" || $MAKENEWLIST == "Y" ]]
             then
@@ -82,15 +84,23 @@ CHARACTERSHEETSBASEURI=$(node scripts/helpers/readAddress.js $1 CharacterSheetsB
 
 if [[ $CHARACTERSHEETSBASEURI != '' ]]
 then
+echo "=================================================="
 echo "Character Sheets base uri detected."
-read -p "Would you like to insert a new uri? (y/n)" SHEETSCONF
+echo "=================================================="
+read -p "Would you like to use a different uri? (y/n): " SHEETSCONF
+echo "=================================================="
+echo ""
     if [[ $SHEETSCONF == "y" || $SHEETSCONF == "Y" ]]
         then
+        echo "=================================================="
         read -p "Enter new Character Sheets base uri: " NEWSHEETSURI
+
         node scripts/helpers/saveCreationData.js $1 CharacterSheetsBaseUri $NEWSHEETSURI
     fi
-    else        
+    else     
+    echo "=================================================="   
         read -p "Enter new Character Sheets base uri: " NEWSHEETSURI
+
         node scripts/helpers/saveCreationData.js $1 CharacterSheetsBaseUri $NEWSHEETSURI
 fi
 
@@ -98,15 +108,23 @@ EXPERIENCEBASEURI=$(node scripts/helpers/readAddress.js $1 ExperienceBaseUri)
 
 if [[ $EXPERIENCEBASEURI != '' ]]
 then
+echo "=================================================="
 echo "Experience and Items base uri detected."
-read -p "Would you like to insert a new uri? (y/n)" EXPCONF
+echo "=================================================="
+read -p "Would you like to use a different uri? (y/n): " EXPCONF
+echo "=================================================="
+echo ""
     if [[ $EXPCONF == "y" || $EXPCONF == "Y" ]]
         then
+        echo "=================================================="
         read -p "Enter new Items and Experience base uri: " NEWEXPURI
+
         node scripts/helpers/saveCreationData.js $1 ExperienceBaseUri $NEWEXPURI
     fi
     else        
+    echo "=================================================="
         read -p "Enter new Items and Experience base uri: " NEWEXPURI
+
         node scripts/helpers/saveCreationData.js $1 ExperienceBaseUri $NEWEXPURI
 fi
 
@@ -114,15 +132,23 @@ CLASSESBASEURI=$(node scripts/helpers/readAddress.js $1 ClassesBaseUri)
 
 if [[ $CLASSESBASEURI != '' ]]
 then
+echo "=================================================="
 echo "Classes base uri detected."
-read -p "Would you like to insert a new uri? (y/n):" CLASSCONF
+echo "=================================================="
+read -p "Would you like to use a different uri? (y/n): " CLASSCONF
+echo "=================================================="
+echo ""
     if [[ $CLASSCONF == "y" || $CLASSCONF == "Y" ]]
         then
+        echo "=================================================="
         read -p "Enter new Classes base uri: " NEWCLASSURI
+
         node scripts/helpers/saveCreationData.js $1 ClassesBaseUri $NEWCLASSURI
     fi
-    else        
+    else
+    echo "=================================================="        
         read -p "Enter new Classes base uri: " NEWCLASSURI
+
         node scripts/helpers/saveCreationData.js $1 ClassesBaseUri $NEWCLASSURI
 fi
 
