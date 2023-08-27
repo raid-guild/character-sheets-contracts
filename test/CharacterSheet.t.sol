@@ -1,62 +1,61 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 pragma abicoder v2;
 //solhint-disable
 
-import 'forge-std/Test.sol';
-import './helpers/SetUp.sol';
-import '../src/lib/Errors.sol';
+import "forge-std/Test.sol";
+import "./helpers/SetUp.sol";
+import "../src/lib/Errors.sol";
 
-import 'forge-std/console2.sol';
-
+import "forge-std/console2.sol";
 
 contract CharacterSheetsTest is Test, SetUp {
-
     event ExperienceUpdated(address exp);
 
     function testRollCharacterSheet() public {
-        bytes memory encodedData = abi.encode('Test Name', 'test_token_uri/');
+        bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
         vm.prank(admin);
         characterSheets.rollCharacterSheet(admin, encodedData);
 
-        assertEq(characterSheets.tokenURI(2), 'test_base_uri_character_sheets/test_token_uri/');
+        assertEq(characterSheets.tokenURI(2), "test_base_uri_character_sheets/test_token_uri/");
     }
 
     function testRollCharacterSheetFailNonMember() public {
-        bytes memory encodedData = abi.encode('Test Name', 'test uri');
+        bytes memory encodedData = abi.encode("Test Name", "test uri");
         vm.prank(admin);
         vm.expectRevert();
-        characterSheets.rollCharacterSheet(player2, encodedData );
+        characterSheets.rollCharacterSheet(player2, encodedData);
     }
 
     function testRollCharacterSheetRevertAlreadyACharacter() public {
-        bytes memory encodedData = abi.encode('Test Name', 'test uri');
+        bytes memory encodedData = abi.encode("Test Name", "test uri");
         vm.prank(admin);
         vm.expectRevert();
-        characterSheets.rollCharacterSheet(player1, encodedData );
+        characterSheets.rollCharacterSheet(player1, encodedData);
     }
 
     function testChangeBaseUri() public {
-        string memory newBaseUri = 'new_base_uri/';
+        string memory newBaseUri = "new_base_uri/";
         vm.prank(admin);
         characterSheets.setBaseUri(newBaseUri);
-        assertEq(characterSheets.tokenURI(1), 'new_base_uri/test_token_uri/');
+        assertEq(characterSheets.tokenURI(1), "new_base_uri/test_token_uri/");
     }
 
     function testChangeBaseUriAccessControlRevert() public {
-        string memory newBaseUri = 'new_base_uri/';
+        string memory newBaseUri = "new_base_uri/";
         vm.prank(player1);
-        vm.expectRevert('AccessControl: account 0x000000000000000000000000000000000000beef is missing role 0x9f5957e014b94f6c4458eb946e74e5d7e489dfaff6e0bddd07dd7d48100ca913');
+        vm.expectRevert(
+            "AccessControl: account 0x000000000000000000000000000000000000beef is missing role 0x9f5957e014b94f6c4458eb946e74e5d7e489dfaff6e0bddd07dd7d48100ca913"
+        );
         characterSheets.setBaseUri(newBaseUri);
-
     }
 
     function testEquipClassToCharacter() public {
         vm.prank(admin);
-        classes.assignClass(1,1);
+        classes.assignClass(1, 1);
         assertEq(classes.balanceOf(npc1, 1), 1, "incorrect balance");
         assertEq(characterSheets.getCharacterSheetByCharacterId(1).ERC6551TokenAddress, npc1, "incorrect npc");
-        
+
         vm.prank(npc1);
         characterSheets.equipClassToCharacter(1, 1);
 
@@ -64,7 +63,7 @@ contract CharacterSheetsTest is Test, SetUp {
         // assertEq(sheet.classes[0], 1, 'class not assigned');
     }
 
-        function testEquipItemToCharacter() public {
+    function testEquipItemToCharacter() public {
         vm.prank(admin);
         address[] memory npc = new address[](1);
         npc[0] = npc1;
@@ -79,9 +78,9 @@ contract CharacterSheetsTest is Test, SetUp {
         characterSheets.equipItemToCharacter(1, 1);
 
         CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(1);
-        assertEq(sheet.inventory[0], 1, 'item not assigned');
+        assertEq(sheet.inventory[0], 1, "item not assigned");
     }
- 
+
     function testTransferFromRevert() public {
         vm.prank(player1);
         vm.expectRevert();
@@ -92,15 +91,15 @@ contract CharacterSheetsTest is Test, SetUp {
         characterSheets.transferFrom(player1, player2, 1);
     }
 
-    function testRenounceSheet()public {
+    function testRenounceSheet() public {
         vm.prank(player1);
         characterSheets.renounceSheet(1);
 
-        assertEq(characterSheets.balanceOf(player1), 0, "sheet not renounced");  
+        assertEq(characterSheets.balanceOf(player1), 0, "sheet not renounced");
 
         vm.prank(player2);
         vm.expectRevert();
-        characterSheets.renounceSheet(1);   
+        characterSheets.renounceSheet(1);
     }
 
     function testUpdateExpContract() public {
@@ -115,7 +114,7 @@ contract CharacterSheetsTest is Test, SetUp {
         assertEq(sheet.memberAddress, player1);
 
         vm.expectRevert();
-        characterSheets.getCharacterSheetByCharacterId(5); 
+        characterSheets.getCharacterSheetByCharacterId(5);
     }
 
     function testGetPlayerIdFromNftAddress() public {
@@ -123,14 +122,13 @@ contract CharacterSheetsTest is Test, SetUp {
 
         uint256 playerId = characterSheets.getCharacterIdByNftAddress(sheet.ERC6551TokenAddress);
 
-        assertEq(playerId, 1, 'Incorrect playerId');
+        assertEq(playerId, 1, "Incorrect playerId");
 
         vm.expectRevert();
         characterSheets.getCharacterIdByNftAddress(player2);
     }
 
     function testRemovePlayer() public {
-
         vm.prank(admin);
         vm.expectRevert();
         characterSheets.removeSheet(1);
@@ -140,22 +138,23 @@ contract CharacterSheetsTest is Test, SetUp {
         vm.prank(admin);
         characterSheets.removeSheet(1);
 
-        assertEq(characterSheets.balanceOf(player1), 0, 'Player has not been removed');
+        assertEq(characterSheets.balanceOf(player1), 0, "Player has not been removed");
 
         vm.prank(admin);
         vm.expectRevert();
         characterSheets.removeSheet(2);
     }
 
-    function testUpdateCharacterName()public {
+    function testUpdateCharacterName() public {
         vm.prank(player1);
-        characterSheets.updateCharacterName('Regard');
+        characterSheets.updateCharacterName("Regard");
         CharacterSheet memory player = characterSheets.getCharacterSheetByCharacterId(1);
-        assertEq(player.name, 'Regard', 'This player is not regarded');
+        assertEq(player.name, "Regard", "This player is not regarded");
 
         vm.prank(player2);
-        vm.expectRevert('AccessControl: account 0x000000000000000000000000000000000000babe is missing role 0x0f98b3a5774fbfdf19646dba94a6c08f13f4c341502334a57724de46497192c3');
-        characterSheets.updateCharacterName('Regard');
+        vm.expectRevert(
+            "AccessControl: account 0x000000000000000000000000000000000000babe is missing role 0x0f98b3a5774fbfdf19646dba94a6c08f13f4c341502334a57724de46497192c3"
+        );
+        characterSheets.updateCharacterName("Regard");
     }
-    
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 import {CharacterAccount} from "../src/CharacterAccount.sol";
 
@@ -9,18 +9,17 @@ import "../lib/forge-std/src/Script.sol";
 import "../lib/forge-std/src/StdJson.sol";
 
 contract DeployCharacterAccount is BaseDeployer {
-  using stdJson for string;
+    using stdJson for string;
 
-  CharacterAccount public characterAccount;
+    CharacterAccount public characterAccount;
 
-  function deploy() internal override returns (address) {
-    vm.startBroadcast(deployerPrivateKey);
+    function deploy() internal override returns (address) {
+        vm.startBroadcast(deployerPrivateKey);
 
-    characterAccount = new CharacterAccount();
+        characterAccount = new CharacterAccount();
 
-    
-    vm.stopBroadcast();
+        vm.stopBroadcast();
 
-    return address(characterAccount);
-  }
+        return address(characterAccount);
+    }
 }

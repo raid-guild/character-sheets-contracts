@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 import {ExperienceAndItemsImplementation} from "../src/implementations/ExperienceAndItemsImplementation.sol";
 
@@ -8,17 +8,17 @@ import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
 
 contract DeployExperienceAndItemsImplementation is BaseDeployer {
-  using stdJson for string;
+    using stdJson for string;
 
-  ExperienceAndItemsImplementation public experienceAndItemsImplementation;
+    ExperienceAndItemsImplementation public experienceAndItemsImplementation;
 
-  function deploy() internal override returns (address) {
-    vm.startBroadcast(deployerPrivateKey);
+    function deploy() internal override returns (address) {
+        vm.startBroadcast(deployerPrivateKey);
 
-    experienceAndItemsImplementation = new ExperienceAndItemsImplementation();
-    
-    vm.stopBroadcast();
+        experienceAndItemsImplementation = new ExperienceAndItemsImplementation();
 
-    return address(experienceAndItemsImplementation);
-  }
+        vm.stopBroadcast();
+
+        return address(experienceAndItemsImplementation);
+    }
 }

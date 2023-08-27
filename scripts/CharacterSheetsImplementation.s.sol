@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 import {CharacterSheetsImplementation} from "../src/implementations/CharacterSheetsImplementation.sol";
 
@@ -8,17 +8,17 @@ import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
 
 contract DeployCharacterSheetsImplementation is BaseDeployer {
-  using stdJson for string;
+    using stdJson for string;
 
-  CharacterSheetsImplementation public characterSheetsImplementation;
+    CharacterSheetsImplementation public characterSheetsImplementation;
 
-  function deploy() internal override returns (address) {
-    vm.startBroadcast(deployerPrivateKey);
+    function deploy() internal override returns (address) {
+        vm.startBroadcast(deployerPrivateKey);
 
-    characterSheetsImplementation = new CharacterSheetsImplementation();
-    
-    vm.stopBroadcast();
+        characterSheetsImplementation = new CharacterSheetsImplementation();
 
-    return address(characterSheetsImplementation);
-  }
+        vm.stopBroadcast();
+
+        return address(characterSheetsImplementation);
+    }
 }

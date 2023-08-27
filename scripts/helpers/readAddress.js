@@ -1,6 +1,6 @@
-const path = require("path");
+const path = require('path');
 
-const addressesPath = "../../addresses.json";
+const addressesPath = '../../addresses.json';
 
 const addresses = require(path.join(__dirname, addressesPath));
 const [targetEnv, contract] = process.argv.slice(2);
@@ -14,4 +14,4 @@ if (!addresses[targetEnv]) {
 
 const address = addresses[targetEnv][contract];
 
-console.log(address ?? "");
+console.log(address ?? '');

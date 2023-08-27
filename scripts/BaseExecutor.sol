@@ -7,13 +7,13 @@ import "forge-std/StdJson.sol";
 import {ForkManagement} from "./helpers/ForkManagement.sol";
 import "forge-std/console2.sol";
 
-abstract contract BaseDeployer is Script, ForkManagement {
+abstract contract BaseExecutor is Script, ForkManagement {
     using stdJson for string;
 
     uint256 deployerPrivateKey;
     address deployer;
 
-    function loadBaseAddresses(string memory json, string memory targetEnv) internal virtual {
+    function loadBaseData(string memory json, string memory targetEnv) internal virtual {
         // empty
     }
 
@@ -34,12 +34,12 @@ abstract contract BaseDeployer is Script, ForkManagement {
     function run(string calldata targetEnv) external {
         string memory json = loadJson();
         checkNetworkParams(json, targetEnv);
-        loadBaseAddresses(json, targetEnv);
+        loadBaseData(json, targetEnv);
         loadPrivateKeys();
 
-        address module = deploy();
-        console.log("New Deployment Address:", address(module));
+        (address characterSheetsAddresss, address experienceAddress, address classesAddress) = create();
+        console.log("New contracts created: ", characterSheetsAddresss, experienceAddress, classesAddress);
     }
 
-    function deploy() internal virtual returns (address) {}
+    function create() internal virtual returns (address, address, address) {}
 }

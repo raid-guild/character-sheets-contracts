@@ -59,4 +59,4 @@ verify-contracts :; make verify-${network} contract=CharacterAccount && \
 	make verify-${network} contract=CharacterSheetsFactory;
 
 # execute commands
-create-round :; scripts/execute.sh ${network} CharacterSheetsFactory create
+create-sheets :; scripts/createSheets.sh ${network} ${dungeon-masters} ${sheets-base} ${exp-base} ${classes-base}

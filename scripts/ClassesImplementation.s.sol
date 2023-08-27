@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 import {ClassesImplementation} from "../src/implementations/ClassesImplementation.sol";
 
@@ -9,18 +9,17 @@ import "../lib/forge-std/src/Script.sol";
 import "../lib/forge-std/src/StdJson.sol";
 
 contract DeployClassesImplementation is BaseDeployer {
-  using stdJson for string;
+    using stdJson for string;
 
-  ClassesImplementation public classesImplementation;
+    ClassesImplementation public classesImplementation;
 
-  function deploy() internal override returns (address) {
-    vm.startBroadcast(deployerPrivateKey);
+    function deploy() internal override returns (address) {
+        vm.startBroadcast(deployerPrivateKey);
 
-    classesImplementation = new ClassesImplementation();
-    
-    
-    vm.stopBroadcast();
+        classesImplementation = new ClassesImplementation();
 
-    return address(classesImplementation);
-  }
+        vm.stopBroadcast();
+
+        return address(classesImplementation);
+    }
 }

@@ -14,11 +14,20 @@
     "chainId": "11155111",
     "network": "sepolia",
     "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
-    "Dao": "",
+    "Dao": "0x34998d45554480fab16360a367fe44b480987ee6",
     "CharacterSheetsFactory": "0xb271d3501CfEd30616Ebf83bbcE693b2eE93CE25",
     "CharacterSheetsImplementation": "0x17c6e273709532585c4F5EA322d90B15f4D66D29",
     "CharacterAccount": "0x0f6fbE92d5131299c0d80aC508192F226b0AD140",
     "ExperienceAndItemsImplementation": "0x024417e9Caea813F83CA9BF29938802B18005755",
-    "ClassesImplementation": "0x5c0b6d591b00ABdFbb0B6d432D92e552f206a482"
+    "ClassesImplementation": "0x5c0b6d591b00ABdFbb0B6d432D92e552f206a482",
+    "DungeonMasters": [
+      "0x941E92c9Eff78a2b7217057752cf938040a59aE9"
+    ],
+    "CharacterSheetsBaseUri": "sheet",
+    "ExperienceBaseUri": "exp",
+    "ClassesBaseUri": "class",
+    "CreatedCharacterSheet": "0x1920a6b180C4D7d5acB6F3da29207C62F3408BEd",
+    "CreatedExperienceAndItems": "0xaDAf1d4B17D28Fdd57C636B3B8Bf6a62887FeEfF",
+    "CreatedClasses": "0xFf4F28f1D1d2294C9Ff8eb17D0b85419Eff8346D"
   }
 }

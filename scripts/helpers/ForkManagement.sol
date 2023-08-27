@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 //solhint-disable
 
@@ -23,10 +23,10 @@ contract ForkManagement is Script {
         console2.log(targetEnv);
         network = json.readString(string(abi.encodePacked(".", targetEnv, ".network")));
         chainId = json.readUint(string(abi.encodePacked(".", targetEnv, ".chainId")));
-        console2.log("ChainId: ", chainId, block.chainid);
+        console2.log("ChainId: ", chainId);
         console2.log("\nTarget environment:", targetEnv);
         console2.log("Network:", network);
-        // if (block.chainid != chainId) revert("Wrong chainId");
+        if (block.chainid != chainId) revert("Wrong chainId");
         console2.log("ChainId:", chainId);
     }
 
