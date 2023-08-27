@@ -11,7 +11,8 @@ cat << "EOF"
  \ \ \_/\ \ \ \ \/   \ \ \_\ \/\  __/ /\ \L\.\_ /\ \L\ \   \ \ \L\ \/\  __/    \ \ \    \ \ \ 
   \ \_\\ \_\ \ \_\    \ \____/\ \____\\ \__/.\_\\ \___,_\   \ \____/\ \____\    \ \_\    \ \_\
    \/_/ \/_/  \/_/     \/___/  \/____/ \/__/\/_/ \/__,_ /    \/___/  \/____/     \/_/     \/_/
-*************************************************************************************************                                                                                          
+***********************************************************************************************
+
 EOF
 
 if [[ $1 == "" || $2 == "" ]]
@@ -45,8 +46,8 @@ SAVED_ADDRESS=$(node scripts/helpers/readAddress.js $1 $2)
 
 if [[ $SAVED_ADDRESS == "" ]]
     then
-        echo "Saved Address for $2 not found"
-        read -p "Exit? (y/n):" CONFIRMATION
+        echo " Saved Address for $2 not found"
+        read -p " Exit? (y/n):" CONFIRMATION
         if [[ $CONFIRMATION != "y" && $CONFIRMATION != "Y" ]]
             then
             echo "Deployment cancelled. Execution terminated."
@@ -60,8 +61,8 @@ CHAIN_ID=$(node scripts/helpers/readChainId.js $1)
 
 if [[ CHAIN_ID == "" ]]
 then
-    echo "Chain Id not found"
-    echo "Exiting script"
+    echo " Chain Id not found"
+    echo " Exiting script"
     exit 1
 fi
 
