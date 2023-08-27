@@ -42,7 +42,12 @@ make verify-contracts network=<sepolia/gnosis>
 
 ### Create new characterSheets and sub contracts
 
-To use the character Sheets factory you will need the following addresses available to input into the script - A list of address that you would like to give administrator privileges to. - the address of the Moloch Dao who's members will be eligible to use the protocol - the base image uri for the character sheets NFT contract - the base image URI for the Experience and Items ERC1155 contract - the base image URI for the Classes contract
+To use the character Sheets factory you will need the following addresses available to input into the script - A list of address that you would like to give administrator privileges to.
+
+- the address of the Moloch Dao who's members will be eligible to use the protocol
+- the base image uri for the character sheets NFT contract
+- the base image URI for the Experience and Items ERC1155 contract
+- the base image URI for the Classes contract
 
 The bash script will ask for this info during the creation of the contracts you can either paste them directly into the CLI or add them to the addresses.json file before running the script.
 
