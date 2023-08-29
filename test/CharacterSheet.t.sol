@@ -12,6 +12,11 @@ import "forge-std/console2.sol";
 contract CharacterSheetsTest is Test, SetUp {
     event ExperienceUpdated(address exp);
 
+    function testFunctionSelector() public pure {
+        bytes4 selector = bytes4(keccak256(abi.encodePacked("run(string,uint256)")));
+        console2.logBytes4(selector);
+    }
+
     function testRollCharacterSheet() public {
         bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
         vm.prank(admin);

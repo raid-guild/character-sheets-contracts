@@ -4,11 +4,11 @@ pragma solidity ^0.8.19;
 import {CharacterSheetsFactory} from "../src/CharacterSheetsFactory.sol";
 
 import {BaseDeployer} from "./BaseDeployer.sol";
-import {BaseExecutor} from "./BaseExecutor.sol";
+import {BaseFactoryExecutor} from "./BaseExecutor.sol";
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
 
-contract DeployCharacterSheetsFactory is BaseDeployer {
+contract CharacterSheetsFactory is BaseDeployer {
     using stdJson for string;
 
     address public erc6551Registry;
@@ -53,7 +53,7 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
     }
 }
 
-contract Create is BaseExecutor {
+contract Create is BaseFactoryExecutor {
     using stdJson for string;
 
     address[] public dungeonMasters;

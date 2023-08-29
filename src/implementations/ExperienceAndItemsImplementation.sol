@@ -455,7 +455,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         {
             (name, supply, newItemRequirements, newClassRequirements, soulbound, claimable, cid) =
                 abi.decode(data, (string, uint256, uint256[][], uint256[], bool, bytes32, string));
-            return Item(0, name, supply, 0, newItemRequirements, newClassRequirements, soulbound, claimable, cid);
+            return Item(cid, claimable, newClassRequirements, newItemRequirements, name, soulbound, 0, supply, 0);
         }
     }
 

@@ -191,7 +191,7 @@ if [[ $CONFIRMATION == "y" || $CONFIRMATION == "Y" ]]
         FORGE_OUTPUT=$(PRIVATE_KEY=$PRIVATE_KEY forge script scripts/CharacterSheetsFactory.s.sol:Create -s $CALLDATA --rpc-url $NETWORK --broadcast)
         echo "$FORGE_OUTPUT"
 
-        DEPLOYED_ADDRESSES=$(echo "$FORGE_OUTPUT" | grep -oEi 'New contracts created.*0x[a-fA-F0-9]{40}' | grep -oEi '*0x[a-fA-F0-9]{40}')
+        DEPLOYED_ADDRESSES=$(echo "$FORGE_OUTPUT" | grep -oEi 'New contracts created.*0x[a-fA-F0-9]{40}' | grep -oEi '0x[a-fA-F0-9]{40}')
 
         if [[ $DEPLOYED_ADDRESSES != "" ]]
             then
