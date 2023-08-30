@@ -24,36 +24,8 @@ contract DeployExperienceAndItemsImplementation is BaseDeployer {
     }
 }
 
-struct InterItem {
-    /// @dev this item's image/metadata uri
-    string cid;
-    /// @dev  claimable: if bytes32(0) then  items are claimable by anyone, otherwise upload a merkle root
-    /// of all addresses allowed to claim.  if not claimable at all use any random bytes32(n) besides bytes32(0)
-    /// so all merkle proofs will fail.
-    uint256[][] claimable;
-    /// @dev this is the array of classes required to transfer this item
-    uint256[] classRequirements;
-    /// @dev an array of arrays with length of 2. containing the required itemId and the amount required
-    /// eg. [[itemId, amount], [itemId, amount]]
-    uint256[][] itemRequirements;
-    /// @dev the name of this item
-    string name;
-    /// @dev is this item soulbound or not
-    uint256 soulbound;
-    /// @dev the number of this item that have been given out or claimed
-    uint256 supplied;
-    /// @dev the number of this item to be created.
-    uint256 supply;
-    /// @dev erc1155 token id
-    bytes tokenId;
-}
-
 contract ExecuteExperienceAndItemsImplementation is BaseExecutor {
     using stdJson for string;
-
-    InterItem public newItem;
-
-    bytes public intermediaryBytes;
 
     ExperienceAndItemsImplementation public experience;
     address public experienceAddress;
@@ -86,18 +58,13 @@ contract ExecuteExperienceAndItemsImplementation is BaseExecutor {
     }
 
     function execute() internal override {
-        bytes memory encodedData = abi.encode(
-            newItem.name,
-            newItem.supply,
-            newItem.itemRequirements,
-            newItem.classRequirements,
-            newItem.soulbound,
-            _createMerkleRoot(),
-            newItem.cid
-        );
+        bytes32 merkleRoot = _createMerkleRoot();
+        bytes memory encodedData =
+            abi.encode(itemName, supply, itemRequirements, classRequirements, soulbound, merkleRoot, uri);
 
         vm.broadcast(deployerPrivateKey);
-        experience.createItemType(encodedData);
+        uint256 newItemId = experience.createItemType(encodedData);
+        console.log("New Item Id: ", newItemId);
     }
 
     function _createMerkleRoot() internal pure returns (bytes32) {

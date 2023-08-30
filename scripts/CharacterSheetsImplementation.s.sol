@@ -39,6 +39,8 @@ contract ExecuteCharacterSheetsImplementation is BaseExecutor {
             dao.addMember(memberAddress);
         }
 
+        console2.log("SHEET URI: ", sheetUri);
+
         bytes memory encodedData = abi.encode(characterName, sheetUri);
 
         vm.broadcast(deployerPrivateKey);
