@@ -53,3 +53,15 @@ The bash script will ask for this info during the creation of the contracts you 
 ```sh
 make create-sheets network=<sepolia/gnosis>
 ```
+
+### Basic contract interactions
+
+once new contracts are deployed you can...
+
+- Make a new Class
+- Make a new Item
+- Roll a character sheet
+
+```sh
+make execute network=<sepolia/gnosis>
+```
