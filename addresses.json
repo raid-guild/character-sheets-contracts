@@ -1,6 +1,6 @@
 {
   "gnosis": {
-    "chainId": "0x64",
+    "chainId": "100",
     "network": "gnosis",
     "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
     "Dao": "0xfe1084bC16427e5EB7f13Fc19bCD4E641F7d571f",
@@ -37,7 +37,38 @@
         "Erc6551address": "0x3B39178c8AE4ef6290B6730f5f5485B938D3D7f4"
       }
     ],
-    "Items": [],
-    "Classes": []
+    "Items": [
+      {
+        "cid": "false",
+        "name": "invisiblefartofdeath",
+        "supply": "1000000",
+        "soulbound": false,
+        "requirements": {
+          "classRequirements": [],
+          "itemRequirements": [
+            [
+              0,
+              0
+            ]
+          ],
+          "claimable": [
+            [
+              0,
+              0
+            ]
+          ]
+        }
+      }
+    ],
+    "Classes": [
+      {
+        "ClassName": "wizard",
+        "ClassUri": null
+      },
+      {
+        "ClassName": "warrior",
+        "ClassUri": null
+      }
+    ]
   }
 }

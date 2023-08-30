@@ -42,16 +42,12 @@ contract ExecuteClassesImplementation is BaseExecutor {
         console2.log("ARR INDEX: ", arrIndex);
         className = json.readString(string(abi.encodePacked(".", targetEnv, ".Classes[", arrIndex, "].ClassName")));
         classUri = json.readString(string(abi.encodePacked(".", targetEnv, ".Classes[", arrIndex, "].ClassUri")));
-        characterAddress =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".Characters[", arrIndex, "].MemberAddress")));
     }
 
     function execute() internal override {
         bytes memory encodedData = abi.encode(className, classUri);
 
         vm.broadcast(deployerPrivateKey);
-        vm.expectEmit(true, true, false, false);
-        emit NewCharacter(tokenId, tba);
         classesImplementation.createClassType(encodedData);
     }
 }

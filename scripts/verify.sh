@@ -75,3 +75,4 @@ else
 fi
 
 echo "end verification"
+exit 0

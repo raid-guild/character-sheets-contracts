@@ -73,3 +73,4 @@ fi
 
 
     echo "Deployment completed: $DEPLOYED_ADDRESS"
+    exit 0
