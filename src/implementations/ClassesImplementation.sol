@@ -51,6 +51,7 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
 
     event NewClassCreated(uint256 erc1155TokenId, string name);
     event ClassAssigned(address classAssignedTo, uint256 erc1155TokenId, uint256 classId);
+    event CharacterSheetsUpdated(address newCharacterSheets);
 
     modifier onlyDungeonMaster() {
         if (!characterSheets.hasRole(DUNGEON_MASTER, msg.sender)) {
@@ -118,6 +119,11 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
         for (uint256 i = 0; i < _classIds.length; i++) {
             assignClass(characterId, _classIds[i]);
         }
+    }
+
+    function updateCharacterSheetsContract(address newCharSheets) external onlyDungeonMaster {
+        characterSheets = CharacterSheetsImplementation(newCharSheets);
+        emit CharacterSheetsUpdated(newCharSheets);
     }
 
     /**
