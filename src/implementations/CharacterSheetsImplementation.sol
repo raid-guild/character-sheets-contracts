@@ -49,8 +49,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
 
     uint256 public totalSheets;
 
-    event NewPlayer(uint256 tokenId, address memberAddress);
-    event NewCharacter(uint256 tokenId, address tba);
+    event NewCharacterSheetRolled(address member, address erc6551, uint256 tokenId);
     event PlayerRemoved(uint256 tokenId);
     event ExperienceUpdated(address exp);
     event ClassEquipped(uint256 characterId, uint256 classId);
@@ -184,8 +183,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         totalSheets++;
         _grantRole(PLAYER, _to);
         _grantRole(CHARACTER, tba);
-        emit NewPlayer(tokenId, _to);
-        emit NewCharacter(tokenId, tba);
+        emit NewCharacterSheetRolled(_to, tba, tokenId);
 
         return tokenId;
     }
@@ -314,10 +312,6 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     function jailPlayer(address playerAddress, bool throwInJail) public onlyRole(DUNGEON_MASTER) {
         jailed[playerAddress] = throwInJail;
         emit PlayerJailed(playerAddress, throwInJail);
-    }
-
-    function setExperienceAndGearContract(address _experience) public onlyRole(DUNGEON_MASTER) {
-        experience = ExperienceAndItemsImplementation(_experience);
     }
 
     function updateExpContract(address expContract) public onlyRole(DUNGEON_MASTER) {
