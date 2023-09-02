@@ -17,11 +17,14 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
     uint256 private _nonce;
 
-    event CharacterSheetsCreated(address newCharacterSheets, address creator);
+    event CharacterSheetsCreated(
+      address creator,
+      address characterSheets,
+      address classes,
+      address experienceAndItems
+    );
     event CharacterSheetsUpdated(address newCharacterSheets);
-    event ClassesCreated(address newClasses, address creator);
     event ExperienceUpdated(address newExperience);
-    event ExperienceAndItemsCreated(address newExp, address creator);
     event RegistryUpdated(address newRegistry);
     event ERC6551AccountImplementationUpdated(address newImplementation);
     event ClassesImplementationUpdated(address newClasses);
@@ -93,9 +96,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
         ClassesImplementation(classesClone).initialize(_encodeClassesData(characterSheetsClone, data));
 
-        emit CharacterSheetsCreated(characterSheetsClone, msg.sender);
-        emit ExperienceAndItemsCreated(experienceClone, msg.sender);
-        emit ClassesCreated(classesClone, msg.sender);
+        emit CharacterSheetsCreated(msg.sender, characterSheetsClone, classesClone, experienceClone);
 
         _nonce++;
 
