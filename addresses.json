@@ -15,11 +15,11 @@
     "network": "sepolia",
     "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
     "Dao": "0x34998d45554480fab16360a367fe44b480987ee6",
-    "CharacterSheetsFactory": "0xb271d3501CfEd30616Ebf83bbcE693b2eE93CE25",
-    "CharacterSheetsImplementation": "0x64Bb118b81d1a9616012b9727DB4501122997a76",
-    "CharacterAccount": "0x0f6fbE92d5131299c0d80aC508192F226b0AD140",
-    "ExperienceAndItemsImplementation": "0x024417e9Caea813F83CA9BF29938802B18005755",
-    "ClassesImplementation": "0x5c0b6d591b00ABdFbb0B6d432D92e552f206a482",
+    "CharacterSheetsFactory": "0x7CeCF0a7B6e764d7B8849bD47E1A92c1806B89aC",
+    "CharacterSheetsImplementation": "0x7f8F6E42C169B294A384F5667c303fd8Eedb3CF3",
+    "CharacterAccount": "0x0d006D9e862B362180eb602e5973Fd1fdb6f78dd",
+    "ExperienceAndItemsImplementation": "0x61cEBDf43a96581E6E144395fBA18f9D1a43e558",
+    "ClassesImplementation": "0x37Ceee303E485bc23aa1c21aa91D51C1f0030Dae",
     "DungeonMasters": [
       "0x941E92c9Eff78a2b7217057752cf938040a59aE9"
     ],

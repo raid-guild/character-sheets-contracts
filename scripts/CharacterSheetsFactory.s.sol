@@ -8,7 +8,7 @@ import {BaseFactoryExecutor} from "./BaseExecutor.sol";
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
 
-contract CharacterSheetsFactory is BaseDeployer {
+contract DeployCharacterSheetsFactory is BaseDeployer {
     using stdJson for string;
 
     address public erc6551Registry;
