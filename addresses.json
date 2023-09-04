@@ -58,11 +58,36 @@
             ]
           ]
         }
+      },
+      {
+        "cid": "false",
+        "name": "rusty_stick",
+        "supply": "100000",
+        "soulbound": false,
+        "requirements": {
+          "classRequirements": [],
+          "itemRequirements": [
+            [
+              0,
+              0
+            ]
+          ],
+          "claimable": [
+            [
+              0,
+              0
+            ]
+          ]
+        }
       }
     ],
     "Classes": [
       {
         "ClassName": "wizard",
+        "ClassUri": null
+      },
+      {
+        "ClassName": "warrior",
         "ClassUri": null
       },
       {

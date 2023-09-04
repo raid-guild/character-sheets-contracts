@@ -3,8 +3,7 @@ pragma solidity ^0.8.9;
 
 import {Initializable} from "openzeppelin/proxy/utils/Initializable.sol";
 import {MerkleProof} from "openzeppelin/utils/cryptography/MerkleProof.sol";
-import {ERC20} from "hats/lib/ERC20/ERC20.sol";
-import {IERC721} from "openzeppelin/token/ERC721/IERC721.sol";
+import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
 
 import {CharacterSheetsImplementation} from "./CharacterSheetsImplementation.sol";
 import {ClassesImplementation} from "./ClassesImplementation.sol";
@@ -28,7 +27,7 @@ contract ExperienceAndItemsImplementation is ERC20 {
 
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
     CharacterSheetsImplementation public characterSheets;
-    address experienceContract;
+    address public experienceContract;
 
     modifier onlyDungeonMaster() {
         if (!characterSheets.hasRole(DUNGEON_MASTER, msg.sender)) {

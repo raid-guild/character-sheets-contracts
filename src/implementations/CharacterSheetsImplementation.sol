@@ -17,7 +17,7 @@ import {Item, Class, CharacterSheet} from "../lib/Structs.sol";
 
 //solhint-disable-next-line
 import "../lib/Errors.sol";
-import "forge-std/console2.sol";
+// import "forge-std/console2.sol";
 
 contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorage, AccessControl {
     using Counters for Counters.Counter;
