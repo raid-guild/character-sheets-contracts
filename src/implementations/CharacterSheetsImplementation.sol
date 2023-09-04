@@ -54,7 +54,9 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     event PlayerRemoved(uint256 tokenId);
     event ExperienceUpdated(address exp);
     event ClassEquipped(uint256 characterId, uint256 classId);
+    event ClassUnequipped(uint256 characterId, uint256 classId);
     event ItemEquipped(uint256 characterId, uint256 itemTokenId);
+    event ItemUnequipped(uint256 characterId, uint256 itemTokenId);
     event CharacterNameUpdated(string oldName, string newName);
     event PlayerJailed(address playerAddress, bool thrownInJail);
 
@@ -225,6 +227,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
                 sheets[characterId].classes = arr;
                 sheets[characterId].classes.pop();
 
+                emit ClassUnequipped(characterId, classId);
                 return success = true;
             }
         }
@@ -259,6 +262,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
                 sheets[characterId].inventory = arr;
                 sheets[characterId].inventory.pop();
 
+                emit ItemUnequipped(characterId, tokenId);
                 return success = true;
             }
         }
