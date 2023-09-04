@@ -328,6 +328,10 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         baseTokenURI = _uri;
     }
 
+    function setMetadataUri(string memory _uri) public onlyRole(DUNGEON_MASTER) {
+        metadataURI = _uri;
+    }
+
     /**
      * Burns a players characterSheet.  can only be done if there is a passing guild kick proposal
      * @param characterId the characterId of the player to be removed.
