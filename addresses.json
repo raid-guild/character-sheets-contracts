@@ -20,9 +20,8 @@
     "CharacterAccount": "0x0d006D9e862B362180eb602e5973Fd1fdb6f78dd",
     "ExperienceAndItemsImplementation": "0x61cEBDf43a96581E6E144395fBA18f9D1a43e558",
     "ClassesImplementation": "0x37Ceee303E485bc23aa1c21aa91D51C1f0030Dae",
-    "DungeonMasters": [
-      "0x941E92c9Eff78a2b7217057752cf938040a59aE9"
-    ],
+    "DungeonMasters": ["0x941E92c9Eff78a2b7217057752cf938040a59aE9"],
+    "CharacterSheetsMetadataUri": "sheet-metadata",
     "CharacterSheetsBaseUri": "sheet",
     "ExperienceBaseUri": "exp",
     "ClassesBaseUri": "class",
@@ -45,18 +44,8 @@
         "soulbound": false,
         "requirements": {
           "classRequirements": [],
-          "itemRequirements": [
-            [
-              0,
-              0
-            ]
-          ],
-          "claimable": [
-            [
-              0,
-              0
-            ]
-          ]
+          "itemRequirements": [[0, 0]],
+          "claimable": [[0, 0]]
         }
       }
     ],

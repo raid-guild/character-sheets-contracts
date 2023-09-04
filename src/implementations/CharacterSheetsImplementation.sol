@@ -36,6 +36,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     IMolochDAO public dao;
 
     string public baseTokenURI;
+    string public metadataURI;
 
     IERC6551Registry private _erc6551Registry;
     address public erc6551AccountImplementation;
@@ -78,6 +79,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
      * - address CharacterAccountImplementation: the erc 4337 implementation of the Character account.
      * - address erc6551Registry:  the address of the deployed ERC6551 registry on whichever chain these
      *      contracts are on
+     * - string metadataURI: the metadata for the character sheets implementation
      * - string baseURI: the default uri of the player card images, arbitrary a different uri can be set
      *      when the character sheet is minted.
      * - address experienceImplementation: this is the address of the ERC1155 experience contract associated
@@ -93,8 +95,6 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         address classesImplementation;
         address experienceImplementation;
         address erc6551Registry;
-        address characterAccountImplementation;
-        string memory baseUri;
 
         (
             daoAddress,
@@ -103,9 +103,10 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
             classesImplementation,
             experienceImplementation,
             erc6551Registry,
-            characterAccountImplementation,
-            baseUri
-        ) = abi.decode(_encodedParameters, (address, address[], address, address, address, address, address, string));
+            erc6551AccountImplementation,
+            metadataURI,
+            baseTokenURI
+        ) = abi.decode(_encodedParameters, (address, address[], address, address, address, address, address, string, string));
 
         _grantRole(DEFAULT_ADMIN_ROLE, owner);
 
@@ -113,11 +114,9 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
             _grantRole(DUNGEON_MASTER, dungeonMasters[i]);
         }
 
-        setBaseUri(baseUri);
         experience = ExperienceAndItemsImplementation(experienceImplementation);
         classes = ClassesImplementation(classesImplementation);
         dao = IMolochDAO(daoAddress);
-        erc6551AccountImplementation = characterAccountImplementation;
         _erc6551Registry = IERC6551Registry(erc6551Registry);
         _tokenIdCounter.increment();
 

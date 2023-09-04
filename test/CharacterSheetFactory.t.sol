@@ -9,7 +9,12 @@ import "../src/implementations/ExperienceAndItemsImplementation.sol";
 // import "forge-std/console2.sol";
 
 contract CharacterSheetsTest is Test, SetUp {
-    event CharacterSheetsCreated(address newCharacterSheets, address creator);
+    event CharacterSheetsCreated(
+      address creator,
+      address characterSheets,
+      address classes,
+      address experienceAndItems
+    );
     event CharacterSheetsUpdated(address newCharacterSheets);
     event ExperienceUpdated(address newExperience);
     event ExperienceAndItemsCreated(address newExp, address creator);
@@ -83,9 +88,9 @@ contract CharacterSheetsTest is Test, SetUp {
         for (uint256 i = 0; i < 10; i++) {
             vm.prank(player1);
             vm.expectEmit(true, true, false, false);
-            emit CharacterSheetsCreated(address(0), player1);
+            emit CharacterSheetsCreated(player1, address(0), address(0), address(0));
             bytes memory baseUriData =
-                abi.encode("test_base_uri_character_sheets/", "test_base_uri_experience/", "test_base_uri_classes/");
+                abi.encode("test_metadata_uri_character_sheets/", "test_base_uri_character_sheets/", "test_base_uri_experience/", "test_base_uri_classes/");
 
             (address sheets, address exp, address class) =
                 characterSheetsFactory.create(dungeonMasters, address(dao), baseUriData);
@@ -93,6 +98,11 @@ contract CharacterSheetsTest is Test, SetUp {
             assertEq(address(CharacterSheetsImplementation(sheets).experience()), exp, "wrong experience");
             assertEq(address(ExperienceAndItemsImplementation(exp).characterSheets()), sheets, "wrong sheets");
             assertEq(address(ExperienceAndItemsImplementation(exp).classes()), class, "wrong classes");
+            assertEq(
+                CharacterSheetsImplementation(sheets).metadataURI(),
+                "test_metadata_uri_character_sheets/",
+                "Wrong character sheets metadata uri"
+            );
             assertEq(
                 CharacterSheetsImplementation(sheets).baseTokenURI(),
                 "test_base_uri_character_sheets/",
