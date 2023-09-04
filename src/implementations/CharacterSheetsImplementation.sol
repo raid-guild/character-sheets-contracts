@@ -57,7 +57,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     event ClassUnequipped(uint256 characterId, uint256 classId);
     event ItemEquipped(uint256 characterId, uint256 itemTokenId);
     event ItemUnequipped(uint256 characterId, uint256 itemTokenId);
-    event CharacterNameUpdated(string oldName, string newName);
+    event CharacterNameUpdated(uint256 tokenId, string oldName, string newName);
     event PlayerJailed(address playerAddress, bool thrownInJail);
 
     modifier onlyExpContract() {
@@ -306,10 +306,12 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
      * @param newName the new player name
      */
     function updateCharacterName(string calldata newName) public onlyRole(PLAYER) {
-        string memory oldName = sheets[memberAddressToTokenId[msg.sender]].name;
-        sheets[memberAddressToTokenId[msg.sender]].name = newName;
+        uint256 tokenId = memberAddressToTokenId[msg.sender];
 
-        emit CharacterNameUpdated(oldName, newName);
+        string memory oldName = sheets[tokenId].name;
+        sheets[tokenId].name = newName;
+
+        emit CharacterNameUpdated(tokenId, oldName, newName);
     }
 
     function jailPlayer(address playerAddress, bool throwInJail) public onlyRole(DUNGEON_MASTER) {
