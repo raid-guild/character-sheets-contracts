@@ -50,7 +50,8 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
     CharacterSheetsImplementation public characterSheets;
 
     event NewClassCreated(uint256 erc1155TokenId, string name);
-    event ClassAssigned(address classAssignedTo, uint256 erc1155TokenId, uint256 classId);
+    event ClassAssigned(uint256 characterId, uint256 classId);
+    event ClassRevoked(uint256 characterId, uint256 classId);
     event CharacterSheetsUpdated(address newCharacterSheets);
 
     modifier onlyDungeonMaster() {
@@ -150,7 +151,7 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
 
         classes[classId].supply++;
 
-        emit ClassAssigned(player.ERC6551TokenAddress, newClass.tokenId, classId);
+        emit ClassAssigned(characterId, classId);
     }
 
     /**
@@ -172,7 +173,6 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
                     revert Errors.ClassError();
                 }
             }
-            _burn(sheet.ERC6551TokenAddress, classId, 1);
         } else {
             if (sheet.memberAddress != msg.sender && sheet.ERC6551TokenAddress != msg.sender) {
                 revert Errors.OwnershipError();
@@ -182,9 +182,12 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
                     revert Errors.ClassError();
                 }
             }
-            _burn(sheet.ERC6551TokenAddress, classId, 1);
         }
+
+        _burn(sheet.ERC6551TokenAddress, classId, 1);
+
         success = true;
+        emit ClassRevoked(characterId, classId);
     }
 
     /**

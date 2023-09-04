@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 import {Initializable} from "openzeppelin/proxy/utils/Initializable.sol";
 import {MerkleProof} from "openzeppelin/utils/cryptography/MerkleProof.sol";
 import {ERC1155Receiver} from "openzeppelin/token/ERC1155/utils/ERC1155Receiver.sol";
-import {ERC1155, ERC1155TokenReceiver} from "hats/lib/ERC1155/ERC1155.sol";
+import {ERC1155, ERC1155TokenReceiver} from "@hats/lib/ERC1155/ERC1155.sol";
 import {IERC721} from "openzeppelin/token/ERC721/IERC721.sol";
 import {ERC1155Holder} from "openzeppelin/token/ERC1155/utils/ERC1155Holder.sol";
 import {Counters} from "openzeppelin/utils/Counters.sol";
@@ -56,8 +56,12 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     ClassesImplementation public classes;
 
     event NewItemTypeCreated(uint256 itemId, string name);
-    event ItemTransfered(address itemTransferedTo, uint256 itemId);
-    event ItemUpdated(uint256 itemId);
+    event ItemTransfered(address character, uint256 itemId, uint256 amount);
+    event ItemClaimableUpdated(uint256 itemId, bytes32 merkleRoot);
+    event ItemRequirementAdded(uint256 itemId, uint256 requiredItemId, uint256 requiredAmount);
+    event ItemRequirementRemoved(uint256 itemId, uint256 requiredItemId);
+    event ClassRequirementAdded(uint256 itemId, uint256 requiredClassId);
+    event ClassRequirementRemoved(uint256 itemId, uint256 requiredClassId);
 
     modifier onlyDungeonMaster() {
         if (!characterSheets.hasRole(DUNGEON_MASTER, msg.sender)) {
@@ -217,6 +221,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         items[itemId].itemRequirements.push(newRequirement);
         success = true;
 
+        emit ItemRequirementAdded(itemId, requiredItemId, amount);
         return success;
     }
 
@@ -231,6 +236,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         items[itemId].classRequirements.push(requiredClassId);
         success = true;
 
+        emit ClassRequirementAdded(itemId, requiredClassId);
         return success;
     }
 
@@ -260,7 +266,11 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         if (success == true) {
             items[itemId].itemRequirements = arr;
             items[itemId].itemRequirements.pop();
+        } else {
+            revert Errors.ItemError();
         }
+
+        emit ItemRequirementRemoved(itemId, removedItemId);
 
         return success;
     }
@@ -288,7 +298,11 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         if (success == true) {
             items[itemId].classRequirements = arr;
             items[itemId].classRequirements.pop();
+        } else {
+            revert Errors.ClassError();
         }
+
+        emit ClassRequirementRemoved(itemId, removedClassId);
 
         return success;
     }
@@ -305,7 +319,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         }
         items[itemId].claimable = merkleRoot;
 
-        emit ItemUpdated(itemId);
+        emit ItemClaimableUpdated(itemId, merkleRoot);
     }
 
     function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes calldata data)
@@ -491,7 +505,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
         items[tokenId].supplied++;
 
-        emit ItemTransfered(_to, tokenId);
+        emit ItemTransfered(_to, tokenId, amount);
     }
 
     /**
@@ -529,7 +543,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
             _balanceOf[nftAddress][tokenId] += amount;
             items[tokenId].supplied += amount;
 
-            emit ItemTransfered(nftAddress, tokenId);
+            emit ItemTransfered(nftAddress, tokenId, amount);
 
             success = true;
         }

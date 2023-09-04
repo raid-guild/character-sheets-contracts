@@ -17,11 +17,14 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
     uint256 private _nonce;
 
-    event CharacterSheetsCreated(address newCharacterSheets, address creator);
+    event CharacterSheetsCreated(
+      address creator,
+      address characterSheets,
+      address classes,
+      address experienceAndItems
+    );
     event CharacterSheetsUpdated(address newCharacterSheets);
-    event ClassesCreated(address newClasses, address creator);
     event ExperienceUpdated(address newExperience);
-    event ExperienceAndItemsCreated(address newExp, address creator);
     event RegistryUpdated(address newRegistry);
     event ERC6551AccountImplementationUpdated(address newImplementation);
     event ClassesImplementationUpdated(address newClasses);
@@ -93,9 +96,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
         ClassesImplementation(classesClone).initialize(_encodeClassesData(characterSheetsClone, data));
 
-        emit CharacterSheetsCreated(characterSheetsClone, msg.sender);
-        emit ExperienceAndItemsCreated(experienceClone, msg.sender);
-        emit ClassesCreated(classesClone, msg.sender);
+        emit CharacterSheetsCreated(msg.sender, characterSheetsClone, classesClone, experienceClone);
 
         _nonce++;
 
@@ -124,7 +125,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         address classesClone,
         bytes memory data
     ) private view returns (bytes memory) {
-        (string memory characterSheetsBaseUri,,) = _decodeStrings(data);
+        (string memory characterSheetsMetadataUri, string memory characterSheetsBaseUri,,) = _decodeStrings(data);
 
         bytes memory encodedCharacterSheetParameters = abi.encode(
             dao,
@@ -134,6 +135,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
             experienceClone,
             erc6551Registry,
             erc6551AccountImplementation,
+            characterSheetsMetadataUri,
             characterSheetsBaseUri
         );
 
@@ -145,19 +147,19 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         pure
         returns (bytes memory)
     {
-        (, string memory experienceBaseUri,) = _decodeStrings(data);
+        (,, string memory experienceBaseUri,) = _decodeStrings(data);
 
         return abi.encode(characterSheetsClone, classesClone, experienceBaseUri);
     }
 
     function _encodeClassesData(address characterSheetsClone, bytes memory data) private pure returns (bytes memory) {
-        (,, string memory classesBaseUri) = _decodeStrings(data);
+        (,,, string memory classesBaseUri) = _decodeStrings(data);
         return abi.encode(characterSheetsClone, classesBaseUri);
     }
 
-    function _decodeStrings(bytes memory data) private pure returns (string memory, string memory, string memory) {
-        (string memory characterSheetsBaseUri, string memory experienceBaseUri, string memory classesBaseUri) =
-            abi.decode(data, (string, string, string));
-        return (characterSheetsBaseUri, experienceBaseUri, classesBaseUri);
+    function _decodeStrings(bytes memory data) private pure returns (string memory, string memory, string memory, string memory) {
+        (string memory characterSheetsMetadataUri, string memory characterSheetsBaseUri, string memory experienceBaseUri, string memory classesBaseUri) =
+            abi.decode(data, (string, string, string, string));
+        return (characterSheetsMetadataUri, characterSheetsBaseUri, experienceBaseUri, classesBaseUri);
     }
 }

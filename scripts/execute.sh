@@ -323,6 +323,7 @@ EOF
                     read -p "Please input the NAME of your Character: " CHARACTERNAME
                     echo ""
                     read -p "Please input the URI of your characters profile image (leave blank to use default): " CHARURI
+
                     JSINPUT="$MEMBERADDRESS;$CHARACTERNAME;$CHARURI"
                     
                     SAVE_DATA=$(node scripts/helpers/saveExecutionData.js $1 Characters $JSINPUT)

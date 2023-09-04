@@ -8,7 +8,7 @@ import {BaseFactoryExecutor} from "./BaseExecutor.sol";
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
 
-contract CharacterSheetsFactory is BaseDeployer {
+contract DeployCharacterSheetsFactory is BaseDeployer {
     using stdJson for string;
 
     address public erc6551Registry;
@@ -60,6 +60,7 @@ contract Create is BaseFactoryExecutor {
     address public dao;
     bytes public encodedNames;
     address public characterSheets;
+    string public characterSheetsMetadataUri;
     string public characterSheetsBaseUri;
     string public experienceBaseUri;
     string public classesBaseUri;
@@ -73,11 +74,12 @@ contract Create is BaseFactoryExecutor {
         dao = json.readAddress(string(abi.encodePacked(".", targetEnv, ".Dao")));
         characterSheets = json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterSheetsFactory")));
         dungeonMasters = json.readAddressArray(string(abi.encodePacked(".", targetEnv, ".DungeonMasters")));
+        characterSheetsMetadataUri = json.readString(string(abi.encodePacked(".", targetEnv, ".CharacterSheetsMetadataUri")));
         characterSheetsBaseUri = json.readString(string(abi.encodePacked(".", targetEnv, ".CharacterSheetsBaseUri")));
         experienceBaseUri = json.readString(string(abi.encodePacked(".", targetEnv, ".ExperienceBaseUri")));
         classesBaseUri = json.readString(string(abi.encodePacked(".", targetEnv, ".ClassesBaseUri")));
         factory = CharacterSheetsFactory(characterSheets);
-        encodedData = abi.encode(characterSheetsBaseUri, experienceBaseUri, classesBaseUri);
+        encodedData = abi.encode(characterSheetsMetadataUri, characterSheetsBaseUri, experienceBaseUri, classesBaseUri);
     }
 
     function create() internal override returns (address, address, address) {

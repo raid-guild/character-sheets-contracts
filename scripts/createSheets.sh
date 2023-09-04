@@ -129,6 +129,30 @@ if [[ $CHARACTERSHEETSBASEURI != '' ]]
 
         node scripts/helpers/saveCreationData.js $1 CharacterSheetsBaseUri $NEWSHEETSURI
 fi
+CHARACTERSHEETSMETADATAURI=$(node scripts/helpers/readAddress.js $1 CharacterSheetsMetadataUri)
+
+if [[ $CHARACTERSHEETSMETADATAURI != '' ]]
+    then
+        echo "==============================================================="
+        echo "CHARACTER SHEETS base metadata uri detected."
+        echo "---------------------------------------------------------------"
+            read -p "Would you like to use a different uri? (y/n): " SHEETSCONF
+        echo "==============================================================="
+        echo ""
+    if [[ $SHEETSCONF == "y" || $SHEETSCONF == "Y" ]]
+        then
+            echo "==============================================================="
+                read -p "Enter new CHARACTER SHEETS base metadata uri: " BASEMETAURI
+
+            node scripts/helpers/saveCreationData.js $1 CharacterSheetsMetadataUri $BASEMETAURI
+    fi
+    else     
+        echo "==============================================================="   
+            read -p "Enter new CHARACTER SHEETS base METADATA uri: " BASEMETAURI
+
+        node scripts/helpers/saveCreationData.js $1 CharacterSheetsMetadataUri $BASEMETAURI
+fi
+
 
 EXPERIENCEBASEURI=$(node scripts/helpers/readAddress.js $1 ExperienceBaseUri)
 
