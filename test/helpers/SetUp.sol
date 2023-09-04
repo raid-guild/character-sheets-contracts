@@ -85,7 +85,7 @@ contract SetUp is Test {
         characterSheetsFactory.updateERC6551AccountImplementation(address(erc6551Implementation));
 
         bytes memory baseUriData =
-            abi.encode("test_base_uri_character_sheets/", "test_base_uri_experience/", "test_base_uri_classes/");
+            abi.encode("test_metadata_uri_character_sheets/", "test_base_uri_character_sheets/", "test_base_uri_experience/", "test_base_uri_classes/");
         (stored.createdCharacterSheets, stored.createdExperience, stored.createdClasses) =
             characterSheetsFactory.create(dungeonMasters, address(dao), baseUriData);
 
