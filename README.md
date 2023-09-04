@@ -45,6 +45,7 @@ To use the character Sheets factory you will need the following addresses availa
 - A list of address that you would like to give administrator privileges to.
 - the address of the Moloch Dao who's members will be eligible to use the protocol
 - the base image uri for the character sheets NFT contract
+- the base METADATA uri for the character sheets nft contract
 - the base image URI for the Experience and Items ERC1155 contract
 - the base image URI for the Classes contract
 
