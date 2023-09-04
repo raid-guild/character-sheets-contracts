@@ -60,6 +60,7 @@ contract Create is BaseFactoryExecutor {
     address public dao;
     bytes public encodedNames;
     address public characterSheets;
+    string public characterSheetsMetadataUri;
     string public characterSheetsBaseUri;
     string public experienceBaseUri;
     string public classesBaseUri;

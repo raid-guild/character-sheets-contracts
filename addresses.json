@@ -15,12 +15,14 @@
     "network": "sepolia",
     "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
     "Dao": "0x34998d45554480fab16360a367fe44b480987ee6",
-    "CharacterSheetsFactory": "0x7CeCF0a7B6e764d7B8849bD47E1A92c1806B89aC",
-    "CharacterSheetsImplementation": "0x7f8F6E42C169B294A384F5667c303fd8Eedb3CF3",
-    "CharacterAccount": "0x0d006D9e862B362180eb602e5973Fd1fdb6f78dd",
-    "ExperienceAndItemsImplementation": "0x61cEBDf43a96581E6E144395fBA18f9D1a43e558",
-    "ClassesImplementation": "0x37Ceee303E485bc23aa1c21aa91D51C1f0030Dae",
-    "DungeonMasters": ["0x941E92c9Eff78a2b7217057752cf938040a59aE9"],
+    "CharacterSheetsFactory": "0x26832d296Be653C1A818B7AaF3D4e5e16A0C314d",
+    "CharacterSheetsImplementation": "0x3893b6deB66A8BFEBda3333103064668F89Bf9DD",
+    "CharacterAccount": "0xDf6028278964B2dA9A84F9941a60B2817e2D465F",
+    "ExperienceAndItemsImplementation": "0x01b5845ef936CDEB12155Feaba82DfdecB57AE20",
+    "ClassesImplementation": "0x130cB316dcD178C02C62691398F4fcC63103Cdb7",
+    "DungeonMasters": [
+      "0x941E92c9Eff78a2b7217057752cf938040a59aE9"
+    ],
     "CharacterSheetsMetadataUri": "sheet-metadata",
     "CharacterSheetsBaseUri": "sheet",
     "ExperienceBaseUri": "exp",
@@ -44,8 +46,18 @@
         "soulbound": false,
         "requirements": {
           "classRequirements": [],
-          "itemRequirements": [[0, 0]],
-          "claimable": [[0, 0]]
+          "itemRequirements": [
+            [
+              0,
+              0
+            ]
+          ],
+          "claimable": [
+            [
+              0,
+              0
+            ]
+          ]
         }
       }
     ],
