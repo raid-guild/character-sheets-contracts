@@ -10,3 +10,4 @@ runs = 10000
 [rpc_endpoints]
 gnosis = "${GNOSIS_RPC_URL}"
 sepolia = "${SEPOLIA_RPC_URL}"
+goerli = "${GOERLI_RPC_URL}"
