@@ -32,9 +32,9 @@ contract ExecuteCharacterSheetsImplementation is BaseExecutor {
     }
 
     function execute() internal override {
-        (, uint256 shares,,,,) = dao.members(memberAddress);
+        Moloch.Member memory member = dao.members(memberAddress);
 
-        if (shares < 100 && block.chainid == 11155111) {
+        if (member.shares < 100 && block.chainid == 11155111) {
             vm.broadcast(deployerPrivateKey);
             dao.addMember(memberAddress);
         }

@@ -33,10 +33,12 @@ anvil :; anvil -m 'test test test test test test test test test test test junk' 
 # deploy commands
 deploy-anvil :; ./scripts/deploy.sh anvil ${contract}
 deploy-sepolia :; ./scripts/deploy.sh sepolia ${contract} --verify
+deploy-goerli :; ./scripts/deploy.sh goerli ${contract} --verify
 deploy-gnosis :; ./scripts/deploy.sh gnosis ${contract} --verify
 
 # verify commands
 verify-sepolia :; ./scripts/verify.sh sepolia ${contract}
+verify-goerli :; ./scripts/verify.sh goerli ${contract}
 verify-gnosis :; ./scripts/verify.sh gnosis ${contract}
 
 deploy-contracts :; make deploy-${network} contract=CharacterAccount && \

@@ -71,5 +71,20 @@
         "ClassUri": null
       }
     ]
+  },
+  "goerli": {
+    "chainId": "5",
+    "network": "goerli",
+    "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
+    "Dao": "0xDCDAf80AE12CCdA4DfDDcB6B7C0E8bDa396fa398",
+    "CharacterSheetsMetadataUri": "sheet-metadata",
+    "CharacterSheetsBaseUri": "sheet",
+    "ExperienceBaseUri": "exp",
+    "ClassesBaseUri": "class",
+    "CharacterAccount": "0x8fF48C79f263E5944E7eA75C193Fa161060672E4",
+    "CharacterSheetsImplementation": "0x3690a87bb3240FDf99c67514Ea9c3434a8222182",
+    "ExperienceAndItemsImplementation": "0xd09D5C5421148D2C4118CBf964FA5E21AEDde071",
+    "ClassesImplementation": "0x804987f972ccdAC6f9DE2b109b381313e5e65b92",
+    "CharacterSheetsFactory": "0xd81891c3F6AF2e9CE71b6d0e1cc09E560b1EB0e6"
   }
 }
