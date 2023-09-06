@@ -105,7 +105,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
      * @return tokenId the ERC1155 tokenId
      */
 
-    function createItemType(bytes calldata itemData) external virtual onlyDungeonMaster returns (uint256 tokenId) {
+    function createItemType(bytes calldata itemData) public onlyDungeonMaster returns (uint256 tokenId) {
         Item memory newItem = _createItemStruct(itemData);
 
         //solhint-disable-next-line
@@ -128,6 +128,14 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
 
         totalItemTypes++;
         return _tokenId;
+    }
+
+    function batchCreateItemType(bytes[] calldata itemDatas) external onlyDungeonMaster returns (uint256[] memory tokenIds) {
+      tokenIds = new uint256[](itemDatas.length);
+
+      for (uint256 i; i < itemDatas.length; i++) {
+        tokenIds[i] = createItemType(itemDatas[i]);
+      }
     }
 
     /**

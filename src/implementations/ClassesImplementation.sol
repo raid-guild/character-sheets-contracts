@@ -97,7 +97,7 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
      * @return tokenId the ERC1155 token id
      */
 
-    function createClassType(bytes calldata classData) external onlyDungeonMaster returns (uint256 tokenId) {
+    function createClassType(bytes calldata classData) public onlyDungeonMaster returns (uint256 tokenId) {
         Class memory _newClass = _createClassStruct(classData);
 
         uint256 _tokenId = _classIdCounter.current();
@@ -113,6 +113,15 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
         _classIdCounter.increment();
 
         return _tokenId;
+    }
+
+    function batchCreateClassType(bytes[] calldata classDatas) external onlyDungeonMaster returns (uint256[] memory tokenIds) {
+      tokenIds = new uint256[](classDatas.length);
+
+      for (uint256 i = 0; i < classDatas.length; i++) {
+        bytes calldata classData = classDatas[i];
+        tokenIds[i] = createClassType(classData);
+      }
     }
 
     function assignClasses(uint256 characterId, uint256[] calldata _classIds) external onlyDungeonMaster {

@@ -5,6 +5,7 @@ pragma abicoder v2;
 //solhint-disable
 
 import "forge-std/Test.sol";
+import "forge-std/console2.sol";
 import "../src/implementations/ClassesImplementation.sol";
 import "./helpers/SetUp.sol";
 import "../src/lib/Structs.sol";
@@ -21,6 +22,35 @@ contract ClassesTest is Test, SetUp {
         assertEq(keccak256(abi.encode(name)), keccak256(abi.encode("Ballerina")));
         assertEq(supply, 0);
         assertEq(keccak256(abi.encode(cid)), keccak256(abi.encode("test_class_cid/")));
+        assertEq(classes.uri(classId), "test_base_uri_classes/test_class_cid/", "incorrect token uri");
+    }
+
+    function testBatchCreateClass() public {
+        vm.prank(admin);
+        bytes[] memory _classes = new bytes[](2);
+        _classes[0] = createNewClass("Ballerina1");
+        _classes[1] = createNewClass("Ballerina2");
+        uint256[] memory _classIds = classes.batchCreateClassType(_classes);
+
+        assertEq(_classIds.length, 2, "incorrect length");
+
+        (uint256 classId, string memory name, uint256 supply, string memory cid) = classes.classes(_classIds[0]);
+
+        assertEq(classes.totalClasses(), 3, "incorrect total classes");
+        assertEq(_classIds[0], 2, "incorrect class id");
+        assertEq(classId, 2, "incorrect class id");
+        assertEq(keccak256(abi.encode(name)), keccak256(abi.encode("Ballerina1")), "incorrect class name");
+        assertEq(supply, 0, "incorrect supply");
+        assertEq(keccak256(abi.encode(cid)), keccak256(abi.encode("test_class_cid/")), "incorrect cid");
+        assertEq(classes.uri(classId), "test_base_uri_classes/test_class_cid/", "incorrect token uri");
+
+        (classId, name, supply, cid) = classes.classes(_classIds[1]);
+
+        assertEq(_classIds[1], 3, "incorrect class id");
+        assertEq(classId, 3, "incorrect class id");
+        assertEq(keccak256(abi.encode(name)), keccak256(abi.encode("Ballerina2")), "incorrect class name");
+        assertEq(supply, 0, "incorrect supply");
+        assertEq(keccak256(abi.encode(cid)), keccak256(abi.encode("test_class_cid/")), "incorrect cid");
         assertEq(classes.uri(classId), "test_base_uri_classes/test_class_cid/", "incorrect token uri");
     }
 
