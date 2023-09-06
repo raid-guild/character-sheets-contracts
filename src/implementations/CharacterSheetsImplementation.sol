@@ -51,6 +51,8 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     uint256 public totalSheets;
 
     event NewCharacterSheetRolled(address member, address erc6551, uint256 tokenId);
+    event MetadataURIUpdated(string oldURI, string newURI);
+    event BaseURIUpdated(string oldURI, string newURI);
     event PlayerRemoved(uint256 tokenId);
     event ExperienceUpdated(address exp);
     event ClassEquipped(uint256 characterId, uint256 classId);
@@ -137,7 +139,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
             revert Errors.VariableNotSet();
         }
 
-        if (dao.members(_to).shares > 100) {
+        if (dao.members(_to).shares == 0) {
             revert Errors.DaoError();
         }
 
@@ -325,11 +327,15 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     }
 
     function setBaseUri(string memory _uri) public onlyRole(DUNGEON_MASTER) {
+        string memory oldBaseURI = baseTokenURI;
         baseTokenURI = _uri;
+        emit BaseURIUpdated(oldBaseURI, _uri);
     }
 
     function setMetadataUri(string memory _uri) public onlyRole(DUNGEON_MASTER) {
+        string memory oldMetadataURI = metadataURI;
         metadataURI = _uri;
+        emit MetadataURIUpdated(oldMetadataURI, _uri);
     }
 
     /**
