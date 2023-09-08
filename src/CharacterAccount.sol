@@ -21,6 +21,11 @@ contract CharacterAccount is IERC165, IERC1271, IERC6551Account, ERC1155Holder {
 
     receive() external payable {}
 
+
+    function supportsInterface(bytes4 interfaceId) public pure override(ERC1155Receiver, IERC165) returns (bool) {
+        return (interfaceId == type(IERC165).interfaceId || interfaceId == type(IERC6551Account).interfaceId);
+    }
+
     function executeCall(address to, uint256 value, bytes calldata data)
         external
         payable
@@ -61,9 +66,5 @@ contract CharacterAccount is IERC165, IERC1271, IERC6551Account, ERC1155Holder {
         if (chainId != block.chainid) return address(0);
 
         return IERC721(tokenContract).ownerOf(tokenId);
-    }
-
-    function supportsInterface(bytes4 interfaceId) public pure override(ERC1155Receiver, IERC165) returns (bool) {
-        return (interfaceId == type(IERC165).interfaceId || interfaceId == type(IERC6551Account).interfaceId);
     }
 }
