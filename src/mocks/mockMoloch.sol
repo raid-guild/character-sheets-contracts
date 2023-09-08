@@ -21,12 +21,7 @@ contract Moloch is IMolochDAO {
         _members[member].jailed = 100;
     }
 
-    function members(address memberAddress)
-        external
-        view
-        override
-        returns (Member memory member)
-    {
+    function members(address memberAddress) external view override returns (Member memory member) {
         return _members[memberAddress];
     }
 }

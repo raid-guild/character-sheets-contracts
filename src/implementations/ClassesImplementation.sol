@@ -115,13 +115,17 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
         return _tokenId;
     }
 
-    function batchCreateClassType(bytes[] calldata classDatas) external onlyDungeonMaster returns (uint256[] memory tokenIds) {
-      tokenIds = new uint256[](classDatas.length);
+    function batchCreateClassType(bytes[] calldata classDatas)
+        external
+        onlyDungeonMaster
+        returns (uint256[] memory tokenIds)
+    {
+        tokenIds = new uint256[](classDatas.length);
 
-      for (uint256 i = 0; i < classDatas.length; i++) {
-        bytes calldata classData = classDatas[i];
-        tokenIds[i] = createClassType(classData);
-      }
+        for (uint256 i = 0; i < classDatas.length; i++) {
+            bytes calldata classData = classDatas[i];
+            tokenIds[i] = createClassType(classData);
+        }
     }
 
     function assignClasses(uint256 characterId, uint256[] calldata _classIds) external onlyDungeonMaster {
@@ -258,6 +262,7 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
     function getBaseURI() public view returns (string memory) {
         return _baseURI;
     }
+
     /**
      * @dev Sets `tokenURI` as the tokenURI of `tokenId`.
      */

@@ -130,12 +130,16 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         return _tokenId;
     }
 
-    function batchCreateItemType(bytes[] calldata itemDatas) external onlyDungeonMaster returns (uint256[] memory tokenIds) {
-      tokenIds = new uint256[](itemDatas.length);
+    function batchCreateItemType(bytes[] calldata itemDatas)
+        external
+        onlyDungeonMaster
+        returns (uint256[] memory tokenIds)
+    {
+        tokenIds = new uint256[](itemDatas.length);
 
-      for (uint256 i; i < itemDatas.length; i++) {
-        tokenIds[i] = createItemType(itemDatas[i]);
-      }
+        for (uint256 i; i < itemDatas.length; i++) {
+            tokenIds[i] = createItemType(itemDatas[i]);
+        }
     }
 
     /**
@@ -441,6 +445,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     function getBaseURI() public view returns (string memory) {
         return _baseURI;
     }
+
     // The following functions are overrides required by Solidity.
 
     function supportsInterface(bytes4 interfaceId) public view override(ERC1155Receiver, ERC1155) returns (bool) {

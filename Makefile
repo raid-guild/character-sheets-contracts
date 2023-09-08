@@ -23,7 +23,7 @@ snapshot :; forge snapshot
 
 slither :; slither --config-file slither.config.json src/.
 
-format :; prettier --write src/**/*.sol && prettier --write src/*.sol
+format :; forge fmt
 
 # solhint should be installed globally
 lint :; solhint src/**/*.sol && solhint src/*.sol

@@ -110,7 +110,9 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
             erc6551AccountImplementation,
             metadataURI,
             baseTokenURI
-        ) = abi.decode(_encodedParameters, (address, address[], address, address, address, address, address, string, string));
+        ) = abi.decode(
+            _encodedParameters, (address, address[], address, address, address, address, address, string, string)
+        );
 
         _grantRole(DEFAULT_ADMIN_ROLE, owner);
 
