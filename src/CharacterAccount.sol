@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
-import "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
-import "openzeppelin-contracts/contracts/interfaces/IERC1271.sol";
-import "openzeppelin-contracts/contracts/utils/cryptography/SignatureChecker.sol";
-import "openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import {IERC165} from "openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
+import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import {IERC1271} from "openzeppelin-contracts/contracts/interfaces/IERC1271.sol";
+import {SignatureChecker} from "openzeppelin-contracts/contracts/utils/cryptography/SignatureChecker.sol";
+import {ERC1155Holder, ERC1155Receiver} from "openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
-import "./interfaces/IERC6551Account.sol";
-import "./lib/ERC6551AccountLib.sol";
+import {IERC6551Account} from "./interfaces/IERC6551Account.sol";
+import {ERC6551AccountLib} from "./lib/ERC6551AccountLib.sol";
 
 /**
  * @title NPC Acount
@@ -20,11 +20,6 @@ contract CharacterAccount is IERC165, IERC1271, IERC6551Account, ERC1155Holder {
     uint256 public nonce;
 
     receive() external payable {}
-
-
-    function supportsInterface(bytes4 interfaceId) public pure override(ERC1155Receiver, IERC165) returns (bool) {
-        return (interfaceId == type(IERC165).interfaceId || interfaceId == type(IERC6551Account).interfaceId);
-    }
 
     function executeCall(address to, uint256 value, bytes calldata data)
         external
@@ -41,6 +36,7 @@ contract CharacterAccount is IERC165, IERC1271, IERC6551Account, ERC1155Holder {
         (success, result) = to.call{value: value}(data);
 
         if (!success) {
+            // solhint-disable-next-line no-inline-assembly
             assembly {
                 revert(add(result, 32), mload(result))
             }
@@ -66,5 +62,9 @@ contract CharacterAccount is IERC165, IERC1271, IERC6551Account, ERC1155Holder {
         if (chainId != block.chainid) return address(0);
 
         return IERC721(tokenContract).ownerOf(tokenId);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public pure override(ERC1155Receiver, IERC165) returns (bool) {
+        return (interfaceId == type(IERC165).interfaceId || interfaceId == type(IERC6551Account).interfaceId);
     }
 }

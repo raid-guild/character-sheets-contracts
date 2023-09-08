@@ -9,7 +9,7 @@ import "../../src/CharacterSheetsFactory.sol";
 import "../../src/implementations/CharacterSheetsImplementation.sol";
 import "../../src/implementations/ClassesImplementation.sol";
 import "../../src/interfaces/IMolochDAO.sol";
-import "../../src/mocks/mockMoloch.sol";
+import "../../src/mocks/MockMoloch.sol";
 // import "../../src/mocks/MockHats.sol";
 import "../../src/lib/Structs.sol";
 import "../../lib/murky/src/Merkle.sol";

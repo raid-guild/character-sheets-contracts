@@ -16,7 +16,7 @@
 
 pragma solidity >=0.8.13;
 
-import "../../lib/hats/src/Hats.sol";
+import {MaxLevelsReached} from "../../lib/hats/src/Hats.sol";
 
 contract MockHats {
     struct Hat {
@@ -33,8 +33,8 @@ contract MockHats {
         string imageURI;
     }
 
-    uint256 hatIds = 1;
-    mapping(address => mapping(uint256 => uint256)) _balanceOf;
+    uint256 public hatIds = 1;
+    mapping(address => mapping(uint256 => uint256)) private _balanceOf;
 
     /*//////////////////////////////////////////////////////////////
                               HATS STORAGE

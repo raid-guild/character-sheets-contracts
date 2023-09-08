@@ -1,24 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "openzeppelin-contracts/contracts/utils/Create2.sol";
-import "./ERC6551BytecodeLib.sol";
+import {Create2} from "openzeppelin-contracts/contracts/utils/Create2.sol";
+import {ERC6551BytecodeLib} from "./ERC6551BytecodeLib.sol";
 
 library ERC6551AccountLib {
-    function computeAddress(
-        address registry,
-        address implementation,
-        uint256 chainId,
-        address tokenContract,
-        uint256 tokenId,
-        uint256 _salt
-    ) internal pure returns (address) {
-        bytes32 bytecodeHash =
-            keccak256(ERC6551BytecodeLib.getCreationCode(implementation, chainId, tokenContract, tokenId, _salt));
-
-        return Create2.computeAddress(bytes32(_salt), bytecodeHash, registry);
-    }
-
     function token() internal view returns (uint256, address, uint256) {
         bytes memory footer = new bytes(0x60);
 
@@ -39,5 +25,19 @@ library ERC6551AccountLib {
         }
 
         return abi.decode(footer, (uint256));
+    }
+
+    function computeAddress(
+        address registry,
+        address implementation,
+        uint256 chainId,
+        address tokenContract,
+        uint256 tokenId,
+        uint256 _salt
+    ) internal pure returns (address) {
+        bytes32 bytecodeHash =
+            keccak256(ERC6551BytecodeLib.getCreationCode(implementation, chainId, tokenContract, tokenId, _salt));
+
+        return Create2.computeAddress(bytes32(_salt), bytecodeHash, registry);
     }
 }

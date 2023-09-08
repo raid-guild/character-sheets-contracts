@@ -13,11 +13,10 @@ import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
 import {IMolochDAO} from "../interfaces/IMolochDAO.sol";
 import {ExperienceAndItemsImplementation} from "./ExperienceAndItemsImplementation.sol";
 import {ClassesImplementation} from "./ClassesImplementation.sol";
-import {Item, Class, CharacterSheet} from "../lib/Structs.sol";
+import {CharacterSheet} from "../lib/Structs.sol";
 
-//solhint-disable-next-line
-import "../lib/Errors.sol";
-import "forge-std/console2.sol";
+import {Errors} from "../lib/Errors.sol";
+// import "forge-std/console2.sol";
 
 contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorage, AccessControl {
     using Counters for Counters.Counter;
