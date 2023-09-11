@@ -150,16 +150,20 @@ contract CharacterSheetsTest is Test, SetUp {
         characterSheets.removeSheet(2);
     }
 
-    function testUpdateCharacterName() public {
+    function testUpdateCharacterMetadata() public {
         vm.prank(player1);
-        characterSheets.updateCharacterName("Regard");
+        characterSheets.updateCharacterMetadata("Regard", "new_cid");
         CharacterSheet memory player = characterSheets.getCharacterSheetByCharacterId(1);
         assertEq(player.name, "Regard", "This player is not regarded");
+
+        string memory uri = characterSheets.tokenURI(1);
+        assertEq(uri, "test_base_uri_character_sheets/new_cid", "Incorrect token uri");
+
 
         vm.prank(player2);
         vm.expectRevert(
             "AccessControl: account 0x000000000000000000000000000000000000babe is missing role 0x0f98b3a5774fbfdf19646dba94a6c08f13f4c341502334a57724de46497192c3"
         );
-        characterSheets.updateCharacterName("Regard");
+        characterSheets.updateCharacterMetadata("Regard", "new_cid");
     }
 }
