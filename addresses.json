@@ -82,10 +82,10 @@
     "CharacterSheetsBaseUri": "sheet",
     "ExperienceBaseUri": "exp",
     "ClassesBaseUri": "class",
-    "CharacterAccount": "0xa30454f846D84366A15fa5aE5E8289F4bdCB2094",
-    "CharacterSheetsImplementation": "0x444F2FbF40BcF16F17C167f141E7d1E7A3a95850",
-    "ExperienceAndItemsImplementation": "0xa0669b58B101D2040fC85a0fE629126E702d301A",
-    "ClassesImplementation": "0x399D32B80952593d66016FBBa82AfE692EAd1Cf5",
-    "CharacterSheetsFactory": "0x24e78AD1E96Db0ECe9b6aE58aF994146a8dE827d"
+    "CharacterAccount": "0x53f37bfB254eFbe6EBbaf45307e754173b4e4276",
+    "CharacterSheetsImplementation": "0xA3c206FD791D78783Da13223D549FE6ee57e7909",
+    "ExperienceAndItemsImplementation": "0x3b5eC8464235FE17aaDBFeBCc042Aead63afc043",
+    "ClassesImplementation": "0xaE8B68450ddf23cf5503AD163D6968e6Ad94CDc9",
+    "CharacterSheetsFactory": "0x59858F6CeD9d6e176A7eC7C3f87a7b131a49566c"
   }
 }
