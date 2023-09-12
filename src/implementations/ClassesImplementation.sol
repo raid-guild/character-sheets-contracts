@@ -99,6 +99,17 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
         }
     }
 
+    function assignClasses(uint256 characterId, uint256[] calldata _classIds) external onlyDungeonMaster {
+        for (uint256 i = 0; i < _classIds.length; i++) {
+            assignClass(characterId, _classIds[i]);
+        }
+    }
+
+    function updateCharacterSheetsContract(address newCharSheets) external onlyDungeonMaster {
+        characterSheets = CharacterSheetsImplementation(newCharSheets);
+        emit CharacterSheetsUpdated(newCharSheets);
+    }
+
     /**
      *
      * @param classData encoded class data includes
@@ -124,17 +135,6 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
         _classIdCounter.increment();
 
         return _tokenId;
-    }
-
-    function assignClasses(uint256 characterId, uint256[] calldata _classIds) external onlyDungeonMaster {
-        for (uint256 i = 0; i < _classIds.length; i++) {
-            assignClass(characterId, _classIds[i]);
-        }
-    }
-
-    function updateCharacterSheetsContract(address newCharSheets) external onlyDungeonMaster {
-        characterSheets = CharacterSheetsImplementation(newCharSheets);
-        emit CharacterSheetsUpdated(newCharSheets);
     }
 
     /**
