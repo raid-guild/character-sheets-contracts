@@ -19,7 +19,7 @@ contract CharacterSheetsTest is Test, SetUp {
 
     function testDeployment() public {
         address _characterSheetsImplementation = characterSheetsFactory.characterSheetsImplementation();
-        address _ItemsImplementation = characterSheetsFactory.itemsImplementation();
+        address _itemsImplementation = characterSheetsFactory.itemsImplementation();
         address _classesImplementation = characterSheetsFactory.classesImplementation();
         address _erc6551Registry = characterSheetsFactory.erc6551Registry();
         address _erc6551AccountImplementation = characterSheetsFactory.erc6551AccountImplementation();
@@ -27,7 +27,7 @@ contract CharacterSheetsTest is Test, SetUp {
         assertEq(
             _characterSheetsImplementation, address(stored.characterSheetsImplementation), "wrong character sheets"
         );
-        assertEq(_ItemsImplementation, address(stored.experienceImplementation), "wrong experience");
+        assertEq(_itemsImplementation, address(stored.experienceImplementation), "wrong experience");
         assertEq(_classesImplementation, address(stored.classesImplementation), "wrong Classes");
         assertEq(_erc6551Registry, address(erc6551Registry), "wrong registry");
         assertEq(_erc6551AccountImplementation, address(erc6551Implementation), "wrong erc6551 account implementation.");
@@ -87,7 +87,7 @@ contract CharacterSheetsTest is Test, SetUp {
             bytes memory baseUriData = abi.encode(
                 "test_metadata_uri_character_sheets/",
                 "test_base_uri_character_sheets/",
-                "test_base_uri_experience/",
+                "test_base_uri_items/",
                 "test_base_uri_classes/"
             );
 
@@ -107,7 +107,7 @@ contract CharacterSheetsTest is Test, SetUp {
                 "test_base_uri_character_sheets/",
                 "Wrong character sheets base uri"
             );
-            assertEq(ItemsImplementation(exp).getBaseURI(), "test_base_uri_experience/", "Wrong exp base uri");
+            assertEq(ItemsImplementation(exp).getBaseURI(), "test_base_uri_items/", "Wrong exp base uri");
             assertEq(ClassesImplementation(class).getBaseURI(), "test_base_uri_classes/", "Wrong classes base uri");
             assertTrue(
                 CharacterSheetsImplementation(sheets).hasRole(keccak256("DUNGEON_MASTER"), address(1)),

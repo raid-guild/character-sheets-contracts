@@ -54,7 +54,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     event NewCharacterSheetRolled(address member, address erc6551, uint256 tokenId);
     event MetadataURIUpdated(string oldURI, string newURI);
     event BaseURIUpdated(string oldURI, string newURI);
-    event PlayerRemoved(uint256 tokenId);
+    event CharacterRemoved(uint256 tokenId);
     event ItemsUpdated(address exp);
     event ClassEquipped(uint256 characterId, uint256 classId);
     event ClassUnequipped(uint256 characterId, uint256 classId);
@@ -62,6 +62,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     event ItemUnequipped(uint256 characterId, uint256 itemTokenId);
     event CharacterUpdated(uint256 tokenId, string newName, string newCid);
     event PlayerJailed(address playerAddress, bool thrownInJail);
+    event CharacterRestored(uint256 tokenId, address tokenBoundAccount, address player);
 
     modifier onlyExpContract() {
         require(msg.sender == address(items), "not the items contract");
@@ -175,7 +176,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
 
         //calculate ERC6551 account address
         address tba = _erc6551Registry.createAccount(
-            erc6551AccountImplementation, block.chainid, address(this), tokenId, uint256(uint160(msg.sender)), ""
+            erc6551AccountImplementation, block.chainid, address(this), tokenId, uint256(uint160(_to)), ""
         );
 
         CharacterSheet memory newCharacterSheet;
@@ -307,8 +308,24 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         _burn(_characterId);
         //clear memberAddress mapping
         memberAddressToTokenId[msg.sender] = 0;
-        emit PlayerRemoved(_characterId);
+        emit CharacterRemoved(_characterId);
         success = true;
+    }
+
+    /**
+     * restores a previously renounced sheet if called by the wrong player and incorrect address will be created that does not control any assets
+     * @param tokenId the token Id of the renounced sheet
+     */
+
+    function restoreSheet(uint256 tokenId) public onlyRole(PLAYER) {
+        if (memberAddressToTokenId[msg.sender] != 0) {
+            revert Errors.PlayerError();
+        }
+        address restoredAccount = _erc6551Registry.createAccount(
+            erc6551AccountImplementation, block.chainid, address(this), tokenId, uint256(uint160(msg.sender)), ""
+        );
+        memberAddressToTokenId[msg.sender] = tokenId;
+        emit CharacterRestored(tokenId, restoredAccount, msg.sender);
     }
 
     /**
@@ -360,7 +377,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         delete sheets[characterId];
         _burn(characterId);
 
-        emit PlayerRemoved(characterId);
+        emit CharacterRemoved(characterId);
     }
 
     /// @dev Sets the address of the ERC6551 registry
