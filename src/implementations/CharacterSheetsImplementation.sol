@@ -55,7 +55,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     event MetadataURIUpdated(string oldURI, string newURI);
     event BaseURIUpdated(string oldURI, string newURI);
     event CharacterRemoved(uint256 tokenId);
-    event ItemsUpdated(address exp);
+    event ItemsUpdated(address items);
     event ItemEquipped(uint256 characterId, uint256 itemTokenId);
     event ItemUnequipped(uint256 characterId, uint256 itemTokenId);
     event CharacterUpdated(uint256 tokenId, string newName, string newCid);
@@ -198,6 +198,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
      * unequips an itemtype from a character sheet inventory
      * @param characterId the player to have the item type from their inventory
      * @param tokenId the erc1155 token id of the item to be unequipped
+     * @return success boolean
      */
 
     function unequipItemFromCharacter(uint256 characterId, uint256 tokenId)
@@ -230,6 +231,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     }
 
     /**
+     * memberAddress
      * adds an item to the items array in the player struct
      * @param characterId the id of the player receiving the item
      * @param itemId the itemId of the item
@@ -268,6 +270,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     /**
      * restores a previously renounced sheet if called by the wrong player and incorrect address will be created that does not control any assets
      * @param tokenId the token Id of the renounced sheet
+     * @return the ERC6551 account address
      */
 
     function restoreSheet(uint256 tokenId) public onlyRole(PLAYER) returns (address) {
@@ -310,7 +313,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         emit PlayerJailed(playerAddress, throwInJail);
     }
 
-    function updateExpContract(address expContract) public onlyRole(DUNGEON_MASTER) {
+    function updateItemsContract(address expContract) public onlyRole(DUNGEON_MASTER) {
         items = ItemsImplementation(expContract);
         emit ItemsUpdated(expContract);
     }

@@ -10,7 +10,7 @@ import "../src/lib/Errors.sol";
 import "forge-std/console2.sol";
 
 contract CharacterSheetsTest is Test, SetUp {
-    event ExperienceUpdated(address exp);
+    event ItemsUpdated(address exp);
 
     function testFunctionSelector() public pure {
         bytes4 selector = bytes4(keccak256(abi.encodePacked("run(string,uint256)")));
@@ -126,11 +126,11 @@ contract CharacterSheetsTest is Test, SetUp {
         assertEq(tbaAddress, restored, "Incorrect Address restored");
     }
 
-    function testUpdateExpContract() public {
+    function testUpdateItemsContract() public {
         vm.expectEmit(false, false, false, true);
-        emit ExperienceUpdated(player2);
+        emit ItemsUpdated(player2);
         vm.prank(admin);
-        characterSheets.updateExpContract(player2);
+        characterSheets.updateItemsContract(player2);
     }
 
     function testGetCharacterSheetByCharacterId() public {

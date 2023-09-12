@@ -94,7 +94,7 @@ contract CharacterSheetsTest is Test, SetUp {
             (address sheets, address exp, address class) =
                 characterSheetsFactory.create(dungeonMasters, address(dao), baseUriData);
 
-            assertEq(address(CharacterSheetsImplementation(sheets).experience()), exp, "wrong experience");
+            assertEq(address(CharacterSheetsImplementation(sheets).items()), exp, "wrong experience");
             assertEq(address(ItemsImplementation(exp).characterSheets()), sheets, "wrong sheets");
             assertEq(address(ItemsImplementation(exp).classes()), class, "wrong classes");
             assertEq(
