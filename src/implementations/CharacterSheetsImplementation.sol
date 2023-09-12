@@ -299,7 +299,11 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         if (msg.sender != tokenOwner) {
             revert Errors.OwnershipError();
         }
+
+        //#TODO consider transferring the token in question to this contract instead of burning in order to manage the assets held by the token
         _burn(_characterId);
+        //clear memberAddress mapping
+        memberAddressToTokenId[msg.sender] = 0;
         emit PlayerRemoved(_characterId);
         success = true;
     }

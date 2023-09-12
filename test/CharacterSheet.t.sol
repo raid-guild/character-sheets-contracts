@@ -105,6 +105,13 @@ contract CharacterSheetsTest is Test, SetUp {
         vm.prank(player2);
         vm.expectRevert();
         characterSheets.renounceSheet(1);
+
+        //create a new sheet after renouncing
+        bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
+        vm.prank(player1);
+        characterSheets.rollCharacterSheet(player1, encodedData);
+
+        assertEq(characterSheets.tokenURI(2), "test_base_uri_character_sheets/test_token_uri/");
     }
 
     function testUpdateExpContract() public {
