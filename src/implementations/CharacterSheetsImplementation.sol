@@ -143,7 +143,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
             revert Errors.VariableNotSet();
         }
 
-        if (dao.members(_to).shares == 0) {
+        if (address(dao) != address(0) && dao.members(_to).shares == 0) {
             revert Errors.DaoError();
         }
 
