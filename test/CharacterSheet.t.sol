@@ -114,6 +114,30 @@ contract CharacterSheetsTest is Test, SetUp {
         assertEq(characterSheets.tokenURI(2), "test_base_uri_character_sheets/test_token_uri/");
     }
 
+    function testRestoreSheet() public {
+        address tbaAddress = characterSheets.getCharacterSheetByCharacterId(1).ERC6551TokenAddress;
+        vm.prank(player1);
+        characterSheets.renounceSheet(1);
+
+        assertEq(characterSheets.balanceOf(player1), 0, "sheet not renounced");
+
+        // test that wrong player cannot restore account
+
+        vm.startPrank(player2);
+        dao.addMember(player2);
+        bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
+        uint256 newTokenId = characterSheets.rollCharacterSheet(player2, encodedData);
+        characterSheets.renounceSheet(newTokenId);
+        address wrong = characterSheets.restoreSheet(1);
+        vm.stopPrank();
+        assert(tbaAddress != wrong);
+
+        vm.prank(player1);
+        address restored = characterSheets.restoreSheet(1);
+
+        assertEq(tbaAddress, restored, "Incorrect Address restored");
+    }
+
     function testUpdateExpContract() public {
         vm.expectEmit(false, false, false, true);
         emit ExperienceUpdated(player2);

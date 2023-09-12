@@ -317,7 +317,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
      * @param tokenId the token Id of the renounced sheet
      */
 
-    function restoreSheet(uint256 tokenId) public onlyRole(PLAYER) {
+    function restoreSheet(uint256 tokenId) public onlyRole(PLAYER) returns (address) {
         if (memberAddressToTokenId[msg.sender] != 0) {
             revert Errors.PlayerError();
         }
@@ -326,6 +326,8 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         );
         memberAddressToTokenId[msg.sender] = tokenId;
         emit CharacterRestored(tokenId, restoredAccount, msg.sender);
+
+        return restoredAccount;
     }
 
     /**
@@ -370,12 +372,14 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
      */
 
     function removeSheet(uint256 characterId) public onlyRole(DUNGEON_MASTER) {
-        if (dao.members(getCharacterSheetByCharacterId(characterId).memberAddress).jailed == 0) {
+        address memberAddress = getCharacterSheetByCharacterId(characterId).memberAddress;
+        if (dao.members(memberAddress).jailed == 0) {
             revert Errors.DaoError();
         }
 
         delete sheets[characterId];
         _burn(characterId);
+        memberAddressToTokenId[memberAddress] = 0;
 
         emit CharacterRemoved(characterId);
     }
