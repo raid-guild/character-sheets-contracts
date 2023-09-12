@@ -23,11 +23,11 @@ contract ExperienceAndItemsImplementation is ERC20, Initializable {
     bytes32 public constant PLAYER = keccak256("PLAYER");
     bytes32 public constant CHARACTER = keccak256("CHARACTER");
 
-    bytes32 public claimersMerkleRoot;
+    bytes32 public claimMerkleRoot;
 
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
     CharacterSheetsImplementation public characterSheets;
-    address public experienceContract;
+    address public itemsContract;
 
     modifier onlyDungeonMaster() {
         if (!characterSheets.hasRole(DUNGEON_MASTER, msg.sender)) {
@@ -50,19 +50,40 @@ contract ExperienceAndItemsImplementation is ERC20, Initializable {
         _;
     }
 
+    modifier onlyContract() {
+        if (msg.sender != itemsContract || msg.sender != address(characterSheets)) {
+            revert Errors.CallerNotApproved();
+        }
+        _;
+    }
+
     constructor() ERC20("EXP", "Experience") {
         _disableInitializers();
     }
 
-    function initialize(bytes calldata initializationData) external initializer {}
+    function initialize(bytes calldata initializationData) external initializer {
+        address characterSheetsContract;
+        (characterSheetsContract, itemsContract) = abiecode(initializationData, (address, address));
+        characterSheets = CharacterSheetsImplementati.don(characterSheetsContract);
+    }
 
-    function dropExp(address to, uint256 amount) public onlyDungeonMaster {}
+    function dropExp(address to, uint256 amount) public onlyDungeonMaster {
+        if (address(characterSheets) == address(0)) {
+            revert Errors.VariableNotSet();
+        }
+        if (!characterSheets.hasRole(CHARACTER, to)) {
+            revert CharacterError();
+        }
+        _mint(to, amount);
+    }
 
-    function claimExp(uint256 amount) public onlyCharacter {}
-
-    function updateCharacterSheetsImplementation(address newSheets) public onlyDungeonMaster {}
+    function updateCharacterSheetsImplementation(address newSheets) public onlyDungeonMaster {
+        characterSheets = CharacterSheetsImplementation(newSheets);
+    }
 
     function updateClaimMerkleRoot(bytes32 newMerkleRoot) public onlyDungeonMaster {}
 
-    // function burnExp(address burnee, uint256 amount) public onlyExperienceContract {}
+    function burnExp(address burnee, uint256 amount) public onlyContract {
+        _burn(burnee, amount);
+    }
 }

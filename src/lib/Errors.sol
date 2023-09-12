@@ -19,4 +19,5 @@ abstract contract Errors {
     error InvalidProof();
     error Jailed();
     error InsufficientBalance();
+    error CallerNotApproved();
 }

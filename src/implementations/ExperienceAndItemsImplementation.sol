@@ -484,7 +484,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
             return Item(cid, claimable, newClassRequirements, newItemRequirements, name, soulbound, 0, supply, 0);
         }
     }
-
+admin
     /**
      * private function for DM to give out experience.
      * @param _to player neft address
