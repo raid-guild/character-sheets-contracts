@@ -55,19 +55,6 @@ contract CharacterSheetsTest is Test, SetUp {
         characterSheets.setBaseUri(newBaseUri);
     }
 
-    function testEquipClassToCharacter() public {
-        vm.prank(admin);
-        classes.assignClass(1, 1);
-        assertEq(classes.balanceOf(npc1, 1), 1, "incorrect balance");
-        assertEq(characterSheets.getCharacterSheetByCharacterId(1).ERC6551TokenAddress, npc1, "incorrect npc");
-
-        vm.prank(npc1);
-        characterSheets.equipClassToCharacter(1, 1);
-
-        // CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(1);
-        // assertEq(sheet.classes[0], 1, 'class not assigned');
-    }
-
     function testEquipItemToCharacter() public {
         vm.prank(admin);
         address[] memory npc = new address[](1);
@@ -132,6 +119,7 @@ contract CharacterSheetsTest is Test, SetUp {
         characterSheets.restoreSheet(1);
         vm.stopPrank();
 
+        // test that account is correctly restored
         vm.prank(player1);
         address restored = characterSheets.restoreSheet(1);
 

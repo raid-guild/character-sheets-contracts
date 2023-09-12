@@ -2,11 +2,11 @@
 pragma solidity ^0.8.9;
 pragma abicoder v2;
 
-import {ERC721} from "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
-import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
-import {ERC721URIStorage} from "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import {AccessControl} from "openzeppelin-contracts/contracts/access/AccessControl.sol";
-import {Counters} from "openzeppelin-contracts/contracts/utils/Counters.sol";
+import {ERC721} from "../../lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
+import {IERC721} from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import {ERC721URIStorage} from "../../lib/openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import {AccessControl} from "../../lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
+import {Counters} from "../../lib/openzeppelin-contracts/contracts/utils/Counters.sol";
 import {Initializable} from "openzeppelin/proxy/utils/Initializable.sol";
 
 import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
@@ -56,8 +56,6 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     event BaseURIUpdated(string oldURI, string newURI);
     event CharacterRemoved(uint256 tokenId);
     event ItemsUpdated(address exp);
-    event ClassEquipped(uint256 characterId, uint256 classId);
-    event ClassUnequipped(uint256 characterId, uint256 classId);
     event ItemEquipped(uint256 characterId, uint256 itemTokenId);
     event ItemUnequipped(uint256 characterId, uint256 itemTokenId);
     event CharacterUpdated(uint256 tokenId, string newName, string newCid);
@@ -194,51 +192,6 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         emit NewCharacterSheetRolled(_to, tba, tokenId);
 
         return tokenId;
-    }
-
-    /**
-     * this adds a class to the classes array of the characterSheet struct in storage
-     * @param characterId the token id of the player to receive a class
-     * @param classId the class ID of the class to be added
-     */
-
-    function equipClassToCharacter(uint256 characterId, uint256 classId) external onlyRole(CHARACTER) {
-        if (classes.balanceOf(msg.sender, classId) < 1) {
-            revert Errors.InsufficientBalance();
-        }
-        sheets[characterId].classes.push(classId);
-        emit ClassEquipped(characterId, classId);
-    }
-
-    /**
-     * removes a class from a character Sheet
-     * @param characterId the id of the character sheet to be modified
-     * @param classId the class Id to be removed
-     */
-
-    function unequipClassFromCharacter(uint256 characterId, uint256 classId)
-        external
-        onlyRole(CHARACTER)
-        returns (bool success)
-    {
-        uint256[] memory arr = sheets[characterId].classes;
-        for (uint256 i = 0; i < arr.length; i++) {
-            if (arr[i] == classId) {
-                for (uint256 j = i; j < arr.length; j++) {
-                    if (j + 1 < arr.length) {
-                        arr[j] = arr[j + 1];
-                    } else if (j + 1 >= arr.length) {
-                        arr[j] = 0;
-                    }
-                }
-                sheets[characterId].classes = arr;
-                sheets[characterId].classes.pop();
-
-                emit ClassUnequipped(characterId, classId);
-                return success = true;
-            }
-        }
-        return success = false;
     }
 
     /**
@@ -411,24 +364,6 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
             }
         }
         revert Errors.CharacterError();
-    }
-
-    function isClassEquipped(uint256 characterId, uint256 classId) public view returns (bool) {
-        CharacterSheet memory sheet = sheets[characterId];
-        if (sheet.memberAddress == address(0)) {
-            revert Errors.PlayerError();
-        }
-        if (sheet.classes.length == 0) {
-            return false;
-        }
-        uint256 tokenId = classes.getClassById(classId).tokenId;
-        require(tokenId != 0, "Class does not exist");
-        for (uint256 i; i < sheet.classes.length; i++) {
-            if (sheet.classes[i] == tokenId) {
-                return true;
-            }
-        }
-        return false;
     }
 
     function isItemEquipped(uint256 characterId, uint256 itemId) public view returns (bool) {

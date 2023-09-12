@@ -177,21 +177,8 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
 
         CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(characterId);
 
-        if (characterSheets.hasRole(DUNGEON_MASTER, msg.sender)) {
-            if (characterSheets.isClassEquipped(characterId, classId)) {
-                if (!characterSheets.unequipClassFromCharacter(characterId, classId)) {
-                    revert Errors.ClassError();
-                }
-            }
-        } else {
-            if (sheet.memberAddress != msg.sender && sheet.ERC6551TokenAddress != msg.sender) {
-                revert Errors.OwnershipError();
-            }
-            if (characterSheets.isClassEquipped(characterId, classId)) {
-                if (!characterSheets.unequipClassFromCharacter(characterId, classId)) {
-                    revert Errors.ClassError();
-                }
-            }
+        if (sheet.memberAddress != msg.sender && sheet.ERC6551TokenAddress != msg.sender) {
+            revert Errors.OwnershipError();
         }
 
         _burn(sheet.ERC6551TokenAddress, classId, 1);

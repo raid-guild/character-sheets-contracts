@@ -45,8 +45,6 @@ struct CharacterSheet {
     address ERC6551TokenAddress;
     /// @dev the EOA of the member who owns this character sheet
     address memberAddress;
-    /// @dev the classId of the class equipped to this player
-    uint256[] classes;
     /// @dev the itemId of the equipped items in this chars inventory
     uint256[] inventory;
 }
