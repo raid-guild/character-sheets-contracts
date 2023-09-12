@@ -128,9 +128,9 @@ contract CharacterSheetsTest is Test, SetUp {
         bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
         uint256 newTokenId = characterSheets.rollCharacterSheet(player2, encodedData);
         characterSheets.renounceSheet(newTokenId);
-        address wrong = characterSheets.restoreSheet(1);
+        vm.expectRevert();
+        characterSheets.restoreSheet(1);
         vm.stopPrank();
-        assert(tbaAddress != wrong);
 
         vm.prank(player1);
         address restored = characterSheets.restoreSheet(1);

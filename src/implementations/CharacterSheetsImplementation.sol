@@ -324,6 +324,9 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         address restoredAccount = _erc6551Registry.createAccount(
             erc6551AccountImplementation, block.chainid, address(this), tokenId, uint256(uint160(msg.sender)), ""
         );
+        if (sheets[tokenId].ERC6551TokenAddress != restoredAccount) {
+            revert Errors.PlayerOnly();
+        }
         memberAddressToTokenId[msg.sender] = tokenId;
         emit CharacterRestored(tokenId, restoredAccount, msg.sender);
 
