@@ -95,10 +95,12 @@ if (subPath == 'Characters') {
     .map((input) => input.trim().toLowerCase());
 
   const className = splitInput[0];
-  const classUri = splitInput[1].length == '' ? null : splitInput[1];
+  const classBool = splitInput[1] == 'y' ? true : false;
+  const classUri = splitInput[2].length == '' ? null : splitInput[1];
 
   const newClass = {
     ClassName: className,
+    Claimable: classBool,
     ClassUri: classUri,
   };
 
