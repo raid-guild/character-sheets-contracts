@@ -18,7 +18,7 @@ import {Errors} from "../lib/Errors.sol";
  * Each item and class is an 1155 token that can soulbound or not to the erc6551 wallet of each player nft
  * in the characterSheets contract.
  */
-contract ExperienceAndItemsImplementation is ERC20 {
+contract ExperienceAndItemsImplementation is ERC20, Initializable {
     bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
     bytes32 public constant PLAYER = keccak256("PLAYER");
     bytes32 public constant CHARACTER = keccak256("CHARACTER");
@@ -62,7 +62,7 @@ contract ExperienceAndItemsImplementation is ERC20 {
 
     function updateCharacterSheetsImplementation(address newSheets) public onlyDungeonMaster {}
 
-    function updateClaimMerkleRoot(bytes32 calldata newMerkleRoot) public onlyDungeonMaster {}
+    function updateClaimMerkleRoot(bytes32 newMerkleRoot) public onlyDungeonMaster {}
 
-    function burnExp(address burnee, uint256 amount) public onlyExperienceContract {}
+    // function burnExp(address burnee, uint256 amount) public onlyExperienceContract {}
 }

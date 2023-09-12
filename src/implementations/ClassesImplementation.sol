@@ -99,12 +99,6 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
         }
     }
 
-    function assignClasses(uint256 characterId, uint256[] calldata _classIds) external onlyDungeonMaster {
-        for (uint256 i = 0; i < _classIds.length; i++) {
-            assignClass(characterId, _classIds[i]);
-        }
-    }
-
     /**
      *
      * @param classData encoded class data includes
