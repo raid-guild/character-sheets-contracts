@@ -47,7 +47,7 @@ contract ExecuteClassesImplementation is BaseExecutor {
     }
 
     function execute() internal override {
-        bytes memory encodedData = abi.encode(className, claimable, classUri);
+        bytes memory encodedData = abi.encode(className, claimable, classUri);ClassName
 
         vm.broadcast(deployerPrivateKey);
         classesImplementation.createClassType(encodedData);

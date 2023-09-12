@@ -274,13 +274,18 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         if (memberAddressToTokenId[msg.sender] != 0) {
             revert Errors.PlayerError();
         }
+        if (dao.members(msg.sender).jailed != 0) {
+            revert Errors.DaoError();
+        }
         address restoredAccount = _erc6551Registry.createAccount(
             erc6551AccountImplementation, block.chainid, address(this), tokenId, uint256(uint160(msg.sender)), ""
         );
         if (sheets[tokenId].erc6551TokenAddress != restoredAccount) {
             revert Errors.PlayerOnly();
         }
+        _safeMint(msg.sender, tokenId);
         memberAddressToTokenId[msg.sender] = tokenId;
+
         emit CharacterRestored(tokenId, restoredAccount, msg.sender);
 
         return restoredAccount;
