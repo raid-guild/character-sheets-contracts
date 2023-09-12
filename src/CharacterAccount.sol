@@ -10,10 +10,10 @@ import {
     ERC1155Receiver,
     IERC1155Receiver
 } from "openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holder.sol";
-import {Executor, Enum} from "safe-contracts/contracts/base/Executor.sol";
 
 import {IERC6551Account} from "./interfaces/IERC6551Account.sol";
 import {IERC6551Executable} from "./interfaces/IERC6551Executable.sol";
+import {CallUtils} from "./lib/CallUtils.sol";
 
 /**
  * @title NPC Acount
@@ -21,10 +21,10 @@ import {IERC6551Executable} from "./interfaces/IERC6551Executable.sol";
  * @notice This is a simple ERC6551 account implementation that can hold ERC1155 tokens
  */
 
-contract CharacterAccount is IERC165, IERC1271, IERC6551Account, IERC6551Executable, ERC1155Holder, Executor {
+contract CharacterAccount is IERC165, IERC1271, IERC6551Account, IERC6551Executable, ERC1155Holder {
     uint256 public state;
 
-    event Executed(bool success);
+    event Executed();
 
     receive() external payable {}
 
@@ -34,29 +34,24 @@ contract CharacterAccount is IERC165, IERC1271, IERC6551Account, IERC6551Executa
         returns (bytes memory result)
     {
         require(_isValidSigner(msg.sender), "Invalid signer");
-        require(operation > 1, "Invalid Operation");
 
         ++state;
 
         bool success;
-        success = execute(to, value, data, Enum.Operation(operation), type(uint256).max);
 
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            // Load free memory location
-            let ptr := mload(0x40)
-            // We allocate memory for the return data by setting the free memory location to
-            // current free memory location + data size + 32 bytes for data size value
-            mstore(0x40, add(ptr, add(returndatasize(), 0x20)))
-            // Store the size
-            mstore(ptr, returndatasize())
-            // Store the data
-            returndatacopy(add(ptr, 0x20), 0, returndatasize())
-            // Point the return data to the correct memory location
-            result := ptr
+        if (operation == 0) {
+            (success, result) = to.call{value: value}(data);
+        } else if (operation == 1) {
+            (success, result) = to.delegatecall(data);
+        } else {
+            revert("Invalid Operation");
         }
 
-        emit Executed(success);
+        if (!success) {
+            CallUtils.revertFromReturnedData(result);
+        }
+
+        emit Executed();
     }
 
     function isValidSigner(address signer, bytes calldata) external view returns (bytes4) {
