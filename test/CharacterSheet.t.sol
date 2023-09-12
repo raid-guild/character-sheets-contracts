@@ -102,7 +102,7 @@ contract CharacterSheetsTest is Test, SetUp {
     }
 
     function testRestoreSheet() public {
-        address tbaAddress = characterSheets.getCharacterSheetByCharacterId(1).ERC6551TokenAddress;
+        address tbaAddress = characterSheets.getCharacterSheetByCharacterId(1).erc6551TokenAddress;
         vm.prank(player1);
         characterSheets.renounceSheet(1);
 
@@ -144,7 +144,7 @@ contract CharacterSheetsTest is Test, SetUp {
     function testGetPlayerIdFromNftAddress() public {
         CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(1);
 
-        uint256 playerId = characterSheets.getCharacterIdByNftAddress(sheet.ERC6551TokenAddress);
+        uint256 playerId = characterSheets.getCharacterIdByNftAddress(sheet.erc6551TokenAddress);
 
         assertEq(playerId, 1, "Incorrect playerId");
 

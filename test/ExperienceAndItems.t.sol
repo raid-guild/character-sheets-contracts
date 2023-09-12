@@ -112,7 +112,7 @@ contract ExperienceAndItemsTest is Test, SetUp {
 
         bytes memory newItem = createNewItem("staff", false, bytes32(0));
 
-        address player2NPC = characterSheets.getCharacterSheetByCharacterId(player2Id).ERC6551TokenAddress;
+        address player2NPC = characterSheets.getCharacterSheetByCharacterId(player2Id).erc6551TokenAddress;
         uint256 _itemId = experience.createItemType(newItem);
 
         address[] memory players = new address[](2);

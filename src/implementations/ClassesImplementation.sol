@@ -99,6 +99,28 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
         }
     }
 
+    function claimClass(uint256 characterId, uint256 classId) external onlyCharacter returns (bool) {
+        CharacterSheet memory character = characterSheets.getCharacterSheetByCharacterId(characterId);
+        Class memory newClass = classes[classId];
+
+        if (msg.sender != character.erc6551TokenAddress) {
+            revert Errors.CharacterError();
+        }
+
+        if (!newClass.claimable) {
+            revert Errors.ClaimableError();
+        }
+
+        _mint(character.erc6551TokenAddress, classId, 1, bytes(newClass.cid));
+
+        classes[classId].supply++;
+
+        emit ClassAssigned(characterId, classId);
+
+        bool success = true;
+        return success;
+    }
+
     function assignClasses(uint256 characterId, uint256[] calldata _classIds) external onlyDungeonMaster {
         for (uint256 i = 0; i < _classIds.length; i++) {
             assignClass(characterId, _classIds[i]);
@@ -144,20 +166,20 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
      */
 
     function assignClass(uint256 characterId, uint256 classId) public onlyDungeonMaster {
-        CharacterSheet memory player = characterSheets.getCharacterSheetByCharacterId(characterId);
+        CharacterSheet memory character = characterSheets.getCharacterSheetByCharacterId(characterId);
         Class memory newClass = classes[classId];
 
-        if (player.memberAddress == address(0x0)) {
-            revert Errors.PlayerError();
+        if (character.memberAddress == address(0x0)) {
+            revert Errors.CharacterError();
         }
         if (newClass.tokenId == 0) {
             revert Errors.ClassError();
         }
-        if (balanceOf(player.ERC6551TokenAddress, newClass.tokenId) != 0) {
+        if (balanceOf(character.erc6551TokenAddress, newClass.tokenId) != 0) {
             revert Errors.ClassError();
         }
 
-        _mint(player.ERC6551TokenAddress, classId, 1, bytes(newClass.cid));
+        _mint(character.erc6551TokenAddress, classId, 1, bytes(newClass.cid));
 
         classes[classId].supply++;
 
@@ -165,7 +187,7 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
     }
 
     /**
-     * removes a class from a player token
+     * removes a class from a character token
      * @param characterId the token Id of the player who needs a class removed
      * @param classId the class to be removed
      */
@@ -177,11 +199,11 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
 
         CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(characterId);
 
-        if (sheet.memberAddress != msg.sender && sheet.ERC6551TokenAddress != msg.sender) {
+        if (sheet.memberAddress != msg.sender && sheet.erc6551TokenAddress != msg.sender) {
             revert Errors.OwnershipError();
         }
 
-        _burn(sheet.ERC6551TokenAddress, classId, 1);
+        _burn(sheet.erc6551TokenAddress, classId, 1);
 
         success = true;
         emit ClassRevoked(characterId, classId);
@@ -263,8 +285,8 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
     }
 
     function _createClassStruct(bytes calldata classData) private pure returns (Class memory) {
-        (string memory name, string memory cid) = abi.decode(classData, (string, string));
+        (string memory name, bool claimable, string memory cid) = abi.decode(classData, (string, bool, string));
 
-        return Class(0, name, 0, cid);
+        return Class(0, name, 0, claimable, cid);
     }
 }

@@ -14,9 +14,11 @@ contract ClassesTest is Test, SetUp {
     function testCreateClass() public {
         vm.prank(admin);
         uint256 _classId = classes.createClassType(createNewClass("Ballerina"));
-        (uint256 classId, string memory name, uint256 supply, string memory cid) = classes.classes(_classId);
+        (uint256 classId, string memory name, uint256 supply, bool claimable, string memory cid) =
+            classes.classes(_classId);
 
         assertEq(classes.totalClasses(), 2);
+        assertEq(claimable, true, "incorrect claimable");
         assertEq(_classId, 2);
         assertEq(classId, 2);
         assertEq(keccak256(abi.encode(name)), keccak256(abi.encode("Ballerina")));
@@ -34,7 +36,8 @@ contract ClassesTest is Test, SetUp {
 
         assertEq(_classIds.length, 2, "incorrect length");
 
-        (uint256 classId, string memory name, uint256 supply, string memory cid) = classes.classes(_classIds[0]);
+        (uint256 classId, string memory name, uint256 supply, bool claimable, string memory cid) =
+            classes.classes(_classIds[0]);
 
         assertEq(classes.totalClasses(), 3, "incorrect total classes");
         assertEq(_classIds[0], 2, "incorrect class id");
@@ -44,8 +47,8 @@ contract ClassesTest is Test, SetUp {
         assertEq(keccak256(abi.encode(cid)), keccak256(abi.encode("test_class_cid/")), "incorrect cid");
         assertEq(classes.uri(classId), "test_base_uri_classes/test_class_cid/", "incorrect token uri");
 
-        (classId, name, supply, cid) = classes.classes(_classIds[1]);
-
+        (classId, name, supply, claimable, cid) = classes.classes(_classIds[1]);
+        assertEq(claimable, true, "incorrect claimable");
         assertEq(_classIds[1], 3, "incorrect class id");
         assertEq(classId, 3, "incorrect class id");
         assertEq(keccak256(abi.encode(name)), keccak256(abi.encode("Ballerina2")), "incorrect class name");
@@ -73,7 +76,7 @@ contract ClassesTest is Test, SetUp {
 
         CharacterSheet memory secondPlayer = characterSheets.getCharacterSheetByCharacterId(playerId);
 
-        assertEq(classes.balanceOf(secondPlayer.ERC6551TokenAddress, 2), 1, "does not own second class");
+        assertEq(classes.balanceOf(secondPlayer.erc6551TokenAddress, 2), 1, "does not own second class");
     }
 
     function testAssignClasses() public {
@@ -89,8 +92,8 @@ contract ClassesTest is Test, SetUp {
         classes.assignClasses(playerId, classesArr);
         vm.stopPrank();
         CharacterSheet memory player = characterSheets.getCharacterSheetByCharacterId(playerId);
-        assertEq(classes.balanceOf(player.ERC6551TokenAddress, allClasses[0].tokenId), 1, "incorrect balance");
-        assertEq(classes.balanceOf(player.ERC6551TokenAddress, allClasses[1].tokenId), 1, "incorrect balance token 2");
+        assertEq(classes.balanceOf(player.erc6551TokenAddress, allClasses[0].tokenId), 1, "incorrect balance");
+        assertEq(classes.balanceOf(player.erc6551TokenAddress, allClasses[1].tokenId), 1, "incorrect balance token 2");
     }
 
     function testRevokeClass() public {
@@ -113,7 +116,7 @@ contract ClassesTest is Test, SetUp {
 
         CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(playerId);
 
-        assertEq(classes.balanceOf(sheet.ERC6551TokenAddress, tokenId), 1, "Incorrect class balance");
+        assertEq(classes.balanceOf(sheet.erc6551TokenAddress, tokenId), 1, "Incorrect class balance");
     }
 
     function testFindClassByName() public {

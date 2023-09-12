@@ -32,6 +32,8 @@ struct Class {
     string name;
     /// @dev the number of this class that have been minted
     uint256 supply;
+    /// @dev set to true if you want characters to be able to claim this class instead of being assined
+    bool claimable;
     /// @dev this classes image/metadata uri
     string cid;
 }
@@ -42,7 +44,7 @@ struct CharacterSheet {
     /// @dev the name of the member who controls this sheet
     string name;
     /// @dev the address of the NPC associated with this character sheet
-    address ERC6551TokenAddress;
+    address erc6551TokenAddress;
     /// @dev the EOA of the member who owns this character sheet
     address memberAddress;
     /// @dev the itemId of the equipped items in this chars inventory

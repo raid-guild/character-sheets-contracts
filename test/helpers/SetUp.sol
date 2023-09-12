@@ -107,7 +107,7 @@ contract SetUp is Test {
         bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
         vm.prank(player1);
         uint256 tokenId1 = characterSheets.rollCharacterSheet(player1, encodedData);
-        npc1 = characterSheets.getCharacterSheetByCharacterId(tokenId1).ERC6551TokenAddress;
+        npc1 = characterSheets.getCharacterSheetByCharacterId(tokenId1).erc6551TokenAddress;
 
         assertTrue(
             characterSheets.hasRole(keccak256("DUNGEON_MASTER"), admin),
@@ -166,6 +166,6 @@ contract SetUp is Test {
     }
 
     function createNewClass(string memory _name) public pure returns (bytes memory data) {
-        return abi.encode(_name, "test_class_cid/");
+        return abi.encode(_name, true, "test_class_cid/");
     }
 }

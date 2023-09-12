@@ -179,7 +179,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
 
         CharacterSheet memory newCharacterSheet;
         newCharacterSheet.name = _newName;
-        newCharacterSheet.ERC6551TokenAddress = tba;
+        newCharacterSheet.erc6551TokenAddress = tba;
         newCharacterSheet.memberAddress = _to;
         newCharacterSheet.tokenId = tokenId;
         //store info in mappings
@@ -206,7 +206,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         returns (bool success)
     {
         uint256[] memory arr = sheets[characterId].inventory;
-        if (items.balanceOf(sheets[characterId].ERC6551TokenAddress, tokenId) != 0) {
+        if (items.balanceOf(sheets[characterId].erc6551TokenAddress, tokenId) != 0) {
             revert Errors.InventoryError();
         }
         for (uint256 i = 0; i < arr.length; i++) {
@@ -277,7 +277,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         address restoredAccount = _erc6551Registry.createAccount(
             erc6551AccountImplementation, block.chainid, address(this), tokenId, uint256(uint160(msg.sender)), ""
         );
-        if (sheets[tokenId].ERC6551TokenAddress != restoredAccount) {
+        if (sheets[tokenId].erc6551TokenAddress != restoredAccount) {
             revert Errors.PlayerOnly();
         }
         memberAddressToTokenId[msg.sender] = tokenId;
@@ -359,7 +359,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
 
     function getCharacterIdByNftAddress(address _nftAddress) public view returns (uint256) {
         for (uint256 i = 1; i <= totalSheets; i++) {
-            if (sheets[i].ERC6551TokenAddress == _nftAddress) {
+            if (sheets[i].erc6551TokenAddress == _nftAddress) {
                 return i;
             }
         }
