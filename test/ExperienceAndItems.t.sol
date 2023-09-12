@@ -33,6 +33,56 @@ contract ExperienceAndItemsTest is Test, SetUp {
         );
     }
 
+    function testBatchCreateItemType() public {
+        bytes[] memory _items = new bytes[](2);
+        _items[0] = createNewItem("Pirate_Hat1", false, bytes32(0));
+        _items[1] = createNewItem("Pirate_Hat2", false, bytes32(0));
+        vm.prank(admin);
+        uint256[] memory _itemIds = experience.batchCreateItemType(_items);
+
+        assertEq(_itemIds.length, 2);
+
+        uint256 _itemId = _itemIds[0];
+
+        Item memory returnedItem = experience.getItemById(_itemId);
+
+        assertEq(experience.totalItemTypes(), 3);
+        assertEq(keccak256(abi.encode(returnedItem.name)), keccak256(abi.encode("Pirate_Hat1")));
+        assertEq(_itemId, 2);
+        assertEq(returnedItem.tokenId, 2);
+        assertEq(returnedItem.supply, 10 ** 18);
+        assertEq(returnedItem.supplied, 0);
+        assertEq(returnedItem.itemRequirements.length, 1);
+        assertEq(returnedItem.soulbound, false);
+        assertEq(returnedItem.claimable, bytes32(0));
+        assertEq(keccak256(abi.encode(returnedItem.cid)), keccak256(abi.encode("test_item_cid/")));
+        assertEq(
+            keccak256(abi.encode(experience.uri(returnedItem.tokenId))),
+            keccak256(abi.encode("test_base_uri_experience/test_item_cid/")),
+            "uris not right"
+        );
+
+        _itemId = _itemIds[1];
+
+        returnedItem = experience.getItemById(_itemId);
+
+        assertEq(experience.totalItemTypes(), 3);
+        assertEq(keccak256(abi.encode(returnedItem.name)), keccak256(abi.encode("Pirate_Hat2")));
+        assertEq(_itemId, 3);
+        assertEq(returnedItem.tokenId, 3);
+        assertEq(returnedItem.supply, 10 ** 18);
+        assertEq(returnedItem.supplied, 0);
+        assertEq(returnedItem.itemRequirements.length, 1);
+        assertEq(returnedItem.soulbound, false);
+        assertEq(returnedItem.claimable, bytes32(0));
+        assertEq(keccak256(abi.encode(returnedItem.cid)), keccak256(abi.encode("test_item_cid/")));
+        assertEq(
+            keccak256(abi.encode(experience.uri(returnedItem.tokenId))),
+            keccak256(abi.encode("test_base_uri_experience/test_item_cid/")),
+            "uris not right"
+        );
+    }
+
     function testCreateItemTypeRevertItemExists() public {
         bytes memory newItem = createNewItem("Pirate_Hat", false, bytes32(0));
 

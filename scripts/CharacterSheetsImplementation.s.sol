@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {CharacterSheetsImplementation} from "../src/implementations/CharacterSheetsImplementation.sol";
-import {Moloch} from "../src/mocks/mockMoloch.sol";
+import {Moloch} from "../src/mocks/MockMoloch.sol";
 import {BaseDeployer} from "./BaseDeployer.sol";
 import {BaseExecutor} from "./BaseExecutor.sol";
 import "forge-std/Script.sol";
