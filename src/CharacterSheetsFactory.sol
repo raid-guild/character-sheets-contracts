@@ -17,12 +17,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
     uint256 private _nonce;
 
-    event CharacterSheetsCreated(
-      address creator,
-      address characterSheets,
-      address classes,
-      address experienceAndItems
-    );
+    event CharacterSheetsCreated(address creator, address characterSheets, address classes, address experienceAndItems);
     event CharacterSheetsUpdated(address newCharacterSheets);
     event ExperienceUpdated(address newExperience);
     event RegistryUpdated(address newRegistry);
@@ -58,6 +53,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         classesImplementation = _newClasses;
         emit ClassesImplementationUpdated(classesImplementation);
     }
+
     /**
      * @param dungeonMasters an array of addresses that will have the DUNGEON_MASTER role.
      * @param dao the dao who"s member list will be able to mint character sheets.
@@ -157,9 +153,17 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         return abi.encode(characterSheetsClone, classesBaseUri);
     }
 
-    function _decodeStrings(bytes memory data) private pure returns (string memory, string memory, string memory, string memory) {
-        (string memory characterSheetsMetadataUri, string memory characterSheetsBaseUri, string memory experienceBaseUri, string memory classesBaseUri) =
-            abi.decode(data, (string, string, string, string));
+    function _decodeStrings(bytes memory data)
+        private
+        pure
+        returns (string memory, string memory, string memory, string memory)
+    {
+        (
+            string memory characterSheetsMetadataUri,
+            string memory characterSheetsBaseUri,
+            string memory experienceBaseUri,
+            string memory classesBaseUri
+        ) = abi.decode(data, (string, string, string, string));
         return (characterSheetsMetadataUri, characterSheetsBaseUri, experienceBaseUri, classesBaseUri);
     }
 }

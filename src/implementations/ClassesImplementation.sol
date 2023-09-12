@@ -2,16 +2,13 @@
 pragma solidity ^0.8.9;
 
 import {Initializable} from "openzeppelin/proxy/utils/Initializable.sol";
-import {MerkleProof} from "openzeppelin/utils/cryptography/MerkleProof.sol";
-import {Strings} from "openzeppelin/utils/Strings.sol";
 import {ERC1155Receiver} from "openzeppelin/token/ERC1155/utils/ERC1155Receiver.sol";
 import {ERC1155} from "hats/lib/ERC1155/ERC1155.sol";
-import {IERC721} from "openzeppelin/token/ERC721/IERC721.sol";
 import {ERC1155Holder} from "openzeppelin/token/ERC1155/utils/ERC1155Holder.sol";
 import {Counters} from "openzeppelin/utils/Counters.sol";
 
 import {CharacterSheetsImplementation} from "../implementations/CharacterSheetsImplementation.sol";
-import {Item, Class, CharacterSheet} from "../lib/Structs.sol";
+import {Class, CharacterSheet} from "../lib/Structs.sol";
 
 import {Errors} from "../lib/Errors.sol";
 
@@ -89,6 +86,25 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
         _classIdCounter.increment();
     }
 
+    function batchCreateClassType(bytes[] calldata classDatas)
+        external
+        onlyDungeonMaster
+        returns (uint256[] memory tokenIds)
+    {
+        tokenIds = new uint256[](classDatas.length);
+
+        for (uint256 i = 0; i < classDatas.length; i++) {
+            bytes calldata classData = classDatas[i];
+            tokenIds[i] = createClassType(classData);
+        }
+    }
+
+    function assignClasses(uint256 characterId, uint256[] calldata _classIds) external onlyDungeonMaster {
+        for (uint256 i = 0; i < _classIds.length; i++) {
+            assignClass(characterId, _classIds[i]);
+        }
+    }
+
     /**
      *
      * @param classData encoded class data includes
@@ -98,7 +114,7 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
      * @return tokenId the ERC1155 token id
      */
 
-    function createClassType(bytes calldata classData) external onlyDungeonMaster returns (uint256 tokenId) {
+    function createClassType(bytes calldata classData) public onlyDungeonMaster returns (uint256 tokenId) {
         Class memory _newClass = _createClassStruct(classData);
 
         uint256 _tokenId = _classIdCounter.current();
@@ -255,6 +271,7 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
     function getBaseURI() public view returns (string memory) {
         return _baseURI;
     }
+
     /**
      * @dev Sets `tokenURI` as the tokenURI of `tokenId`.
      */

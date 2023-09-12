@@ -13,10 +13,9 @@ import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
 import {IMolochDAO} from "../interfaces/IMolochDAO.sol";
 import {ExperienceAndItemsImplementation} from "./ExperienceAndItemsImplementation.sol";
 import {ClassesImplementation} from "./ClassesImplementation.sol";
-import {Item, Class, CharacterSheet} from "../lib/Structs.sol";
+import {CharacterSheet} from "../lib/Structs.sol";
 
-//solhint-disable-next-line
-import "../lib/Errors.sol";
+import {Errors} from "../lib/Errors.sol";
 // import "forge-std/console2.sol";
 
 contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorage, AccessControl {
@@ -51,13 +50,15 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     uint256 public totalSheets;
 
     event NewCharacterSheetRolled(address member, address erc6551, uint256 tokenId);
+    event MetadataURIUpdated(string oldURI, string newURI);
+    event BaseURIUpdated(string oldURI, string newURI);
     event PlayerRemoved(uint256 tokenId);
     event ExperienceUpdated(address exp);
     event ClassEquipped(uint256 characterId, uint256 classId);
     event ClassUnequipped(uint256 characterId, uint256 classId);
     event ItemEquipped(uint256 characterId, uint256 itemTokenId);
     event ItemUnequipped(uint256 characterId, uint256 itemTokenId);
-    event CharacterNameUpdated(uint256 tokenId, string oldName, string newName);
+    event CharacterUpdated(uint256 tokenId, string newName, string newCid);
     event PlayerJailed(address playerAddress, bool thrownInJail);
 
     modifier onlyExpContract() {
@@ -108,7 +109,9 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
             erc6551AccountImplementation,
             metadataURI,
             baseTokenURI
-        ) = abi.decode(_encodedParameters, (address, address[], address, address, address, address, address, string, string));
+        ) = abi.decode(
+            _encodedParameters, (address, address[], address, address, address, address, address, string, string)
+        );
 
         _grantRole(DEFAULT_ADMIN_ROLE, owner);
 
@@ -137,7 +140,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
             revert Errors.VariableNotSet();
         }
 
-        if (dao.members(_to).shares > 100) {
+        if (dao.members(_to).shares == 0) {
             revert Errors.DaoError();
         }
 
@@ -305,13 +308,14 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
      * allows a player to update their name in the contract
      * @param newName the new player name
      */
-    function updateCharacterName(string calldata newName) public onlyRole(PLAYER) {
+    function updateCharacterMetadata(string calldata newName, string calldata newCid) public onlyRole(PLAYER) {
         uint256 tokenId = memberAddressToTokenId[msg.sender];
 
-        string memory oldName = sheets[tokenId].name;
         sheets[tokenId].name = newName;
 
-        emit CharacterNameUpdated(tokenId, oldName, newName);
+        _setTokenURI(tokenId, newCid);
+
+        emit CharacterUpdated(tokenId, newName, newCid);
     }
 
     function jailPlayer(address playerAddress, bool throwInJail) public onlyRole(DUNGEON_MASTER) {
@@ -325,11 +329,15 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     }
 
     function setBaseUri(string memory _uri) public onlyRole(DUNGEON_MASTER) {
+        string memory oldBaseURI = baseTokenURI;
         baseTokenURI = _uri;
+        emit BaseURIUpdated(oldBaseURI, _uri);
     }
 
     function setMetadataUri(string memory _uri) public onlyRole(DUNGEON_MASTER) {
+        string memory oldMetadataURI = metadataURI;
         metadataURI = _uri;
+        emit MetadataURIUpdated(oldMetadataURI, _uri);
     }
 
     /**

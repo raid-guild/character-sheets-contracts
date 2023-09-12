@@ -9,12 +9,7 @@ import "../src/implementations/ExperienceAndItemsImplementation.sol";
 // import "forge-std/console2.sol";
 
 contract CharacterSheetsTest is Test, SetUp {
-    event CharacterSheetsCreated(
-      address creator,
-      address characterSheets,
-      address classes,
-      address experienceAndItems
-    );
+    event CharacterSheetsCreated(address creator, address characterSheets, address classes, address experienceAndItems);
     event CharacterSheetsUpdated(address newCharacterSheets);
     event ExperienceUpdated(address newExperience);
     event ExperienceAndItemsCreated(address newExp, address creator);
@@ -89,8 +84,12 @@ contract CharacterSheetsTest is Test, SetUp {
             vm.prank(player1);
             vm.expectEmit(true, true, false, false);
             emit CharacterSheetsCreated(player1, address(0), address(0), address(0));
-            bytes memory baseUriData =
-                abi.encode("test_metadata_uri_character_sheets/", "test_base_uri_character_sheets/", "test_base_uri_experience/", "test_base_uri_classes/");
+            bytes memory baseUriData = abi.encode(
+                "test_metadata_uri_character_sheets/",
+                "test_base_uri_character_sheets/",
+                "test_base_uri_experience/",
+                "test_base_uri_classes/"
+            );
 
             (address sheets, address exp, address class) =
                 characterSheetsFactory.create(dungeonMasters, address(dao), baseUriData);

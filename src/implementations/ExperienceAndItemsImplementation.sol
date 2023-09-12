@@ -5,13 +5,12 @@ import {Initializable} from "openzeppelin/proxy/utils/Initializable.sol";
 import {MerkleProof} from "openzeppelin/utils/cryptography/MerkleProof.sol";
 import {ERC1155Receiver} from "openzeppelin/token/ERC1155/utils/ERC1155Receiver.sol";
 import {ERC1155, ERC1155TokenReceiver} from "@hats/lib/ERC1155/ERC1155.sol";
-import {IERC721} from "openzeppelin/token/ERC721/IERC721.sol";
 import {ERC1155Holder} from "openzeppelin/token/ERC1155/utils/ERC1155Holder.sol";
 import {Counters} from "openzeppelin/utils/Counters.sol";
 
 import {CharacterSheetsImplementation} from "./CharacterSheetsImplementation.sol";
 import {ClassesImplementation} from "./ClassesImplementation.sol";
-import {Item, Class, CharacterSheet} from "../lib/Structs.sol";
+import {Item} from "../lib/Structs.sol";
 
 import {Errors} from "../lib/Errors.sol";
 
@@ -99,35 +98,16 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
         _itemIdCounter.increment();
     }
 
-    /**
-     * Creates a new type of item
-     * @param itemData the encoded data to create the item struct
-     * @return tokenId the ERC1155 tokenId
-     */
+    function batchCreateItemType(bytes[] calldata itemDatas)
+        external
+        onlyDungeonMaster
+        returns (uint256[] memory tokenIds)
+    {
+        tokenIds = new uint256[](itemDatas.length);
 
-    function createItemType(bytes calldata itemData) external virtual onlyDungeonMaster returns (uint256 tokenId) {
-        Item memory newItem = _createItemStruct(itemData);
-
-        //solhint-disable-next-line
-        (bool success,) = address(this).call(abi.encodeWithSignature("findItemByName(string)", newItem.name));
-
-        if (success == true) {
-            revert Errors.DuplicateError();
+        for (uint256 i; i < itemDatas.length; i++) {
+            tokenIds[i] = createItemType(itemDatas[i]);
         }
-        uint256 _tokenId = _itemIdCounter.current();
-
-        _setURI(_tokenId, newItem.cid);
-        _mint(address(this), _tokenId, newItem.supply, bytes(newItem.cid));
-
-        newItem.tokenId = _tokenId;
-        items[_tokenId] = newItem;
-
-        emit NewItemTypeCreated(_tokenId, newItem.name);
-
-        _itemIdCounter.increment();
-
-        totalItemTypes++;
-        return _tokenId;
     }
 
     /**
@@ -197,6 +177,37 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
             }
         }
         success = true;
+    }
+
+    /**
+     * Creates a new type of item
+     * @param itemData the encoded data to create the item struct
+     * @return tokenId the ERC1155 tokenId
+     */
+
+    function createItemType(bytes calldata itemData) public onlyDungeonMaster returns (uint256 tokenId) {
+        Item memory newItem = _createItemStruct(itemData);
+
+        //solhint-disable-next-line
+        (bool success,) = address(this).call(abi.encodeWithSignature("findItemByName(string)", newItem.name));
+
+        if (success == true) {
+            revert Errors.DuplicateError();
+        }
+        uint256 _tokenId = _itemIdCounter.current();
+
+        _setURI(_tokenId, newItem.cid);
+        _mint(address(this), _tokenId, newItem.supply, bytes(newItem.cid));
+
+        newItem.tokenId = _tokenId;
+        items[_tokenId] = newItem;
+
+        emit NewItemTypeCreated(_tokenId, newItem.name);
+
+        _itemIdCounter.increment();
+
+        totalItemTypes++;
+        return _tokenId;
     }
 
     /**
@@ -433,6 +444,7 @@ contract ExperienceAndItemsImplementation is ERC1155Holder, Initializable, ERC11
     function getBaseURI() public view returns (string memory) {
         return _baseURI;
     }
+
     // The following functions are overrides required by Solidity.
 
     function supportsInterface(bytes4 interfaceId) public view override(ERC1155Receiver, ERC1155) returns (bool) {

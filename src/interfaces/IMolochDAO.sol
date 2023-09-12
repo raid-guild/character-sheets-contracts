@@ -1,4 +1,5 @@
 pragma solidity ^0.8.9;
+
 // SPDX-License-Identifier: MIT
 
 interface IMolochDAO {
@@ -11,5 +12,5 @@ interface IMolochDAO {
         uint256 jailed; // set to proposalIndex of a passing guild kick proposal for this member, prevents voting on and sponsoring proposals
     }
 
-    function members(address memberAddress) external returns (Member calldata member);
+    function members(address memberAddress) external returns (Member memory member);
 }

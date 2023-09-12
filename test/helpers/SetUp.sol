@@ -9,7 +9,7 @@ import "../../src/CharacterSheetsFactory.sol";
 import "../../src/implementations/CharacterSheetsImplementation.sol";
 import "../../src/implementations/ClassesImplementation.sol";
 import "../../src/interfaces/IMolochDAO.sol";
-import "../../src/mocks/mockMoloch.sol";
+import "../../src/mocks/MockMoloch.sol";
 // import "../../src/mocks/MockHats.sol";
 import "../../src/lib/Structs.sol";
 import "../../lib/murky/src/Merkle.sol";
@@ -84,8 +84,12 @@ contract SetUp is Test {
         characterSheetsFactory.updateERC6551Registry(address(erc6551Registry));
         characterSheetsFactory.updateERC6551AccountImplementation(address(erc6551Implementation));
 
-        bytes memory baseUriData =
-            abi.encode("test_metadata_uri_character_sheets/", "test_base_uri_character_sheets/", "test_base_uri_experience/", "test_base_uri_classes/");
+        bytes memory baseUriData = abi.encode(
+            "test_metadata_uri_character_sheets/",
+            "test_base_uri_character_sheets/",
+            "test_base_uri_experience/",
+            "test_base_uri_classes/"
+        );
         (stored.createdCharacterSheets, stored.createdExperience, stored.createdClasses) =
             characterSheetsFactory.create(dungeonMasters, address(dao), baseUriData);
 

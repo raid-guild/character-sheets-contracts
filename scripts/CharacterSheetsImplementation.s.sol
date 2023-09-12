@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {CharacterSheetsImplementation} from "../src/implementations/CharacterSheetsImplementation.sol";
-import {Moloch} from "../src/mocks/mockMoloch.sol";
+import {Moloch} from "../src/mocks/MockMoloch.sol";
 import {BaseDeployer} from "./BaseDeployer.sol";
 import {BaseExecutor} from "./BaseExecutor.sol";
 import "forge-std/Script.sol";
@@ -32,9 +32,9 @@ contract ExecuteCharacterSheetsImplementation is BaseExecutor {
     }
 
     function execute() internal override {
-        (, uint256 shares,,,,) = dao.members(memberAddress);
+        Moloch.Member memory member = dao.members(memberAddress);
 
-        if (shares < 100 && block.chainid == 11155111) {
+        if (member.shares < 100 && block.chainid == 11155111) {
             vm.broadcast(deployerPrivateKey);
             dao.addMember(memberAddress);
         }
