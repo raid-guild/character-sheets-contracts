@@ -14,7 +14,7 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
     address public erc6551Registry;
     address public erc6551AccountImplementation;
     address public characterSheetsImplementation;
-    address public experienceAndItemsImplementation;
+    address public ItemsImplementation;
     address public classesImplementation;
 
     CharacterSheetsFactory public characterSheetsFactory;
@@ -24,8 +24,7 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
         erc6551AccountImplementation = json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterAccount")));
         characterSheetsImplementation =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterSheetsImplementation")));
-        experienceAndItemsImplementation =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".ExperienceAndItemsImplementation")));
+        ItemsImplementation = json.readAddress(string(abi.encodePacked(".", targetEnv, ".ItemsImplementation")));
         classesImplementation = json.readAddress(string(abi.encodePacked(".", targetEnv, ".ClassesImplementation")));
     }
 
@@ -33,7 +32,7 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
         require(erc6551AccountImplementation != address(0), "unknown erc6551AccountImplementation");
         require(erc6551Registry != address(0), "unknown erc6551Registry");
         require(characterSheetsImplementation != address(0), "unknown characterSheetsImplementation");
-        require(experienceAndItemsImplementation != address(0), "unknown experienceAndItemsImplementation");
+        require(ItemsImplementation != address(0), "unknown ItemsImplementation");
         require(classesImplementation != address(0), "unknown classesImplementation");
 
         vm.startBroadcast(deployerPrivateKey);
@@ -42,7 +41,7 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
 
         characterSheetsFactory.initialize();
         characterSheetsFactory.updateCharacterSheetsImplementation(characterSheetsImplementation);
-        characterSheetsFactory.updateExperienceAndItemsImplementation(experienceAndItemsImplementation);
+        characterSheetsFactory.updateItemsImplementation(ItemsImplementation);
         characterSheetsFactory.updateERC6551Registry(erc6551Registry);
         characterSheetsFactory.updateERC6551AccountImplementation(erc6551AccountImplementation);
         characterSheetsFactory.updateClassesImplementation(classesImplementation);
@@ -74,7 +73,8 @@ contract Create is BaseFactoryExecutor {
         dao = json.readAddress(string(abi.encodePacked(".", targetEnv, ".Dao")));
         characterSheets = json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterSheetsFactory")));
         dungeonMasters = json.readAddressArray(string(abi.encodePacked(".", targetEnv, ".DungeonMasters")));
-        characterSheetsMetadataUri = json.readString(string(abi.encodePacked(".", targetEnv, ".CharacterSheetsMetadataUri")));
+        characterSheetsMetadataUri =
+            json.readString(string(abi.encodePacked(".", targetEnv, ".CharacterSheetsMetadataUri")));
         characterSheetsBaseUri = json.readString(string(abi.encodePacked(".", targetEnv, ".CharacterSheetsBaseUri")));
         experienceBaseUri = json.readString(string(abi.encodePacked(".", targetEnv, ".ExperienceBaseUri")));
         classesBaseUri = json.readString(string(abi.encodePacked(".", targetEnv, ".ClassesBaseUri")));

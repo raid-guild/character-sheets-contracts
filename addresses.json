@@ -6,7 +6,7 @@
     "Dao": "0xfe1084bC16427e5EB7f13Fc19bCD4E641F7d571f",
     "CharacterSheetsFactory": "",
     "CharacterSheetsImplementation": "",
-    "ExperienceAndItemsImplementation": "",
+    "ItemsImplementation": "",
     "Erc6551AccountImplementation": "",
     "ClassesImplementation": ""
   },
@@ -19,11 +19,9 @@
     "CharacterSheetsFactory": "0x28C02872016F61A0B3D67D4109dD6772aa375867",
     "CharacterSheetsImplementation": "0xF115d872DCfe5d6a16ADFC97cEaD3c87fEd322DB",
     "CharacterAccount": "0xA84a6E411bFF2aDAba677a92c1E0988D49bfe8B5",
-    "ExperienceAndItemsImplementation": "0xB14e29D750dc88A32EA194aaf185B1D176391414",
+    "ItemsImplementation": "0xB14e29D750dc88A32EA194aaf185B1D176391414",
     "ClassesImplementation": "0xcc74e49A67a73f90585819dA87ab79D9a6c14fC5",
-    "DungeonMasters": [
-      "0x941E92c9Eff78a2b7217057752cf938040a59aE9"
-    ],
+    "DungeonMasters": ["0x941E92c9Eff78a2b7217057752cf938040a59aE9"],
     "CharacterSheetsMetadataUri": "sheet-metadata",
     "CharacterSheetsBaseUri": "sheet",
     "ExperienceBaseUri": "exp",
@@ -47,18 +45,8 @@
         "soulbound": false,
         "requirements": {
           "classRequirements": [],
-          "itemRequirements": [
-            [
-              0,
-              0
-            ]
-          ],
-          "claimable": [
-            [
-              0,
-              0
-            ]
-          ]
+          "itemRequirements": [[0, 0]],
+          "claimable": [[0, 0]]
         }
       },
       {
@@ -68,18 +56,8 @@
         "soulbound": false,
         "requirements": {
           "classRequirements": [],
-          "itemRequirements": [
-            [
-              0,
-              0
-            ]
-          ],
-          "claimable": [
-            [
-              0,
-              0
-            ]
-          ]
+          "itemRequirements": [[0, 0]],
+          "claimable": [[0, 0]]
         }
       }
     ],
@@ -109,7 +87,7 @@
     "ClassesBaseUri": "class",
     "CharacterAccount": "0x53f37bfB254eFbe6EBbaf45307e754173b4e4276",
     "CharacterSheetsImplementation": "0xA3c206FD791D78783Da13223D549FE6ee57e7909",
-    "ExperienceAndItemsImplementation": "0x3b5eC8464235FE17aaDBFeBCc042Aead63afc043",
+    "ItemsImplementation": "0x3b5eC8464235FE17aaDBFeBCc042Aead63afc043",
     "ClassesImplementation": "0xaE8B68450ddf23cf5503AD163D6968e6Ad94CDc9",
     "CharacterSheetsFactory": "0x59858F6CeD9d6e176A7eC7C3f87a7b131a49566c"
   }

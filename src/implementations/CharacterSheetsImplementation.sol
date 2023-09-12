@@ -11,8 +11,9 @@ import {Initializable} from "openzeppelin/proxy/utils/Initializable.sol";
 
 import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
 import {IMolochDAO} from "../interfaces/IMolochDAO.sol";
-import {ExperienceAndItemsImplementation} from "./ExperienceAndItemsImplementation.sol";
+import {ItemsImplementation} from "./ItemsImplementation.sol";
 import {ClassesImplementation} from "./ClassesImplementation.sol";
+import {ExperienceImplementation} from "./ExperienceImplementation.sol";
 import {CharacterSheet} from "../lib/Structs.sol";
 
 import {Errors} from "../lib/Errors.sol";
@@ -29,8 +30,9 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     /// @dev the tokenbound account of the sheet nft
     bytes32 public constant CHARACTER = keccak256("CHARACTER");
 
-    ExperienceAndItemsImplementation public experience;
+    ItemsImplementation public items;
     ClassesImplementation public classes;
+    ExperienceImplementation public experience;
 
     IMolochDAO public dao;
 
@@ -53,7 +55,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     event MetadataURIUpdated(string oldURI, string newURI);
     event BaseURIUpdated(string oldURI, string newURI);
     event PlayerRemoved(uint256 tokenId);
-    event ExperienceUpdated(address exp);
+    event ItemsUpdated(address exp);
     event ClassEquipped(uint256 characterId, uint256 classId);
     event ClassUnequipped(uint256 characterId, uint256 classId);
     event ItemEquipped(uint256 characterId, uint256 itemTokenId);
@@ -62,7 +64,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     event PlayerJailed(address playerAddress, bool thrownInJail);
 
     modifier onlyExpContract() {
-        require(msg.sender == address(experience), "not the experience contract");
+        require(msg.sender == address(items), "not the items contract");
         _;
     }
 
@@ -85,7 +87,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
      * - string metadataURI: the metadata for the character sheets implementation
      * - string baseURI: the default uri of the player card images, arbitrary a different uri can be set
      *      when the character sheet is minted.
-     * - address experienceImplementation: this is the address of the ERC1155 experience contract associated
+     * - address itemsImplementation: this is the address of the ERC1155 items contract associated
      *      with this contract.  this is assigned at contract creation.
      */
 
@@ -96,7 +98,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         address[] memory dungeonMasters;
         address owner;
         address classesImplementation;
-        address experienceImplementation;
+        address itemsImplementation;
         address erc6551Registry;
 
         (
@@ -104,7 +106,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
             dungeonMasters,
             owner,
             classesImplementation,
-            experienceImplementation,
+            itemsImplementation,
             erc6551Registry,
             erc6551AccountImplementation,
             metadataURI,
@@ -119,7 +121,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
             _grantRole(DUNGEON_MASTER, dungeonMasters[i]);
         }
 
-        experience = ExperienceAndItemsImplementation(experienceImplementation);
+        items = ItemsImplementation(itemsImplementation);
         classes = ClassesImplementation(classesImplementation);
         dao = IMolochDAO(daoAddress);
         _erc6551Registry = IERC6551Registry(erc6551Registry);
@@ -172,8 +174,9 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         }
 
         //calculate ERC6551 account address
-        address tba =
-            _erc6551Registry.createAccount(erc6551AccountImplementation, block.chainid, address(this), tokenId, 0, "");
+        address tba = _erc6551Registry.createAccount(
+            erc6551AccountImplementation, block.chainid, address(this), tokenId, uint256(uint160(msg.sender)), ""
+        );
 
         CharacterSheet memory newCharacterSheet;
         newCharacterSheet.name = _newName;
@@ -249,7 +252,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         returns (bool success)
     {
         uint256[] memory arr = sheets[characterId].inventory;
-        if (experience.balanceOf(sheets[characterId].ERC6551TokenAddress, tokenId) != 0) {
+        if (items.balanceOf(sheets[characterId].ERC6551TokenAddress, tokenId) != 0) {
             revert Errors.InventoryError();
         }
         for (uint256 i = 0; i < arr.length; i++) {
@@ -279,7 +282,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
      */
 
     function equipItemToCharacter(uint256 characterId, uint256 itemId) external onlyRole(CHARACTER) {
-        if (experience.balanceOf(msg.sender, itemId) < 1) {
+        if (items.balanceOf(msg.sender, itemId) < 1) {
             revert Errors.InsufficientBalance();
         }
         sheets[characterId].inventory.push(itemId);
@@ -328,8 +331,8 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     }
 
     function updateExpContract(address expContract) public onlyRole(DUNGEON_MASTER) {
-        experience = ExperienceAndItemsImplementation(expContract);
-        emit ExperienceUpdated(expContract);
+        items = ItemsImplementation(expContract);
+        emit ItemsUpdated(expContract);
     }
 
     function setBaseUri(string memory _uri) public onlyRole(DUNGEON_MASTER) {
@@ -412,7 +415,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         if (sheet.inventory.length == 0) {
             return false;
         }
-        uint256 tokenId = experience.getItemById(itemId).tokenId;
+        uint256 tokenId = items.getItemById(itemId).tokenId;
         require(tokenId != 0, "item does not exist");
         for (uint256 i; i < sheet.inventory.length; i++) {
             if (sheet.inventory[i] == tokenId) {

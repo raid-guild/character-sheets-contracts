@@ -4,7 +4,7 @@ pragma abicoder v2;
 //solhint-disable
 
 import "forge-std/Test.sol";
-import "../../src/implementations/ExperienceAndItemsImplementation.sol";
+import "../../src/implementations/ItemsImplementation.sol";
 import "../../src/CharacterSheetsFactory.sol";
 import "../../src/implementations/CharacterSheetsImplementation.sol";
 import "../../src/implementations/ClassesImplementation.sol";
@@ -32,7 +32,7 @@ contract SetUp is Test {
     using ClonesUpgradeable for address;
     using stdJson for string;
 
-    ExperienceAndItemsImplementation experience;
+    ItemsImplementation experience;
     CharacterSheetsFactory characterSheetsFactory;
     CharacterSheetsImplementation characterSheets;
     ClassesImplementation classes;
@@ -60,7 +60,7 @@ contract SetUp is Test {
         vm.label(address(dao), "Moloch");
 
         characterSheetsFactory = new CharacterSheetsFactory();
-        experience = new ExperienceAndItemsImplementation();
+        experience = new ItemsImplementation();
         classes = new ClassesImplementation();
         characterSheets = new CharacterSheetsImplementation();
         characterSheetsFactory.initialize();
@@ -77,7 +77,7 @@ contract SetUp is Test {
         dao.addMember(admin);
 
         characterSheetsFactory.updateCharacterSheetsImplementation(address(stored.characterSheetsImplementation));
-        characterSheetsFactory.updateExperienceAndItemsImplementation(address(stored.experienceImplementation));
+        characterSheetsFactory.updateItemsImplementation(address(stored.experienceImplementation));
         characterSheetsFactory.updateClassesImplementation(address(stored.classesImplementation));
         address[] memory dungeonMasters = new address[](1);
         dungeonMasters[0] = admin;
@@ -95,7 +95,7 @@ contract SetUp is Test {
 
         characterSheets = CharacterSheetsImplementation(stored.createdCharacterSheets);
         assertEq(address(characterSheets.classes()), stored.createdClasses, "incorrect classes address in setup");
-        experience = ExperienceAndItemsImplementation(stored.createdExperience);
+        experience = ItemsImplementation(stored.createdExperience);
         classes = ClassesImplementation(stored.createdClasses);
         characterSheets.setERC6551Registry(address(erc6551Registry));
 

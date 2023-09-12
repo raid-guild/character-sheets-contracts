@@ -1,33 +1,33 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {ExperienceAndItemsImplementation} from "../src/implementations/ExperienceAndItemsImplementation.sol";
+import {ItemsImplementation} from "../src/implementations/ItemsImplementation.sol";
 import {BaseExecutor} from "./BaseExecutor.sol";
 import {BaseDeployer} from "./BaseDeployer.sol";
 import "../src/lib/Structs.sol";
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
 
-contract DeployExperienceAndItemsImplementation is BaseDeployer {
+contract DeployItemsImplementation is BaseDeployer {
     using stdJson for string;
 
-    ExperienceAndItemsImplementation public experienceAndItemsImplementation;
+    ItemsImplementation public ItemsImplementation;
 
     function deploy() internal override returns (address) {
         vm.startBroadcast(deployerPrivateKey);
 
-        experienceAndItemsImplementation = new ExperienceAndItemsImplementation();
+        ItemsImplementation = new ItemsImplementation();
 
         vm.stopBroadcast();
 
-        return address(experienceAndItemsImplementation);
+        return address(ItemsImplementation);
     }
 }
 
-contract ExecuteExperienceAndItemsImplementation is BaseExecutor {
+contract ExecuteItemsImplementation is BaseExecutor {
     using stdJson for string;
 
-    ExperienceAndItemsImplementation public experience;
+    ItemsImplementation public experience;
     address public experienceAddress;
     string public itemName;
     uint256 public supply;
@@ -39,7 +39,7 @@ contract ExecuteExperienceAndItemsImplementation is BaseExecutor {
 
     function loadBaseData(string memory json, string memory targetEnv) internal override {
         experienceAddress = json.readAddress(string(abi.encodePacked(".", targetEnv, ".CreatedExperienceAndItems")));
-        experience = ExperienceAndItemsImplementation(experienceAddress);
+        experience = ItemsImplementation(experienceAddress);
         uri = json.readString(string(abi.encodePacked(".", targetEnv, ".Items[", arrIndex, "].cid")));
         soulbound = json.readBool(string(abi.encodePacked(".", targetEnv, ".Items[", arrIndex, "].soulbound")));
         supply = json.readUint(string(abi.encodePacked(".", targetEnv, ".Items[", arrIndex, "].supply")));

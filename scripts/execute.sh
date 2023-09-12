@@ -176,7 +176,7 @@ cat << "EOF"
  *******************************************************************************************
 EOF
 
-    CONTRACT="ExperienceAndItemsImplementation"
+    CONTRACT="ItemsImplementation"
     CREATEDEXPERIENCEANDITEMS=$(node scripts/helpers/readAddress.js $1 CreatedExperienceAndItems)
     if [[ $CREATEDEXPERIENCEANDITEMS != "" ]]
         then

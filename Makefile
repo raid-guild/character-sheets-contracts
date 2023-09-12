@@ -43,20 +43,20 @@ verify-gnosis :; ./scripts/verify.sh gnosis ${contract}
 
 deploy-contracts :; make deploy-${network} contract=CharacterAccount && \
 	make deploy-${network} contract=CharacterSheetsImplementation && \
-	make deploy-${network} contract=ExperienceAndItemsImplementation && \
+	make deploy-${network} contract=ItemsImplementation && \
 	make deploy-${network} contract=ClassesImplementation && \
 	make deploy-${network} contract=CharacterSheetsFactory;
 
 deploy-all :; make deploy-contracts ${network}&& \
 	make deploy-${network} contract=CharacterAccount && \
 	make deploy-${network} contract=CharacterSheetsImplementation && \
-	make deploy-${network} contract=ExperienceAndItemsImplementation && \
+	make deploy-${network} contract=ItemsImplementation && \
 	make deploy-${network} contract=ClassesImplementation && \
 	make deploy-${network} contract=CharacterSheetsFactory;
 
 verify-contracts :; make verify-${network} contract=CharacterAccount && \
 	make verify-${network} contract=CharacterSheetsImplementation && \
-	make verify-${network} contract=ExperienceAndItemsImplementation && \
+	make verify-${network} contract=ItemsImplementation && \
 	make verify-${network} contract=ClassesImplementation && \
 	make verify-${network} contract=CharacterSheetsFactory;
 

@@ -5,15 +5,16 @@ import {CharacterSheetsImplementation} from "./implementations/CharacterSheetsIm
 import {ClassesImplementation} from "./implementations/ClassesImplementation.sol";
 import {ClonesUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/proxy/ClonesUpgradeable.sol";
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import {ExperienceAndItemsImplementation} from "./implementations/ExperienceAndItemsImplementation.sol";
+import {ItemsImplementation} from "./implementations/ItemsImplementation.sol";
 
 // import "forge-std/console2.sol";
 contract CharacterSheetsFactory is OwnableUpgradeable {
     address public characterSheetsImplementation;
-    address public experienceAndItemsImplementation;
+    address public itemsImplementation;
     address public classesImplementation;
     address public erc6551Registry;
     address public erc6551AccountImplementation;
+    address public experienceImplementation;
 
     uint256 private _nonce;
 
@@ -34,9 +35,9 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         emit CharacterSheetsUpdated(_sheetImplementation);
     }
 
-    function updateExperienceAndItemsImplementation(address _experienceImplementation) external onlyOwner {
-        experienceAndItemsImplementation = _experienceImplementation;
-        emit ExperienceUpdated(_experienceImplementation);
+    function updateItemsImplementation(address _itemsImplementation) external onlyOwner {
+        itemsImplementation = _itemsImplementation;
+        emit ExperienceUpdated(_itemsImplementation);
     }
 
     function updateERC6551Registry(address _newRegistry) external onlyOwner {
@@ -68,7 +69,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         returns (address, address, address)
     {
         require(
-            experienceAndItemsImplementation != address(0) && characterSheetsImplementation != address(0)
+            itemsImplementation != address(0) && characterSheetsImplementation != address(0)
                 && erc6551AccountImplementation != address(0),
             "update implementation addresses"
         );
@@ -77,7 +78,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
             ClonesUpgradeable.cloneDeterministic(characterSheetsImplementation, keccak256(abi.encode(_nonce)));
 
         address experienceClone =
-            ClonesUpgradeable.cloneDeterministic(experienceAndItemsImplementation, keccak256(abi.encode(_nonce)));
+            ClonesUpgradeable.cloneDeterministic(itemsImplementation, keccak256(abi.encode(_nonce)));
 
         address classesClone =
             ClonesUpgradeable.cloneDeterministic(classesImplementation, keccak256(abi.encode(_nonce)));
@@ -86,9 +87,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
             _encodeCharacterInitData(dao, dungeonMasters, experienceClone, classesClone, data)
         );
 
-        ExperienceAndItemsImplementation(experienceClone).initialize(
-            _encodeExpData(characterSheetsClone, classesClone, data)
-        );
+        ItemsImplementation(experienceClone).initialize(_encodeExpData(characterSheetsClone, classesClone, data));
 
         ClassesImplementation(classesClone).initialize(_encodeClassesData(characterSheetsClone, data));
 
@@ -109,7 +108,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     ) private {
         CharacterSheetsImplementation(characterSheetsClone).initialize(encodedCharacterSheetsParams);
 
-        ExperienceAndItemsImplementation(experienceClone).initialize(encodedExpParams);
+        ItemsImplementation(experienceClone).initialize(encodedExpParams);
 
         ClassesImplementation(classesClone).initialize(encodedClassesParams);
     }
