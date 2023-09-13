@@ -15,6 +15,7 @@ import "../../src/lib/Structs.sol";
 import "../../lib/murky/src/Merkle.sol";
 import {ERC6551Registry} from "../../src/mocks/ERC6551Registry.sol";
 import {CharacterAccount} from "../../src/CharacterAccount.sol";
+import {MultiSend} from "../../src/lib/MultiSend.sol";
 
 import "forge-std/console2.sol";
 
@@ -52,6 +53,7 @@ contract SetUp is Test {
 
     ERC6551Registry erc6551Registry;
     CharacterAccount erc6551Implementation;
+    MultiSend multiSend;
 
     function setUp() public {
         vm.startPrank(admin);
@@ -72,6 +74,7 @@ contract SetUp is Test {
 
         erc6551Registry = new ERC6551Registry();
         erc6551Implementation = new CharacterAccount();
+        multiSend = new MultiSend();
 
         dao.addMember(player1);
         dao.addMember(admin);
