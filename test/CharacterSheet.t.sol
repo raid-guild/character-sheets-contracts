@@ -86,6 +86,31 @@ contract CharacterSheetsTest is Test, SetUp {
         assertEq(sheet.inventory[0], 1, "item not assigned");
     }
 
+    function testUnequipItemFromCharacter() public {
+        vm.prank(admin);
+        address[] memory npc = new address[](1);
+        npc[0] = npc1;
+        uint256[][] memory itemIds = new uint256[][](1);
+        itemIds[0] = new uint256[](1);
+        itemIds[0][0] = 1;
+        uint256[][] memory amounts = new uint256[][](1);
+        amounts[0] = new uint256[](1);
+        amounts[0][0] = 1;
+        experience.dropLoot(npc, itemIds, amounts);
+        vm.prank(npc1);
+        characterSheets.equipItemToCharacter(1, 1);
+
+        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(1);
+        assertEq(sheet.inventory.length, 1, "item not assigned");
+        assertEq(sheet.inventory[0], 1, "item not assigned");
+
+        vm.prank(npc1);
+        characterSheets.unequipItemFromCharacter(1, 1);
+
+        sheet = characterSheets.getCharacterSheetByCharacterId(1);
+        assertEq(sheet.inventory.length, 0, "item still assigned");
+    }
+
     function testTransferFromRevert() public {
         vm.prank(player1);
         vm.expectRevert();

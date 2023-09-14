@@ -249,7 +249,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         returns (bool success)
     {
         uint256[] memory arr = sheets[characterId].inventory;
-        if (experience.balanceOf(sheets[characterId].ERC6551TokenAddress, tokenId) != 0) {
+        if (experience.balanceOf(sheets[characterId].ERC6551TokenAddress, tokenId) == 0) {
             revert Errors.InventoryError();
         }
         for (uint256 i = 0; i < arr.length; i++) {
