@@ -8,7 +8,6 @@ murky/=lib/murky/src/
 openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/
 openzeppelin-contracts/=lib/openzeppelin-contracts/
 openzeppelin/=lib/openzeppelin-contracts/contracts/
-safe-contracts/=lib/safe-contracts/
 solady/=lib/hats/lib/solady/src
 solbase/=lib/hats/lib/solbase/src/
 utils/=lib/hats/lib/utils/
