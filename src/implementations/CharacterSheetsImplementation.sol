@@ -39,7 +39,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     string public baseTokenURI;
     string public metadataURI;
 
-    IERC6551Registry private _erc6551Registry;
+    IERC6551Registry public erc6551Registry;
     address public erc6551AccountImplementation;
 
     // tokenId => characterSheet
@@ -93,38 +93,38 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     function initialize(bytes calldata _encodedParameters) external initializer {
         _grantRole(DUNGEON_MASTER, msg.sender);
 
-        address daoAddress;
-        address[] memory dungeonMasters;
-        address owner;
-        address classesImplementation;
-        address itemsImplementation;
-        address erc6551Registry;
-
         (
-            daoAddress,
-            dungeonMasters,
-            owner,
-            classesImplementation,
-            itemsImplementation,
-            erc6551Registry,
-            erc6551AccountImplementation,
-            metadataURI,
-            baseTokenURI
+            address _daoAddress,
+            address[] memory _dungeonMasters,
+            address _owner,
+            address _classesImplementation,
+            address _itemsImplementation,
+            address _experienceImplementation,
+            address _erc6551Registry,
+            address _erc6551AccountImplementation,
+            string memory _metadataURI,
+            string memory _baseTokenURI
         ) = abi.decode(
-            _encodedParameters, (address, address[], address, address, address, address, address, string, string)
+            _encodedParameters,
+            (address, address[], address, address, address, address, address, address, string, string)
         );
 
-        _grantRole(DEFAULT_ADMIN_ROLE, owner);
+        _grantRole(DEFAULT_ADMIN_ROLE, _owner);
 
-        for (uint256 i = 0; i < dungeonMasters.length; i++) {
-            _grantRole(DUNGEON_MASTER, dungeonMasters[i]);
+        for (uint256 i = 0; i < _dungeonMasters.length; i++) {
+            _grantRole(DUNGEON_MASTER, _dungeonMasters[i]);
         }
 
-        items = ItemsImplementation(itemsImplementation);
-        classes = ClassesImplementation(classesImplementation);
-        dao = IMolochDAO(daoAddress);
-        _erc6551Registry = IERC6551Registry(erc6551Registry);
+        items = ItemsImplementation(_itemsImplementation);
+        classes = ClassesImplementation(_classesImplementation);
+        experience = ExperienceImplementation(_experienceImplementation);
+        dao = IMolochDAO(_daoAddress);
+        erc6551Registry = IERC6551Registry(_erc6551Registry);
         _tokenIdCounter.increment();
+
+        erc6551AccountImplementation = _erc6551AccountImplementation;
+        metadataURI = _metadataURI;
+        baseTokenURI = _baseTokenURI;
 
         _revokeRole(DUNGEON_MASTER, msg.sender);
     }
@@ -137,7 +137,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
      */
 
     function rollCharacterSheet(address _to, bytes calldata _data) external returns (uint256) {
-        if (erc6551AccountImplementation == address(0) || address(_erc6551Registry) == address(0)) {
+        if (erc6551AccountImplementation == address(0) || address(erc6551Registry) == address(0)) {
             revert Errors.VariableNotSet();
         }
 
@@ -173,7 +173,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         }
 
         //calculate ERC6551 account address
-        address tba = _erc6551Registry.createAccount(
+        address tba = erc6551Registry.createAccount(
             erc6551AccountImplementation, block.chainid, address(this), tokenId, uint256(uint160(_to)), ""
         );
 
@@ -207,6 +207,9 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         returns (bool success)
     {
         uint256[] memory arr = sheets[characterId].inventory;
+        if (msg.sender != sheets[characterId].erc6551TokenAddress) {
+            revert Errors.OwnershipError();
+        }
         if (items.balanceOf(sheets[characterId].erc6551TokenAddress, tokenId) != 0) {
             revert Errors.InventoryError();
         }
@@ -259,7 +262,6 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
             revert Errors.OwnershipError();
         }
 
-        //#TODO consider transferring the token in question to this contract instead of burning in order to manage the assets held by the token
         _burn(_characterId);
         //clear memberAddress mapping
         memberAddressToTokenId[msg.sender] = 0;
@@ -280,7 +282,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         if (dao.members(msg.sender).jailed != 0) {
             revert Errors.DaoError();
         }
-        address restoredAccount = _erc6551Registry.createAccount(
+        address restoredAccount = erc6551Registry.createAccount(
             erc6551AccountImplementation, block.chainid, address(this), tokenId, uint256(uint160(msg.sender)), ""
         );
         if (sheets[tokenId].erc6551TokenAddress != restoredAccount) {
@@ -350,7 +352,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
 
     /// @dev Sets the address of the ERC6551 registry
     function setERC6551Registry(address registry) public onlyRole(DUNGEON_MASTER) {
-        _erc6551Registry = IERC6551Registry(registry);
+        erc6551Registry = IERC6551Registry(registry);
     }
 
     /// @dev Sets the address of the ERC6551 account implementation

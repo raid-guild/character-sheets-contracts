@@ -22,7 +22,7 @@ contract CharacterAccountTest is Test, SetUp {
         assertEq(sheet.tokenId, 2, "characterId not assigned");
         assertEq(sheet.memberAddress, admin, "memberAddress not assigned");
 
-        CharacterAccount account = CharacterAccount(payable(sheet.ERC6551TokenAddress));
+        CharacterAccount account = CharacterAccount(payable(sheet.erc6551TokenAddress));
 
         address[] memory npc = new address[](1);
         npc[0] = address(account);
@@ -33,7 +33,7 @@ contract CharacterAccountTest is Test, SetUp {
         amounts[0] = new uint256[](1);
         amounts[0][0] = 1;
         vm.prank(admin);
-        experience.dropLoot(npc, itemIds, amounts);
+        items.dropLoot(npc, itemIds, amounts);
 
         bytes4 selector = bytes4(keccak256("equipItemToCharacter(uint256,uint256)"));
         bytes memory data = abi.encodeWithSelector(selector, 2, 1);
@@ -58,7 +58,7 @@ contract CharacterAccountTest is Test, SetUp {
         assertEq(sheet.tokenId, 2, "characterId not assigned");
         assertEq(sheet.memberAddress, admin, "memberAddress not assigned");
 
-        CharacterAccount account = CharacterAccount(payable(sheet.ERC6551TokenAddress));
+        CharacterAccount account = CharacterAccount(payable(sheet.erc6551TokenAddress));
 
         address[] memory npc = new address[](1);
         npc[0] = address(account);
@@ -69,7 +69,7 @@ contract CharacterAccountTest is Test, SetUp {
         amounts[0] = new uint256[](1);
         amounts[0][0] = 1;
         vm.prank(admin);
-        experience.dropLoot(npc, itemIds, amounts);
+        items.dropLoot(npc, itemIds, amounts);
 
         bytes4 selector = bytes4(keccak256("equipItemToCharacter(uint256,uint256)"));
         bytes memory data = abi.encodeWithSelector(selector, 2, 1);
@@ -103,7 +103,7 @@ contract CharacterAccountTest is Test, SetUp {
         assertEq(sheet.tokenId, 2, "characterId not assigned");
         assertEq(sheet.memberAddress, admin, "memberAddress not assigned");
 
-        CharacterAccount account = CharacterAccount(payable(sheet.ERC6551TokenAddress));
+        CharacterAccount account = CharacterAccount(payable(sheet.erc6551TokenAddress));
 
         address[] memory npc = new address[](1);
         npc[0] = address(account);
@@ -114,7 +114,7 @@ contract CharacterAccountTest is Test, SetUp {
         amounts[0] = new uint256[](1);
         amounts[0][0] = 1;
         vm.prank(admin);
-        experience.dropLoot(npc, itemIds, amounts);
+        items.dropLoot(npc, itemIds, amounts);
 
         bytes4 selector = bytes4(keccak256("equipItemToCharacter(uint256,uint256)"));
         bytes memory data = abi.encodeWithSelector(selector, 2, 1);
@@ -145,7 +145,7 @@ contract CharacterAccountTest is Test, SetUp {
         assertEq(sheet.tokenId, 2, "characterId not assigned");
         assertEq(sheet.memberAddress, admin, "memberAddress not assigned");
 
-        CharacterAccount account = CharacterAccount(payable(sheet.ERC6551TokenAddress));
+        CharacterAccount account = CharacterAccount(payable(sheet.erc6551TokenAddress));
 
         address[] memory npc = new address[](1);
         npc[0] = address(account);
@@ -155,8 +155,9 @@ contract CharacterAccountTest is Test, SetUp {
         uint256[][] memory amounts = new uint256[][](1);
         amounts[0] = new uint256[](1);
         amounts[0][0] = 1;
+
         vm.prank(admin);
-        experience.dropLoot(npc, itemIds, amounts);
+        items.dropLoot(npc, itemIds, amounts);
 
         bytes4 selector = bytes4(keccak256("equipItemToCharacter(uint256,uint256)"));
         bytes memory data = abi.encodeWithSelector(selector, 2, 1);

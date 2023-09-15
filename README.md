@@ -11,7 +11,7 @@ You will need a copy of [Foundry](https://github.com/foundry-rs/foundry) install
 ```sh
 git clone https://github.com/MrDeadCe11/character-sheets
 cd character-sheets
-make install
+forge install
 ```
 
 ### Run Tests

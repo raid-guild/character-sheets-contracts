@@ -8,6 +8,7 @@ import {ERC1155Holder} from "openzeppelin/token/ERC1155/utils/ERC1155Holder.sol"
 import {Counters} from "openzeppelin/utils/Counters.sol";
 
 import {CharacterSheetsImplementation} from "../implementations/CharacterSheetsImplementation.sol";
+import {ExperienceImplementation} from "../implementations/ExperienceImplementation.sol";
 import {Class, CharacterSheet} from "../lib/Structs.sol";
 
 import {Errors} from "../lib/Errors.sol";
@@ -15,7 +16,7 @@ import {Errors} from "../lib/Errors.sol";
 /**
  * @title Experience and Items
  * @author MrDeadCe11
- * @notice this is an ERC721 that is designed to intereact with the characterSheets contract.
+ * @notice this is an ERC1155 that is designed to interact with the characterSheets contract.
  * Each item and class is an 1155 token that can soulbound or not to the erc6551 wallet of each player nft
  * in the characterSheets contract.
  */
@@ -45,6 +46,7 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
 
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
     CharacterSheetsImplementation public characterSheets;
+    ExperienceImplementation public experience;
 
     event NewClassCreated(uint256 erc1155TokenId, string name);
     event ClassAssigned(uint256 characterId, uint256 classId);

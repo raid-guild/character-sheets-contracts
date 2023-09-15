@@ -8,6 +8,7 @@ abstract contract Errors {
     error PlayerError();
     error InventoryError();
     error OwnershipError();
+    error InvalidToken();
     error ClaimableError();
     error DuplicateError();
     error DungeonMasterOnly();

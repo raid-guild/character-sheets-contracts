@@ -5,6 +5,7 @@ pragma abicoder v2;
 
 import "forge-std/Test.sol";
 import "../../src/implementations/ItemsImplementation.sol";
+import "../../src/implementations/ExperienceImplementation.sol";
 import "../../src/CharacterSheetsFactory.sol";
 import "../../src/implementations/CharacterSheetsImplementation.sol";
 import "../../src/implementations/ClassesImplementation.sol";
@@ -22,10 +23,12 @@ import "forge-std/console2.sol";
 struct StoredAddresses {
     address characterSheetsImplementation;
     address experienceImplementation;
+    address itemsImplementation;
     address classesImplementation;
     address createdCharacterSheets;
-    address createdExperience;
+    address createdItems;
     address createdClasses;
+    address createdExperience;
     address factory;
 }
 
@@ -33,9 +36,10 @@ contract SetUp is Test {
     using ClonesUpgradeable for address;
     using stdJson for string;
 
-    ItemsImplementation experience;
+    ItemsImplementation items;
     CharacterSheetsFactory characterSheetsFactory;
     CharacterSheetsImplementation characterSheets;
+    ExperienceImplementation experience;
     ClassesImplementation classes;
 
     StoredAddresses public stored;
@@ -62,15 +66,18 @@ contract SetUp is Test {
         vm.label(address(dao), "Moloch");
 
         characterSheetsFactory = new CharacterSheetsFactory();
-        experience = new ItemsImplementation();
+        items = new ItemsImplementation();
         classes = new ClassesImplementation();
         characterSheets = new CharacterSheetsImplementation();
+        experience = new ExperienceImplementation();
+
         characterSheetsFactory.initialize();
 
-        stored.experienceImplementation = address(experience);
+        stored.itemsImplementation = address(items);
         stored.factory = address(characterSheetsFactory);
         stored.classesImplementation = address(classes);
         stored.characterSheetsImplementation = address(characterSheets);
+        stored.experienceImplementation = address(experience);
 
         erc6551Registry = new ERC6551Registry();
         erc6551Implementation = new CharacterAccount();
@@ -80,8 +87,9 @@ contract SetUp is Test {
         dao.addMember(admin);
 
         characterSheetsFactory.updateCharacterSheetsImplementation(address(stored.characterSheetsImplementation));
-        characterSheetsFactory.updateItemsImplementation(address(stored.experienceImplementation));
+        characterSheetsFactory.updateItemsImplementation(address(stored.itemsImplementation));
         characterSheetsFactory.updateClassesImplementation(address(stored.classesImplementation));
+        characterSheetsFactory.updateExperienceImplementation(stored.experienceImplementation);
         address[] memory dungeonMasters = new address[](1);
         dungeonMasters[0] = admin;
         characterSheetsFactory.updateERC6551Registry(address(erc6551Registry));
@@ -90,21 +98,21 @@ contract SetUp is Test {
         bytes memory baseUriData = abi.encode(
             "test_metadata_uri_character_sheets/",
             "test_base_uri_character_sheets/",
-            "test_base_uri_experience/",
+            "test_base_uri_items/",
             "test_base_uri_classes/"
         );
-        (stored.createdCharacterSheets, stored.createdExperience, stored.createdClasses) =
+        (stored.createdCharacterSheets, stored.createdItems, stored.createdExperience, stored.createdClasses) =
             characterSheetsFactory.create(dungeonMasters, address(dao), baseUriData);
 
         characterSheets = CharacterSheetsImplementation(stored.createdCharacterSheets);
         assertEq(address(characterSheets.classes()), stored.createdClasses, "incorrect classes address in setup");
-        experience = ItemsImplementation(stored.createdExperience);
+        items = ItemsImplementation(stored.createdItems);
         classes = ClassesImplementation(stored.createdClasses);
         characterSheets.setERC6551Registry(address(erc6551Registry));
 
         testClassId = classes.createClassType(createNewClass("test_class"));
 
-        testItemId = experience.createItemType(createNewItem("test_item", false, bytes32(0)));
+        testItemId = items.createItemType(createNewItem("test_item", false, bytes32(0)));
 
         vm.stopPrank();
         bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
@@ -129,12 +137,12 @@ contract SetUp is Test {
         amounts[0] = new uint256[](1);
         amounts[0][0] = amount;
         vm.prank(admin);
-        experience.dropLoot(players, itemIds, amounts);
+        items.dropLoot(players, itemIds, amounts);
     }
 
     function createNewItemType(string memory name) public returns (uint256 itemId) {
         bytes memory newItem = createNewItem(name, false, bytes32(0));
-        itemId = experience.createItemType(newItem);
+        itemId = items.createItemType(newItem);
     }
 
     function generateMerkleRootAndProof(

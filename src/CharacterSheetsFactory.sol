@@ -3,9 +3,11 @@ pragma solidity ^0.8.19;
 
 import {CharacterSheetsImplementation} from "./implementations/CharacterSheetsImplementation.sol";
 import {ClassesImplementation} from "./implementations/ClassesImplementation.sol";
+import {ExperienceImplementation} from "./implementations/ExperienceImplementation.sol";
+import {ItemsImplementation} from "./implementations/ItemsImplementation.sol";
+
 import {ClonesUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/proxy/ClonesUpgradeable.sol";
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import {ItemsImplementation} from "./implementations/ItemsImplementation.sol";
 
 // import "forge-std/console2.sol";
 contract CharacterSheetsFactory is OwnableUpgradeable {
@@ -18,9 +20,12 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
     uint256 private _nonce;
 
-    event CharacterSheetsCreated(address creator, address characterSheets, address classes, address experienceAndItems);
+    event CharacterSheetsCreated(
+        address creator, address characterSheets, address classes, address items, address experienceAndItems
+    );
     event CharacterSheetsUpdated(address newCharacterSheets);
     event ExperienceUpdated(address newExperience);
+    event ItemsUpdated(address newItems);
     event RegistryUpdated(address newRegistry);
     event ERC6551AccountImplementationUpdated(address newImplementation);
     event ClassesImplementationUpdated(address newClasses);
@@ -37,7 +42,12 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
     function updateItemsImplementation(address _itemsImplementation) external onlyOwner {
         itemsImplementation = _itemsImplementation;
-        emit ExperienceUpdated(_itemsImplementation);
+        emit ItemsUpdated(_itemsImplementation);
+    }
+
+    function updateExperienceImplementation(address _experienceImplementation) external onlyOwner {
+        experienceImplementation = _experienceImplementation;
+        emit ExperienceUpdated(_experienceImplementation);
     }
 
     function updateERC6551Registry(address _newRegistry) external onlyOwner {
@@ -66,7 +76,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
     function create(address[] calldata dungeonMasters, address dao, bytes calldata data)
         external
-        returns (address, address, address)
+        returns (address, address, address, address)
     {
         require(
             itemsImplementation != address(0) && characterSheetsImplementation != address(0)
@@ -78,44 +88,53 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
             ClonesUpgradeable.cloneDeterministic(characterSheetsImplementation, keccak256(abi.encode(_nonce)));
 
         address experienceClone =
-            ClonesUpgradeable.cloneDeterministic(itemsImplementation, keccak256(abi.encode(_nonce)));
+            ClonesUpgradeable.cloneDeterministic(experienceImplementation, keccak256(abi.encode(_nonce)));
+
+        address itemsClone = ClonesUpgradeable.cloneDeterministic(itemsImplementation, keccak256(abi.encode(_nonce)));
 
         address classesClone =
             ClonesUpgradeable.cloneDeterministic(classesImplementation, keccak256(abi.encode(_nonce)));
 
-        CharacterSheetsImplementation(characterSheetsClone).initialize(
-            _encodeCharacterInitData(dao, dungeonMasters, experienceClone, classesClone, data)
-        );
+        // avoids stacc too dank
+        bytes memory encodedAddresses =
+            abi.encode(dao, dungeonMasters, characterSheetsClone, experienceClone, itemsClone, classesClone);
 
-        ItemsImplementation(experienceClone).initialize(_encodeExpData(characterSheetsClone, classesClone, data));
+        _initializeContracts(encodedAddresses, data);
 
-        ClassesImplementation(classesClone).initialize(_encodeClassesData(characterSheetsClone, data));
-
-        emit CharacterSheetsCreated(msg.sender, characterSheetsClone, classesClone, experienceClone);
+        emit CharacterSheetsCreated(msg.sender, characterSheetsClone, classesClone, itemsClone, experienceClone);
 
         _nonce++;
 
-        return (characterSheetsClone, experienceClone, classesClone);
+        return (characterSheetsClone, itemsClone, experienceClone, classesClone);
     }
 
-    function _initializeContracts(
-        address characterSheetsClone,
-        address experienceClone,
-        address classesClone,
-        bytes memory encodedCharacterSheetsParams,
-        bytes memory encodedExpParams,
-        bytes memory encodedClassesParams
-    ) private {
-        CharacterSheetsImplementation(characterSheetsClone).initialize(encodedCharacterSheetsParams);
+    function _initializeContracts(bytes memory encodedAddresses, bytes calldata data) private {
+        (
+            address dao,
+            address[] memory dungeonMasters,
+            address characterSheetsClone,
+            address experienceClone,
+            address itemsClone,
+            address classesClone
+        ) = abi.decode(encodedAddresses, (address, address[], address, address, address, address));
 
-        ItemsImplementation(experienceClone).initialize(encodedExpParams);
+        CharacterSheetsImplementation(characterSheetsClone).initialize(
+            _encodeCharacterInitData(dao, dungeonMasters, itemsClone, experienceClone, classesClone, data)
+        );
 
-        ClassesImplementation(classesClone).initialize(encodedClassesParams);
+        ItemsImplementation(itemsClone).initialize(
+            _encodeItemsData(characterSheetsClone, classesClone, experienceClone, data)
+        );
+
+        ClassesImplementation(classesClone).initialize(_encodeClassesData(characterSheetsClone, data));
+
+        ExperienceImplementation(experienceClone).initialize(_encodeExpData(characterSheetsClone, itemsClone));
     }
 
     function _encodeCharacterInitData(
         address dao,
         address[] memory dungeonMasters,
+        address itemsClone,
         address experienceClone,
         address classesClone,
         bytes memory data
@@ -127,6 +146,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
             dungeonMasters,
             msg.sender,
             classesClone,
+            itemsClone,
             experienceClone,
             erc6551Registry,
             erc6551AccountImplementation,
@@ -137,19 +157,24 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         return (encodedCharacterSheetParameters);
     }
 
-    function _encodeExpData(address characterSheetsClone, address classesClone, bytes memory data)
-        private
-        pure
-        returns (bytes memory)
-    {
-        (,, string memory experienceBaseUri,) = _decodeStrings(data);
+    function _encodeItemsData(
+        address characterSheetsClone,
+        address classesClone,
+        address experienceClone,
+        bytes memory data
+    ) private pure returns (bytes memory) {
+        (,, string memory itemsBaseUri,) = _decodeStrings(data);
 
-        return abi.encode(characterSheetsClone, classesClone, experienceBaseUri);
+        return abi.encode(characterSheetsClone, classesClone, experienceClone, itemsBaseUri);
     }
 
     function _encodeClassesData(address characterSheetsClone, bytes memory data) private pure returns (bytes memory) {
         (,,, string memory classesBaseUri) = _decodeStrings(data);
         return abi.encode(characterSheetsClone, classesBaseUri);
+    }
+
+    function _encodeExpData(address characterSheetsClone, address itemsClone) private pure returns (bytes memory) {
+        return abi.encode(characterSheetsClone, itemsClone);
     }
 
     function _decodeStrings(bytes memory data)

@@ -8,8 +8,9 @@ import {ERC1155, ERC1155TokenReceiver} from "@hats/lib/ERC1155/ERC1155.sol";
 import {ERC1155Holder} from "openzeppelin/token/ERC1155/utils/ERC1155Holder.sol";
 import {Counters} from "openzeppelin/utils/Counters.sol";
 
-import {CharacterSheetsImplementation} from "./CharacterSheetsImplementation.sol";
+import {ICharacterSheets} from "../interfaces/ICharacterSheets.sol";
 import {ClassesImplementation} from "./ClassesImplementation.sol";
+import {ExperienceImplementation} from "./ExperienceImplementation.sol";
 import {Item} from "../lib/Structs.sol";
 
 import {Errors} from "../lib/Errors.sol";
@@ -32,6 +33,10 @@ contract ItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
 
     bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
 
+    /// @dev tokenId 0 is reserved for the experience ERC20 contract. if you wish to give or require experience through this contract simply input item ID 0
+    /// by a player.
+    uint256 public constant EXPERIENCE = 0;
+
     /// @dev base URI
     string private _baseURI = "";
 
@@ -41,18 +46,15 @@ contract ItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
     /// @dev mapping itemId => item struct for item types.;
     mapping(uint256 => Item) public items;
 
-    /// @dev tokenId 0 is experience which is infinite supply and can be minted by any dungeon master or claimed
-    /// by a player.
-    uint256 public constant EXPERIENCE = 0;
-
     /// @dev the total number of item types that have been created
     uint256 public totalItemTypes;
     /// @dev the total amount of experience that has been given out
     uint256 public totalExperience;
 
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
-    CharacterSheetsImplementation public characterSheets;
+    ICharacterSheets public characterSheets;
     ClassesImplementation public classes;
+    ExperienceImplementation public experience;
 
     event NewItemTypeCreated(uint256 itemId, string name);
     event ItemTransfered(address character, uint256 itemId, uint256 amount);
@@ -90,10 +92,13 @@ contract ItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
     function initialize(bytes calldata _encodedData) external initializer {
         address characterSheetsAddress;
         address classesAddress;
+        address experienceAddress;
         string memory baseUri;
-        (characterSheetsAddress, classesAddress, baseUri) = abi.decode(_encodedData, (address, address, string));
+        (characterSheetsAddress, classesAddress, experienceAddress, baseUri) =
+            abi.decode(_encodedData, (address, address, address, string));
         _baseURI = baseUri;
-        characterSheets = CharacterSheetsImplementation(characterSheetsAddress);
+        characterSheets = ICharacterSheets(characterSheetsAddress);
+        experience = ExperienceImplementation(experienceAddress);
         classes = ClassesImplementation(classesAddress);
         _itemIdCounter.increment();
     }
@@ -125,7 +130,7 @@ contract ItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
         require(nftAddress.length == itemIds.length && itemIds.length == amounts.length, "LENGTH MISMATCH");
         for (uint256 i; i < nftAddress.length; i++) {
             for (uint256 j; j < itemIds[i].length; j++) {
-                if (itemIds[i][j] == 0 && amounts[i][j] > 0) {
+                if (itemIds[i][j] == 0) {
                     _giveExp(nftAddress[i], amounts[i][j]);
                 } else {
                     Item memory newItem = items[itemIds[i][j]];
@@ -177,6 +182,36 @@ contract ItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
             }
         }
         success = true;
+    }
+    /**
+     * @notice Checks the item and class requirements to create a new item then burns the requirements in the character's inventory to create the new item
+     * @dev Explain to a developer any extra details
+     * @param itemId the itemId of the item to be crafted
+     * @param amount the number of new items to be created
+     * @return bool if crafting is a success return true, else return false
+     */
+
+    function craftItem(uint256 itemId, uint256 amount) public onlyCharacter returns (bool) {
+        Item memory newItem = items[itemId];
+        bool success = false;
+        if (
+            _checkItemRequirements(msg.sender, newItem.itemRequirements, amount)
+                && _checkClassRequirements(msg.sender, newItem.classRequirements)
+        ) {
+            for (uint256 i; i < newItem.itemRequirements.length; i++) {
+                if (newItem.itemRequirements[i][0] == 0 && newItem.itemRequirements[i][1] > 0) {
+                    experience.burnExp(msg.sender, (newItem.itemRequirements[i][1] * amount));
+                } else {
+                    _balanceOf[msg.sender][newItem.itemRequirements[i][0]] -= newItem.itemRequirements[i][1] * amount;
+                }
+            }
+
+            _balanceOf[msg.sender][itemId] += amount;
+        } else {
+            return success;
+        }
+        success = true;
+        return success;
     }
 
     /**
@@ -487,11 +522,12 @@ contract ItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
 
     /**
      * private function for DM to give out experience.
-     * @param _to player neft address
+     * @param _to player nft address
      * @param _amount the amount of exp to be issued
      */
+
     function _giveExp(address _to, uint256 _amount) private returns (uint256) {
-        _mint(_to, EXPERIENCE, _amount, "");
+        experience.giveExp(_to, _amount);
         totalExperience += _amount;
         return totalExperience;
     }
@@ -503,13 +539,19 @@ contract ItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
      * @param amount the amount of items to be sent to the player token
      */
 
-    function _transferItem(address _to, uint256 tokenId, uint256 amount) private {
+    function _transferItem(address _to, uint256 tokenId, uint256 amount) private returns (bool success) {
         if (!characterSheets.hasRole(CHARACTER, _to)) {
             revert Errors.CharacterOnly();
         }
 
         if (_balanceOf[address(this)][tokenId] < amount) {
             revert Errors.InsufficientBalance();
+        }
+
+        if (tokenId == 0 && amount > 0) {
+            _giveExp(_to, amount);
+            success = true;
+            return success;
         }
 
         _balanceOf[address(this)][tokenId] -= amount;
@@ -565,6 +607,7 @@ contract ItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
 
     function _checkItemRequirements(address nftAddress, uint256[][] memory itemRequirements, uint256 amount)
         private
+        view
         returns (bool)
     {
         if (itemRequirements.length == 0) {
@@ -574,12 +617,13 @@ contract ItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
 
         for (uint256 i; i < itemRequirements.length; i++) {
             newRequirement = itemRequirements[i];
-
-            if (balanceOf(nftAddress, newRequirement[0]) < newRequirement[1] * amount) {
+            if (newRequirement[0] == 0) {
+                if (experience.balanceOf(nftAddress) < newRequirement[1] * amount) {
+                    return false;
+                }
+            } else if (balanceOf(nftAddress, newRequirement[0]) < newRequirement[1] * amount) {
                 return false;
             }
-
-            _balanceOf[nftAddress][newRequirement[0]] -= newRequirement[1] * amount;
         }
         return true;
     }

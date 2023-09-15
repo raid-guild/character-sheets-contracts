@@ -91,12 +91,13 @@ contract CharacterSheetsTest is Test, SetUp {
                 "test_base_uri_classes/"
             );
 
-            (address sheets, address exp, address class) =
+            (address sheets, address items, address exp, address class) =
                 characterSheetsFactory.create(dungeonMasters, address(dao), baseUriData);
 
-            assertEq(address(CharacterSheetsImplementation(sheets).items()), exp, "wrong experience");
-            assertEq(address(ItemsImplementation(exp).characterSheets()), sheets, "wrong sheets");
-            assertEq(address(ItemsImplementation(exp).classes()), class, "wrong classes");
+            assertEq(address(CharacterSheetsImplementation(sheets).items()), items, "wrong experience");
+            assertEq(address(ItemsImplementation(items).characterSheets()), sheets, "wrong sheets");
+            assertEq(address(ItemsImplementation(items).classes()), class, "wrong classes");
+            // assertEq(exp, address(0), "incorrect address");
             assertEq(
                 CharacterSheetsImplementation(sheets).metadataURI(),
                 "test_metadata_uri_character_sheets/",
@@ -107,7 +108,7 @@ contract CharacterSheetsTest is Test, SetUp {
                 "test_base_uri_character_sheets/",
                 "Wrong character sheets base uri"
             );
-            assertEq(ItemsImplementation(exp).getBaseURI(), "test_base_uri_items/", "Wrong exp base uri");
+            assertEq(ItemsImplementation(items).getBaseURI(), "test_base_uri_items/", "Wrong exp base uri");
             assertEq(ClassesImplementation(class).getBaseURI(), "test_base_uri_classes/", "Wrong classes base uri");
             assertTrue(
                 CharacterSheetsImplementation(sheets).hasRole(keccak256("DUNGEON_MASTER"), address(1)),

@@ -65,7 +65,7 @@ contract CharacterSheetsTest is Test, SetUp {
         uint256[][] memory amounts = new uint256[][](1);
         amounts[0] = new uint256[](1);
         amounts[0][0] = 1;
-        experience.dropLoot(npc, itemIds, amounts);
+        items.dropLoot(npc, itemIds, amounts);
         vm.prank(npc1);
         characterSheets.equipItemToCharacter(1, 1);
 
@@ -83,7 +83,7 @@ contract CharacterSheetsTest is Test, SetUp {
         uint256[][] memory amounts = new uint256[][](1);
         amounts[0] = new uint256[](1);
         amounts[0][0] = 1;
-        experience.dropLoot(npc, itemIds, amounts);
+        items.dropLoot(npc, itemIds, amounts);
         vm.prank(npc1);
         characterSheets.equipItemToCharacter(1, 1);
 
