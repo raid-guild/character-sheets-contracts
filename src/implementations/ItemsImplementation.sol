@@ -15,6 +15,8 @@ import {Item} from "../lib/Structs.sol";
 
 import {Errors} from "../lib/Errors.sol";
 
+import "forge-std/console2.sol";
+
 /**
  * @title Experience and Items
  * @author MrDeadCe11

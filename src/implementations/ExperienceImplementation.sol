@@ -48,8 +48,8 @@ contract ExperienceImplementation is ERC20, Initializable {
         _;
     }
 
-    modifier onlyContract() {
-        if (msg.sender != itemsContract || msg.sender != characterSheets) {
+    modifier onlyItemsContract() {
+        if (msg.sender != itemsContract) {
             revert Errors.CallerNotApproved();
         }
         _;
@@ -66,7 +66,7 @@ contract ExperienceImplementation is ERC20, Initializable {
     /// @notice Called by items contract to give experience to a character
     /// @param to the address of the character that will receive the exp
 
-    function giveExp(address to, uint256 amount) external onlyContract {
+    function giveExp(address to, uint256 amount) external onlyItemsContract {
         if (characterSheets == address(0)) {
             revert Errors.VariableNotSet();
         }
@@ -90,7 +90,7 @@ contract ExperienceImplementation is ERC20, Initializable {
 
     function updateClaimMerkleRoot(bytes32 newMerkleRoot) public onlyDungeonMaster {}
 
-    function burnExp(address burnee, uint256 amount) public onlyContract {
+    function burnExp(address burnee, uint256 amount) public onlyItemsContract {
         _burn(burnee, amount);
     }
 }

@@ -210,7 +210,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         if (msg.sender != sheets[characterId].erc6551TokenAddress) {
             revert Errors.OwnershipError();
         }
-        if (items.balanceOf(sheets[characterId].erc6551TokenAddress, tokenId) != 0) {
+        if (items.balanceOf(sheets[characterId].erc6551TokenAddress, tokenId) == 0) {
             revert Errors.InventoryError();
         }
         for (uint256 i = 0; i < arr.length; i++) {

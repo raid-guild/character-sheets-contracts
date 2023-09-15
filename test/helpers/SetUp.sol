@@ -89,7 +89,7 @@ contract SetUp is Test {
         characterSheetsFactory.updateCharacterSheetsImplementation(address(stored.characterSheetsImplementation));
         characterSheetsFactory.updateItemsImplementation(address(stored.itemsImplementation));
         characterSheetsFactory.updateClassesImplementation(address(stored.classesImplementation));
-        characterSheetsFactory.updateExperienceImplementation(stored.experienceImplementation);
+        characterSheetsFactory.updateExperienceImplementation(address(stored.experienceImplementation));
         address[] memory dungeonMasters = new address[](1);
         dungeonMasters[0] = admin;
         characterSheetsFactory.updateERC6551Registry(address(erc6551Registry));
@@ -108,6 +108,8 @@ contract SetUp is Test {
         assertEq(address(characterSheets.classes()), stored.createdClasses, "incorrect classes address in setup");
         items = ItemsImplementation(stored.createdItems);
         classes = ClassesImplementation(stored.createdClasses);
+        experience = ExperienceImplementation(stored.createdExperience);
+
         characterSheets.setERC6551Registry(address(erc6551Registry));
 
         testClassId = classes.createClassType(createNewClass("test_class"));

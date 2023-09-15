@@ -16,6 +16,7 @@ contract CharacterSheetsTest is Test, SetUp {
     event RegistryUpdated(address newRegistry);
     event ERC6551AccountImplementationUpdated(address newImplementation);
     event ClassesImplementationUpdated(address newClasses);
+    event ItemsUpdated(address newItems);
 
     function testDeployment() public {
         address _characterSheetsImplementation = characterSheetsFactory.characterSheetsImplementation();
@@ -44,7 +45,7 @@ contract CharacterSheetsTest is Test, SetUp {
     function testUpdateItemsImplementation() public {
         vm.prank(admin);
         vm.expectEmit(true, false, false, false);
-        emit ExperienceUpdated(address(1));
+        emit ItemsUpdated(address(1));
         characterSheetsFactory.updateItemsImplementation(address(1));
         assertEq(characterSheetsFactory.itemsImplementation(), address(1));
     }
