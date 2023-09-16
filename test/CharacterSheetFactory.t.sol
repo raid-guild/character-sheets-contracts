@@ -9,7 +9,7 @@ import "../src/implementations/ItemsImplementation.sol";
 // import "forge-std/console2.sol";
 
 contract CharacterSheetsTest is Test, SetUp {
-    event CharacterSheetsCreated(address creator, address characterSheets, address classes, address experienceAndItems);
+    event CharacterSheetsCreated(address creator, address characterSheets, address items, address exp, address classes);
     event CharacterSheetsUpdated(address newCharacterSheets);
     event ExperienceUpdated(address newExperience);
     event ExperienceAndItemsCreated(address newExp, address creator);
@@ -24,11 +24,13 @@ contract CharacterSheetsTest is Test, SetUp {
         address _classesImplementation = characterSheetsFactory.classesImplementation();
         address _erc6551Registry = characterSheetsFactory.erc6551Registry();
         address _erc6551AccountImplementation = characterSheetsFactory.erc6551AccountImplementation();
+        address _experienceImpementation = characterSheetsFactory.experienceImplementation();
 
         assertEq(
             _characterSheetsImplementation, address(stored.characterSheetsImplementation), "wrong character sheets"
         );
-        assertEq(_itemsImplementation, address(stored.experienceImplementation), "wrong experience");
+        assertEq(_itemsImplementation, address(stored.itemsImplementation), "wrong items");
+        assertEq(_experienceImpementation, address(stored.experienceImplementation), "wrong experience");
         assertEq(_classesImplementation, address(stored.classesImplementation), "wrong Classes");
         assertEq(_erc6551Registry, address(erc6551Registry), "wrong registry");
         assertEq(_erc6551AccountImplementation, address(erc6551Implementation), "wrong erc6551 account implementation.");
@@ -83,8 +85,8 @@ contract CharacterSheetsTest is Test, SetUp {
         //create a bunch of sheets
         for (uint256 i = 0; i < 10; i++) {
             vm.prank(player1);
-            vm.expectEmit(true, true, false, false);
-            emit CharacterSheetsCreated(player1, address(0), address(0), address(0));
+            vm.expectEmit(true, true, true, false);
+            emit CharacterSheetsCreated(player1, address(0), address(0), address(0), address(0));
             bytes memory baseUriData = abi.encode(
                 "test_metadata_uri_character_sheets/",
                 "test_base_uri_character_sheets/",
@@ -92,12 +94,12 @@ contract CharacterSheetsTest is Test, SetUp {
                 "test_base_uri_classes/"
             );
 
-            (address sheets, address items, address exp, address class) =
+            (address sheets, address _items, address exp, address class) =
                 characterSheetsFactory.create(dungeonMasters, address(dao), baseUriData);
 
-            assertEq(address(CharacterSheetsImplementation(sheets).items()), items, "wrong experience");
-            assertEq(address(ItemsImplementation(items).characterSheets()), sheets, "wrong sheets");
-            assertEq(address(ItemsImplementation(items).classes()), class, "wrong classes");
+            assertEq(address(CharacterSheetsImplementation(sheets).items()), _items, "wrong experience");
+            assertEq(address(ItemsImplementation(_items).characterSheets()), sheets, "wrong sheets");
+            assertEq(address(ItemsImplementation(_items).classes()), class, "wrong classes");
             // assertEq(exp, address(0), "incorrect address");
             assertEq(
                 CharacterSheetsImplementation(sheets).metadataURI(),
@@ -109,8 +111,11 @@ contract CharacterSheetsTest is Test, SetUp {
                 "test_base_uri_character_sheets/",
                 "Wrong character sheets base uri"
             );
-            assertEq(ItemsImplementation(items).getBaseURI(), "test_base_uri_items/", "Wrong exp base uri");
+            assertEq(ItemsImplementation(_items).getBaseURI(), "test_base_uri_items/", "Wrong exp base uri");
             assertEq(ClassesImplementation(class).getBaseURI(), "test_base_uri_classes/", "Wrong classes base uri");
+            assertEq(
+                ExperienceImplementation(exp).characterSheets(), sheets, "incorrect sheets address on exp contract"
+            );
             assertTrue(
                 CharacterSheetsImplementation(sheets).hasRole(keccak256("DUNGEON_MASTER"), address(1)),
                 "incorrect dungeon master 1 "
