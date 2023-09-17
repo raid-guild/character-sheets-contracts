@@ -10,7 +10,6 @@ import {
     ERC1155Receiver,
     IERC1155Receiver
 } from "openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holder.sol";
-
 import {IERC6551Account} from "./interfaces/IERC6551Account.sol";
 import {IERC6551Executable} from "./interfaces/IERC6551Executable.sol";
 import {CallUtils} from "./lib/CallUtils.sol";

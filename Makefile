@@ -52,7 +52,8 @@ deploy-all :; make deploy-contracts ${network}&& \
 	make deploy-${network} contract=CharacterSheetsImplementation && \
 	make deploy-${network} contract=ItemsImplementation && \
 	make deploy-${network} contract=ClassesImplementation && \
-	make deploy-${network} contract=CharacterSheetsFactory;
+	make deploy-${network} contract=CharacterSheetsFactory && \
+	make deploy-${network} contract=EligibilityAdaptor;
 
 verify-contracts :; make verify-${network} contract=CharacterAccount && \
 	make verify-${network} contract=CharacterSheetsImplementation && \

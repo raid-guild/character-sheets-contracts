@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {IMolochDAO} from "../interfaces/IMolochDAO.sol";
 
 contract Moloch is IMolochDAO {
-    mapping(address => Member) public _members;
+    mapping(address => Member) private _members;
 
     function members(address memberAddress) external view override returns (Member memory member) {
         return _members[memberAddress];
