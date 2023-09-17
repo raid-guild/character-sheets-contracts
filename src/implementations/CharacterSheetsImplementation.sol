@@ -10,12 +10,12 @@ import {Counters} from "../../lib/openzeppelin-contracts/contracts/utils/Counter
 import {Initializable} from "openzeppelin/proxy/utils/Initializable.sol";
 
 import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
-import {IMolochDAO} from "../interfaces/IMolochDAO.sol";
 import {ItemsImplementation} from "./ItemsImplementation.sol";
 import {ClassesImplementation} from "./ClassesImplementation.sol";
 import {ExperienceImplementation} from "./ExperienceImplementation.sol";
 import {CharacterSheet} from "../lib/Structs.sol";
 
+import {IEligibilityAdaptor} from "../interfaces/IEligibilityAdaptor.sol";
 import {Errors} from "../lib/Errors.sol";
 // import "forge-std/console2.sol";
 
@@ -34,7 +34,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     ClassesImplementation public classes;
     ExperienceImplementation public experience;
 
-    IMolochDAO public dao;
+    address public eligibilityAdaptor;
 
     string public baseTokenURI;
     string public metadataURI;
@@ -94,7 +94,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         _grantRole(DUNGEON_MASTER, msg.sender);
 
         (
-            address _daoAddress,
+            address _eligibilityAdaptor,
             address[] memory _dungeonMasters,
             address _owner,
             address _classesImplementation,
@@ -118,7 +118,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         items = ItemsImplementation(_itemsImplementation);
         classes = ClassesImplementation(_classesImplementation);
         experience = ExperienceImplementation(_experienceImplementation);
-        dao = IMolochDAO(_daoAddress);
+        eligibilityAdaptor = _eligibilityAdaptor;
         erc6551Registry = IERC6551Registry(_erc6551Registry);
         _tokenIdCounter.increment();
 
@@ -141,8 +141,9 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
             revert Errors.VariableNotSet();
         }
 
-        if (address(dao) != address(0) && dao.members(_to).shares == 0) {
-            revert Errors.DaoError();
+        //check the eligibility adaptor to see if the player is eligible to roll a character sheet
+        if (!IEligibilityAdaptor(eligibilityAdaptor).isEligible(_to)) {
+            revert Errors.EligibilityError();
         }
 
         if (_to != msg.sender) {
@@ -279,8 +280,8 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         if (memberAddressToTokenId[msg.sender] != 0) {
             revert Errors.PlayerError();
         }
-        if (dao.members(msg.sender).jailed != 0) {
-            revert Errors.DaoError();
+        if (!IEligibilityAdaptor(eligibilityAdaptor).isEligible(msg.sender)) {
+            revert Errors.EligibilityError();
         }
         address restoredAccount = erc6551Registry.createAccount(
             erc6551AccountImplementation, block.chainid, address(this), tokenId, uint256(uint160(msg.sender)), ""
@@ -339,8 +340,8 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
 
     function removeSheet(uint256 characterId) public onlyRole(DUNGEON_MASTER) {
         address memberAddress = getCharacterSheetByCharacterId(characterId).memberAddress;
-        if (dao.members(memberAddress).jailed == 0) {
-            revert Errors.DaoError();
+        if (IEligibilityAdaptor(eligibilityAdaptor).isEligible(memberAddress)) {
+            revert Errors.EligibilityError();
         }
 
         delete sheets[characterId];

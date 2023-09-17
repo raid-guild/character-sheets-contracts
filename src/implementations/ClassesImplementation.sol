@@ -138,7 +138,6 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
      *
      * @param classData encoded class data includes
      *  - string name
-     *  - uint256 supply
      *  - string cid
      * @return tokenId the ERC1155 token id
      */
@@ -209,6 +208,16 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
 
         success = true;
         emit ClassRevoked(characterId, classId);
+    }
+
+    function levelClass(uint256 classId) public onlyCharacter {
+        uint256 balance = balanceOf(msg.sender, classId);
+
+        if (balance < 1) {
+            revert Errors.ClassError();
+        }
+
+        //#todo create an adapter that decides on the EXP amount required to acheive levels and implement here
     }
 
     /**

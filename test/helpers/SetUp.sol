@@ -7,6 +7,7 @@ import "forge-std/Test.sol";
 import "../../src/implementations/ItemsImplementation.sol";
 import "../../src/implementations/ExperienceImplementation.sol";
 import "../../src/CharacterSheetsFactory.sol";
+import "../../src/EligibilityAdaptor.sol";
 import "../../src/implementations/CharacterSheetsImplementation.sol";
 import "../../src/implementations/ClassesImplementation.sol";
 import "../../src/interfaces/IMolochDAO.sol";
@@ -41,6 +42,7 @@ contract SetUp is Test {
     CharacterSheetsImplementation characterSheets;
     ExperienceImplementation experience;
     ClassesImplementation classes;
+    EligibilityAdaptor eligibility;
 
     StoredAddresses public stored;
 
@@ -63,7 +65,13 @@ contract SetUp is Test {
         vm.startPrank(admin);
 
         dao = new Moloch();
+
+        eligibility = new EligibilityAdaptor();
+
+        eligibility.updateDaoAddress(address(dao));
+
         vm.label(address(dao), "Moloch");
+        vm.label(address(eligibility), "Eligibility Adaptor");
 
         characterSheetsFactory = new CharacterSheetsFactory();
         items = new ItemsImplementation();
@@ -102,7 +110,7 @@ contract SetUp is Test {
             "test_base_uri_classes/"
         );
         (stored.createdCharacterSheets, stored.createdItems, stored.createdExperience, stored.createdClasses) =
-            characterSheetsFactory.create(dungeonMasters, address(dao), baseUriData);
+            characterSheetsFactory.create(dungeonMasters, address(eligibility), baseUriData);
 
         characterSheets = CharacterSheetsImplementation(stored.createdCharacterSheets);
         assertEq(address(characterSheets.classes()), stored.createdClasses, "incorrect classes address in setup");
@@ -115,7 +123,6 @@ contract SetUp is Test {
         testClassId = classes.createClassType(createNewClass("test_class"));
 
         testItemId = items.createItemType(createNewItem("test_item", false, bytes32(0)));
-
         vm.stopPrank();
         bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
         vm.prank(player1);

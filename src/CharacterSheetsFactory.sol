@@ -67,14 +67,14 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
     /**
      * @param dungeonMasters an array of addresses that will have the DUNGEON_MASTER role.
-     * @param dao the dao who"s member list will be able to mint character sheets.
+     * @param eligibilityAdaptor the adaptor use to determin the elegibility of an account to roll a character sheet.
      * @param data the encoded strings o the charactersheets, experience and classes base URI's
      * @return the address of the characterSheets clone.
      * @return the address of the experienceAndItems clone.
      * @return the address of the classes clone.
      */
 
-    function create(address[] calldata dungeonMasters, address dao, bytes calldata data)
+    function create(address[] calldata dungeonMasters, address eligibilityAdaptor, bytes calldata data)
         external
         returns (address, address, address, address)
     {
@@ -96,8 +96,9 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
             ClonesUpgradeable.cloneDeterministic(classesImplementation, keccak256(abi.encode(_nonce)));
 
         // avoids stacc too dank
-        bytes memory encodedAddresses =
-            abi.encode(dao, dungeonMasters, characterSheetsClone, experienceClone, itemsClone, classesClone);
+        bytes memory encodedAddresses = abi.encode(
+            eligibilityAdaptor, dungeonMasters, characterSheetsClone, experienceClone, itemsClone, classesClone
+        );
 
         _initializeContracts(encodedAddresses, data);
 
@@ -110,7 +111,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
     function _initializeContracts(bytes memory encodedAddresses, bytes calldata data) private {
         (
-            address dao,
+            address eligibilityAdaptor,
             address[] memory dungeonMasters,
             address characterSheetsClone,
             address experienceClone,
@@ -119,7 +120,9 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         ) = abi.decode(encodedAddresses, (address, address[], address, address, address, address));
 
         CharacterSheetsImplementation(characterSheetsClone).initialize(
-            _encodeCharacterInitData(dao, dungeonMasters, itemsClone, experienceClone, classesClone, data)
+            _encodeCharacterInitData(
+                eligibilityAdaptor, dungeonMasters, itemsClone, experienceClone, classesClone, data
+            )
         );
 
         ItemsImplementation(itemsClone).initialize(
@@ -132,7 +135,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     }
 
     function _encodeCharacterInitData(
-        address dao,
+        address eligibilityAdaptor,
         address[] memory dungeonMasters,
         address itemsClone,
         address experienceClone,
@@ -142,7 +145,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         (string memory characterSheetsMetadataUri, string memory characterSheetsBaseUri,,) = _decodeStrings(data);
 
         bytes memory encodedCharacterSheetParameters = abi.encode(
-            dao,
+            eligibilityAdaptor,
             dungeonMasters,
             msg.sender,
             classesClone,

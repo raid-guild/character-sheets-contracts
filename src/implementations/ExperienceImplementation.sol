@@ -48,8 +48,8 @@ contract ExperienceImplementation is ERC20, Initializable {
         _;
     }
 
-    modifier onlyItemsContract() {
-        if (msg.sender != itemsContract) {
+    modifier onlyContract() {
+        if (msg.sender != itemsContract && msg.sender != characterSheets) {
             revert Errors.CallerNotApproved();
         }
         _;
@@ -66,7 +66,7 @@ contract ExperienceImplementation is ERC20, Initializable {
     /// @notice Called by items contract to give experience to a character
     /// @param to the address of the character that will receive the exp
 
-    function giveExp(address to, uint256 amount) external onlyItemsContract {
+    function giveExp(address to, uint256 amount) external onlyContract {
         if (characterSheets == address(0)) {
             revert Errors.VariableNotSet();
         }
@@ -90,7 +90,24 @@ contract ExperienceImplementation is ERC20, Initializable {
 
     function updateClaimMerkleRoot(bytes32 newMerkleRoot) public onlyDungeonMaster {}
 
-    function burnExp(address burnee, uint256 amount) public onlyItemsContract {
-        _burn(burnee, amount);
+    function revokeExp(address account, uint256 amount) public onlyDungeonMaster {
+        _burn(account, amount);
+    }
+
+    function burnExp(address account, uint256 amount) public onlyContract {
+        _burn(account, amount);
+    }
+
+    // overrides
+    //Experience is non transferable
+
+    //solhint-disable-next-line
+    function transferFrom(address from, address to, uint256 amount) public override returns (bool) {
+        revert Errors.TransferError();
+    }
+
+    //solhint-disable-next-line
+    function transfer(address to, uint256 amount) public override returns (bool) {
+        revert Errors.TransferError();
     }
 }
