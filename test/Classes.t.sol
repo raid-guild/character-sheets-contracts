@@ -126,4 +126,21 @@ contract ClassesTest is Test, SetUp {
         vm.expectRevert();
         classes.findClassByName("no_class");
     }
+
+    function testTransferClass() public {
+        vm.prank(admin);
+        classes.assignClass(1, 1);
+
+        assertEq(classes.balanceOf(npc1, 1), 1, "incorrect class assignment");
+
+        vm.prank(npc1);
+        vm.expectRevert();
+        classes.safeTransferFrom(npc1, player1, 1, 1, "");
+
+        vm.prank(admin);
+        classes.safeTransferFrom(npc1, player1, 1, 1, "");
+
+        assertEq(classes.balanceOf(player1, 1), 1, "incorrect class assignment");
+        assertEq(classes.balanceOf(npc1, 1), 0, "incorrect class assignment");
+    }
 }
