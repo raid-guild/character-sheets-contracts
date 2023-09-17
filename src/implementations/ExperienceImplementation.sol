@@ -101,13 +101,13 @@ contract ExperienceImplementation is ERC20, Initializable {
     // overrides
     //Experience is non transferable
 
-    //solhint-disable-next-line
-    function transferFrom(address from, address to, uint256 amount) public override returns (bool) {
+    //solhint-disable-next-line no-unused-vars
+    function transferFrom(address from, address to, uint256 amount) public pure override returns (bool) {
         revert Errors.TransferError();
     }
 
-    //solhint-disable-next-line
-    function transfer(address to, uint256 amount) public override returns (bool) {
+    //solhint-disable-next-line no-unused-vars
+    function transfer(address to, uint256 amount) public pure override returns (bool) {
         revert Errors.TransferError();
     }
 }

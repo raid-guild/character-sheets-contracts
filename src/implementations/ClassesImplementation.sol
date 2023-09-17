@@ -304,7 +304,7 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
     // overrides
 
     /// @notice Only dungeon master can transfer classes. approval of character is not required
-
+    //solhint-disable-next-line
     function safeBatchTransferFrom(
         address from,
         address to,

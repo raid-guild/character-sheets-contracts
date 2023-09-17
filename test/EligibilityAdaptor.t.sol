@@ -12,6 +12,10 @@ import "../src/lib/Errors.sol";
 
 contract EligibilityAdaptorTest is Test, SetUp {
     function testSupportsInterface() public {
-        eligibility.supportsInterface(0x01ffc9a7);
+        assertTrue(eligibility.supportsInterface(0x01ffc9a7));
+    }
+
+    function testIsEligible() public {
+        //#todo finish testing
     }
 }

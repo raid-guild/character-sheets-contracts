@@ -34,7 +34,7 @@ contract EligibilityAdaptor is ERC165, Ownable {
         return (newMember.shares >= 100 && newMember.jailed == 0);
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
         return interfaceId == 0x01ffc9a7 || interfaceId == INTERFACE_ID;
     }
 }
