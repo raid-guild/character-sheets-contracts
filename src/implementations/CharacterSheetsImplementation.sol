@@ -61,6 +61,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     event CharacterUpdated(uint256 tokenId, string newName, string newCid);
     event PlayerJailed(address playerAddress, bool thrownInJail);
     event CharacterRestored(uint256 tokenId, address tokenBoundAccount, address player);
+    event EligibilityAdaptorUpdated(address newAdaptor);
 
     modifier onlyExpContract() {
         require(msg.sender == address(items), "not the items contract");
@@ -319,6 +320,12 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     function updateItemsContract(address expContract) public onlyRole(DUNGEON_MASTER) {
         items = ItemsImplementation(expContract);
         emit ItemsUpdated(expContract);
+    }
+
+    function updateEligibilityAdaptor(address newAdaptor) public onlyRole(DUNGEON_MASTER) {
+        eligibilityAdaptor = newAdaptor;
+
+        emit EligibilityAdaptorUpdated(newAdaptor);
     }
 
     function setBaseUri(string memory _uri) public onlyRole(DUNGEON_MASTER) {
