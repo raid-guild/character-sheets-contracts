@@ -143,7 +143,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         }
 
         //check the eligibility adaptor to see if the player is eligible to roll a character sheet
-        if (!IEligibilityAdaptor(eligibilityAdaptor).isEligible(_to)) {
+        if (!IEligibilityAdaptor(eligibilityAdaptor).isEligible(_to) && !jailed[_to]) {
             revert Errors.EligibilityError();
         }
 
@@ -317,29 +317,6 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         emit PlayerJailed(playerAddress, throwInJail);
     }
 
-    function updateItemsContract(address expContract) public onlyRole(DUNGEON_MASTER) {
-        items = ItemsImplementation(expContract);
-        emit ItemsUpdated(expContract);
-    }
-
-    function updateEligibilityAdaptor(address newAdaptor) public onlyRole(DUNGEON_MASTER) {
-        eligibilityAdaptor = newAdaptor;
-
-        emit EligibilityAdaptorUpdated(newAdaptor);
-    }
-
-    function setBaseUri(string memory _uri) public onlyRole(DUNGEON_MASTER) {
-        string memory oldBaseURI = baseTokenURI;
-        baseTokenURI = _uri;
-        emit BaseURIUpdated(oldBaseURI, _uri);
-    }
-
-    function setMetadataUri(string memory _uri) public onlyRole(DUNGEON_MASTER) {
-        string memory oldMetadataURI = metadataURI;
-        metadataURI = _uri;
-        emit MetadataURIUpdated(oldMetadataURI, _uri);
-    }
-
     /**
      * Burns a players characterSheet.  can only be done if there is a passing guild kick proposal
      * @param characterId the characterId of the player to be removed.
@@ -356,6 +333,28 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         memberAddressToTokenId[memberAddress] = 0;
 
         emit CharacterRemoved(characterId);
+    }
+
+    function updateItemsContract(address expContract) public onlyRole(DUNGEON_MASTER) {
+        items = ItemsImplementation(expContract);
+        emit ItemsUpdated(expContract);
+    }
+
+    function updateEligibilityAdaptor(address newAdaptor) public onlyRole(DUNGEON_MASTER) {
+        eligibilityAdaptor = newAdaptor;
+        emit EligibilityAdaptorUpdated(newAdaptor);
+    }
+
+    function setBaseUri(string memory _uri) public onlyRole(DUNGEON_MASTER) {
+        string memory oldBaseURI = baseTokenURI;
+        baseTokenURI = _uri;
+        emit BaseURIUpdated(oldBaseURI, _uri);
+    }
+
+    function setMetadataUri(string memory _uri) public onlyRole(DUNGEON_MASTER) {
+        string memory oldMetadataURI = metadataURI;
+        metadataURI = _uri;
+        emit MetadataURIUpdated(oldMetadataURI, _uri);
     }
 
     /// @dev Sets the address of the ERC6551 registry
