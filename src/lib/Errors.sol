@@ -23,4 +23,6 @@ abstract contract Errors {
     error Jailed();
     error InsufficientBalance();
     error CallerNotApproved();
+    error SoulboundToken();
+    error RequirementNotMet();
 }

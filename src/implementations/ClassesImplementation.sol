@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {Initializable} from "openzeppelin-contracts/proxy/utils/Initializable.sol";
-import {ERC1155Receiver} from "openzeppelin-contracts/token/ERC1155/utils/ERC1155Receiver.sol";
-import {ERC1155, ERC1155TokenReceiver} from "hats-protocol/lib/ERC1155/ERC1155.sol";
-import {ERC1155Holder} from "openzeppelin-contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import {ERC1155Upgradeable} from "openzeppelin-contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
+import {
+    ERC1155HolderUpgradeable,
+    ERC1155ReceiverUpgradeable
+} from "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Counters} from "openzeppelin-contracts/utils/Counters.sol";
 
 import {CharacterSheetsImplementation} from "../implementations/CharacterSheetsImplementation.sol";
@@ -19,7 +21,7 @@ import {Errors} from "../lib/Errors.sol";
  * Each item and class is an 1155 token that can soulbound or not to the erc6551 wallet of each player nft
  * in the characterSheets contract.
  */
-contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
+contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UUPSUpgradeable {
     using Counters for Counters.Counter;
 
     Counters.Counter private _classIdCounter;
@@ -252,7 +254,12 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
         return classes[classId];
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(ERC1155, ERC1155Receiver) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC1155Upgradeable, ERC1155ReceiverUpgradeable)
+        returns (bool)
+    {
         return super.supportsInterface(interfaceId);
     }
 
@@ -307,61 +314,20 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
     function safeBatchTransferFrom(
         address from,
         address to,
-        uint256[] calldata ids,
-        uint256[] calldata amounts,
-        bytes calldata data
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory data
     ) public override onlyDungeonMaster {
-        require(ids.length == amounts.length, "LENGTH_MISMATCH");
-
-        // require(msg.sender == from || isApprovedForAll[from][msg.sender], "NOT_AUTHORIZED");
-
-        // Storing these outside the loop saves ~15 gas per iteration.
-        uint256 id;
-        uint256 amount;
-
-        for (uint256 i = 0; i < ids.length;) {
-            id = ids[i];
-            amount = amounts[i];
-
-            _balanceOf[from][id] -= amount;
-            _balanceOf[to][id] += amount;
-
-            // An array can't have a total length
-            // larger than the max uint256 value.
-            unchecked {
-                ++i;
-            }
-        }
-
-        emit TransferBatch(msg.sender, from, to, ids, amounts);
-
-        require(
-            to.code.length == 0
-                ? to != address(0)
-                : ERC1155TokenReceiver(to).onERC1155BatchReceived(msg.sender, from, ids, amounts, data)
-                    == ERC1155TokenReceiver.onERC1155BatchReceived.selector,
-            "UNSAFE_RECIPIENT"
-        );
+        super._safeBatchTransferFrom(from, to, ids, amounts, data);
     }
 
-    function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes calldata data)
+    function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes memory data)
         public
         override
         onlyDungeonMaster
     {
-        // require(msg.sender == from || isApprovedForAll[from][msg.sender], "NOT_AUTHORIZED");
-
-        _balanceOf[from][id] -= amount;
-        _balanceOf[to][id] += amount;
-
-        emit TransferSingle(msg.sender, from, to, id, amount);
-
-        require(
-            to.code.length == 0
-                ? to != address(0)
-                : ERC1155TokenReceiver(to).onERC1155Received(msg.sender, from, id, amount, data)
-                    == ERC1155TokenReceiver.onERC1155Received.selector,
-            "UNSAFE_RECIPIENT"
-        );
+        super._safeTransferFrom(from, to, id, amount, data);
     }
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {}
 }

@@ -1,8 +1,8 @@
 pragma solidity ^0.8.19;
 // SPDX-License-Identifier: MIT
 
-import {ClonesUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/ClonesUpgradeable.sol";
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ERC1967Proxy} from "openzeppelin-contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import {CharacterSheetsImplementation} from "./implementations/CharacterSheetsImplementation.sol";
 import {ClassesImplementation} from "./implementations/ClassesImplementation.sol";
@@ -84,16 +84,13 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
             "update implementation addresses"
         );
 
-        address characterSheetsClone =
-            ClonesUpgradeable.cloneDeterministic(characterSheetsImplementation, keccak256(abi.encode(_nonce)));
+        address characterSheetsClone = address(new ERC1967Proxy(characterSheetsImplementation, ""));
 
-        address experienceClone =
-            ClonesUpgradeable.cloneDeterministic(experienceImplementation, keccak256(abi.encode(_nonce)));
+        address experienceClone = address(new ERC1967Proxy(experienceImplementation, ""));
 
-        address itemsClone = ClonesUpgradeable.cloneDeterministic(itemsImplementation, keccak256(abi.encode(_nonce)));
+        address itemsClone = address(new ERC1967Proxy(itemsImplementation, ""));
 
-        address classesClone =
-            ClonesUpgradeable.cloneDeterministic(classesImplementation, keccak256(abi.encode(_nonce)));
+        address classesClone = address(new ERC1967Proxy(classesImplementation, ""));
 
         // avoids stacc too dank
         bytes memory encodedAddresses = abi.encode(

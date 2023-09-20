@@ -33,7 +33,6 @@ struct StoredAddresses {
 }
 
 contract SetUp is Test {
-    using ClonesUpgradeable for address;
     using stdJson for string;
 
     ItemsImplementation items;

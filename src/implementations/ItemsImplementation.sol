@@ -3,9 +3,12 @@ pragma solidity ^0.8.9;
 
 import {Initializable} from "openzeppelin-contracts/proxy/utils/Initializable.sol";
 import {MerkleProof} from "openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
-import {ERC1155Receiver} from "openzeppelin-contracts/token/ERC1155/utils/ERC1155Receiver.sol";
-import {ERC1155, ERC1155TokenReceiver} from "hats-protocol/lib/ERC1155/ERC1155.sol";
-import {ERC1155Holder} from "openzeppelin-contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import {ERC1155Upgradeable} from "openzeppelin-contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
+import {
+    ERC1155HolderUpgradeable,
+    ERC1155ReceiverUpgradeable
+} from "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Counters} from "openzeppelin-contracts/utils/Counters.sol";
 // import {console2} from "forge-std/console2.sol";
 
@@ -22,7 +25,7 @@ import {Errors} from "../lib/Errors.sol";
  * Each item and class is an 1155 token that can soulbound or not to the erc6551 wallet of each player nft
  * in the characterSheets contract.
  */
-contract ItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
+contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UUPSUpgradeable {
     using Counters for Counters.Counter;
 
     Counters.Counter private _itemIdCounter;
@@ -100,6 +103,7 @@ contract ItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
         characterSheets = ICharacterSheets(characterSheetsAddress);
         experience = ExperienceImplementation(experienceAddress);
         classes = ClassesImplementation(classesAddress);
+
         _itemIdCounter.increment();
     }
 
@@ -183,33 +187,38 @@ contract ItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
         }
         success = true;
     }
+
     /**
      * @notice Checks the item and class requirements to create a new item then burns the requirements in the character's inventory to create the new item
      * @dev Explain to a developer any extra details
      * @param itemId the itemId of the item to be crafted
      * @param amount the number of new items to be created
-     * @return bool if crafting is a success return true, else return false
+     * @return success bool if crafting is a success return true, else return false
      */
 
-    function craftItem(uint256 itemId, uint256 amount) public onlyCharacter returns (bool) {
-        Item memory newItem = items[itemId];
-        bool success = false;
-        if (
-            _checkItemRequirements(msg.sender, newItem.itemRequirements, amount)
-                && _checkClassRequirements(msg.sender, newItem.classRequirements)
-        ) {
-            for (uint256 i; i < newItem.itemRequirements.length; i++) {
-                if (newItem.itemRequirements[i][0] == 0 && newItem.itemRequirements[i][1] > 0) {
-                    experience.burnExp(msg.sender, (newItem.itemRequirements[i][1] * amount));
-                } else {
-                    _balanceOf[msg.sender][newItem.itemRequirements[i][0]] -= newItem.itemRequirements[i][1] * amount;
-                }
-            }
+    function craftItem(uint256 itemId, uint256 amount) public onlyCharacter returns (bool success) {
+        Item storage newItem = items[itemId];
 
-            _balanceOf[msg.sender][itemId] += amount;
-        } else {
-            return success;
+        if (newItem.supply == 0) {
+            revert Errors.ItemError();
         }
+
+        if (
+            !_checkItemRequirements(msg.sender, newItem.itemRequirements, amount)
+                || !_checkClassRequirements(msg.sender, newItem.classRequirements)
+        ) {
+            revert Errors.RequirementNotMet();
+        }
+
+        for (uint256 i; i < newItem.itemRequirements.length; i++) {
+            if (newItem.itemRequirements[i][0] == 0 && newItem.itemRequirements[i][1] > 0) {
+                experience.burnExp(msg.sender, (newItem.itemRequirements[i][1] * amount));
+            } else {
+                _burn(msg.sender, newItem.itemRequirements[i][0], newItem.itemRequirements[i][1] * amount);
+            }
+        }
+
+        _transferItem(msg.sender, newItem.tokenId, amount);
         success = true;
         return success;
     }
@@ -257,7 +266,7 @@ contract ItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
         onlyDungeonMaster
         returns (bool success)
     {
-        if (items[requiredItemId].supply == 0) {
+        if (itemId == requiredItemId || itemId == 0 || (requiredItemId != 0 && items[requiredItemId].supply == 0)) {
             revert Errors.ItemError();
         }
         uint256[] memory newRequirement = new uint256[](2);
@@ -360,7 +369,8 @@ contract ItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
      */
 
     function updateItemClaimable(uint256 itemId, bytes32 merkleRoot) public onlyDungeonMaster {
-        if (items[itemId].tokenId == 0) {
+        if (items[itemId].supply == 0) {
+            // tokenId 0 has supply 0
             revert Errors.ItemError();
         }
         items[itemId].claimable = merkleRoot;
@@ -368,53 +378,44 @@ contract ItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
         emit ItemClaimableUpdated(itemId, merkleRoot);
     }
 
-    function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes calldata data)
+    function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes memory data)
         public
         override
     {
         if (!characterSheets.hasRole(CHARACTER, to)) {
             revert Errors.CharacterOnly();
         }
-        require(id > 0, "this item does not exist");
-        Item memory item = items[id];
-        require(item.soulbound == false, "This item is soulbound");
+        if (items[id].supply == 0) {
+            // tokenId 0 has supply 0
+            revert Errors.InvalidToken();
+        }
+        if (items[id].soulbound) {
+            revert Errors.SoulboundToken();
+        }
         super.safeTransferFrom(from, to, id, amount, data);
     }
 
     function safeBatchTransferFrom(
         address from,
         address to,
-        uint256[] calldata ids,
-        uint256[] calldata amounts,
-        bytes calldata data
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory data
     ) public override {
-        if (ids.length != amounts.length) {
-            revert Errors.LengthMismatch();
+        if (!characterSheets.hasRole(CHARACTER, to)) {
+            revert Errors.CharacterOnly();
         }
 
-        require(msg.sender == from || isApprovedForAll[from][msg.sender], "NOT_AUTHORIZED");
-
-        // Storing these outside the loop saves ~15 gas per iteration.
-        uint256 id;
-        uint256 amount;
-
-        for (uint256 i = 0; i < ids.length;) {
-            safeTransferFrom(from, to, id, amount, data);
+        for (uint256 i; i < ids.length; i++) {
+            if (items[ids[i]].supply == 0) {
+                // tokenId 0 has supply 0
+                revert Errors.InvalidToken();
+            }
+            if (items[ids[i]].soulbound) {
+                revert Errors.SoulboundToken();
+            }
         }
-
-        emit TransferBatch(msg.sender, from, to, ids, amounts);
-
-        require(
-            to.code.length == 0
-                ? to != address(0)
-                : ERC1155TokenReceiver(to).onERC1155BatchReceived(msg.sender, from, ids, amounts, data)
-                    == ERC1155TokenReceiver.onERC1155BatchReceived.selector,
-            "UNSAFE_RECIPIENT"
-        );
-    }
-
-    function setApprovalForAll(address operator, bool approved) public override {
-        super.setApprovalForAll(operator, approved);
+        super.safeBatchTransferFrom(from, to, ids, amounts, data);
     }
 
     /**
@@ -482,7 +483,12 @@ contract ItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
 
     // The following functions are overrides required by Solidity.
 
-    function supportsInterface(bytes4 interfaceId) public view override(ERC1155Receiver, ERC1155) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC1155Upgradeable, ERC1155ReceiverUpgradeable)
+        returns (bool)
+    {
         return super.supportsInterface(interfaceId);
     }
 
@@ -504,6 +510,8 @@ contract ItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
     function _setBaseURI(string memory _baseUri) internal {
         _baseURI = _baseUri;
     }
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {}
 
     function _createItemStruct(bytes memory data) internal pure returns (Item memory) {
         string memory name;
@@ -544,20 +552,23 @@ contract ItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
             revert Errors.CharacterOnly();
         }
 
-        if (_balanceOf[address(this)][tokenId] < amount) {
-            revert Errors.InsufficientBalance();
+        // We never _transferItem exp, instead use _giveExp
+        // if (tokenId == 0 && amount > 0) {
+        //     _giveExp(_to, amount);
+        //     success = true;
+        //     return success;
+        // }
+
+        Item storage item = items[tokenId];
+        if (item.supply == 0) {
+            revert Errors.ItemError();
         }
 
-        if (tokenId == 0 && amount > 0) {
-            _giveExp(_to, amount);
-            success = true;
-            return success;
-        }
-
-        _balanceOf[address(this)][tokenId] -= amount;
-        _balanceOf[_to][tokenId] += amount;
+        super._safeTransferFrom(address(this), _to, tokenId, amount, "");
 
         items[tokenId].supplied++;
+
+        success = true;
 
         emit ItemTransfered(_to, tokenId, amount);
     }
@@ -570,37 +581,35 @@ contract ItemsImplementation is ERC1155Holder, Initializable, ERC1155 {
      */
 
     function _transferItemWithReq(address nftAddress, uint256 tokenId, uint256 amount) private returns (bool success) {
-        if (_balanceOf[address(this)][tokenId] < amount) {
-            revert Errors.InsufficientBalance();
-        }
-
         if (!characterSheets.hasRole(CHARACTER, nftAddress)) {
             revert Errors.CharacterOnly();
         }
 
-        if (tokenId == 0 && amount > 0) {
-            _giveExp(nftAddress, amount);
-            success = true;
-            return success;
-        }
+        // We never _transferItemWithReq(nftAddress, tokenId, amount) exp, instead use _giveExp
+        // if (tokenId == 0 && amount > 0) {
+        //     _giveExp(nftAddress, amount);
+        //     success = true;
+        //     return success;
+        // }
 
-        Item memory item = items[tokenId];
+        Item storage item = items[tokenId];
         if (item.supply == 0) {
             revert Errors.ItemError();
         }
 
         if (
-            _checkItemRequirements(nftAddress, item.itemRequirements, amount)
-                && _checkClassRequirements(nftAddress, item.classRequirements)
+            !_checkItemRequirements(nftAddress, item.itemRequirements, amount)
+                || !_checkClassRequirements(nftAddress, item.classRequirements)
         ) {
-            _balanceOf[address(this)][tokenId] -= amount;
-            _balanceOf[nftAddress][tokenId] += amount;
-            items[tokenId].supplied += amount;
-
-            emit ItemTransfered(nftAddress, tokenId, amount);
-
-            success = true;
+            revert Errors.RequirementNotMet();
         }
+
+        super._safeTransferFrom(address(this), nftAddress, tokenId, amount, "");
+        items[tokenId].supplied += amount;
+
+        emit ItemTransfered(nftAddress, tokenId, amount);
+
+        success = true;
 
         return success;
     }

@@ -3,7 +3,8 @@ pragma solidity ^0.8.9;
 
 import {Initializable} from "openzeppelin-contracts/proxy/utils/Initializable.sol";
 import {MerkleProof} from "openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
-import {ERC20} from "openzeppelin-contracts/token/ERC20/ERC20.sol";
+import {ERC20Upgradeable} from "openzeppelin-contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {ICharacterSheets} from "../interfaces/ICharacterSheets.sol";
 import {ClassesImplementation} from "./ClassesImplementation.sol";
@@ -15,7 +16,7 @@ import {Errors} from "../lib/Errors.sol";
  * @author MrDeadCe11
  * @notice this is an ERC20 that is designed to intereact with the items, character sheets, and classes contracts to provide a measurable amount of character advancment
  */
-contract ExperienceImplementation is ERC20, Initializable {
+contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
     bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
     bytes32 public constant PLAYER = keccak256("PLAYER");
     bytes32 public constant CHARACTER = keccak256("CHARACTER");
@@ -54,11 +55,12 @@ contract ExperienceImplementation is ERC20, Initializable {
         _;
     }
 
-    constructor() ERC20("EXP", "Experience") {
+    constructor() {
         _disableInitializers();
     }
 
     function initialize(bytes calldata initializationData) external initializer {
+        __ERC20_init_unchained("EXP", "Experience");
         (characterSheets, itemsContract) = abi.decode(initializationData, (address, address));
     }
 
@@ -109,4 +111,6 @@ contract ExperienceImplementation is ERC20, Initializable {
     function transfer(address, uint256) public pure override returns (bool) {
         revert Errors.TransferError();
     }
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {}
 }
