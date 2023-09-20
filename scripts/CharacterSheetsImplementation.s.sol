@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import "forge-std/Script.sol";
+import "forge-std/StdJson.sol";
+
 import {CharacterSheetsImplementation} from "../src/implementations/CharacterSheetsImplementation.sol";
 import {Moloch} from "../src/mocks/MockMoloch.sol";
 import {BaseDeployer} from "./BaseDeployer.sol";
 import {BaseExecutor} from "./BaseExecutor.sol";
-import "forge-std/Script.sol";
-import "forge-std/StdJson.sol";
 
 contract ExecuteCharacterSheetsImplementation is BaseExecutor {
     using stdJson for string;

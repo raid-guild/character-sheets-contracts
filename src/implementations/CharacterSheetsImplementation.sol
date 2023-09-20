@@ -2,22 +2,21 @@
 pragma solidity ^0.8.9;
 pragma abicoder v2;
 
-import {ERC721} from "../../lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
-import {IERC721} from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
-import {ERC721URIStorage} from "../../lib/openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import {AccessControl} from "../../lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
-import {Counters} from "../../lib/openzeppelin-contracts/contracts/utils/Counters.sol";
-import {Initializable} from "openzeppelin/proxy/utils/Initializable.sol";
+import {ERC721} from "openzeppelin-contracts/token/ERC721/ERC721.sol";
+import {IERC721} from "openzeppelin-contracts/token/ERC721/IERC721.sol";
+import {ERC721URIStorage} from "openzeppelin-contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import {AccessControl} from "openzeppelin-contracts/access/AccessControl.sol";
+import {Counters} from "openzeppelin-contracts/utils/Counters.sol";
+import {Initializable} from "openzeppelin-contracts/proxy/utils/Initializable.sol";
+// import {console2} from "forge-std/console2.sol";
 
 import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
+import {IEligibilityAdaptor} from "../interfaces/IEligibilityAdaptor.sol";
 import {ItemsImplementation} from "./ItemsImplementation.sol";
 import {ClassesImplementation} from "./ClassesImplementation.sol";
 import {ExperienceImplementation} from "./ExperienceImplementation.sol";
 import {CharacterSheet} from "../lib/Structs.sol";
-
-import {IEligibilityAdaptor} from "../interfaces/IEligibilityAdaptor.sol";
 import {Errors} from "../lib/Errors.sol";
-// import "forge-std/console2.sol";
 
 contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorage, AccessControl {
     using Counters for Counters.Counter;

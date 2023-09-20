@@ -1,21 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {Initializable} from "openzeppelin/proxy/utils/Initializable.sol";
-import {MerkleProof} from "openzeppelin/utils/cryptography/MerkleProof.sol";
-import {ERC1155Receiver} from "openzeppelin/token/ERC1155/utils/ERC1155Receiver.sol";
-import {ERC1155, ERC1155TokenReceiver} from "@hats/lib/ERC1155/ERC1155.sol";
-import {ERC1155Holder} from "openzeppelin/token/ERC1155/utils/ERC1155Holder.sol";
-import {Counters} from "openzeppelin/utils/Counters.sol";
+import {Initializable} from "openzeppelin-contracts/proxy/utils/Initializable.sol";
+import {MerkleProof} from "openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
+import {ERC1155Receiver} from "openzeppelin-contracts/token/ERC1155/utils/ERC1155Receiver.sol";
+import {ERC1155, ERC1155TokenReceiver} from "hats-protocol/lib/ERC1155/ERC1155.sol";
+import {ERC1155Holder} from "openzeppelin-contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import {Counters} from "openzeppelin-contracts/utils/Counters.sol";
+// import {console2} from "forge-std/console2.sol";
 
 import {ICharacterSheets} from "../interfaces/ICharacterSheets.sol";
 import {ClassesImplementation} from "./ClassesImplementation.sol";
 import {ExperienceImplementation} from "./ExperienceImplementation.sol";
 import {Item} from "../lib/Structs.sol";
-
 import {Errors} from "../lib/Errors.sol";
-
-import "forge-std/console2.sol";
 
 /**
  * @title Experience and Items

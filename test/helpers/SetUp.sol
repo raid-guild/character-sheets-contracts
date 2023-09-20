@@ -4,6 +4,7 @@ pragma abicoder v2;
 //solhint-disable
 
 import "forge-std/Test.sol";
+import "forge-std/console2.sol";
 import "../../src/implementations/ItemsImplementation.sol";
 import "../../src/implementations/ExperienceImplementation.sol";
 import "../../src/CharacterSheetsFactory.sol";
@@ -14,12 +15,10 @@ import "../../src/interfaces/IMolochDAO.sol";
 import "../../src/mocks/MockMoloch.sol";
 // import "../../src/mocks/MockHats.sol";
 import "../../src/lib/Structs.sol";
-import "../../lib/murky/src/Merkle.sol";
+import "murky/src/Merkle.sol";
 import {ERC6551Registry} from "../../src/mocks/ERC6551Registry.sol";
 import {CharacterAccount} from "../../src/CharacterAccount.sol";
 import {MultiSend} from "../../src/lib/MultiSend.sol";
-
-import "forge-std/console2.sol";
 
 struct StoredAddresses {
     address characterSheetsImplementation;

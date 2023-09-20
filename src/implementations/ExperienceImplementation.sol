@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {Initializable} from "openzeppelin/proxy/utils/Initializable.sol";
-import {MerkleProof} from "openzeppelin/utils/cryptography/MerkleProof.sol";
-import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
+import {Initializable} from "openzeppelin-contracts/proxy/utils/Initializable.sol";
+import {MerkleProof} from "openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
+import {ERC20} from "openzeppelin-contracts/token/ERC20/ERC20.sol";
 
 import {ICharacterSheets} from "../interfaces/ICharacterSheets.sol";
 import {ClassesImplementation} from "./ClassesImplementation.sol";
 import {Item, Class, CharacterSheet} from "../lib/Structs.sol";
-
 import {Errors} from "../lib/Errors.sol";
 
 /**
@@ -102,12 +101,12 @@ contract ExperienceImplementation is ERC20, Initializable {
     //Experience is non transferable
 
     //solhint-disable-next-line no-unused-vars
-    function transferFrom(address from, address to, uint256 amount) public pure override returns (bool) {
+    function transferFrom(address, address, uint256) public pure override returns (bool) {
         revert Errors.TransferError();
     }
 
     //solhint-disable-next-line no-unused-vars
-    function transfer(address to, uint256 amount) public pure override returns (bool) {
+    function transfer(address, uint256) public pure override returns (bool) {
         revert Errors.TransferError();
     }
 }

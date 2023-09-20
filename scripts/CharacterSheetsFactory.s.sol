@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import "forge-std/Script.sol";
+import "forge-std/StdJson.sol";
+
 import {CharacterSheetsFactory} from "../src/CharacterSheetsFactory.sol";
 
 import {BaseDeployer} from "./BaseDeployer.sol";
 import {BaseFactoryExecutor} from "./BaseExecutor.sol";
-import "forge-std/Script.sol";
-import "forge-std/StdJson.sol";
 
 contract DeployCharacterSheetsFactory is BaseDeployer {
     using stdJson for string;

@@ -1,13 +1,13 @@
 pragma solidity ^0.8.19;
 // SPDX-License-Identifier: MIT
 
+import {ClonesUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/ClonesUpgradeable.sol";
+import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import {CharacterSheetsImplementation} from "./implementations/CharacterSheetsImplementation.sol";
 import {ClassesImplementation} from "./implementations/ClassesImplementation.sol";
 import {ExperienceImplementation} from "./implementations/ExperienceImplementation.sol";
 import {ItemsImplementation} from "./implementations/ItemsImplementation.sol";
-
-import {ClonesUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/proxy/ClonesUpgradeable.sol";
-import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
 // import "forge-std/console2.sol";
 contract CharacterSheetsFactory is OwnableUpgradeable {
@@ -32,7 +32,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
     function initialize() external initializer {
         __Context_init_unchained();
-        __Ownable_init_unchained(msg.sender);
+        __Ownable_init_unchained();
     }
 
     function updateCharacterSheetsImplementation(address _sheetImplementation) external onlyOwner {
