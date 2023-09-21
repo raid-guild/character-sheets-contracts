@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IERC165} from "openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
-import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
-import {IERC1271} from "openzeppelin-contracts/contracts/interfaces/IERC1271.sol";
-import {SignatureChecker} from "openzeppelin-contracts/contracts/utils/cryptography/SignatureChecker.sol";
+import {IERC165} from "openzeppelin-contracts/utils/introspection/IERC165.sol";
+import {IERC721} from "openzeppelin-contracts/token/ERC721/IERC721.sol";
+import {IERC1271} from "openzeppelin-contracts/interfaces/IERC1271.sol";
+import {SignatureChecker} from "openzeppelin-contracts/utils/cryptography/SignatureChecker.sol";
 import {
     ERC1155Holder,
     ERC1155Receiver,
     IERC1155Receiver
-} from "openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+} from "openzeppelin-contracts/token/ERC1155/utils/ERC1155Holder.sol";
+
 import {IERC6551Account} from "./interfaces/IERC6551Account.sol";
 import {IERC6551Executable} from "./interfaces/IERC6551Executable.sol";
 import {CallUtils} from "./lib/CallUtils.sol";

@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {ERC165} from "openzeppelin/utils/introspection/ERC165.sol";
-import {Ownable} from "openzeppelin/access/Ownable.sol";
+import {ERC165} from "openzeppelin-contracts/utils/introspection/ERC165.sol";
+import {Ownable} from "openzeppelin-contracts/access/Ownable.sol";
+
 import {IMolochDAO} from "./interfaces/IMolochDAO.sol";
 import {IEligibilityAdaptor} from "./interfaces/IEligibilityAdaptor.sol";
 import {ICharacterSheets} from "./interfaces/ICharacterSheets.sol";

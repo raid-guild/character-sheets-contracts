@@ -2,24 +2,25 @@
 pragma solidity ^0.8.9;
 pragma abicoder v2;
 
-import {ERC721} from "../../lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
-import {IERC721} from "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
-import {ERC721URIStorage} from "../../lib/openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import {AccessControl} from "../../lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
-import {Counters} from "../../lib/openzeppelin-contracts/contracts/utils/Counters.sol";
-import {Initializable} from "openzeppelin/proxy/utils/Initializable.sol";
+import {
+    ERC721URIStorageUpgradeable,
+    ERC721Upgradeable,
+    IERC721Upgradeable
+} from "openzeppelin-contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
+import {AccessControlUpgradeable} from "openzeppelin-contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {Counters} from "openzeppelin-contracts/utils/Counters.sol";
+// import {console2} from "forge-std/console2.sol";
 
 import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
+import {IEligibilityAdaptor} from "../interfaces/IEligibilityAdaptor.sol";
 import {ItemsImplementation} from "./ItemsImplementation.sol";
 import {ClassesImplementation} from "./ClassesImplementation.sol";
 import {ExperienceImplementation} from "./ExperienceImplementation.sol";
 import {CharacterSheet} from "../lib/Structs.sol";
-
-import {IEligibilityAdaptor} from "../interfaces/IEligibilityAdaptor.sol";
 import {Errors} from "../lib/Errors.sol";
-// import "forge-std/console2.sol";
 
-contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorage, AccessControl {
+contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
     using Counters for Counters.Counter;
 
     Counters.Counter private _tokenIdCounter;
@@ -69,7 +70,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     }
 
     //solhint-disable-next-line
-    constructor() ERC721("CharacterSheet", "CHAS") {
+    constructor() {
         _disableInitializers();
     }
 
@@ -92,6 +93,8 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
      */
 
     function initialize(bytes calldata _encodedParameters) external initializer {
+        __ERC721_init_unchained("CharacterSheet", "CHAS");
+
         _grantRole(DUNGEON_MASTER, msg.sender);
 
         (
@@ -404,7 +407,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
 
     // The following functions are overrides required by Solidity.
     // solhint-disable
-    function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
+    function _burn(uint256 tokenId) internal override {
         super._burn(tokenId);
     }
 
@@ -412,14 +415,16 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
         return baseTokenURI;
     }
 
-    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(DUNGEON_MASTER) {}
+
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
         return super.tokenURI(tokenId);
     }
 
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC721, ERC721URIStorage, AccessControl)
+        override(ERC721URIStorageUpgradeable, AccessControlUpgradeable)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
@@ -431,14 +436,18 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
      * @dev See {IERC721-approve}.
      */
 
-    function approve(address to, uint256 tokenId) public virtual override(ERC721, IERC721) {
+    function approve(address to, uint256 tokenId) public virtual override(ERC721Upgradeable, IERC721Upgradeable) {
         return super.approve(to, tokenId);
     }
 
     /**
      * @dev See {IERC721-setApprovalForAll}.
      */
-    function setApprovalForAll(address operator, bool approved) public virtual override(ERC721, IERC721) {
+    function setApprovalForAll(address operator, bool approved)
+        public
+        virtual
+        override(ERC721Upgradeable, IERC721Upgradeable)
+    {
         return super.setApprovalForAll(operator, approved);
     }
 
@@ -448,7 +457,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     function transferFrom(address from, address to, uint256 tokenId)
         public
         virtual
-        override(ERC721, IERC721)
+        override(ERC721Upgradeable, IERC721Upgradeable)
         onlyRole(DUNGEON_MASTER)
     {
         return super.transferFrom(from, to, tokenId);
@@ -462,7 +471,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     function safeTransferFrom(address from, address to, uint256 tokenId)
         public
         virtual
-        override(ERC721, IERC721)
+        override(ERC721Upgradeable, IERC721Upgradeable)
         onlyRole(DUNGEON_MASTER)
     {
         return super.safeTransferFrom(from, to, tokenId);
@@ -474,7 +483,7 @@ contract CharacterSheetsImplementation is Initializable, ERC721, ERC721URIStorag
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data)
         public
         virtual
-        override(ERC721, IERC721)
+        override(ERC721Upgradeable, IERC721Upgradeable)
         onlyRole(DUNGEON_MASTER)
     {
         return super.safeTransferFrom(from, to, tokenId, data);

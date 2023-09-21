@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
+//solhint-disable
+
+import "forge-std/Script.sol";
+import "forge-std/StdJson.sol";
 
 import {CharacterAccount} from "../src/CharacterAccount.sol";
-
 import {BaseDeployer} from "./BaseDeployer.sol";
-//solhint-disable
-import "../lib/forge-std/src/Script.sol";
-import "../lib/forge-std/src/StdJson.sol";
 
 contract DeployCharacterAccount is BaseDeployer {
     using stdJson for string;

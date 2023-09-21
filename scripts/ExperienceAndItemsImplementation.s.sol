@@ -1,26 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import "forge-std/Script.sol";
+import "forge-std/StdJson.sol";
+
 import {ItemsImplementation} from "../src/implementations/ItemsImplementation.sol";
 import {BaseExecutor} from "./BaseExecutor.sol";
 import {BaseDeployer} from "./BaseDeployer.sol";
 import "../src/lib/Structs.sol";
-import "forge-std/Script.sol";
-import "forge-std/StdJson.sol";
 
 contract DeployItemsImplementation is BaseDeployer {
     using stdJson for string;
 
-    ItemsImplementation public ItemsImplementation;
+    ItemsImplementation public itemsImplementation;
 
     function deploy() internal override returns (address) {
         vm.startBroadcast(deployerPrivateKey);
 
-        ItemsImplementation = new ItemsImplementation();
+        itemsImplementation = new ItemsImplementation();
 
         vm.stopBroadcast();
 
-        return address(ItemsImplementation);
+        return address(itemsImplementation);
     }
 }
 
