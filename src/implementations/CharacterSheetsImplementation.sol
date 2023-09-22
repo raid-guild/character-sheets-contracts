@@ -460,6 +460,10 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
         override(ERC721Upgradeable, IERC721Upgradeable)
         onlyRole(DUNGEON_MASTER)
     {
+        if (memberAddressToTokenId[to] != 0) {
+            revert Errors.TokenBalanceError();
+        }
+        memberAddressToTokenId[to] = tokenId;
         return super.transferFrom(from, to, tokenId);
     }
 
@@ -474,6 +478,10 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
         override(ERC721Upgradeable, IERC721Upgradeable)
         onlyRole(DUNGEON_MASTER)
     {
+        if (memberAddressToTokenId[to] != 0) {
+            revert Errors.TokenBalanceError();
+        }
+        memberAddressToTokenId[to] = tokenId;
         return super.safeTransferFrom(from, to, tokenId);
     }
 
@@ -486,6 +494,10 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
         override(ERC721Upgradeable, IERC721Upgradeable)
         onlyRole(DUNGEON_MASTER)
     {
+        if (memberAddressToTokenId[to] != 0) {
+            revert Errors.TokenBalanceError();
+        }
+        memberAddressToTokenId[to] = tokenId;
         return super.safeTransferFrom(from, to, tokenId, data);
     }
 }

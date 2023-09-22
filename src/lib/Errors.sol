@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 abstract contract Errors {
     error VariableNotSet();
+    error TokenBalanceError();
     error EligibilityError();
     error CharacterError();
     error PlayerError();
