@@ -4,8 +4,10 @@ pragma solidity ^0.8.9;
 import {Initializable} from "openzeppelin-contracts/proxy/utils/Initializable.sol";
 import {MerkleProof} from "openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
 import {ERC1155Upgradeable} from "openzeppelin-contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
-import {ERC1155HolderUpgradeable} from
-    "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import {
+    ERC1155HolderUpgradeable,
+    ERC1155ReceiverUpgradeable
+} from "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Counters} from "openzeppelin-contracts/utils/Counters.sol";
 // import {console2} from "forge-std/console2.sol";
@@ -16,6 +18,11 @@ import {ExperienceImplementation} from "./ExperienceImplementation.sol";
 import {Item} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
 
+<<<<<<< Updated upstream
+=======
+// import "forge-std/console2.sol";
+
+>>>>>>> Stashed changes
 /**
  * @title Experience and Items
  * @author MrDeadCe11
@@ -195,6 +202,7 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
      * @return success bool if crafting is a success return true, else return false
      */
 
+<<<<<<< Updated upstream
     function craftItem(uint256 itemId, uint256 amount) public onlyCharacter returns (bool success) {
         Item storage newItem = items[itemId];
 
@@ -202,6 +210,14 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
             revert Errors.ItemError();
         }
 
+=======
+    function craftItem(uint256 itemId, uint256 amount) public onlyCharacter returns (bool) {
+        Item memory newItem = items[itemId];
+        bool success = false;
+        if (!newItem.craftable) {
+            revert Errors.ItemError();
+        }
+>>>>>>> Stashed changes
         if (
             !_checkItemRequirements(msg.sender, newItem.itemRequirements, amount)
                 || !_checkClassRequirements(msg.sender, newItem.classRequirements)
