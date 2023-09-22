@@ -4,10 +4,10 @@ pragma abicoder v2;
 //solhint-disable
 
 import "forge-std/Test.sol";
+import "forge-std/console2.sol";
+
 import "./helpers/SetUp.sol";
 import "../src/lib/Errors.sol";
-
-import "forge-std/console2.sol";
 
 contract CharacterAccountTest is Test, SetUp {
     function testEquipItemToCharacter() public {

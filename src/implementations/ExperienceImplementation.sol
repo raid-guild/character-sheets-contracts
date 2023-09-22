@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {Initializable} from "openzeppelin/proxy/utils/Initializable.sol";
-import {MerkleProof} from "openzeppelin/utils/cryptography/MerkleProof.sol";
-import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
+import {Initializable} from "openzeppelin-contracts/proxy/utils/Initializable.sol";
+import {MerkleProof} from "openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
+import {ERC20Upgradeable} from "openzeppelin-contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {ICharacterSheets} from "../interfaces/ICharacterSheets.sol";
 import {ClassesImplementation} from "./ClassesImplementation.sol";
 import {Item, Class, CharacterSheet} from "../lib/Structs.sol";
-
 import {Errors} from "../lib/Errors.sol";
 
 /**
@@ -16,7 +16,7 @@ import {Errors} from "../lib/Errors.sol";
  * @author MrDeadCe11
  * @notice this is an ERC20 that is designed to intereact with the items, character sheets, and classes contracts to provide a measurable amount of character advancment
  */
-contract ExperienceImplementation is ERC20, Initializable {
+contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
     bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
     bytes32 public constant PLAYER = keccak256("PLAYER");
     bytes32 public constant CHARACTER = keccak256("CHARACTER");
@@ -55,11 +55,12 @@ contract ExperienceImplementation is ERC20, Initializable {
         _;
     }
 
-    constructor() ERC20("EXP", "Experience") {
+    constructor() {
         _disableInitializers();
     }
 
     function initialize(bytes calldata initializationData) external initializer {
+        __ERC20_init_unchained("EXP", "Experience");
         (characterSheets, itemsContract) = abi.decode(initializationData, (address, address));
     }
 
@@ -102,12 +103,14 @@ contract ExperienceImplementation is ERC20, Initializable {
     //Experience is non transferable
 
     //solhint-disable-next-line no-unused-vars
-    function transferFrom(address from, address to, uint256 amount) public pure override returns (bool) {
+    function transferFrom(address, address, uint256) public pure override returns (bool) {
         revert Errors.TransferError();
     }
 
     //solhint-disable-next-line no-unused-vars
-    function transfer(address to, uint256 amount) public pure override returns (bool) {
+    function transfer(address, uint256) public pure override returns (bool) {
         revert Errors.TransferError();
     }
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {}
 }

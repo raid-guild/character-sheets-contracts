@@ -5,9 +5,10 @@ pragma abicoder v2;
 //solhint-disable
 
 import "forge-std/Test.sol";
+
 import "../src/implementations/ItemsImplementation.sol";
-import "./helpers/SetUp.sol";
 import "../src/lib/Structs.sol";
+import "./helpers/SetUp.sol";
 
 contract ItemsTest is Test, SetUp {
     function testCreateItemType() public {
