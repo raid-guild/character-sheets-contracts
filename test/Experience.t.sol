@@ -78,7 +78,7 @@ contract ExperienceTest is Test, SetUp {
 
         //suceed if calld by another contract
         vm.prank(address(classes));
-        experience.burnExp(npc1, 100);
-        assertEq(experience.balanceOf(npc1), 0, "incorrect balance");
+        experience.burnExp(npc1, 99);
+        assertEq(experience.balanceOf(npc1), 1, "incorrect balance");
     }
 }
