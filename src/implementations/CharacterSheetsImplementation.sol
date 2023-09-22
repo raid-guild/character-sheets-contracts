@@ -4,9 +4,9 @@ pragma abicoder v2;
 
 import {
     ERC721URIStorageUpgradeable,
-    ERC721Upgradeable,
-    IERC721Upgradeable
+    ERC721Upgradeable
 } from "openzeppelin-contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
+import {IERC721Upgradeable} from "openzeppelin-contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {AccessControlUpgradeable} from "openzeppelin-contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Counters} from "openzeppelin-contracts/utils/Counters.sol";
