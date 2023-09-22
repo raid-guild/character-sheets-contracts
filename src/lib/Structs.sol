@@ -10,6 +10,8 @@ struct Item {
     bytes32 claimable;
     /// @dev this is the array of classes required to transfer this item
     uint256[] classRequirements;
+    /// @dev whether or not this item is craftable
+    bool craftable;
     /// @dev an array of arrays with length of 2. containing the required itemId and the amount required
     /// eg. [[itemId, amount], [itemId, amount]]
     uint256[][] itemRequirements;

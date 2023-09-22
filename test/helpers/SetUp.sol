@@ -120,7 +120,7 @@ contract SetUp is Test {
 
         testClassId = classes.createClassType(createNewClass("test_class"));
 
-        testItemId = items.createItemType(createNewItem("test_item", false, bytes32(0)));
+        testItemId = items.createItemType(createNewItem("test_item", false, false, bytes32(0)));
         vm.stopPrank();
         bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
         vm.prank(player1);
@@ -148,7 +148,7 @@ contract SetUp is Test {
     }
 
     function createNewItemType(string memory name) public returns (uint256 itemId) {
-        bytes memory newItem = createNewItem(name, false, bytes32(0));
+        bytes memory newItem = createNewItem(name, false, false, bytes32(0));
         itemId = items.createItemType(newItem);
     }
 
@@ -166,7 +166,7 @@ contract SetUp is Test {
         root = merkle.getRoot(leaves);
     }
 
-    function createNewItem(string memory _name, bool _soulbound, bytes32 _claimable)
+    function createNewItem(string memory _name, bool craftable, bool _soulbound, bytes32 _claimable)
         public
         pure
         returns (bytes memory)
@@ -179,7 +179,14 @@ contract SetUp is Test {
         uint256[] memory newClassRequirements;
         // newClassRequirements[0] = testClassId;
         return abi.encode(
-            _name, 10 ** 18, newItemRequirements, newClassRequirements, _soulbound, _claimable, "test_item_cid/"
+            _name,
+            10 ** 18,
+            newItemRequirements,
+            newClassRequirements,
+            craftable,
+            _soulbound,
+            _claimable,
+            "test_item_cid/"
         );
     }
 

@@ -51,6 +51,7 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
 
     /// @dev the total number of item types that have been created
     uint256 public totalItemTypes;
+
     /// @dev the total amount of experience that has been given out
     uint256 public totalExperience;
 
@@ -518,13 +519,16 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
         uint256 supply;
         uint256[][] memory newItemRequirements;
         uint256[] memory newClassRequirements;
+        bool craftable;
         bool soulbound;
         bytes32 claimable;
         string memory cid;
         {
-            (name, supply, newItemRequirements, newClassRequirements, soulbound, claimable, cid) =
-                abi.decode(data, (string, uint256, uint256[][], uint256[], bool, bytes32, string));
-            return Item(cid, claimable, newClassRequirements, newItemRequirements, name, soulbound, 0, supply, 0);
+            (name, supply, newItemRequirements, newClassRequirements, craftable, soulbound, claimable, cid) =
+                abi.decode(data, (string, uint256, uint256[][], uint256[], bool, bool, bytes32, string));
+            return Item(
+                cid, claimable, newClassRequirements, craftable, newItemRequirements, name, soulbound, 0, supply, 0
+            );
         }
     }
 

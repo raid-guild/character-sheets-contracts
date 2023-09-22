@@ -187,6 +187,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
         newCharacterSheet.erc6551TokenAddress = tba;
         newCharacterSheet.memberAddress = _to;
         newCharacterSheet.tokenId = tokenId;
+
         //store info in mappings
         sheets[tokenId] = newCharacterSheet;
         memberAddressToTokenId[_to] = tokenId;

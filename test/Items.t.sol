@@ -12,7 +12,7 @@ import "./helpers/SetUp.sol";
 
 contract ItemsTest is Test, SetUp {
     function testCreateItemType() public {
-        bytes memory newItem = createNewItem("Pirate_Hat", false, bytes32(0));
+        bytes memory newItem = createNewItem("Pirate_Hat", false, false, bytes32(0));
         vm.prank(admin);
         uint256 _itemId = items.createItemType(newItem);
 
@@ -36,8 +36,8 @@ contract ItemsTest is Test, SetUp {
 
     function testBatchCreateItemType() public {
         bytes[] memory _items = new bytes[](2);
-        _items[0] = createNewItem("Pirate_Hat1", false, bytes32(0));
-        _items[1] = createNewItem("Pirate_Hat2", false, bytes32(0));
+        _items[0] = createNewItem("Pirate_Hat1", false, false, bytes32(0));
+        _items[1] = createNewItem("Pirate_Hat2", false, false, bytes32(0));
         vm.prank(admin);
         uint256[] memory _itemIds = items.batchCreateItemType(_items);
 
@@ -85,7 +85,7 @@ contract ItemsTest is Test, SetUp {
     }
 
     function testCreateItemTypeRevertItemExists() public {
-        bytes memory newItem = createNewItem("Pirate_Hat", false, bytes32(0));
+        bytes memory newItem = createNewItem("Pirate_Hat", false, false, bytes32(0));
 
         vm.startPrank(admin);
         items.createItemType(newItem);
@@ -97,7 +97,7 @@ contract ItemsTest is Test, SetUp {
     }
 
     function testCreateItemTypeRevertAccessControl() public {
-        bytes memory newItem = createNewItem("Pirate_Hat", false, bytes32(0));
+        bytes memory newItem = createNewItem("Pirate_Hat", false, false, bytes32(0));
 
         vm.startPrank(player2);
         vm.expectRevert();
@@ -111,7 +111,7 @@ contract ItemsTest is Test, SetUp {
         uint256 player2Id = characterSheets.rollCharacterSheet(player2, abi.encode("player 2", "test_token_uri1/"));
         vm.startPrank(admin);
 
-        bytes memory newItem = createNewItem("staff", false, bytes32(0));
+        bytes memory newItem = createNewItem("staff", false, false, bytes32(0));
 
         address player2NPC = characterSheets.getCharacterSheetByCharacterId(player2Id).erc6551TokenAddress;
         uint256 _itemId = items.createItemType(newItem);
@@ -290,5 +290,12 @@ contract ItemsTest is Test, SetUp {
         assertEq(modifiedItem.itemRequirements.length, 1, "requirement not removed");
         assertEq(modifiedItem.itemRequirements[0][0], 0, "wrong requirement removed");
         assertEq(modifiedItem.itemRequirements[0][1], 100, "Incorrect remaining amount");
+    }
+
+    function testCraftItem() public {
+        // should revert if item is not set to craftable
+        vm.prank(npc1);
+        vm.expectRevert();
+        items.craftItem(1, 1);
     }
 }
