@@ -19,11 +19,6 @@ import {ClassesImplementation} from "./ClassesImplementation.sol";
 import {ExperienceImplementation} from "./ExperienceImplementation.sol";
 import {CharacterSheet} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
-<<<<<<< Updated upstream
-=======
-
-// import "forge-std/console2.sol";
->>>>>>> Stashed changes
 
 contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
     using Counters for Counters.Counter;

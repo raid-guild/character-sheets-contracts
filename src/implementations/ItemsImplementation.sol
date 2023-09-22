@@ -18,11 +18,6 @@ import {ExperienceImplementation} from "./ExperienceImplementation.sol";
 import {Item} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
 
-<<<<<<< Updated upstream
-=======
-// import "forge-std/console2.sol";
-
->>>>>>> Stashed changes
 /**
  * @title Experience and Items
  * @author MrDeadCe11
@@ -202,7 +197,6 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
      * @return success bool if crafting is a success return true, else return false
      */
 
-<<<<<<< Updated upstream
     function craftItem(uint256 itemId, uint256 amount) public onlyCharacter returns (bool success) {
         Item storage newItem = items[itemId];
 
@@ -210,14 +204,6 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
             revert Errors.ItemError();
         }
 
-=======
-    function craftItem(uint256 itemId, uint256 amount) public onlyCharacter returns (bool) {
-        Item memory newItem = items[itemId];
-        bool success = false;
-        if (!newItem.craftable) {
-            revert Errors.ItemError();
-        }
->>>>>>> Stashed changes
         if (
             !_checkItemRequirements(msg.sender, newItem.itemRequirements, amount)
                 || !_checkClassRequirements(msg.sender, newItem.classRequirements)

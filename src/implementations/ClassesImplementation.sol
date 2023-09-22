@@ -8,11 +8,14 @@ import {
 } from "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Counters} from "openzeppelin-contracts/utils/Counters.sol";
+import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {CharacterSheetsImplementation} from "../implementations/CharacterSheetsImplementation.sol";
 import {ExperienceImplementation} from "../implementations/ExperienceImplementation.sol";
 import {Class, CharacterSheet} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
+
+import {IClassLevelAdaptor} from "../interfaces/IClassLevelAdaptor.sol";
 
 /**
  * @title Experience and Items
@@ -21,7 +24,7 @@ import {Errors} from "../lib/Errors.sol";
  * Each item and class is an 1155 token that can soulbound or not to the erc6551 wallet of each player nft
  * in the characterSheets contract.
  */
-contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UUPSUpgradeable {
+contract ClassesImplementation is Initializable, ERC1155HolderUpgradeable, ERC1155Upgradeable, UUPSUpgradeable {
     using Counters for Counters.Counter;
 
     Counters.Counter private _classIdCounter;
@@ -32,6 +35,9 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
 
     /// @dev individual mapping for token URIs
     mapping(uint256 => string) private _classURIs;
+
+    /// @dev character => classId => exp staked
+    mapping(address => mapping(uint256 => uint256)) public classLevels;
 
     /// @dev base URI
     string private _baseURI = "";
@@ -48,6 +54,8 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
     CharacterSheetsImplementation public characterSheets;
     ExperienceImplementation public experience;
+
+    address public classLevelAdaptor;
 
     event NewClassCreated(uint256 erc1155TokenId, string name);
     event ClassAssigned(uint256 characterId, uint256 classId);
@@ -82,7 +90,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     function initialize(bytes calldata _encodedData) external initializer {
         address characterSheetsAddress;
         string memory baseUri;
-        (characterSheetsAddress, baseUri) = abi.decode(_encodedData, (address, string));
+        (characterSheetsAddress, classLevelAdaptor, baseUri) = abi.decode(_encodedData, (address, address, string));
         _baseURI = baseUri;
         characterSheets = CharacterSheetsImplementation(characterSheetsAddress);
 
@@ -189,7 +197,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     }
 
     /**
-     * removes a class from a character token
+     * removes a class from a character token must be called by the character account or the dungeon master
      * @param characterId the token Id of the player who needs a class removed
      * @param classId the class to be removed
      */
@@ -201,8 +209,10 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
 
         CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(characterId);
 
-        if (sheet.memberAddress != msg.sender && sheet.erc6551TokenAddress != msg.sender) {
-            revert Errors.OwnershipError();
+        if (!characterSheets.hasRole(DUNGEON_MASTER, msg.sender)) {
+            if (sheet.memberAddress != msg.sender && sheet.erc6551TokenAddress != msg.sender) {
+                revert Errors.OwnershipError();
+            }
         }
 
         _burn(sheet.erc6551TokenAddress, classId, 1);
@@ -211,16 +221,23 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
         emit ClassRevoked(characterId, classId);
     }
 
-    function levelClass(uint256 classId) public onlyCharacter {
-        uint256 balance = balanceOf(msg.sender, classId);
+    // function levelClass(uint256 classId) public returns (uint256) {
+    //     uint256 balance = balanceOf(msg.sender, classId);
 
-        if (balance < 1) {
-            revert Errors.ClassError();
-        }
+    //     if (balance < 1) {
+    //         revert Errors.ClassError();
+    //     }
 
-        //#todo create an adapter that decides on the EXP amount required to acheive levels and implement here
-    }
+    //     //check that character has enough exp to level
 
+    //     //stake appropriate exp
+
+    //     //mint another class token
+    // }
+
+    // function stakeExpForClassLevel(uint256 classId, uint256 amount) public returns (bool) {
+    //     uint256 balance = balanceOf(msg.sender, classId);
+    // }
     /**
      *
      * @param name the name of the class.  is case sensetive.

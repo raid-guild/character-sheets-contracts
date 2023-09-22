@@ -6,4 +6,6 @@ interface IExperience {
     function dropExp(address to, uint256 amount) external;
 
     function burnExp(address account, uint256 amount) external view returns (bool);
+
+    function balanceOf(address account) external view returns (uint256);
 }
