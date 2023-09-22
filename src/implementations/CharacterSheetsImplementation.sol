@@ -19,11 +19,6 @@ import {ClassesImplementation} from "./ClassesImplementation.sol";
 import {ExperienceImplementation} from "./ExperienceImplementation.sol";
 import {CharacterSheet} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
-<<<<<<< Updated upstream
-=======
-
-// import "forge-std/console2.sol";
->>>>>>> Stashed changes
 
 contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
     using Counters for Counters.Counter;
@@ -465,6 +460,10 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
         override(ERC721Upgradeable, IERC721Upgradeable)
         onlyRole(DUNGEON_MASTER)
     {
+        if (memberAddressToTokenId[to] != 0) {
+            revert Errors.TokenBalanceError();
+        }
+        memberAddressToTokenId[to] = tokenId;
         return super.transferFrom(from, to, tokenId);
     }
 
@@ -479,6 +478,10 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
         override(ERC721Upgradeable, IERC721Upgradeable)
         onlyRole(DUNGEON_MASTER)
     {
+        if (memberAddressToTokenId[to] != 0) {
+            revert Errors.TokenBalanceError();
+        }
+        memberAddressToTokenId[to] = tokenId;
         return super.safeTransferFrom(from, to, tokenId);
     }
 
@@ -491,6 +494,10 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
         override(ERC721Upgradeable, IERC721Upgradeable)
         onlyRole(DUNGEON_MASTER)
     {
+        if (memberAddressToTokenId[to] != 0) {
+            revert Errors.TokenBalanceError();
+        }
+        memberAddressToTokenId[to] = tokenId;
         return super.safeTransferFrom(from, to, tokenId, data);
     }
 }
