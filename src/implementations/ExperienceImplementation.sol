@@ -26,6 +26,7 @@ contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
     address public characterSheets;
     address public itemsContract;
+    address public classesContract;
 
     modifier onlyDungeonMaster() {
         if (!ICharacterSheets(characterSheets).hasRole(DUNGEON_MASTER, msg.sender)) {
@@ -49,7 +50,7 @@ contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
     }
 
     modifier onlyContract() {
-        if (msg.sender != itemsContract && msg.sender != characterSheets) {
+        if (msg.sender != itemsContract && msg.sender != characterSheets && msg.sender != classesContract) {
             revert Errors.CallerNotApproved();
         }
         _;
@@ -61,7 +62,7 @@ contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
 
     function initialize(bytes calldata initializationData) external initializer {
         __ERC20_init_unchained("EXP", "Experience");
-        (characterSheets, itemsContract) = abi.decode(initializationData, (address, address));
+        (characterSheets, itemsContract, classesContract) = abi.decode(initializationData, (address, address, address));
     }
 
     /// @notice Called by items contract to give experience to a character

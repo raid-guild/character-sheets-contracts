@@ -21,6 +21,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     address public experienceImplementation;
 
     bytes4 public constant ELIGIBILITY_INTERFACE_ID = 0x671ccc5a;
+    bytes4 public constant CLASS_LEVELS_INTERFACE_ID = 0xfe211eb1;
 
     uint256 private _nonce;
 
@@ -108,7 +109,10 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     }
 
     function createClassLevelAdaptor(address classLevelAdaptorImplementation) public returns (address) {
-        //require interface id
+        require(
+            ClassLevelAdaptor(classLevelAdaptorImplementation).supportsInterface(CLASS_LEVELS_INTERFACE_ID),
+            "invalid interface"
+        );
 
         address classLevelAdaptorClone = address(new ERC1967Proxy(classLevelAdaptorImplementation, ""));
         return classLevelAdaptorClone;
@@ -177,6 +181,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     //     );
     // }
 
+    // adaptors must be initialized seperately
     function initializeContracts(bytes calldata encodedAddresses, bytes calldata data) public {
         (
             address eligibilityAdaptorClone,
@@ -187,23 +192,26 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
             address itemsClone,
             address classesClone
         ) = abi.decode(encodedAddresses, (address, address, address[], address, address, address, address));
-        //stacc too dank again
 
+        //stacc too dank again
         bytes memory encodedCharInitAddresses =
             abi.encode(eligibilityAdaptorClone, dungeonMasters, itemsClone, experienceClone, classesClone);
 
         CharacterSheetsImplementation(characterSheetsClone).initialize(
             _encodeCharacterInitData(encodedCharInitAddresses, data)
         );
+
         ItemsImplementation(itemsClone).initialize(
             _encodeItemsData(characterSheetsClone, classesClone, experienceClone, data)
         );
 
         ClassesImplementation(classesClone).initialize(
-            _encodeClassesData(characterSheetsClone, classLevelAdaptorClone, data)
+            _encodeClassesData(characterSheetsClone, experienceClone, classLevelAdaptorClone, data)
         );
 
-        ExperienceImplementation(experienceClone).initialize(_encodeExpData(characterSheetsClone, itemsClone));
+        ExperienceImplementation(experienceClone).initialize(
+            _encodeExpData(characterSheetsClone, itemsClone, classesClone)
+        );
     }
 
     function _encodeCharacterInitData(bytes memory encodedInitData, bytes memory data)
@@ -248,17 +256,22 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         return abi.encode(characterSheetsClone, classesClone, experienceClone, itemsBaseUri);
     }
 
-    function _encodeClassesData(address characterSheetsClone, address classLevelAdaptorClone, bytes memory data)
+    function _encodeClassesData(
+        address characterSheetsClone,
+        address experienceClone,
+        address classLevelAdaptorClone,
+        bytes memory data
+    ) private pure returns (bytes memory) {
+        (,,, string memory classesBaseUri) = _decodeStrings(data);
+        return abi.encode(characterSheetsClone, experienceClone, classLevelAdaptorClone, classesBaseUri);
+    }
+
+    function _encodeExpData(address characterSheetsClone, address itemsClone, address classesClone)
         private
         pure
         returns (bytes memory)
     {
-        (,,, string memory classesBaseUri) = _decodeStrings(data);
-        return abi.encode(characterSheetsClone, classLevelAdaptorClone, classesBaseUri);
-    }
-
-    function _encodeExpData(address characterSheetsClone, address itemsClone) private pure returns (bytes memory) {
-        return abi.encode(characterSheetsClone, itemsClone);
+        return abi.encode(characterSheetsClone, itemsClone, classesClone);
     }
 
     function _decodeStrings(bytes memory data)

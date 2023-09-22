@@ -66,4 +66,19 @@ contract ExperienceTest is Test, SetUp {
         experience.revokeExp(npc1, 100);
         assertEq(experience.balanceOf(npc1), 0, "incorrect balance");
     }
+
+    function testBurnExp() public {
+        vm.prank(admin);
+        experience.dropExp(npc1, 100);
+        assertEq(experience.balanceOf(npc1), 100, "incorrect balance");
+        //revert if not called by another contract
+        vm.prank(player1);
+        vm.expectRevert();
+        experience.burnExp(npc1, 100);
+
+        //suceed if calld by another contract
+        vm.prank(address(classes));
+        experience.burnExp(npc1, 100);
+        assertEq(experience.balanceOf(npc1), 0, "incorrect balance");
+    }
 }

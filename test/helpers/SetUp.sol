@@ -105,7 +105,6 @@ contract SetUp is Test {
         address[] memory dungeonMasters = new address[](1);
         dungeonMasters[0] = admin;
 
-        bytes memory encodedDungeonMasters = abi.encode(dungeonMasters);
         characterSheetsFactory.updateERC6551Registry(address(erc6551Registry));
         characterSheetsFactory.updateERC6551AccountImplementation(address(erc6551Implementation));
 
@@ -152,20 +151,26 @@ contract SetUp is Test {
         );
 
         characterSheets = CharacterSheetsImplementation(stored.createdCharacterSheets);
+
         assertEq(address(characterSheets.classes()), stored.createdClasses, "incorrect classes address in setup");
+
         items = ItemsImplementation(stored.createdItems);
 
         classes = ClassesImplementation(stored.createdClasses);
+
         experience = ExperienceImplementation(stored.createdExperience);
 
         eligibility = EligibilityAdaptor(stored.createdEligibility);
 
         classLevels = ClassLevelAdaptor(stored.createdClassLevels);
 
+        //initialize created adaptors
+
         eligibility.initialize(abi.encode(address(dao)));
 
         classLevels.initialize(abi.encode(address(classes), address(experience)));
 
+        //set registry in character Sheets Contract
         characterSheets.setERC6551Registry(address(erc6551Registry));
 
         testClassId = classes.createClassType(createNewClass("test_class"));
@@ -182,19 +187,6 @@ contract SetUp is Test {
             "wrong dungeon master role assignment for character sheets"
         );
         assertTrue(characterSheets.hasRole(bytes32(0), admin), "wrong ADMIN role assignment for character sheets");
-    }
-
-    function dropExp(address player, uint256 amount) public {
-        address[] memory players = new address[](1);
-        players[0] = player;
-        uint256[][] memory itemIds = new uint256[][](1);
-        itemIds[0] = new uint256[](1);
-        itemIds[0][0] = 0;
-        uint256[][] memory amounts = new uint256[][](1);
-        amounts[0] = new uint256[](1);
-        amounts[0][0] = amount;
-        vm.prank(admin);
-        items.dropLoot(players, itemIds, amounts);
     }
 
     function createNewItemType(string memory name) public returns (uint256 itemId) {

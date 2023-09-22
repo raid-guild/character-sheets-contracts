@@ -144,4 +144,25 @@ contract ClassesTest is Test, SetUp {
         assertEq(classes.balanceOf(player1, 1), 1, "incorrect class assignment");
         assertEq(classes.balanceOf(npc1, 1), 0, "incorrect class assignment");
     }
+
+    function testClaimClass() public {
+        vm.prank(npc1);
+        classes.claimClass(1);
+
+        assertEq(classes.balanceOf(npc1, 1), 1, "incorrect token balance");
+    }
+
+    function testLevelClass() public {
+        vm.prank(npc1);
+        classes.claimClass(1);
+
+        vm.prank(admin);
+        experience.dropExp(npc1, 300);
+
+        vm.prank(npc1);
+        classes.levelClass(1);
+
+        assertEq(experience.balanceOf(npc1), 0, "incorrect exp balance");
+        assertEq(classes.balanceOf(npc1, 1), 2, "incorrect class level");
+    }
 }

@@ -10,8 +10,8 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UU
 import {Counters} from "openzeppelin-contracts/utils/Counters.sol";
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import {CharacterSheetsImplementation} from "../implementations/CharacterSheetsImplementation.sol";
-import {ExperienceImplementation} from "../implementations/ExperienceImplementation.sol";
+import {ICharacterSheets} from "../interfaces/ICharacterSheets.sol";
+import {IExperience} from "../interfaces/IExperience.sol";
 import {Class, CharacterSheet} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
 
@@ -52,8 +52,8 @@ contract ClassesImplementation is Initializable, ERC1155HolderUpgradeable, ERC11
     uint256 public totalClasses;
 
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
-    CharacterSheetsImplementation public characterSheets;
-    ExperienceImplementation public experience;
+    address public characterSheets;
+    address public experience;
 
     address public classLevelAdaptor;
 
@@ -63,21 +63,21 @@ contract ClassesImplementation is Initializable, ERC1155HolderUpgradeable, ERC11
     event CharacterSheetsUpdated(address newCharacterSheets);
 
     modifier onlyDungeonMaster() {
-        if (!characterSheets.hasRole(DUNGEON_MASTER, msg.sender)) {
+        if (!ICharacterSheets(characterSheets).hasRole(DUNGEON_MASTER, msg.sender)) {
             revert Errors.DungeonMasterOnly();
         }
         _;
     }
 
     modifier onlyPlayer() {
-        if (!characterSheets.hasRole(PLAYER, msg.sender)) {
+        if (!ICharacterSheets(characterSheets).hasRole(PLAYER, msg.sender)) {
             revert Errors.PlayerOnly();
         }
         _;
     }
 
     modifier onlyCharacter() {
-        if (!characterSheets.hasRole(CHARACTER, msg.sender)) {
+        if (!ICharacterSheets(characterSheets).hasRole(CHARACTER, msg.sender)) {
             revert Errors.CharacterOnly();
         }
         _;
@@ -88,11 +88,10 @@ contract ClassesImplementation is Initializable, ERC1155HolderUpgradeable, ERC11
     }
 
     function initialize(bytes calldata _encodedData) external initializer {
-        address characterSheetsAddress;
         string memory baseUri;
-        (characterSheetsAddress, classLevelAdaptor, baseUri) = abi.decode(_encodedData, (address, address, string));
+        (characterSheets, experience, classLevelAdaptor, baseUri) =
+            abi.decode(_encodedData, (address, address, address, string));
         _baseURI = baseUri;
-        characterSheets = CharacterSheetsImplementation(characterSheetsAddress);
 
         _classIdCounter.increment();
     }
@@ -110,8 +109,9 @@ contract ClassesImplementation is Initializable, ERC1155HolderUpgradeable, ERC11
         }
     }
 
-    function claimClass(uint256 characterId, uint256 classId) external onlyCharacter returns (bool) {
-        CharacterSheet memory character = characterSheets.getCharacterSheetByCharacterId(characterId);
+    function claimClass(uint256 classId) external onlyCharacter returns (bool) {
+        uint256 characterId = ICharacterSheets(characterSheets).getCharacterIdByNftAddress(msg.sender);
+        CharacterSheet memory character = ICharacterSheets(characterSheets).getCharacterSheetByCharacterId(characterId);
         Class memory newClass = classes[classId];
 
         if (msg.sender != character.erc6551TokenAddress) {
@@ -139,7 +139,7 @@ contract ClassesImplementation is Initializable, ERC1155HolderUpgradeable, ERC11
     }
 
     function updateCharacterSheetsContract(address newCharSheets) external onlyDungeonMaster {
-        characterSheets = CharacterSheetsImplementation(newCharSheets);
+        characterSheets = newCharSheets;
         emit CharacterSheetsUpdated(newCharSheets);
     }
 
@@ -176,7 +176,7 @@ contract ClassesImplementation is Initializable, ERC1155HolderUpgradeable, ERC11
      */
 
     function assignClass(uint256 characterId, uint256 classId) public onlyDungeonMaster {
-        CharacterSheet memory character = characterSheets.getCharacterSheetByCharacterId(characterId);
+        CharacterSheet memory character = ICharacterSheets(characterSheets).getCharacterSheetByCharacterId(characterId);
         Class memory newClass = classes[classId];
 
         if (character.memberAddress == address(0x0)) {
@@ -207,9 +207,9 @@ contract ClassesImplementation is Initializable, ERC1155HolderUpgradeable, ERC11
             revert Errors.ClassError();
         }
 
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(characterId);
+        CharacterSheet memory sheet = ICharacterSheets(characterSheets).getCharacterSheetByCharacterId(characterId);
 
-        if (!characterSheets.hasRole(DUNGEON_MASTER, msg.sender)) {
+        if (!ICharacterSheets(characterSheets).hasRole(DUNGEON_MASTER, msg.sender)) {
             if (sheet.memberAddress != msg.sender && sheet.erc6551TokenAddress != msg.sender) {
                 revert Errors.OwnershipError();
             }
@@ -221,23 +221,26 @@ contract ClassesImplementation is Initializable, ERC1155HolderUpgradeable, ERC11
         emit ClassRevoked(characterId, classId);
     }
 
-    // function levelClass(uint256 classId) public returns (uint256) {
-    //     uint256 balance = balanceOf(msg.sender, classId);
+    function levelClass(uint256 classId) public returns (bool) {
+        if (!IClassLevelAdaptor(classLevelAdaptor).levelRequirementsMet(msg.sender, classId)) {
+            revert Errors.ClassError();
+        }
 
-    //     if (balance < 1) {
-    //         revert Errors.ClassError();
-    //     }
+        uint256 currentLevel = balanceOf(msg.sender, classId);
+        uint256 requiredAmount = IClassLevelAdaptor(classLevelAdaptor).getExperienceForNextLevel(currentLevel);
 
-    //     //check that character has enough exp to level
+        //stake appropriate exp
+        classLevels[msg.sender][classId] += requiredAmount;
 
-    //     //stake appropriate exp
+        IExperience(experience).burnExp(msg.sender, requiredAmount);
 
-    //     //mint another class token
-    // }
+        //mint another class token
 
-    // function stakeExpForClassLevel(uint256 classId, uint256 amount) public returns (bool) {
-    //     uint256 balance = balanceOf(msg.sender, classId);
-    // }
+        _mint(msg.sender, classId, 1, "");
+
+        return true;
+    }
+
     /**
      *
      * @param name the name of the class.  is case sensetive.

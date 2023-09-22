@@ -218,7 +218,9 @@ contract ItemsTest is Test, SetUp {
         vm.expectRevert();
         items.claimItems(itemIds2, amounts2, proofs);
 
-        dropExp(npc1, 1000);
+        vm.prank(admin);
+        experience.dropExp(npc1, 1000);
+
         // revert wrong class
         vm.prank(npc1);
         vm.expectRevert();
