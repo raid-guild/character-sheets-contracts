@@ -18,14 +18,12 @@ import {Errors} from "../lib/Errors.sol";
  */
 contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
     bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
-    bytes32 public constant PLAYER = keccak256("PLAYER");
     bytes32 public constant CHARACTER = keccak256("CHARACTER");
 
     bytes32 public claimMerkleRoot;
 
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
     address public characterSheets;
-    address public itemsContract;
 
     modifier onlyDungeonMaster() {
         if (!ICharacterSheets(characterSheets).hasRole(DUNGEON_MASTER, msg.sender)) {
@@ -34,47 +32,15 @@ contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
         _;
     }
 
-    modifier onlyPlayer() {
-        if (!ICharacterSheets(characterSheets).hasRole(PLAYER, msg.sender)) {
-            revert Errors.PlayerOnly();
-        }
-        _;
-    }
-
-    modifier onlyCharacter() {
-        if (!ICharacterSheets(characterSheets).hasRole(CHARACTER, msg.sender)) {
-            revert Errors.CharacterOnly();
-        }
-        _;
-    }
-
-    modifier onlyContract() {
-        if (msg.sender != itemsContract && msg.sender != characterSheets) {
-            revert Errors.CallerNotApproved();
-        }
-        _;
-    }
-
     constructor() {
         _disableInitializers();
     }
 
-    function initialize(bytes calldata initializationData) external initializer {
+    function initialize(address _characterSheets) external initializer {
         __ERC20_init_unchained("EXP", "Experience");
-        (characterSheets, itemsContract) = abi.decode(initializationData, (address, address));
-    }
+        __UUPSUpgradeable_init();
 
-    /// @notice Called by items contract to give experience to a character
-    /// @param to the address of the character that will receive the exp
-
-    function giveExp(address to, uint256 amount) external onlyContract {
-        if (characterSheets == address(0)) {
-            revert Errors.VariableNotSet();
-        }
-        if (!ICharacterSheets(characterSheets).hasRole(CHARACTER, to)) {
-            revert Errors.CharacterError();
-        }
-        _mint(to, amount);
+        characterSheets = _characterSheets;
     }
 
     /// @notice Called by dungeon master to give experience to a character
@@ -95,7 +61,7 @@ contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
         _burn(account, amount);
     }
 
-    function burnExp(address account, uint256 amount) public onlyContract {
+    function burnExp(address account, uint256 amount) public onlyDungeonMaster {
         _burn(account, amount);
     }
 

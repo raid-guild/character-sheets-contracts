@@ -1,30 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {Asset} from "./MultiToken.sol";
+
 struct Item {
-    /// @dev this item's image/metadata uri
-    string cid;
     /// @dev  claimable: if bytes32(0) then  items are claimable by anyone, otherwise upload a merkle root
     /// of all addresses allowed to claim.  if not claimable at all use any random bytes32(n) besides bytes32(0)
     /// so all merkle proofs will fail.
     bytes32 claimable;
-    /// @dev this is the array of classes required to transfer this item
-    uint256[] classRequirements;
     /// @dev whether or not this item is craftable
     bool craftable;
-    /// @dev an array of arrays with length of 2. containing the required itemId and the amount required
-    /// eg. [[itemId, amount], [itemId, amount]]
-    uint256[][] itemRequirements;
-    /// @dev the name of this item
-    string name;
     /// @dev is this item soulbound or not
     bool soulbound;
     /// @dev the number of this item that have been given out or claimed
     uint256 supplied;
     /// @dev the number of this item to be created.
     uint256 supply;
-    /// @dev erc1155 token id
-    uint256 tokenId;
 }
 
 struct Class {

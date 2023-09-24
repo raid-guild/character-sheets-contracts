@@ -94,6 +94,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
 
     function initialize(bytes calldata _encodedParameters) external initializer {
         __ERC721_init_unchained("CharacterSheet", "CHAS");
+        __UUPSUpgradeable_init();
 
         _grantRole(DUNGEON_MASTER, msg.sender);
 
@@ -395,10 +396,10 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
         if (sheet.inventory.length == 0) {
             return false;
         }
-        uint256 tokenId = items.getItemById(itemId).tokenId;
-        require(tokenId != 0, "item does not exist");
+        uint256 supply = items.getItemById(itemId).supply;
+        require(supply != 0, "item does not exist");
         for (uint256 i; i < sheet.inventory.length; i++) {
-            if (sheet.inventory[i] == tokenId) {
+            if (sheet.inventory[i] == itemId) {
                 return true;
             }
         }

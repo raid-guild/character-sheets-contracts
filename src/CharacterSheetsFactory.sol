@@ -122,13 +122,11 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
             )
         );
 
-        ItemsImplementation(itemsClone).initialize(
-            _encodeItemsData(characterSheetsClone, classesClone, experienceClone, data)
-        );
+        ItemsImplementation(itemsClone).initialize(_encodeItemsData(characterSheetsClone, data));
 
         ClassesImplementation(classesClone).initialize(_encodeClassesData(characterSheetsClone, data));
 
-        ExperienceImplementation(experienceClone).initialize(_encodeExpData(characterSheetsClone, itemsClone));
+        ExperienceImplementation(experienceClone).initialize(characterSheetsClone);
     }
 
     function _encodeCharacterInitData(
@@ -157,24 +155,15 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         return (encodedCharacterSheetParameters);
     }
 
-    function _encodeItemsData(
-        address characterSheetsClone,
-        address classesClone,
-        address experienceClone,
-        bytes memory data
-    ) private pure returns (bytes memory) {
+    function _encodeItemsData(address characterSheetsClone, bytes memory data) private pure returns (bytes memory) {
         (,, string memory itemsBaseUri,) = _decodeStrings(data);
 
-        return abi.encode(characterSheetsClone, classesClone, experienceClone, itemsBaseUri);
+        return abi.encode(characterSheetsClone, itemsBaseUri);
     }
 
     function _encodeClassesData(address characterSheetsClone, bytes memory data) private pure returns (bytes memory) {
         (,,, string memory classesBaseUri) = _decodeStrings(data);
         return abi.encode(characterSheetsClone, classesBaseUri);
-    }
-
-    function _encodeExpData(address characterSheetsClone, address itemsClone) private pure returns (bytes memory) {
-        return abi.encode(characterSheetsClone, itemsClone);
     }
 
     function _decodeStrings(bytes memory data)
