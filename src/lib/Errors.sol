@@ -26,4 +26,11 @@ abstract contract Errors {
     error CallerNotApproved();
     error SoulboundToken();
     error RequirementNotMet();
+
+    // CharacterAccount.sol
+    error InvalidSigner();
+    error InvalidOperation();
+
+    // Common
+    error NotInitialized();
 }

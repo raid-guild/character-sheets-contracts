@@ -8,6 +8,7 @@ import {CharacterSheetsImplementation} from "./implementations/CharacterSheetsIm
 import {ClassesImplementation} from "./implementations/ClassesImplementation.sol";
 import {ExperienceImplementation} from "./implementations/ExperienceImplementation.sol";
 import {ItemsImplementation} from "./implementations/ItemsImplementation.sol";
+import {Errors} from "./lib/Errors.sol";
 
 // import "forge-std/console2.sol";
 contract CharacterSheetsFactory is OwnableUpgradeable {
@@ -78,11 +79,12 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         external
         returns (address, address, address, address)
     {
-        require(
-            itemsImplementation != address(0) && characterSheetsImplementation != address(0)
-                && erc6551AccountImplementation != address(0),
-            "update implementation addresses"
-        );
+        if (
+            itemsImplementation == address(0) || characterSheetsImplementation == address(0)
+                || erc6551AccountImplementation == address(0)
+        ) {
+            revert Errors.NotInitialized();
+        }
 
         address characterSheetsClone = address(new ERC1967Proxy(characterSheetsImplementation, ""));
 
