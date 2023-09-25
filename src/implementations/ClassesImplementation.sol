@@ -61,6 +61,7 @@ contract ClassesImplementation is Initializable, ERC1155HolderUpgradeable, ERC11
     event ClassAssigned(uint256 characterId, uint256 classId);
     event ClassRevoked(uint256 characterId, uint256 classId);
     event CharacterSheetsUpdated(address newCharacterSheets);
+    event ClassLeveled(address character, uint256 classId, uint256 newLevel);
 
     modifier onlyDungeonMaster() {
         if (!ICharacterSheets(characterSheets).hasRole(DUNGEON_MASTER, msg.sender)) {
@@ -221,24 +222,40 @@ contract ClassesImplementation is Initializable, ERC1155HolderUpgradeable, ERC11
         emit ClassRevoked(characterId, classId);
     }
 
-    function levelClass(uint256 classId) public returns (bool) {
-        if (!IClassLevelAdaptor(classLevelAdaptor).levelRequirementsMet(msg.sender, classId)) {
+    /// @notice This will level the class of any character class if they have enough exp
+    /// @dev As a source of truth, only the dungeon master can call this function so that the correct classes are leveld
+    /// @param character the address of the character account to have a class leveled
+    /// @param classId the Id of the class that will be leveled
+    /// @return uint256 class token balance
+
+    function levelClass(address character, uint256 classId) public onlyDungeonMaster returns (uint256) {
+        if (!IClassLevelAdaptor(classLevelAdaptor).levelRequirementsMet(character, classId)) {
             revert Errors.ClassError();
         }
 
-        uint256 currentLevel = balanceOf(msg.sender, classId);
+        uint256 currentLevel = balanceOf(character, classId);
         uint256 requiredAmount = IClassLevelAdaptor(classLevelAdaptor).getExperienceForNextLevel(currentLevel);
 
         //stake appropriate exp
-        classLevels[msg.sender][classId] += requiredAmount;
+        classLevels[character][classId] += requiredAmount;
 
-        IExperience(experience).burnExp(msg.sender, requiredAmount);
+        IExperience(experience).burnExp(character, requiredAmount);
 
         //mint another class token
 
-        _mint(msg.sender, classId, 1, "");
+        _mint(character, classId, 1, "");
 
-        return true;
+        uint256 newLevel = balanceOf(character, classId);
+
+        emit ClassLeveled(character, classId, newLevel);
+
+        return newLevel;
+    }
+
+    function deLevelClass(uint256 classId, uint256 numberOfLevels) public onlyCharacter returns(uint256){
+        uint256 currentLevel = balanceOf(msg.sender, classId);
+
+        
     }
 
     /**
