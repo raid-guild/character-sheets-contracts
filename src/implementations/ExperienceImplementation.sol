@@ -18,7 +18,6 @@ import {Errors} from "../lib/Errors.sol";
  */
 contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
     bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
-    bytes32 public constant PLAYER = keccak256("PLAYER");
     bytes32 public constant CHARACTER = keccak256("CHARACTER");
 
     bytes32 public claimMerkleRoot;
@@ -31,13 +30,6 @@ contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
     modifier onlyDungeonMaster() {
         if (!ICharacterSheets(characterSheets).hasRole(DUNGEON_MASTER, msg.sender)) {
             revert Errors.DungeonMasterOnly();
-        }
-        _;
-    }
-
-    modifier onlyPlayer() {
-        if (!ICharacterSheets(characterSheets).hasRole(PLAYER, msg.sender)) {
-            revert Errors.PlayerOnly();
         }
         _;
     }
@@ -62,20 +54,8 @@ contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
 
     function initialize(bytes calldata initializationData) external initializer {
         __ERC20_init_unchained("EXP", "Experience");
-        (characterSheets, itemsContract, classesContract) = abi.decode(initializationData, (address, address, address));
-    }
-
-    /// @notice Called by items contract to give experience to a character
-    /// @param to the address of the character that will receive the exp
-
-    function giveExp(address to, uint256 amount) external onlyContract {
-        if (characterSheets == address(0)) {
-            revert Errors.VariableNotSet();
-        }
-        if (!ICharacterSheets(characterSheets).hasRole(CHARACTER, to)) {
-            revert Errors.CharacterError();
-        }
-        _mint(to, amount);
+        __UUPSUpgradeable_init();
+        (characterSheets, classesContract) = abi.decode(initializationData, (address, address));
     }
 
     /// @notice Called by dungeon master to give experience to a character
@@ -96,7 +76,7 @@ contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
         _burn(account, amount);
     }
 
-    function burnExp(address account, uint256 amount) public onlyContract {
+    function burnExp(address account, uint256 amount) public onlyDungeonMaster {
         _burn(account, amount);
     }
 

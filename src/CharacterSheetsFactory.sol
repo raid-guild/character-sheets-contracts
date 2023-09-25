@@ -10,6 +10,8 @@ import {ExperienceImplementation} from "./implementations/ExperienceImplementati
 import {ItemsImplementation} from "./implementations/ItemsImplementation.sol";
 import {EligibilityAdaptor} from "./adaptors/EligibilityAdaptor.sol";
 import {ClassLevelAdaptor} from "./adaptors/ClassLevelAdaptor.sol";
+import {Errors} from "./lib/Errors.sol";
+
 // import "forge-std/console2.sol";
 
 contract CharacterSheetsFactory is OwnableUpgradeable {
@@ -201,9 +203,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
             _encodeCharacterInitData(encodedCharInitAddresses, data)
         );
 
-        ItemsImplementation(itemsClone).initialize(
-            _encodeItemsData(characterSheetsClone, classesClone, experienceClone, data)
-        );
+        ItemsImplementation(itemsClone).initialize(_encodeItemsData(characterSheetsClone, data));
 
         ClassesImplementation(classesClone).initialize(
             _encodeClassesData(characterSheetsClone, experienceClone, classLevelAdaptorClone, data)
@@ -245,15 +245,10 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         return (encodedCharacterSheetParameters);
     }
 
-    function _encodeItemsData(
-        address characterSheetsClone,
-        address classesClone,
-        address experienceClone,
-        bytes memory data
-    ) private pure returns (bytes memory) {
+    function _encodeItemsData(address characterSheetsClone, bytes memory data) private pure returns (bytes memory) {
         (,, string memory itemsBaseUri,) = _decodeStrings(data);
 
-        return abi.encode(characterSheetsClone, classesClone, experienceClone, itemsBaseUri);
+        return abi.encode(characterSheetsClone, itemsBaseUri);
     }
 
     function _encodeClassesData(

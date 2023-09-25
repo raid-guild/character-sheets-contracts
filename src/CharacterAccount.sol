@@ -14,6 +14,7 @@ import {
 import {IERC6551Account} from "./interfaces/IERC6551Account.sol";
 import {IERC6551Executable} from "./interfaces/IERC6551Executable.sol";
 import {CallUtils} from "./lib/CallUtils.sol";
+import {Errors} from "./lib/Errors.sol";
 
 /**
  * @title NPC Acount
@@ -33,18 +34,22 @@ contract CharacterAccount is IERC165, IERC1271, IERC6551Account, IERC6551Executa
         payable
         returns (bytes memory result)
     {
-        require(_isValidSigner(msg.sender), "Invalid signer");
+        if (!_isValidSigner(msg.sender)) {
+            revert Errors.InvalidSigner();
+        }
 
         ++state;
 
         bool success;
 
         if (operation == 0) {
+            // solhint-disable-next-line avoid-low-level-calls
             (success, result) = to.call{value: value}(data);
         } else if (operation == 1) {
+            // solhint-disable-next-line avoid-low-level-calls
             (success, result) = to.delegatecall(data);
         } else {
-            revert("Invalid Operation");
+            revert Errors.InvalidOperation();
         }
 
         if (!success) {

@@ -89,6 +89,9 @@ contract ClassesImplementation is Initializable, ERC1155HolderUpgradeable, ERC11
     }
 
     function initialize(bytes calldata _encodedData) external initializer {
+        __UUPSUpgradeable_init();
+        __ERC1155Holder_init();
+
         string memory baseUri;
         (characterSheets, experience, classLevelAdaptor, baseUri) =
             abi.decode(_encodedData, (address, address, address, string));
