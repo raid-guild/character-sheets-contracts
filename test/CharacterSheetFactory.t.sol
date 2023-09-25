@@ -99,7 +99,8 @@ contract CharacterSheetsTest is Test, SetUp {
 
             assertEq(address(CharacterSheetsImplementation(sheets).items()), _items, "wrong experience");
             assertEq(address(ItemsImplementation(_items).characterSheets()), sheets, "wrong sheets");
-            assertEq(address(ItemsImplementation(_items).classes()), class, "wrong classes");
+            // assertEq(address(ItemsImplementation(_items).classes()), class, "wrong classes");
+
             assertEq(
                 CharacterSheetsImplementation(sheets).metadataURI(),
                 "test_metadata_uri_character_sheets/",

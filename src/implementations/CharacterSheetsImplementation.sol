@@ -396,7 +396,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
         if (sheet.inventory.length == 0) {
             return false;
         }
-        uint256 supply = items.getItemById(itemId).supply;
+        uint256 supply = items.getItem(itemId).supply;
         require(supply != 0, "item does not exist");
         for (uint256 i; i < sheet.inventory.length; i++) {
             if (sheet.inventory[i] == itemId) {

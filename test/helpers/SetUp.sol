@@ -125,6 +125,7 @@ contract SetUp is Test {
         bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
         vm.prank(player1);
         uint256 tokenId1 = characterSheets.rollCharacterSheet(player1, encodedData);
+        assertEq(tokenId1, 1);
         npc1 = characterSheets.getCharacterSheetByCharacterId(tokenId1).erc6551TokenAddress;
 
         assertTrue(
@@ -135,16 +136,8 @@ contract SetUp is Test {
     }
 
     function dropExp(address player, uint256 amount) public {
-        address[] memory players = new address[](1);
-        players[0] = player;
-        uint256[][] memory itemIds = new uint256[][](1);
-        itemIds[0] = new uint256[](1);
-        itemIds[0][0] = 0;
-        uint256[][] memory amounts = new uint256[][](1);
-        amounts[0] = new uint256[](1);
-        amounts[0][0] = amount;
         vm.prank(admin);
-        items.dropLoot(players, itemIds, amounts);
+        experience.dropExp(player, amount);
     }
 
     function createNewItemType(string memory name) public returns (uint256 itemId) {
@@ -166,31 +159,49 @@ contract SetUp is Test {
         root = merkle.getRoot(leaves);
     }
 
-    function createNewItem(string memory _name, bool craftable, bool _soulbound, bytes32 _claimable)
+    function createNewItem(string memory name, bool craftable, bool soulbound, bytes32 claimable)
         public
-        pure
+        view
         returns (bytes memory)
     {
-        uint256[][] memory newItemRequirements = new uint256[][](1);
-        newItemRequirements[0] = new uint256[](2);
-        newItemRequirements[0][0] = 0;
-        newItemRequirements[0][1] = 100;
+        bytes memory requiredAssets;
 
-        uint256[] memory newClassRequirements;
-        // newClassRequirements[0] = testClassId;
+        {
+            uint8[] memory requiredAssetCategories = new uint8[](1);
+            requiredAssetCategories[0] = uint8(Category.ERC20);
+            address[] memory requiredAssetAddresses = new address[](1);
+            requiredAssetAddresses[0] = address(experience);
+            uint256[] memory requiredAssetIds = new uint256[](1);
+            requiredAssetIds[0] = 0;
+            uint256[] memory requiredAssetAmounts = new uint256[](1);
+            requiredAssetAmounts[0] = 100;
+
+            requiredAssets =
+                abi.encode(requiredAssetCategories, requiredAssetAddresses, requiredAssetIds, requiredAssetAmounts);
+        }
+
         return abi.encode(
-            _name,
-            10 ** 18,
-            newItemRequirements,
-            newClassRequirements,
-            craftable,
-            _soulbound,
-            _claimable,
-            "test_item_cid/"
+            craftable, soulbound, claimable, 10 ** 18, abi.encodePacked("test_item_cid/", name), requiredAssets
         );
     }
 
     function createNewClass(string memory _name) public pure returns (bytes memory data) {
         return abi.encode(_name, true, "test_class_cid/");
+    }
+
+    function dropItems(address player, uint256 itemId, uint256 amount) public {
+        address[] memory players = new address[](1);
+        players[0] = player;
+
+        uint256[][] memory itemIds = new uint256[][](1);
+        itemIds[0] = new uint256[](1);
+        itemIds[0][0] = itemId;
+
+        uint256[][] memory amounts = new uint256[][](1);
+        amounts[0] = new uint256[](1);
+        amounts[0][0] = amount;
+
+        vm.prank(admin);
+        items.dropLoot(players, itemIds, amounts);
     }
 }
