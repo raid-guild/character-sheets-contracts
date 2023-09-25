@@ -24,26 +24,18 @@ contract CharacterAccountTest is Test, SetUp {
 
         CharacterAccount account = CharacterAccount(payable(sheet.erc6551TokenAddress));
 
-        address[] memory npc = new address[](1);
-        npc[0] = address(account);
-        uint256[][] memory itemIds = new uint256[][](1);
-        itemIds[0] = new uint256[](1);
-        itemIds[0][0] = 1;
-        uint256[][] memory amounts = new uint256[][](1);
-        amounts[0] = new uint256[](1);
-        amounts[0][0] = 1;
-        vm.prank(admin);
-        items.dropLoot(npc, itemIds, amounts);
+        dropExp(address(account), 1000);
+        dropItems(address(account), 0, 1);
 
         bytes4 selector = bytes4(keccak256("equipItemToCharacter(uint256,uint256)"));
-        bytes memory data = abi.encodeWithSelector(selector, 2, 1);
+        bytes memory data = abi.encodeWithSelector(selector, 2, 0);
 
         vm.prank(admin);
         account.execute(address(characterSheets), 0, data, 0);
 
         sheet = characterSheets.getCharacterSheetByCharacterId(2);
         assertEq(sheet.inventory.length, 1, "item not assigned");
-        assertEq(sheet.inventory[0], 1, "item not assigned");
+        assertEq(sheet.inventory[0], 0, "item not assigned");
     }
 
     function testUnequipItemToCharacter() public {
@@ -60,29 +52,21 @@ contract CharacterAccountTest is Test, SetUp {
 
         CharacterAccount account = CharacterAccount(payable(sheet.erc6551TokenAddress));
 
-        address[] memory npc = new address[](1);
-        npc[0] = address(account);
-        uint256[][] memory itemIds = new uint256[][](1);
-        itemIds[0] = new uint256[](1);
-        itemIds[0][0] = 1;
-        uint256[][] memory amounts = new uint256[][](1);
-        amounts[0] = new uint256[](1);
-        amounts[0][0] = 1;
-        vm.prank(admin);
-        items.dropLoot(npc, itemIds, amounts);
+        dropExp(address(account), 1000);
+        dropItems(address(account), 0, 1);
 
         bytes4 selector = bytes4(keccak256("equipItemToCharacter(uint256,uint256)"));
-        bytes memory data = abi.encodeWithSelector(selector, 2, 1);
+        bytes memory data = abi.encodeWithSelector(selector, 2, 0);
 
         vm.prank(admin);
         account.execute(address(characterSheets), 0, data, 0);
 
         sheet = characterSheets.getCharacterSheetByCharacterId(2);
         assertEq(sheet.inventory.length, 1, "item not assigned");
-        assertEq(sheet.inventory[0], 1, "item not assigned");
+        assertEq(sheet.inventory[0], 0, "item not assigned");
 
         selector = bytes4(keccak256("unequipItemFromCharacter(uint256,uint256)"));
-        data = abi.encodeWithSelector(selector, 2, 1);
+        data = abi.encodeWithSelector(selector, 2, 0);
 
         vm.prank(admin);
         account.execute(address(characterSheets), 0, data, 0);
@@ -105,19 +89,11 @@ contract CharacterAccountTest is Test, SetUp {
 
         CharacterAccount account = CharacterAccount(payable(sheet.erc6551TokenAddress));
 
-        address[] memory npc = new address[](1);
-        npc[0] = address(account);
-        uint256[][] memory itemIds = new uint256[][](1);
-        itemIds[0] = new uint256[](1);
-        itemIds[0][0] = 1;
-        uint256[][] memory amounts = new uint256[][](1);
-        amounts[0] = new uint256[](1);
-        amounts[0][0] = 1;
-        vm.prank(admin);
-        items.dropLoot(npc, itemIds, amounts);
+        dropExp(address(account), 1000);
+        dropItems(address(account), 0, 1);
 
         bytes4 selector = bytes4(keccak256("equipItemToCharacter(uint256,uint256)"));
-        bytes memory data = abi.encodeWithSelector(selector, 2, 1);
+        bytes memory data = abi.encodeWithSelector(selector, 2, 0);
 
         bytes memory transaction =
             abi.encodePacked(uint8(0), address(characterSheets), uint256(0), uint256(data.length), data);
@@ -130,7 +106,7 @@ contract CharacterAccountTest is Test, SetUp {
 
         sheet = characterSheets.getCharacterSheetByCharacterId(2);
         assertEq(sheet.inventory.length, 1, "item not assigned");
-        assertEq(sheet.inventory[0], 1, "item not assigned");
+        assertEq(sheet.inventory[0], 0, "item not assigned");
     }
 
     function testEquipAndUnequipViaMultiSendDelegateCall() public {
@@ -147,26 +123,17 @@ contract CharacterAccountTest is Test, SetUp {
 
         CharacterAccount account = CharacterAccount(payable(sheet.erc6551TokenAddress));
 
-        address[] memory npc = new address[](1);
-        npc[0] = address(account);
-        uint256[][] memory itemIds = new uint256[][](1);
-        itemIds[0] = new uint256[](1);
-        itemIds[0][0] = 1;
-        uint256[][] memory amounts = new uint256[][](1);
-        amounts[0] = new uint256[](1);
-        amounts[0][0] = 1;
-
-        vm.prank(admin);
-        items.dropLoot(npc, itemIds, amounts);
+        dropExp(address(account), 1000);
+        dropItems(address(account), 0, 1);
 
         bytes4 selector = bytes4(keccak256("equipItemToCharacter(uint256,uint256)"));
-        bytes memory data = abi.encodeWithSelector(selector, 2, 1);
+        bytes memory data = abi.encodeWithSelector(selector, 2, 0);
 
         bytes memory transaction1 =
             abi.encodePacked(uint8(0), address(characterSheets), uint256(0), uint256(data.length), data);
 
         selector = bytes4(keccak256("unequipItemFromCharacter(uint256,uint256)"));
-        data = abi.encodeWithSelector(selector, 2, 1);
+        data = abi.encodeWithSelector(selector, 2, 0);
 
         bytes memory transaction2 =
             abi.encodePacked(uint8(0), address(characterSheets), uint256(0), uint256(data.length), data);

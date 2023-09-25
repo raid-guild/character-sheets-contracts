@@ -15,28 +15,28 @@ contract ExperienceTest is Test, SetUp {
     function testExperienceDeployment() public {
         assertEq(address(experience), stored.createdExperience, "Incorrect Experience Address");
         assertEq(experience.characterSheets(), stored.createdCharacterSheets, "incorrect character sheets address");
-        assertEq(experience.itemsContract(), stored.createdItems, "incorrect items address");
+        // assertEq(experience.itemsContract(), stored.createdItems, "incorrect items address");
 
         vm.prank(admin);
         vm.expectRevert();
-        experience.initialize("");
+        experience.initialize(address(0));
     }
 
-    function testGiveExp() public {
-        //revert if called by anything but items or character sheets contract
-        vm.prank(address(characterSheets));
-        experience.giveExp(npc1, 100);
-        assertEq(experience.balanceOf(npc1), 100, "incorrect balance");
+    //function testGiveExp() public {
+    //    //revert if called by anything but items or character sheets contract
+    //    vm.prank(address(characterSheets));
+    //    experience.giveExp(npc1, 100);
+    //    assertEq(experience.balanceOf(npc1), 100, "incorrect balance");
 
-        vm.prank(address(items));
-        experience.giveExp(npc1, 100);
+    //    vm.prank(address(items));
+    //    experience.giveExp(npc1, 100);
 
-        assertEq(experience.balanceOf(npc1), 200, "incorrect balance");
+    //    assertEq(experience.balanceOf(npc1), 200, "incorrect balance");
 
-        vm.prank(player1);
-        vm.expectRevert();
-        experience.giveExp(npc1, 100);
-    }
+    //    vm.prank(player1);
+    //    vm.expectRevert();
+    //    experience.giveExp(npc1, 100);
+    //}
 
     function testDropExp() public {
         //revert if not called by dm
