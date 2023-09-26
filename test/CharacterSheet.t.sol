@@ -179,7 +179,6 @@ contract CharacterSheetsTest is Test, SetUp {
     function testUpdateCharacterMetadata() public {
         vm.prank(player1);
         characterSheets.updateCharacterMetadata("new_cid");
-        CharacterSheet memory player = characterSheets.getCharacterSheetByCharacterId(1);
 
         string memory uri = characterSheets.tokenURI(1);
         assertEq(uri, "test_base_uri_character_sheets/new_cid", "Incorrect token uri");
