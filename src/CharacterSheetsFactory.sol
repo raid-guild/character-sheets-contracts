@@ -8,8 +8,8 @@ import {CharacterSheetsImplementation} from "./implementations/CharacterSheetsIm
 import {ClassesImplementation} from "./implementations/ClassesImplementation.sol";
 import {ExperienceImplementation} from "./implementations/ExperienceImplementation.sol";
 import {ItemsImplementation} from "./implementations/ItemsImplementation.sol";
-import {EligibilityAdaptor} from "./adaptors/EligibilityAdaptor.sol";
-import {ClassLevelAdaptor} from "./adaptors/ClassLevelAdaptor.sol";
+import {IEligibilityAdaptor} from "./interfaces/IEligibilityAdaptor.sol";
+import {IClassLevelAdaptor} from "./interfaces/IClassLevelAdaptor.sol";
 import {Errors} from "./lib/Errors.sol";
 
 // import "forge-std/console2.sol";
@@ -72,7 +72,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         emit ClassesImplementationUpdated(classesImplementation);
     }
 
-    /// create functions
+    /// create functions must be called fist before the initialize call is made
 
     function createExperience() public returns (address) {
         require(experienceImplementation != address(0), "update experience implementation");
@@ -102,7 +102,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
     function createEligibilityAdaptor(address eligibilityAdaptorImplementation) public returns (address) {
         require(
-            EligibilityAdaptor(eligibilityAdaptorImplementation).supportsInterface(ELIGIBILITY_INTERFACE_ID),
+            IEligibilityAdaptor(eligibilityAdaptorImplementation).supportsInterface(ELIGIBILITY_INTERFACE_ID),
             "invalid interface"
         );
 
@@ -112,7 +112,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
     function createClassLevelAdaptor(address classLevelAdaptorImplementation) public returns (address) {
         require(
-            ClassLevelAdaptor(classLevelAdaptorImplementation).supportsInterface(CLASS_LEVELS_INTERFACE_ID),
+            IClassLevelAdaptor(classLevelAdaptorImplementation).supportsInterface(CLASS_LEVELS_INTERFACE_ID),
             "invalid interface"
         );
 
@@ -122,6 +122,21 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
     // adaptors must be initialized seperately
 
+    /// @notice This will initialize all the contracts except the eligibility adaptors
+    /// @dev this function should be called immediately after all the create functions have been called
+    /// @param encodedAddresses the encoded addresses should include
+    /// -eligibility adaptor clone
+    /// - class level adaptor clone
+    /// - dungeon masters: an array of addresses that will have dungeonMaster permission on the character sheets contract
+    /// - character sheets clone to be initialized
+    /// - experience clone to be initialized
+    /// - items clones to be initialized
+    /// - classes clone to be initialized
+    /// @param data encoded string data  strings to include must be:
+    /// - the base metadata uri for the character sheets clone
+    /// - the base character token uri for the character sheets clone
+    /// - the base uri for the ITEMS clone
+    /// - the base uri for the CLASSES clone
     function initializeContracts(bytes calldata encodedAddresses, bytes calldata data) public {
         (
             address eligibilityAdaptorClone,

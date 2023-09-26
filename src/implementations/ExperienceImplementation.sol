@@ -50,7 +50,7 @@ contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
     }
 
     function initialize(bytes calldata initializationData) external initializer {
-        __ERC20_init_unchained("EXP", "Experience");
+        __ERC20_init_unchained("Experience", "EXP");
         __UUPSUpgradeable_init();
         (characterSheets, classesContract) = abi.decode(initializationData, (address, address));
     }
