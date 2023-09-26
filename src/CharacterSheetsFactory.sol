@@ -209,9 +209,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
             _encodeClassesData(characterSheetsClone, experienceClone, classLevelAdaptorClone, data)
         );
 
-        ExperienceImplementation(experienceClone).initialize(
-            _encodeExpData(characterSheetsClone, itemsClone, classesClone)
-        );
+        ExperienceImplementation(experienceClone).initialize(_encodeExpData(characterSheetsClone, classesClone));
     }
 
     function _encodeCharacterInitData(bytes memory encodedInitData, bytes memory data)
@@ -261,12 +259,8 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         return abi.encode(characterSheetsClone, experienceClone, classLevelAdaptorClone, classesBaseUri);
     }
 
-    function _encodeExpData(address characterSheetsClone, address itemsClone, address classesClone)
-        private
-        pure
-        returns (bytes memory)
-    {
-        return abi.encode(characterSheetsClone, itemsClone, classesClone);
+    function _encodeExpData(address characterSheetsClone, address classesClone) private pure returns (bytes memory) {
+        return abi.encode(characterSheetsClone, classesClone);
     }
 
     function _decodeStrings(bytes memory data)

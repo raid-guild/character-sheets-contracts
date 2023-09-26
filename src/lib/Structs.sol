@@ -21,8 +21,6 @@ struct Item {
 struct Class {
     /// @dev erc1155 token id
     uint256 tokenId;
-    /// @dev class name
-    string name;
     /// @dev the number of this class that have been minted
     uint256 supply;
     /// @dev set to true if you want characters to be able to claim this class instead of being assined

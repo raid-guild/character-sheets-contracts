@@ -70,13 +70,23 @@ contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
         _mint(to, amount);
     }
 
+    function giveExp(address to, uint256 amount) public onlyContract {
+        if (characterSheets == address(0) || classesContract == address(0)) {
+            revert Errors.VariableNotSet();
+        }
+        if (!ICharacterSheets(characterSheets).hasRole(CHARACTER, to)) {
+            revert Errors.CharacterError();
+        }
+        _mint(to, amount);
+    }
+
     function updateClaimMerkleRoot(bytes32 newMerkleRoot) public onlyDungeonMaster {}
 
     function revokeExp(address account, uint256 amount) public onlyDungeonMaster {
         _burn(account, amount);
     }
 
-    function burnExp(address account, uint256 amount) public onlyDungeonMaster {
+    function burnExp(address account, uint256 amount) public onlyContract {
         _burn(account, amount);
     }
 

@@ -63,6 +63,12 @@ contract SetUp is Test {
     CharacterAccount erc6551Implementation;
     MultiSend multiSend;
 
+    enum Category {
+        ERC20,
+        ERC721,
+        ERC1155
+    }
+
     function setUp() public {
         vm.startPrank(admin);
 
@@ -173,9 +179,9 @@ contract SetUp is Test {
         //set registry in character Sheets Contract
         characterSheets.setERC6551Registry(address(erc6551Registry));
 
-        testClassId = classes.createClassType(createNewClass("test_class"));
+        testClassId = classes.createClassType(createNewClass(true));
 
-        testItemId = items.createItemType(createNewItem("test_item", false, false, bytes32(0)));
+        testItemId = items.createItemType(createNewItem(false, false, bytes32(0)));
         vm.stopPrank();
         bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
         vm.prank(player1);
@@ -195,8 +201,8 @@ contract SetUp is Test {
         experience.dropExp(player, amount);
     }
 
-    function createNewItemType(string memory name) public returns (uint256 itemId) {
-        bytes memory newItem = createNewItem(name, false, false, bytes32(0));
+    function createNewItemType() public returns (uint256 itemId) {
+        bytes memory newItem = createNewItem(false, false, bytes32(0));
         itemId = items.createItemType(newItem);
     }
 
@@ -214,11 +220,7 @@ contract SetUp is Test {
         root = merkle.getRoot(leaves);
     }
 
-    function createNewItem(string memory name, bool craftable, bool soulbound, bytes32 claimable)
-        public
-        view
-        returns (bytes memory)
-    {
+    function createNewItem(bool craftable, bool soulbound, bytes32 claimable) public view returns (bytes memory) {
         bytes memory requiredAssets;
 
         {
@@ -235,13 +237,11 @@ contract SetUp is Test {
                 abi.encode(requiredAssetCategories, requiredAssetAddresses, requiredAssetIds, requiredAssetAmounts);
         }
 
-        return abi.encode(
-            craftable, soulbound, claimable, 10 ** 18, abi.encodePacked("test_item_cid/", name), requiredAssets
-        );
+        return abi.encode(craftable, soulbound, claimable, 10 ** 18, abi.encodePacked("test_item_cid/"), requiredAssets);
     }
 
-    function createNewClass(string memory _name) public pure returns (bytes memory data) {
-        return abi.encode(_name, true, "test_class_cid/");
+    function createNewClass(bool claimable) public pure returns (bytes memory data) {
+        return abi.encode(claimable, "test_class_cid/");
     }
 
     function dropItems(address player, uint256 itemId, uint256 amount) public {

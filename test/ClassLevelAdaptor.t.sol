@@ -24,11 +24,11 @@ contract ClassLevelAdaptorTest is Test, SetUp {
         classes.claimClass(1);
         assertFalse(classLevels.levelRequirementsMet(npc1, 1));
         vm.stopPrank();
-
+        uint256 expAmount = 301 * 10 ** 18;
         vm.prank(admin);
-        experience.dropExp(npc1, 301);
+        experience.dropExp(npc1, expAmount);
 
-        assertEq(experience.balanceOf(npc1), 301, "incorrect exp amount");
+        assertEq(experience.balanceOf(npc1), expAmount, "incorrect exp amount");
 
         vm.prank(npc1);
 

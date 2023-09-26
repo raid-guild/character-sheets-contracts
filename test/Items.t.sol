@@ -12,7 +12,7 @@ import "./helpers/SetUp.sol";
 
 contract ItemsTest is Test, SetUp {
     function testCreateItemType() public {
-        bytes memory newItem = createNewItem("Pirate_Hat", false, false, bytes32(0));
+        bytes memory newItem = createNewItem(false, false, bytes32(0));
         vm.prank(admin);
         uint256 _itemId = items.createItemType(newItem);
 
@@ -27,11 +27,11 @@ contract ItemsTest is Test, SetUp {
         assertEq(itemRequirements.length, 1);
         assertEq(returnedItem.soulbound, false);
         assertEq(returnedItem.claimable, bytes32(0));
-        assertEq(cid, "test_base_uri_items/test_item_cid/Pirate_Hat");
+        assertEq(cid, "test_base_uri_items/test_item_cid/", "incorrect CID");
     }
 
     function testCreateItemTypeRevertAccessControl() public {
-        bytes memory newItem = createNewItem("Pirate_Hat", false, false, bytes32(0));
+        bytes memory newItem = createNewItem(false, false, bytes32(0));
 
         vm.startPrank(player2);
         vm.expectRevert();
@@ -49,10 +49,10 @@ contract ItemsTest is Test, SetUp {
 
         address player2NPC = characterSheets.getCharacterSheetByCharacterId(player2Id).erc6551TokenAddress;
 
-        uint256 _itemId = createNewItemType("staff");
+        uint256 _itemId = createNewItemType();
         assertEq(_itemId, 1);
 
-        uint256 _itemId2 = createNewItemType("sword");
+        uint256 _itemId2 = createNewItemType();
         assertEq(_itemId2, 2);
 
         address[] memory players = new address[](2);
@@ -91,7 +91,7 @@ contract ItemsTest is Test, SetUp {
 
     function testDropLootRevert() public {
         vm.prank(admin);
-        uint256 _itemId = createNewItemType("staff");
+        uint256 _itemId = createNewItemType();
         assertEq(_itemId, 1);
 
         address[] memory players = new address[](1);
@@ -125,8 +125,8 @@ contract ItemsTest is Test, SetUp {
 
     function testClaimItem() public {
         vm.startPrank(admin);
-        uint256 _itemId1 = createNewItemType("WANG!");
-        uint256 _itemId2 = createNewItemType("BOOM!");
+        uint256 _itemId1 = createNewItemType();
+        uint256 _itemId2 = createNewItemType();
 
         items.addItemRequirement(_itemId1, uint8(Category.ERC1155), address(classes), testClassId, 1);
 
@@ -167,7 +167,7 @@ contract ItemsTest is Test, SetUp {
         items.claimItems(itemIds2, amounts2, proofs);
 
         vm.prank(admin);
-        classes.assignClass(1, testClassId);
+        classes.assignClass(npc1, testClassId);
 
         //revert invalid proof
         vm.prank(npc1);
@@ -186,12 +186,12 @@ contract ItemsTest is Test, SetUp {
 
     function testURI() public {
         string memory _uri = items.uri(0);
-        assertEq(_uri, "test_base_uri_items/test_item_cid/test_item", "incorrect uri returned");
+        assertEq(_uri, "test_base_uri_items/test_item_cid/", "incorrect uri returned");
     }
 
     function testAddItemRequirement() public {
         vm.prank(admin);
-        uint256 tokenId = createNewItemType("hat");
+        uint256 tokenId = createNewItemType();
 
         vm.prank(admin);
         items.addItemRequirement(0, uint8(Category.ERC1155), address(items), tokenId, 100);
@@ -209,7 +209,7 @@ contract ItemsTest is Test, SetUp {
 
     function testRemoveItemRequirement() public {
         vm.prank(admin);
-        uint256 tokenId = createNewItemType("hat");
+        uint256 tokenId = createNewItemType();
 
         vm.prank(admin);
         items.addItemRequirement(0, uint8(Category.ERC1155), address(items), tokenId, 1000);
