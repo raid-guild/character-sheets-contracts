@@ -38,7 +38,7 @@ contract CharacterSheetsTest is Test, SetUp {
         string memory newBaseUri = "new_base_uri/";
         vm.prank(admin);
         characterSheets.setBaseUri(newBaseUri);
-        assertEq(characterSheets.tokenURI(1), "new_base_uri/test_token_uri/");
+        assertEq(characterSheets.baseTokenURI(), "new_base_uri/");
     }
 
     function testChangeBaseUriAccessControlRevert() public {

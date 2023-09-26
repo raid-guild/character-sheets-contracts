@@ -260,7 +260,7 @@ contract ClassesImplementation is Initializable, ERC1155HolderUpgradeable, ERC11
     function deLevelClass(uint256 classId, uint256 numberOfLevels) public onlyCharacter returns (uint256) {
         uint256 currentLevel = balanceOf(msg.sender, classId) - 1;
 
-        if (currentLevel <= numberOfLevels) {
+        if (currentLevel < numberOfLevels) {
             revert Errors.InsufficientBalance();
         }
 
