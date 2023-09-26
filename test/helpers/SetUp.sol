@@ -120,16 +120,6 @@ contract SetUp is Test {
             "test_base_uri_items/",
             "test_base_uri_classes/"
         );
-        // (
-        //     stored.createdCharacterSheets,
-        //     stored.createdItems,
-        //     stored.createdExperience,
-        //     stored.createdClasses,
-        //     stored.createdEligibility,
-        //     stored.createdClassLevels
-        // ) = characterSheetsFactory.create(
-        //     abi.encode(dungeonMasters), address(eligibility), address(classLevels), baseUriData
-        // );
 
         stored.createdCharacterSheets = characterSheetsFactory.createCharacterSheets();
 
@@ -158,7 +148,7 @@ contract SetUp is Test {
 
         characterSheets = CharacterSheetsImplementation(stored.createdCharacterSheets);
 
-        assertEq(address(characterSheets.classes()), stored.createdClasses, "incorrect classes address in setup");
+        assertEq(address(characterSheets.items()), stored.createdItems, "incorrect items address in setup");
 
         items = ItemsImplementation(stored.createdItems);
 

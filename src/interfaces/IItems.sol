@@ -2,6 +2,8 @@
 pragma solidity ^0.8.9;
 pragma abicoder v2;
 
+import {Item} from "../lib/Structs.sol";
+
 interface IItems {
     function batchCreateItemType(bytes[] calldata itemDatas) external returns (uint256[] memory tokenIds);
 
@@ -12,6 +14,8 @@ interface IItems {
     function claimItems(uint256[] calldata itemIds, uint256[] calldata amounts, bytes32[][] calldata proofs)
         external
         returns (bool success);
+
+    function getItem(uint256 itemId) external returns (Item memory);
 
     function craftItem(uint256 itemId, uint256 amount) external returns (bool);
 
@@ -26,4 +30,6 @@ interface IItems {
     function removeItemRequirement(uint256 itemId, uint256 removedItemId) external returns (bool);
 
     function removeClassRequirement(uint256 itemId, uint256 removedClassId) external returns (bool);
+
+    function balanceOf(address account, uint256 itemId) external returns (uint256);
 }

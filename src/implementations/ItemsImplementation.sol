@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {Initializable} from "openzeppelin-contracts/proxy/utils/Initializable.sol";
 import {MerkleProof} from "openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
 import {ERC1155Upgradeable} from "openzeppelin-contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import {
@@ -12,8 +11,6 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UU
 // import {console2} from "forge-std/console2.sol";
 
 import {ICharacterSheets} from "../interfaces/ICharacterSheets.sol";
-import {ClassesImplementation} from "./ClassesImplementation.sol";
-import {ExperienceImplementation} from "./ExperienceImplementation.sol";
 import {Item} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
 import {MultiToken, Asset, Category} from "../lib/MultiToken.sol";
@@ -94,7 +91,9 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
         onlyDungeonMaster
         returns (bool success)
     {
-        require(characterAccounts.length == itemIds.length && itemIds.length == amounts.length, "LENGTH MISMATCH");
+        if (characterAccounts.length != itemIds.length && itemIds.length != amounts.length) {
+            revert Errors.LengthMismatch();
+        }
         for (uint256 i; i < characterAccounts.length; i++) {
             for (uint256 j; j < itemIds[i].length; j++) {
                 if (_requirements[itemIds[i][j]].length == 0) {

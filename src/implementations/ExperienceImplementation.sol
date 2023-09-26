@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {Initializable} from "openzeppelin-contracts/proxy/utils/Initializable.sol";
 import {MerkleProof} from "openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
 import {ERC20Upgradeable} from "openzeppelin-contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {ICharacterSheets} from "../interfaces/ICharacterSheets.sol";
-import {ClassesImplementation} from "./ClassesImplementation.sol";
-import {Item, Class, CharacterSheet} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
 
 /**

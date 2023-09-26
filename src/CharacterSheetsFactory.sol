@@ -120,70 +120,8 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         return classLevelAdaptorClone;
     }
 
-    // /**
-    //  * @param dungeonMasters an array of addresses that will have the DUNGEON_MASTER role.
-    //  * @param eligibilityAdaptorImplementation the adaptor use to determin the elegibility of an account to roll a character sheet.
-    //  * @param classLevelAdaptorImplementation is the adaptor to be used for the class leveling schema
-    //  * @param data the encoded strings o the charactersheets, experience and classes base URI's
-    //  * @return the address of the characterSheets clone.
-    //  * @return the address of the experienceAndItems clone.
-    //  * @return the address of the classes clone.
-    //  */
-
-    // function create(
-    //     bytes calldata dungeonMasters,
-    //     address eligibilityAdaptorImplementation,
-    //     address classLevelAdaptorImplementation,
-    //     bytes calldata data
-    // ) external returns (address, address, address, address, address, address) {
-    //     require(
-    //         itemsImplementation != address(0) && characterSheetsImplementation != address(0)
-    //             && erc6551AccountImplementation != address(0),
-    //         "update implementation addresses"
-    //     );
-
-    //     address experienceClone = address(new ERC1967Proxy(experienceImplementation, ""));
-
-    //     address itemsClone = address(new ERC1967Proxy(itemsImplementation, ""));
-
-    //     address classesClone = address(new ERC1967Proxy(classesImplementation, ""));
-
-    //     address eligibilityAdaptorClone = address(new ERC1967Proxy(eligibilityAdaptorImplementation, ""));
-
-    //     address classLevelAdaptorClone = address(new ERC1967Proxy(classLevelAdaptorImplementation, ""));
-
-    //     bytes memory encodedAddresses;
-    //     {
-    //         // avoids stacc too dank
-    //         encodedAddresses = abi.encode(
-    //             eligibilityAdaptorClone,
-    //             classLevelAdaptorClone,
-    //             dungeonMasters,
-    //             characterSheetsClone,
-    //             experienceClone,
-    //             itemsClone,
-    //             classesClone
-    //         );
-    //     }
-
-    //     // this does not initialize the adaptors.  adaptors should be initialized by the deployer.
-    //     _initializeContracts(encodedAddresses, data);
-
-    //     emit CharacterSheetsCreated(msg.sender, characterSheetsClone, classesClone, itemsClone, experienceClone);
-
-    //     _nonce++;
-
-    //     return (
-    //         characterSheetsClone,
-    //         itemsClone,
-    //         experienceClone,
-    //         classesClone,
-    //         eligibilityAdaptorClone,
-    //         classLevelAdaptorClone
-    //     );
-    // }
-
     // adaptors must be initialized seperately
+
     function initializeContracts(bytes calldata encodedAddresses, bytes calldata data) public {
         (
             address eligibilityAdaptorClone,
@@ -196,8 +134,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         ) = abi.decode(encodedAddresses, (address, address, address[], address, address, address, address));
 
         //stacc too dank again
-        bytes memory encodedCharInitAddresses =
-            abi.encode(eligibilityAdaptorClone, dungeonMasters, itemsClone, experienceClone, classesClone);
+        bytes memory encodedCharInitAddresses = abi.encode(eligibilityAdaptorClone, dungeonMasters, itemsClone);
 
         CharacterSheetsImplementation(characterSheetsClone).initialize(
             _encodeCharacterInitData(encodedCharInitAddresses, data)
@@ -219,21 +156,14 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     {
         (string memory characterSheetsMetadataUri, string memory characterSheetsBaseUri,,) = _decodeStrings(data);
 
-        (
-            address eligibilityAdaptorClone,
-            address[] memory dungeonMasters,
-            address itemsClone,
-            address experienceClone,
-            address classesClone
-        ) = abi.decode(encodedInitData, (address, address[], address, address, address));
+        (address eligibilityAdaptorClone, address[] memory dungeonMasters, address itemsClone) =
+            abi.decode(encodedInitData, (address, address[], address));
 
         bytes memory encodedCharacterSheetParameters = abi.encode(
             eligibilityAdaptorClone,
             dungeonMasters,
             msg.sender,
-            classesClone,
             itemsClone,
-            experienceClone,
             erc6551Registry,
             erc6551AccountImplementation,
             characterSheetsMetadataUri,
