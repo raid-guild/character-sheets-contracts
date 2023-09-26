@@ -32,8 +32,6 @@ struct Class {
 struct CharacterSheet {
     /// @dev erc721 tokenId
     uint256 tokenId;
-    /// @dev the name of the member who controls this sheet
-    string name;
     /// @dev the address of the NPC associated with this character sheet
     address erc6551TokenAddress;
     /// @dev the EOA of the member who owns this character sheet

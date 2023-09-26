@@ -59,7 +59,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
     event ItemsUpdated(address items);
     event ItemEquipped(uint256 characterId, uint256 itemTokenId);
     event ItemUnequipped(uint256 characterId, uint256 itemTokenId);
-    event CharacterUpdated(uint256 tokenId, string newName, string newCid);
+    event CharacterUpdated(uint256 tokenId, string newCid);
     event PlayerJailed(address playerAddress, bool thrownInJail);
     event CharacterRestored(uint256 tokenId, address tokenBoundAccount, address player);
     event EligibilityAdaptorUpdated(address newAdaptor);
@@ -137,7 +137,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
     /**
      *
      * @param _to the address of the dao member wallet that will hold the character sheet nft
-     * @param _data encoded data that contains the name of the member and the uri of the base image for the nft.
+     * @param _data encoded data that contains the uri of the base image for the nft.
      * if no uri is stored then it will revert to the base uri of the contract
      */
 
@@ -159,9 +159,8 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
             revert Errors.Jailed();
         }
 
-        string memory _newName;
         string memory _tokenURI;
-        (_newName, _tokenURI) = abi.decode(_data, (string, string));
+        (_tokenURI) = abi.decode(_data, (string));
 
         uint256 tokenId = _tokenIdCounter.current();
 
@@ -184,7 +183,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
         );
 
         CharacterSheet memory newCharacterSheet;
-        newCharacterSheet.name = _newName;
         newCharacterSheet.erc6551TokenAddress = tba;
         newCharacterSheet.memberAddress = _to;
         newCharacterSheet.tokenId = tokenId;
@@ -304,17 +302,15 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
     }
 
     /**
-     * allows a player to update their name in the contract
-     * @param newName the new player name
+     * allows a player to update the character metadata in the contract
+     * @param newCid the new metadata URI
      */
-    function updateCharacterMetadata(string calldata newName, string calldata newCid) public onlyRole(PLAYER) {
+    function updateCharacterMetadata(string calldata newCid) public onlyRole(PLAYER) {
         uint256 tokenId = memberAddressToTokenId[msg.sender];
-
-        sheets[tokenId].name = newName;
 
         _setTokenURI(tokenId, newCid);
 
-        emit CharacterUpdated(tokenId, newName, newCid);
+        emit CharacterUpdated(tokenId, newCid);
     }
 
     function jailPlayer(address playerAddress, bool throwInJail) public onlyRole(DUNGEON_MASTER) {

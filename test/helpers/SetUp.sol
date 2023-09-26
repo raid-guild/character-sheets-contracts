@@ -183,7 +183,7 @@ contract SetUp is Test {
 
         testItemId = items.createItemType(createNewItem(false, false, bytes32(0)));
         vm.stopPrank();
-        bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
+        bytes memory encodedData = abi.encode("test_character_token_uri/");
         vm.prank(player1);
         uint256 tokenId1 = characterSheets.rollCharacterSheet(player1, encodedData);
         assertEq(tokenId1, 1);
