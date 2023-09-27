@@ -15,7 +15,9 @@ install :; forge install --no-commit foundry-rs/forge-std openzeppelin/openzeppe
 # Update Dependencies
 update:; forge update
 
-build:; forge build
+compile:; forge compile
+
+build:; forge build --sizes
 
 test :; forge test
 

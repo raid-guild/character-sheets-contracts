@@ -8,6 +8,7 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UU
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {IMolochDAO} from "../interfaces/IMolochDAO.sol";
+import {Errors} from "../lib/Errors.sol";
 
 contract EligibilityAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUpgradeable {
     //(this.isEligible.selector ^ this.supportsInterface.selector);
@@ -35,7 +36,9 @@ contract EligibilityAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUp
     }
 
     function isEligible(address account) public returns (bool) {
-        require(dao != address(0), "must set moloch dao address");
+        if (dao == address(0)) {
+            revert Errors.NotInitialized();
+        }
 
         IMolochDAO.Member memory newMember = IMolochDAO(dao).members(account);
         return (newMember.shares >= 100 && newMember.jailed == 0);
@@ -45,5 +48,6 @@ contract EligibilityAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUp
         return interfaceId == 0x01ffc9a7 || interfaceId == INTERFACE_ID;
     }
 
+    //solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }

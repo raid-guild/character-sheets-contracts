@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {MerkleProof} from "openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
 import {ERC20Upgradeable} from "openzeppelin-contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
@@ -16,8 +15,6 @@ import {Errors} from "../lib/Errors.sol";
 contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
     bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
     bytes32 public constant CHARACTER = keccak256("CHARACTER");
-
-    bytes32 public claimMerkleRoot;
 
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
     address public characterSheets;
@@ -77,8 +74,6 @@ contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
         _mint(to, amount);
     }
 
-    function updateClaimMerkleRoot(bytes32 newMerkleRoot) public onlyDungeonMaster {}
-
     function revokeExp(address account, uint256 amount) public onlyDungeonMaster {
         _burn(account, amount);
     }
@@ -100,5 +95,6 @@ contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
         revert Errors.TransferError();
     }
 
+    //solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {}
 }

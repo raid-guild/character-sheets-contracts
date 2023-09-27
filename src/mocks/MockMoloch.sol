@@ -22,4 +22,8 @@ contract Moloch is IMolochDAO {
     function jailMember(address member) public {
         _members[member].jailed = 100;
     }
+
+    function unjailMember(address member) public {
+        _members[member].jailed = 0;
+    }
 }

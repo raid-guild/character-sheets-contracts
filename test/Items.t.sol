@@ -43,11 +43,11 @@ contract ItemsTest is Test, SetUp {
         dao.addMember(player2);
 
         vm.prank(player2);
-        uint256 player2Id = characterSheets.rollCharacterSheet(player2, abi.encode("player 2", "test_token_uri1/"));
+        uint256 player2Id = characterSheets.rollCharacterSheet("test_token_uri1/");
 
         vm.startPrank(admin);
 
-        address player2NPC = characterSheets.getCharacterSheetByCharacterId(player2Id).erc6551TokenAddress;
+        address player2NPC = characterSheets.getCharacterSheetByCharacterId(player2Id).accountAddress;
 
         uint256 _itemId = createNewItemType();
         assertEq(_itemId, 1);

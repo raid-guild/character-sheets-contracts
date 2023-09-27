@@ -21,8 +21,8 @@ contract ClassLevelAdaptorTest is Test, SetUp {
         vm.startPrank(npc1);
         classLevels.levelRequirementsMet(npc1, 1);
 
-        classes.claimClass(1);
-        assertFalse(classLevels.levelRequirementsMet(npc1, 1));
+        classes.claimClass(0);
+        assertFalse(classLevels.levelRequirementsMet(npc1, 0), "should not be met");
         vm.stopPrank();
         uint256 expAmount = 301 * 10 ** 18;
         vm.prank(admin);
@@ -32,6 +32,6 @@ contract ClassLevelAdaptorTest is Test, SetUp {
 
         vm.prank(npc1);
 
-        assertTrue(classLevels.levelRequirementsMet(npc1, 1));
+        assertTrue(classLevels.levelRequirementsMet(npc1, 0), "should be met");
     }
 }

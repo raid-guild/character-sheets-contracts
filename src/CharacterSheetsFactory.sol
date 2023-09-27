@@ -75,7 +75,9 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     /// create functions must be called fist before the initialize call is made
 
     function createExperience() public returns (address) {
-        require(experienceImplementation != address(0), "update experience implementation");
+        if (experienceImplementation == address(0)) {
+            revert Errors.NotInitialized();
+        }
 
         address experienceClone = address(new ERC1967Proxy(experienceImplementation, ""));
 
@@ -83,7 +85,9 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     }
 
     function createCharacterSheets() public returns (address) {
-        require(characterSheetsImplementation != address(0), "update character sheets address");
+        if (characterSheetsImplementation == address(0)) {
+            revert Errors.NotInitialized();
+        }
 
         address characterSheetsClone = address(new ERC1967Proxy(characterSheetsImplementation, ""));
 
@@ -91,30 +95,34 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     }
 
     function createItems() public returns (address) {
+        if (itemsImplementation == address(0)) {
+            revert Errors.NotInitialized();
+        }
         address itemsClone = address(new ERC1967Proxy(itemsImplementation, ""));
         return itemsClone;
     }
 
     function createClasses() public returns (address) {
+        if (classesImplementation == address(0)) {
+            revert Errors.NotInitialized();
+        }
         address classesClone = address(new ERC1967Proxy(classesImplementation, ""));
         return classesClone;
     }
 
     function createEligibilityAdaptor(address eligibilityAdaptorImplementation) public returns (address) {
-        require(
-            IEligibilityAdaptor(eligibilityAdaptorImplementation).supportsInterface(ELIGIBILITY_INTERFACE_ID),
-            "invalid interface"
-        );
+        if (!IEligibilityAdaptor(eligibilityAdaptorImplementation).supportsInterface(ELIGIBILITY_INTERFACE_ID)) {
+            revert Errors.UnsupportedInterface();
+        }
 
         address eligibilityAdaptorClone = address(new ERC1967Proxy(eligibilityAdaptorImplementation, ""));
         return eligibilityAdaptorClone;
     }
 
     function createClassLevelAdaptor(address classLevelAdaptorImplementation) public returns (address) {
-        require(
-            IClassLevelAdaptor(classLevelAdaptorImplementation).supportsInterface(CLASS_LEVELS_INTERFACE_ID),
-            "invalid interface"
-        );
+        if (!IClassLevelAdaptor(classLevelAdaptorImplementation).supportsInterface(CLASS_LEVELS_INTERFACE_ID)) {
+            revert Errors.UnsupportedInterface();
+        }
 
         address classLevelAdaptorClone = address(new ERC1967Proxy(classLevelAdaptorImplementation, ""));
         return classLevelAdaptorClone;
