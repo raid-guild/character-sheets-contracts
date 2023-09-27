@@ -8,8 +8,6 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UU
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import "forge-std/console2.sol";
-
 contract ClassLevelAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUpgradeable {
     /// @title Class Level Adaptor
     /// @author MrDeadCe11

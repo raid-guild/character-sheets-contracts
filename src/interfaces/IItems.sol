@@ -15,8 +15,6 @@ interface IItems {
         external
         returns (bool success);
 
-    function getItem(uint256 itemId) external returns (Item memory);
-
     function craftItem(uint256 itemId, uint256 amount) external returns (bool);
 
     function createItemType(bytes calldata itemData) external returns (uint256 tokenId);
@@ -31,5 +29,7 @@ interface IItems {
 
     function removeClassRequirement(uint256 itemId, uint256 removedClassId) external returns (bool);
 
-    function balanceOf(address account, uint256 itemId) external returns (uint256);
+    function getItem(uint256 itemId) external view returns (Item memory);
+
+    function balanceOf(address account, uint256 itemId) external view returns (uint256);
 }

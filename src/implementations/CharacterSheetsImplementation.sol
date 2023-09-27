@@ -374,7 +374,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
         revert Errors.CharacterError();
     }
 
-    function isItemEquipped(uint256 characterId, uint256 itemId) public returns (bool) {
+    function isItemEquipped(uint256 characterId, uint256 itemId) public view returns (bool) {
         CharacterSheet memory sheet = sheets[characterId];
         if (sheet.memberAddress == address(0)) {
             revert Errors.PlayerError();
