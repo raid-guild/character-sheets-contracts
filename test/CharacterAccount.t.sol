@@ -11,7 +11,7 @@ import "../src/lib/Errors.sol";
 
 contract CharacterAccountTest is Test, SetUp {
     function testEquipItemToCharacter() public {
-        bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
+        bytes memory encodedData = abi.encode("test_token_uri/");
 
         vm.prank(admin);
         characterSheets.rollCharacterSheet(admin, encodedData);
@@ -39,7 +39,7 @@ contract CharacterAccountTest is Test, SetUp {
     }
 
     function testUnequipItemToCharacter() public {
-        bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
+        bytes memory encodedData = abi.encode("test_token_uri/");
 
         vm.prank(admin);
         characterSheets.rollCharacterSheet(admin, encodedData);
@@ -76,7 +76,7 @@ contract CharacterAccountTest is Test, SetUp {
     }
 
     function testEquipViaMultiSendDelegateCall() public {
-        bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
+        bytes memory encodedData = abi.encode("test_token_uri/");
 
         vm.prank(admin);
         characterSheets.rollCharacterSheet(admin, encodedData);
@@ -110,7 +110,7 @@ contract CharacterAccountTest is Test, SetUp {
     }
 
     function testEquipAndUnequipViaMultiSendDelegateCall() public {
-        bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
+        bytes memory encodedData = abi.encode("test_token_uri/");
 
         vm.prank(admin);
         characterSheets.rollCharacterSheet(admin, encodedData);

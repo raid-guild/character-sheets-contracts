@@ -78,57 +78,77 @@ contract CharacterSheetsTest is Test, SetUp {
         assertEq(characterSheetsFactory.classesImplementation(), address(1));
     }
 
-    function testCreate() public {
-        address[] memory dungeonMasters = new address[](2);
-        dungeonMasters[0] = address(1);
-        dungeonMasters[1] = address(2);
-        //create a bunch of sheets
-        for (uint256 i = 0; i < 10; i++) {
-            vm.prank(player1);
-            vm.expectEmit(true, true, true, false);
-            emit CharacterSheetsCreated(player1, address(0), address(0), address(0), address(0));
-            bytes memory baseUriData = abi.encode(
-                "test_metadata_uri_character_sheets/",
-                "test_base_uri_character_sheets/",
-                "test_base_uri_items/",
-                "test_base_uri_classes/"
-            );
+    function testCreateExperience() public {
+        vm.prank(player1);
+        address newExperience = characterSheetsFactory.createExperience();
 
-            (address sheets, address _items, address exp, address class) =
-                characterSheetsFactory.create(dungeonMasters, address(dao), baseUriData);
+        assert(address(experience) != newExperience);
+    }
 
-            assertEq(address(CharacterSheetsImplementation(sheets).items()), _items, "wrong experience");
-            assertEq(address(ItemsImplementation(_items).characterSheets()), sheets, "wrong sheets");
-            // assertEq(address(ItemsImplementation(_items).classes()), class, "wrong classes");
+    function testCreateCharacterSheets() public {
+        vm.prank(player1);
+        address newSheets = characterSheetsFactory.createCharacterSheets();
+        assert(newSheets != address(characterSheets));
+    }
 
-            assertEq(
-                CharacterSheetsImplementation(sheets).metadataURI(),
-                "test_metadata_uri_character_sheets/",
-                "Wrong character sheets metadata uri"
-            );
-            assertEq(
-                CharacterSheetsImplementation(sheets).baseTokenURI(),
-                "test_base_uri_character_sheets/",
-                "Wrong character sheets base uri"
-            );
-            assertEq(ItemsImplementation(_items).getBaseURI(), "test_base_uri_items/", "Wrong exp base uri");
-            assertEq(ClassesImplementation(class).getBaseURI(), "test_base_uri_classes/", "Wrong classes base uri");
-            assertEq(
-                ExperienceImplementation(exp).characterSheets(), sheets, "incorrect sheets address on exp contract"
-            );
-            assertTrue(
-                CharacterSheetsImplementation(sheets).hasRole(keccak256("DUNGEON_MASTER"), address(1)),
-                "incorrect dungeon master 1 "
-            );
-            assertTrue(
-                CharacterSheetsImplementation(sheets).hasRole(keccak256("DUNGEON_MASTER"), address(2)),
-                "incorrect dungeon master 2 "
-            );
-            assertEq(
-                address(CharacterSheetsImplementation(sheets).erc6551AccountImplementation()),
-                address(erc6551Implementation),
-                "incorrect 6551 account"
-            );
-        }
+    function testCreateItems() public {
+        vm.prank(player1);
+        address newItems = characterSheetsFactory.createItems();
+        assert(newItems != address(items));
+    }
+
+    function testCreateClasses() public {
+        vm.prank(player1);
+        address newClasses = characterSheetsFactory.createClasses();
+        assert(newClasses != address(classes));
+    }
+
+    function testCreateEligibilityAdaptor() public {
+        vm.prank(player1);
+        address newEligibility = characterSheetsFactory.createEligibilityAdaptor(address(eligibility));
+        assert(newEligibility != address(eligibility));
+    }
+
+    function testCreateClassLevelAdaptor() public {
+        vm.prank(player1);
+        address newClassLevel = characterSheetsFactory.createClassLevelAdaptor(address(classLevels));
+        assert(newClassLevel != address(classLevels));
+    }
+
+    function testInitializeContracts() public {
+        vm.startPrank(player1);
+
+        address newExperience = characterSheetsFactory.createExperience();
+
+        address newSheets = characterSheetsFactory.createCharacterSheets();
+
+        address newItems = characterSheetsFactory.createItems();
+
+        address newClasses = characterSheetsFactory.createClasses();
+
+        address newEligibility = characterSheetsFactory.createEligibilityAdaptor(address(eligibility));
+
+        address newClassLevel = characterSheetsFactory.createClassLevelAdaptor(address(classLevels));
+        address[] memory dungeonMasters = new address[](1);
+        dungeonMasters[0] = player1;
+        bytes memory encodedInitData =
+            abi.encode(newEligibility, newClassLevel, dungeonMasters, newSheets, newExperience, newItems, newClasses);
+
+        bytes memory stringData = abi.encode(
+            "test_metadata_uri_character_sheets/",
+            "test_base_uri_character_sheets/",
+            "test_base_uri_items/",
+            "test_base_uri_classes/"
+        );
+        characterSheetsFactory.initializeContracts(encodedInitData, stringData);
+
+        assertEq(ItemsImplementation(newItems).getBaseURI(), "test_base_uri_items/", "incorrect items base uri");
+        assertEq(ClassesImplementation(newClasses).getBaseURI(), "test_base_uri_classes/", "incorrect classes baseUri");
+        assertEq(
+            CharacterSheetsImplementation(newSheets).baseTokenURI(),
+            "test_base_uri_character_sheets/",
+            "incorrect sheets base uri"
+        );
+        assertEq(ExperienceImplementation(newExperience).name(), "Experience", "incorrec experience name");
     }
 }

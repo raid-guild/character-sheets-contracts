@@ -14,9 +14,7 @@ import {Counters} from "openzeppelin-contracts/utils/Counters.sol";
 
 import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
 import {IEligibilityAdaptor} from "../interfaces/IEligibilityAdaptor.sol";
-import {ItemsImplementation} from "./ItemsImplementation.sol";
-import {ClassesImplementation} from "./ClassesImplementation.sol";
-import {ExperienceImplementation} from "./ExperienceImplementation.sol";
+import {IItems} from "../interfaces/IItems.sol";
 import {CharacterSheet} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
 
@@ -31,9 +29,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
     /// @dev the tokenbound account of the sheet nft
     bytes32 public constant CHARACTER = keccak256("CHARACTER");
 
-    ItemsImplementation public items;
-    ClassesImplementation public classes;
-    ExperienceImplementation public experience;
+    address public items;
 
     address public eligibilityAdaptor;
 
@@ -59,13 +55,15 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
     event ItemsUpdated(address items);
     event ItemEquipped(uint256 characterId, uint256 itemTokenId);
     event ItemUnequipped(uint256 characterId, uint256 itemTokenId);
-    event CharacterUpdated(uint256 tokenId, string newName, string newCid);
+    event CharacterUpdated(uint256 tokenId, string newCid);
     event PlayerJailed(address playerAddress, bool thrownInJail);
     event CharacterRestored(uint256 tokenId, address tokenBoundAccount, address player);
     event EligibilityAdaptorUpdated(address newAdaptor);
 
-    modifier onlyExpContract() {
-        require(msg.sender == address(items), "not the items contract");
+    modifier onlyContract() {
+        if (msg.sender != items) {
+            revert Errors.CallerNotApproved();
+        }
         _;
     }
 
@@ -102,17 +100,12 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
             address _eligibilityAdaptor,
             address[] memory _dungeonMasters,
             address _owner,
-            address _classesImplementation,
             address _itemsImplementation,
-            address _experienceImplementation,
             address _erc6551Registry,
             address _erc6551AccountImplementation,
             string memory _metadataURI,
             string memory _baseTokenURI
-        ) = abi.decode(
-            _encodedParameters,
-            (address, address[], address, address, address, address, address, address, string, string)
-        );
+        ) = abi.decode(_encodedParameters, (address, address[], address, address, address, address, string, string));
 
         _grantRole(DEFAULT_ADMIN_ROLE, _owner);
 
@@ -120,9 +113,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
             _grantRole(DUNGEON_MASTER, _dungeonMasters[i]);
         }
 
-        items = ItemsImplementation(_itemsImplementation);
-        classes = ClassesImplementation(_classesImplementation);
-        experience = ExperienceImplementation(_experienceImplementation);
+        items = _itemsImplementation;
         eligibilityAdaptor = _eligibilityAdaptor;
         erc6551Registry = IERC6551Registry(_erc6551Registry);
         _tokenIdCounter.increment();
@@ -137,7 +128,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
     /**
      *
      * @param _to the address of the dao member wallet that will hold the character sheet nft
-     * @param _data encoded data that contains the name of the member and the uri of the base image for the nft.
+     * @param _data encoded data that contains the uri of the base image for the nft.
      * if no uri is stored then it will revert to the base uri of the contract
      */
 
@@ -159,9 +150,8 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
             revert Errors.Jailed();
         }
 
-        string memory _newName;
         string memory _tokenURI;
-        (_newName, _tokenURI) = abi.decode(_data, (string, string));
+        (_tokenURI) = abi.decode(_data, (string));
 
         uint256 tokenId = _tokenIdCounter.current();
 
@@ -184,7 +174,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
         );
 
         CharacterSheet memory newCharacterSheet;
-        newCharacterSheet.name = _newName;
         newCharacterSheet.erc6551TokenAddress = tba;
         newCharacterSheet.memberAddress = _to;
         newCharacterSheet.tokenId = tokenId;
@@ -207,7 +196,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
      * @param tokenId the erc1155 token id of the item to be unequipped
      * @return success boolean
      */
-
     function unequipItemFromCharacter(uint256 characterId, uint256 tokenId)
         external
         onlyRole(CHARACTER)
@@ -217,7 +205,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
         if (msg.sender != sheets[characterId].erc6551TokenAddress) {
             revert Errors.OwnershipError();
         }
-        if (items.balanceOf(sheets[characterId].erc6551TokenAddress, tokenId) == 0) {
+        if (IItems(items).balanceOf(sheets[characterId].erc6551TokenAddress, tokenId) == 0) {
             revert Errors.InventoryError();
         }
         for (uint256 i = 0; i < arr.length; i++) {
@@ -248,7 +236,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
      */
 
     function equipItemToCharacter(uint256 characterId, uint256 itemId) external onlyRole(CHARACTER) {
-        if (items.balanceOf(msg.sender, itemId) < 1) {
+        if (IItems(items).balanceOf(msg.sender, itemId) < 1) {
             revert Errors.InsufficientBalance();
         }
         sheets[characterId].inventory.push(itemId);
@@ -304,17 +292,15 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
     }
 
     /**
-     * allows a player to update their name in the contract
-     * @param newName the new player name
+     * allows a player to update the character metadata in the contract
+     * @param newCid the new metadata URI
      */
-    function updateCharacterMetadata(string calldata newName, string calldata newCid) public onlyRole(PLAYER) {
+    function updateCharacterMetadata(string calldata newCid) public onlyRole(PLAYER) {
         uint256 tokenId = memberAddressToTokenId[msg.sender];
-
-        sheets[tokenId].name = newName;
 
         _setTokenURI(tokenId, newCid);
 
-        emit CharacterUpdated(tokenId, newName, newCid);
+        emit CharacterUpdated(tokenId, newCid);
     }
 
     function jailPlayer(address playerAddress, bool throwInJail) public onlyRole(DUNGEON_MASTER) {
@@ -341,7 +327,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
     }
 
     function updateItemsContract(address expContract) public onlyRole(DUNGEON_MASTER) {
-        items = ItemsImplementation(expContract);
+        items = expContract;
         emit ItemsUpdated(expContract);
     }
 
@@ -396,7 +382,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
         if (sheet.inventory.length == 0) {
             return false;
         }
-        uint256 supply = items.getItem(itemId).supply;
+        uint256 supply = IItems(items).getItem(itemId).supply;
         require(supply != 0, "item does not exist");
         for (uint256 i; i < sheet.inventory.length; i++) {
             if (sheet.inventory[i] == itemId) {

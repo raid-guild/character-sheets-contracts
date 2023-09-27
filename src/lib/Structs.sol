@@ -21,8 +21,6 @@ struct Item {
 struct Class {
     /// @dev erc1155 token id
     uint256 tokenId;
-    /// @dev class name
-    string name;
     /// @dev the number of this class that have been minted
     uint256 supply;
     /// @dev set to true if you want characters to be able to claim this class instead of being assined
@@ -34,8 +32,6 @@ struct Class {
 struct CharacterSheet {
     /// @dev erc721 tokenId
     uint256 tokenId;
-    /// @dev the name of the member who controls this sheet
-    string name;
     /// @dev the address of the NPC associated with this character sheet
     address erc6551TokenAddress;
     /// @dev the EOA of the member who owns this character sheet

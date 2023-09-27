@@ -13,7 +13,7 @@ contract CharacterSheetsTest is Test, SetUp {
     event ItemsUpdated(address exp);
 
     function testRollCharacterSheet() public {
-        bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
+        bytes memory encodedData = abi.encode("test_token_uri/");
         vm.prank(admin);
         characterSheets.rollCharacterSheet(admin, encodedData);
 
@@ -21,14 +21,14 @@ contract CharacterSheetsTest is Test, SetUp {
     }
 
     function testRollCharacterSheetFailNonMember() public {
-        bytes memory encodedData = abi.encode("Test Name", "test uri");
+        bytes memory encodedData = abi.encode("test uri");
         vm.prank(admin);
         vm.expectRevert();
         characterSheets.rollCharacterSheet(player2, encodedData);
     }
 
     function testRollCharacterSheetRevertAlreadyACharacter() public {
-        bytes memory encodedData = abi.encode("Test Name", "test uri");
+        bytes memory encodedData = abi.encode("test uri");
         vm.prank(admin);
         vm.expectRevert();
         characterSheets.rollCharacterSheet(player1, encodedData);
@@ -38,7 +38,7 @@ contract CharacterSheetsTest is Test, SetUp {
         string memory newBaseUri = "new_base_uri/";
         vm.prank(admin);
         characterSheets.setBaseUri(newBaseUri);
-        assertEq(characterSheets.tokenURI(1), "new_base_uri/test_token_uri/");
+        assertEq(characterSheets.baseTokenURI(), "new_base_uri/");
     }
 
     function testChangeBaseUriAccessControlRevert() public {
@@ -101,7 +101,7 @@ contract CharacterSheetsTest is Test, SetUp {
         characterSheets.renounceSheet(1);
 
         //create a new sheet after renouncing
-        bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
+        bytes memory encodedData = abi.encode("test_token_uri/");
         vm.prank(player1);
         characterSheets.rollCharacterSheet(player1, encodedData);
 
@@ -119,7 +119,7 @@ contract CharacterSheetsTest is Test, SetUp {
 
         vm.startPrank(player2);
         dao.addMember(player2);
-        bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
+        bytes memory encodedData = abi.encode("test_token_uri/");
         uint256 newTokenId = characterSheets.rollCharacterSheet(player2, encodedData);
         characterSheets.renounceSheet(newTokenId);
         vm.expectRevert();
@@ -178,9 +178,7 @@ contract CharacterSheetsTest is Test, SetUp {
 
     function testUpdateCharacterMetadata() public {
         vm.prank(player1);
-        characterSheets.updateCharacterMetadata("Regard", "new_cid");
-        CharacterSheet memory player = characterSheets.getCharacterSheetByCharacterId(1);
-        assertEq(player.name, "Regard", "This player is not regarded");
+        characterSheets.updateCharacterMetadata("new_cid");
 
         string memory uri = characterSheets.tokenURI(1);
         assertEq(uri, "test_base_uri_character_sheets/new_cid", "Incorrect token uri");
@@ -189,6 +187,6 @@ contract CharacterSheetsTest is Test, SetUp {
         vm.expectRevert(
             "AccessControl: account 0x000000000000000000000000000000000000babe is missing role 0x0f98b3a5774fbfdf19646dba94a6c08f13f4c341502334a57724de46497192c3"
         );
-        characterSheets.updateCharacterMetadata("Regard", "new_cid");
+        characterSheets.updateCharacterMetadata("new_cid");
     }
 }

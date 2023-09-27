@@ -5,15 +5,16 @@ pragma abicoder v2;
 
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";
-import "../../src/implementations/ItemsImplementation.sol";
-import "../../src/implementations/ExperienceImplementation.sol";
-import "../../src/CharacterSheetsFactory.sol";
-import "../../src/EligibilityAdaptor.sol";
-import "../../src/implementations/CharacterSheetsImplementation.sol";
-import "../../src/implementations/ClassesImplementation.sol";
-import "../../src/interfaces/IMolochDAO.sol";
-import "../../src/mocks/MockMoloch.sol";
-// import "../../src/mocks/MockHats.sol";
+import {ItemsImplementation} from "../../src/implementations/ItemsImplementation.sol";
+import {ExperienceImplementation} from "../../src/implementations/ExperienceImplementation.sol";
+import {CharacterSheetsFactory} from "../../src/CharacterSheetsFactory.sol";
+import {EligibilityAdaptor} from "../../src/adaptors/EligibilityAdaptor.sol";
+import {ClassLevelAdaptor} from "../../src/adaptors/ClassLevelAdaptor.sol";
+import {CharacterSheetsImplementation} from "../../src/implementations/CharacterSheetsImplementation.sol";
+import {ClassesImplementation} from "../../src/implementations/ClassesImplementation.sol";
+import {IMolochDAO} from "../../src/interfaces/IMolochDAO.sol";
+import {Moloch} from "../../src/mocks/MockMoloch.sol";
+
 import "../../src/lib/Structs.sol";
 import "murky/src/Merkle.sol";
 import {ERC6551Registry} from "../../src/mocks/ERC6551Registry.sol";
@@ -29,6 +30,8 @@ struct StoredAddresses {
     address createdItems;
     address createdClasses;
     address createdExperience;
+    address createdEligibility;
+    address createdClassLevels;
     address factory;
 }
 
@@ -41,6 +44,7 @@ contract SetUp is Test {
     ExperienceImplementation experience;
     ClassesImplementation classes;
     EligibilityAdaptor eligibility;
+    ClassLevelAdaptor classLevels;
 
     StoredAddresses public stored;
 
@@ -59,14 +63,22 @@ contract SetUp is Test {
     CharacterAccount erc6551Implementation;
     MultiSend multiSend;
 
+    enum Category {
+        ERC20,
+        ERC721,
+        ERC1155
+    }
+
     function setUp() public {
         vm.startPrank(admin);
 
+        //create mock moloch dao for test
         dao = new Moloch();
 
+        // create eligibilityAdaptor implementation
         eligibility = new EligibilityAdaptor();
-
-        eligibility.updateDaoAddress(address(dao));
+        // create class level adaptor implementation
+        classLevels = new ClassLevelAdaptor();
 
         vm.label(address(dao), "Moloch");
         vm.label(address(eligibility), "Eligibility Adaptor");
@@ -98,6 +110,7 @@ contract SetUp is Test {
         characterSheetsFactory.updateExperienceImplementation(address(stored.experienceImplementation));
         address[] memory dungeonMasters = new address[](1);
         dungeonMasters[0] = admin;
+
         characterSheetsFactory.updateERC6551Registry(address(erc6551Registry));
         characterSheetsFactory.updateERC6551AccountImplementation(address(erc6551Implementation));
 
@@ -107,22 +120,60 @@ contract SetUp is Test {
             "test_base_uri_items/",
             "test_base_uri_classes/"
         );
-        (stored.createdCharacterSheets, stored.createdItems, stored.createdExperience, stored.createdClasses) =
-            characterSheetsFactory.create(dungeonMasters, address(eligibility), baseUriData);
+
+        stored.createdCharacterSheets = characterSheetsFactory.createCharacterSheets();
+
+        stored.createdItems = characterSheetsFactory.createItems();
+
+        stored.createdExperience = characterSheetsFactory.createExperience();
+
+        stored.createdClasses = characterSheetsFactory.createClasses();
+
+        stored.createdEligibility = characterSheetsFactory.createEligibilityAdaptor(address(eligibility));
+
+        stored.createdClassLevels = characterSheetsFactory.createClassLevelAdaptor(address(classLevels));
+
+        characterSheetsFactory.initializeContracts(
+            abi.encode(
+                stored.createdEligibility,
+                stored.createdClassLevels,
+                dungeonMasters,
+                stored.createdCharacterSheets,
+                stored.createdExperience,
+                stored.createdItems,
+                stored.createdClasses
+            ),
+            baseUriData
+        );
 
         characterSheets = CharacterSheetsImplementation(stored.createdCharacterSheets);
-        assertEq(address(characterSheets.classes()), stored.createdClasses, "incorrect classes address in setup");
+
+        assertEq(address(characterSheets.items()), stored.createdItems, "incorrect items address in setup");
+
         items = ItemsImplementation(stored.createdItems);
+
         classes = ClassesImplementation(stored.createdClasses);
+
         experience = ExperienceImplementation(stored.createdExperience);
 
+        eligibility = EligibilityAdaptor(stored.createdEligibility);
+
+        classLevels = ClassLevelAdaptor(stored.createdClassLevels);
+
+        //initialize created adaptors
+
+        eligibility.initialize(abi.encode(address(dao)));
+
+        classLevels.initialize(abi.encode(address(classes), address(experience)));
+
+        //set registry in character Sheets Contract
         characterSheets.setERC6551Registry(address(erc6551Registry));
 
-        testClassId = classes.createClassType(createNewClass("test_class"));
+        testClassId = classes.createClassType(createNewClass(true));
 
-        testItemId = items.createItemType(createNewItem("test_item", false, false, bytes32(0)));
+        testItemId = items.createItemType(createNewItem(false, false, bytes32(0)));
         vm.stopPrank();
-        bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
+        bytes memory encodedData = abi.encode("test_character_token_uri/");
         vm.prank(player1);
         uint256 tokenId1 = characterSheets.rollCharacterSheet(player1, encodedData);
         assertEq(tokenId1, 1);
@@ -140,8 +191,8 @@ contract SetUp is Test {
         experience.dropExp(player, amount);
     }
 
-    function createNewItemType(string memory name) public returns (uint256 itemId) {
-        bytes memory newItem = createNewItem(name, false, false, bytes32(0));
+    function createNewItemType() public returns (uint256 itemId) {
+        bytes memory newItem = createNewItem(false, false, bytes32(0));
         itemId = items.createItemType(newItem);
     }
 
@@ -159,11 +210,7 @@ contract SetUp is Test {
         root = merkle.getRoot(leaves);
     }
 
-    function createNewItem(string memory name, bool craftable, bool soulbound, bytes32 claimable)
-        public
-        view
-        returns (bytes memory)
-    {
+    function createNewItem(bool craftable, bool soulbound, bytes32 claimable) public view returns (bytes memory) {
         bytes memory requiredAssets;
 
         {
@@ -180,13 +227,11 @@ contract SetUp is Test {
                 abi.encode(requiredAssetCategories, requiredAssetAddresses, requiredAssetIds, requiredAssetAmounts);
         }
 
-        return abi.encode(
-            craftable, soulbound, claimable, 10 ** 18, abi.encodePacked("test_item_cid/", name), requiredAssets
-        );
+        return abi.encode(craftable, soulbound, claimable, 10 ** 18, abi.encodePacked("test_item_cid/"), requiredAssets);
     }
 
-    function createNewClass(string memory _name) public pure returns (bytes memory data) {
-        return abi.encode(_name, true, "test_class_cid/");
+    function createNewClass(bool claimable) public pure returns (bytes memory data) {
+        return abi.encode(claimable, "test_class_cid/");
     }
 
     function dropItems(address player, uint256 itemId, uint256 amount) public {
