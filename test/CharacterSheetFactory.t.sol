@@ -149,6 +149,6 @@ contract CharacterSheetsTest is Test, SetUp {
             "test_base_uri_character_sheets/",
             "incorrect sheets base uri"
         );
-        assertEq(ExperienceImplementation(newExperience).name(), "Experience", "incorrec experience name");
+        assertEq(ExperienceImplementation(newExperience).name(), "Experience", "incorrect experience name");
     }
 }

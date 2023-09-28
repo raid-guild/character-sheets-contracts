@@ -124,15 +124,15 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
     /// @notice This will initialize all the contracts except the eligibility adaptors
     /// @dev this function should be called immediately after all the create functions have been called
-    /// @param encodedAddresses the encoded addresses should include
-    /// -eligibility adaptor clone
-    /// - class level adaptor clone
+    /// @param encodedAddresses the encoded addresses must include in this order:
+    /// -eligibility adaptor clone address
+    /// - class level adaptor clone address
     /// - dungeon masters: an array of addresses that will have dungeonMaster permission on the character sheets contract
-    /// - character sheets clone to be initialized
-    /// - experience clone to be initialized
-    /// - items clones to be initialized
-    /// - classes clone to be initialized
-    /// @param data encoded string data  strings to include must be:
+    /// - character sheets clone address to be initialized
+    /// - experience clone to address be initialized
+    /// - items clone address to be initialized
+    /// - classes clone address to be initialized
+    /// @param data encoded string data strings to include must be in this order:
     /// - the base metadata uri for the character sheets clone
     /// - the base character token uri for the character sheets clone
     /// - the base uri for the ITEMS clone

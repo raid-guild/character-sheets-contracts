@@ -15,7 +15,7 @@ contract ClassLevelAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUpg
     /// @dev any variation to this contract must implement the levelRequirementsMet and getExperienceForNextLevel functions
 
     /// @notice erc651 interfaceId
-    /// @dev (this.levelRequirementsMet.selector ^ this.getExperienceForNextLevel.selector ^this.supportsInterface.selector)
+    /// @dev (this.levelRequirementsMet.selector ^ this.getExperienceForNextLevel.selector ^ this.supportsInterface.selector)
     bytes4 public constant INTERFACE_ID = 0xfe211eb1;
 
     uint256 public constant MAX_LEVEL = 20; // Maximum level
