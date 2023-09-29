@@ -33,4 +33,10 @@ abstract contract Errors {
 
     // Common
     error NotInitialized();
+
+    // ClassLevel
+    error InvalidClassLevel();
+
+    // Factory
+    error UnsupportedInterface();
 }

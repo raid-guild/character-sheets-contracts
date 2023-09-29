@@ -173,11 +173,10 @@ contract SetUp is Test {
 
         testItemId = items.createItemType(createNewItem(false, false, bytes32(0)));
         vm.stopPrank();
-        bytes memory encodedData = abi.encode("test_character_token_uri/");
         vm.prank(player1);
-        uint256 tokenId1 = characterSheets.rollCharacterSheet(player1, encodedData);
-        assertEq(tokenId1, 1);
-        npc1 = characterSheets.getCharacterSheetByCharacterId(tokenId1).erc6551TokenAddress;
+        uint256 tokenId1 = characterSheets.rollCharacterSheet("test_character_token_uri/");
+        assertEq(tokenId1, 0, "incorrect tokenId for player1");
+        npc1 = characterSheets.getCharacterSheetByCharacterId(tokenId1).accountAddress;
 
         assertTrue(
             characterSheets.hasRole(keccak256("DUNGEON_MASTER"), admin),

@@ -7,6 +7,7 @@ import {IExperience} from "../interfaces/IExperience.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
+import {Errors} from "../lib/Errors.sol";
 
 contract ClassLevelAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUpgradeable {
     /// @title Class Level Adaptor
@@ -71,7 +72,9 @@ contract ClassLevelAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUpg
     function levelRequirementsMet(address account, uint256 classId) public returns (bool) {
         // checks the number of class tokens held by account.  1 token = level 0.
         uint256 currentLevel = IClasses(classesContract).balanceOf(account, classId);
-        require(currentLevel > 0, "must have at least 1 class token");
+        if (currentLevel == 0) {
+            revert Errors.InvalidClassLevel();
+        }
 
         //current experience not locked in a class
         uint256 currentExp = IExperience(experienceContract).balanceOf(account);
@@ -85,12 +88,16 @@ contract ClassLevelAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUpg
     }
 
     function getLockedExperience(uint256 currentLevel) public view returns (uint256) {
-        require(currentLevel > 0, "must have at least one class token");
+        if (currentLevel == 0) {
+            revert Errors.InvalidClassLevel();
+        }
         return _experiencePoints[currentLevel - 1];
     }
 
     function getExperienceForNextLevel(uint256 currentLevel) public view returns (uint256) {
-        require(currentLevel <= MAX_LEVEL, "Invalid level");
+        if (currentLevel >= MAX_LEVEL) {
+            revert Errors.InvalidClassLevel();
+        }
         return _experiencePoints[currentLevel] - getLockedExperience(currentLevel);
     }
 
@@ -98,5 +105,6 @@ contract ClassLevelAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUpg
         return interfaceId == 0x01ffc9a7 || interfaceId == INTERFACE_ID;
     }
 
+    // solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }

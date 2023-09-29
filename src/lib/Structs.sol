@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Asset} from "./MultiToken.sol";
-
 struct Item {
     /// @dev  claimable: if bytes32(0) then  items are claimable by anyone, otherwise upload a merkle root
     /// of all addresses allowed to claim.  if not claimable at all use any random bytes32(n) besides bytes32(0)
@@ -19,23 +17,17 @@ struct Item {
 }
 
 struct Class {
-    /// @dev erc1155 token id
-    uint256 tokenId;
     /// @dev the number of this class that have been minted
     uint256 supply;
     /// @dev set to true if you want characters to be able to claim this class instead of being assined
     bool claimable;
-    /// @dev this classes image/metadata uri
-    string cid;
 }
 
 struct CharacterSheet {
-    /// @dev erc721 tokenId
-    uint256 tokenId;
-    /// @dev the address of the NPC associated with this character sheet
-    address erc6551TokenAddress;
-    /// @dev the EOA of the member who owns this character sheet
-    address memberAddress;
+    /// @dev the address of the player who owns this character sheet
+    address playerAddress;
+    /// @dev the address of the erc6551 account associated with this character sheet
+    address accountAddress;
     /// @dev the itemId of the equipped items in this chars inventory
     uint256[] inventory;
 }

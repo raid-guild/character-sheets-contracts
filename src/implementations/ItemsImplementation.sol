@@ -73,9 +73,7 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
         __ERC1155Holder_init();
 
         address characterSheetsAddress;
-        string memory baseUri;
-        (characterSheetsAddress, baseUri) = abi.decode(_encodedData, (address, string));
-        _baseURI = baseUri;
+        (characterSheetsAddress, _baseURI) = abi.decode(_encodedData, (address, string));
         characterSheets = ICharacterSheets(characterSheetsAddress);
     }
 
@@ -96,11 +94,7 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
         }
         for (uint256 i; i < characterAccounts.length; i++) {
             for (uint256 j; j < itemIds[i].length; j++) {
-                if (_requirements[itemIds[i][j]].length == 0) {
-                    _transferItem(characterAccounts[i], itemIds[i][j], amounts[i][j]);
-                } else {
-                    _transferItemWithReq(characterAccounts[i], itemIds[i][j], amounts[i][j]);
-                }
+                _transferItem(characterAccounts[i], itemIds[i][j], amounts[i][j]);
             }
         }
         success = true;
@@ -129,7 +123,7 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
             } else {
                 Item storage claimableItem = _items[itemIds[i]];
                 if (claimableItem.claimable == bytes32(0)) {
-                    _transferItemWithReq(msg.sender, itemIds[i], amounts[i]);
+                    _transferItem(msg.sender, itemIds[i], amounts[i]);
                 } else {
                     bytes32 leaf =
                         keccak256(bytes.concat(keccak256(abi.encodePacked(itemIds[i], msg.sender, amounts[i]))));
@@ -137,7 +131,7 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
                     if (!MerkleProof.verify(proofs[i], claimableItem.claimable, leaf)) {
                         revert Errors.InvalidProof();
                     }
-                    _transferItemWithReq(msg.sender, itemIds[i], amounts[i]);
+                    _transferItem(msg.sender, itemIds[i], amounts[i]);
                 }
             }
         }
@@ -152,7 +146,7 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
      * @return success bool if crafting is a success return true, else return false
      */
 
-    function craftItem(uint256 itemId, uint256 amount) public onlyCharacter returns (bool success) {
+    function craftItem(uint256 itemId, uint256 amount) external onlyCharacter returns (bool success) {
         Item storage newItem = _items[itemId];
 
         if (!newItem.craftable) {
@@ -165,13 +159,10 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
 
         Asset[] storage itemRequirements = _requirements[itemId];
         for (uint256 i; i < itemRequirements.length; i++) {
-            Asset storage newRequirement = itemRequirements[i];
+            Asset memory newRequirement = itemRequirements[i];
             newRequirement.amount = newRequirement.amount * amount;
-            if (newRequirement.assetAddress == address(this)) {
-                _burn(msg.sender, newRequirement.id, newRequirement.amount);
-            } else {
-                MultiToken.safeTransferAssetFrom(newRequirement, msg.sender, address(0));
-            }
+            MultiToken.safeTransferAssetFrom(newRequirement, address(this), address(0));
+            // TODO create a dismatle function that returns the items to the player
         }
 
         _transferItem(msg.sender, itemId, amount);
@@ -185,7 +176,7 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
      * @return _itemId the ERC1155 tokenId
      */
 
-    function createItemType(bytes calldata _itemData) public onlyDungeonMaster returns (uint256 _itemId) {
+    function createItemType(bytes calldata _itemData) external onlyDungeonMaster returns (uint256 _itemId) {
         _itemId = totalItemTypes;
 
         _createItem(_itemData, _itemId);
@@ -207,7 +198,7 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
      */
 
     function addItemRequirement(uint256 itemId, uint8 category, address assetAddress, uint256 assetId, uint256 amount)
-        public
+        external
         onlyDungeonMaster
         returns (bool success)
     {
@@ -233,7 +224,7 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
      *  and it will remove the requirment with itemId 1
      */
     function removeItemRequirement(uint256 itemId, address assetAddress, uint256 assetId)
-        public
+        external
         onlyDungeonMaster
         returns (bool)
     {
@@ -271,14 +262,29 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
      * @param merkleRoot the merkle root of the addresses and amounts that can be claimed of this item
      */
 
-    function updateItemClaimable(uint256 itemId, bytes32 merkleRoot) public onlyDungeonMaster {
+    function updateItemClaimable(uint256 itemId, bytes32 merkleRoot) external onlyDungeonMaster {
         if (_items[itemId].supply == 0) {
-            // itemId 0 has supply 0
             revert Errors.ItemError();
         }
         _items[itemId].claimable = merkleRoot;
 
         emit ItemClaimableUpdated(itemId, merkleRoot);
+    }
+
+    /**
+     * @dev Sets `baseURI` as the `_baseURI` for all tokens
+     */
+    function setBaseURI(string memory _baseUri) external onlyDungeonMaster {
+        _baseURI = _baseUri;
+    }
+
+    /**
+     * @dev Sets `tokenURI` as the tokenURI of `tokenId`.
+     */
+
+    function setURI(uint256 tokenId, string memory tokenURI) external onlyDungeonMaster {
+        _itemURIs[tokenId] = tokenURI;
+        emit URI(uri(tokenId), tokenId);
     }
 
     function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes memory data)
@@ -287,10 +293,6 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
     {
         if (to != address(0) && !characterSheets.hasRole(CHARACTER, to)) {
             revert Errors.CharacterOnly();
-        }
-        if (_items[id].supply == 0) {
-            // itemId 0 has supply 0
-            revert Errors.InvalidToken();
         }
         if (_items[id].soulbound) {
             revert Errors.SoulboundToken();
@@ -305,20 +307,20 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
         uint256[] memory amounts,
         bytes memory data
     ) public override {
-        if (!characterSheets.hasRole(CHARACTER, to)) {
+        if (to != address(0) && !characterSheets.hasRole(CHARACTER, to)) {
             revert Errors.CharacterOnly();
         }
 
         for (uint256 i; i < ids.length; i++) {
-            if (_items[ids[i]].supply == 0) {
-                // itemId 0 has supply 0
-                revert Errors.InvalidToken();
-            }
             if (_items[ids[i]].soulbound) {
                 revert Errors.SoulboundToken();
             }
         }
         super.safeBatchTransferFrom(from, to, ids, amounts, data);
+    }
+
+    function withdrawAsset(Asset calldata asset, address to) public onlyDungeonMaster {
+        MultiToken.safeTransferAssetFrom(asset, address(this), to);
     }
 
     /**
@@ -373,20 +375,6 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
 
     /// end overrides
 
-    /**
-     * @dev Sets `tokenURI` as the tokenURI of `itemId`.
-     */
-
-    /**
-     * @dev Sets `baseURI` as the `_baseURI` for all tokens
-     */
-
-    function _setBaseURI(string memory _baseUri) internal {
-        _baseURI = _baseUri;
-    }
-
-    function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {}
-
     function _createItem(bytes memory _data, uint256 _itemId) internal {
         bool craftable;
         bool soulbound;
@@ -439,42 +427,13 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
     }
 
     /**
-     * internal function to transfer items.
-     * @param _to the token bound account to receive the item;
-     * @param itemId the erc1155 id of the Item in the items mapping.
-     * @param amount the amount of items to be sent to the player token
-     */
-
-    function _transferItem(address _to, uint256 itemId, uint256 amount) private returns (bool success) {
-        if (!characterSheets.hasRole(CHARACTER, _to)) {
-            revert Errors.CharacterOnly();
-        }
-
-        Item storage item = _items[itemId];
-        if (item.supply == 0) {
-            revert Errors.ItemError();
-        }
-
-        super._safeTransferFrom(address(this), _to, itemId, amount, "");
-
-        _items[itemId].supplied++;
-
-        success = true;
-
-        emit ItemTransfered(_to, itemId, amount);
-    }
-
-    /**
      * transfers an item that has requirements.
      * @param characterAccount the address of the token bound account of the player nft
      * @param itemId the erc1155 Id of the item to be transfered
      * @param amount the number of items to be transfered
      */
 
-    function _transferItemWithReq(address characterAccount, uint256 itemId, uint256 amount)
-        private
-        returns (bool success)
-    {
+    function _transferItem(address characterAccount, uint256 itemId, uint256 amount) internal returns (bool success) {
         if (!characterSheets.hasRole(CHARACTER, characterAccount)) {
             revert Errors.CharacterOnly();
         }
@@ -498,7 +457,14 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
         return success;
     }
 
-    function _checkRequirements(address characterAccount, uint256 itemId, uint256 amount) private view returns (bool) {
+    //solhint-disable-next-line no-empty-blocks
+    function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {}
+
+    function _checkRequirements(address characterAccount, uint256 itemId, uint256 amount)
+        internal
+        view
+        returns (bool)
+    {
         Asset[] storage itemRequirements = _requirements[itemId];
         if (itemRequirements.length == 0) {
             return true;
