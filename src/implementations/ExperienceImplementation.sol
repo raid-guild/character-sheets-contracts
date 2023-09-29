@@ -9,7 +9,7 @@ import {Errors} from "../lib/Errors.sol";
 
 /**
  * @title Experience and Items
- * @author MrDeadCe11
+ * @author MrDeadCe11 && dan13ram
  * @notice this is an ERC20 that is designed to intereact with the items, character sheets, and classes contracts to provide a measurable amount of character advancment
  */
 contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
@@ -51,9 +51,11 @@ contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
         __UUPSUpgradeable_init();
         (characterSheets, classesContract) = abi.decode(initializationData, (address, address));
     }
-
-    /// @notice Called by dungeon master to give experience to a character
-    /// @param to the address of the character that will receive the exp
+    
+    /**
+    * @notice Called by dungeon master to give experience to a character
+    * @param to the address of the character that will receive the exp
+    */
     function dropExp(address to, uint256 amount) public onlyDungeonMaster {
         if (characterSheets == address(0)) {
             revert Errors.VariableNotSet();

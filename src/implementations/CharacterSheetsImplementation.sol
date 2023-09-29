@@ -15,6 +15,15 @@ import {IEligibilityAdaptor} from "../interfaces/IEligibilityAdaptor.sol";
 import {IItems} from "../interfaces/IItems.sol";
 import {CharacterSheet} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
+/**
+ * @title Character Sheets
+ * @author MrDeadCe11 && dan13ram
+ * @notice This is a gamified reputation managment system desgigned for raid guild but
+ * left composable for use with any dao or organization
+ * @dev this is an erc721 contract that calculates the erc6551 address of every token at token creation and then uses that address as the character for
+ * a rpg themed reputation system with experience points awarded by a centralized authority the "DUNGEON_MASTER" and items and classes that can be owned and equipped
+ * by the base character account.
+ */
 
 contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
     /// @dev the admin of the contract
@@ -348,12 +357,16 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
         emit MetadataURIUpdated(_uri);
     }
 
-    /// @dev Sets the address of the ERC6551 registry
+    /**
+     * @dev Sets the address of the ERC6551 registry
+     */
     function setERC6551Registry(address registry) public onlyRole(DUNGEON_MASTER) {
         erc6551Registry = registry;
     }
 
-    /// @dev Sets the address of the ERC6551 account implementation
+    /**
+     * @dev Sets the address of the ERC6551 account implementation
+     */
     function setERC6551Implementation(address implementation) public onlyRole(DUNGEON_MASTER) {
         erc6551AccountImplementation = implementation;
     }

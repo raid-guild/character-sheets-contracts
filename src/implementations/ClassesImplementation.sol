@@ -17,7 +17,7 @@ import {IClassLevelAdaptor} from "../interfaces/IClassLevelAdaptor.sol";
 
 /**
  * @title Experience and Items
- * @author MrDeadCe11
+ * @author MrDeadCe11 && dan13ram
  * @notice this is an ERC1155 that is designed to interact with the characterSheets contract.
  * Each item and class is an 1155 token that can soulbound or not to the erc6551 wallet of each player nft
  * in the characterSheets contract.
@@ -177,12 +177,13 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     function renounceClass(uint256 classId) public onlyCharacter returns (bool success) {
         return _revokeClass(msg.sender, classId);
     }
-
-    /// @notice This will level the class of any character class if they have enough exp
-    /// @dev As a source of truth, only the dungeon master can call this function so that the correct _classes are leveld
-    /// @param character the address of the character account to have a class leveled
-    /// @param classId the Id of the class that will be leveled
-    /// @return uint256 class token balance
+    /**
+     * @notice This will level the class of any character class if they have enough exp
+     * @dev As a source of truth, only the dungeon master can call this function so that the correct _classes are leveld
+     * @param character the address of the character account to have a class leveled
+     * @param classId the Id of the class that will be leveled
+     * @return uint256 class token balance
+     */
 
     function levelClass(address character, uint256 classId) public onlyDungeonMaster returns (uint256) {
         if (!IClassLevelAdaptor(classLevelAdaptor).levelRequirementsMet(character, classId)) {
@@ -231,7 +232,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     }
 
     /**
-     * returns an array of all Class structs stored in the _classes mapping
+     * @return an array of all Class structs stored in the _classes mapping
      */
 
     function getAllClasses() public view returns (Class[] memory) {
@@ -293,7 +294,9 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
 
     // overrides
 
-    /// @notice Only dungeon master can transfer _classes. approval of character is not required
+    /**
+     * @notice Only dungeon master can transfer _classes. approval of character is not required
+     */
     //solhint-disable-next-line
     function safeBatchTransferFrom(
         address from,

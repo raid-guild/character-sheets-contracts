@@ -17,7 +17,7 @@ import {MultiToken, Asset, Category} from "../lib/MultiToken.sol";
 
 /**
  * @title Experience and Items
- * @author MrDeadCe11
+ * @author MrDeadCe11 && dan13ram
  * @notice this is an ERC1155 that is designed to intereact with the characterSheets contract.
  * Each item and class is an 1155 token that can soulbound or not to the erc6551 wallet of each player nft
  * in the characterSheets contract.

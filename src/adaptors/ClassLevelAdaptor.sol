@@ -9,14 +9,18 @@ import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/Owna
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {Errors} from "../lib/Errors.sol";
 
-contract ClassLevelAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUpgradeable {
-    /// @title Class Level Adaptor
-    /// @author MrDeadCe11
-    /// @notice This is an adaptor that allows the classesImplementation to check the requirements to level a class
-    /// @dev any variation to this contract must implement the levelRequirementsMet and getExperienceForNextLevel functions
+    /**
+    * @title Class Level Adaptor
+    * @author MrDeadCe11
+    * @notice This is an adaptor that allows the classesImplementation to check the requirements to level a class
+    * @dev any variation to this contract must implement the levelRequirementsMet and getExperienceForNextLevel functions
+    */
 
-    /// @notice erc651 interfaceId
-    /// @dev (this.levelRequirementsMet.selector ^ this.getExperienceForNextLevel.selector ^ this.supportsInterface.selector)
+contract ClassLevelAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUpgradeable {
+    /**
+    * @notice erc651 interfaceId
+    * @dev (this.levelRequirementsMet.selector ^ this.getExperienceForNextLevel.selector ^ this.supportsInterface.selector)
+    */
     bytes4 public constant INTERFACE_ID = 0xfe211eb1;
 
     uint256 public constant MAX_LEVEL = 20; // Maximum level
@@ -27,7 +31,6 @@ contract ClassLevelAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUpg
 
     event ClassesContractUpdated(address newClassesContract);
     event ExperienceContractUpdated(address newExperienceContract);
-    // Constructor to initialize the XP array
 
     constructor() {
         _disableInitializers();
