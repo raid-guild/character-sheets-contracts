@@ -2,25 +2,26 @@
 pragma solidity ^0.8.9;
 
 import {ERC165} from "openzeppelin-contracts/utils/introspection/ERC165.sol";
-import {IClasses} from "../interfaces/IClasses.sol";
-import {IExperience} from "../interfaces/IExperience.sol";
+import {IClassLevelAdaptor} from "../interfaces/IClassLevelAdaptor.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
+import {IERC1155} from "openzeppelin-contracts/token/ERC1155/IERC1155.sol";
+import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import {Errors} from "../lib/Errors.sol";
 
-    /**
-    * @title Class Level Adaptor
-    * @author MrDeadCe11
-    * @notice This is an adaptor that allows the classesImplementation to check the requirements to level a class
-    * @dev any variation to this contract must implement the levelRequirementsMet and getExperienceForNextLevel functions
-    */
+/**
+ * @title Class Level Adaptor
+ * @author MrDeadCe11
+ * @notice This is an adaptor that allows the classesImplementation to check the requirements to level a class
+ * @dev any variation to this contract must implement the levelRequirementsMet and getExperienceForNextLevel functions
+ */
 
-contract ClassLevelAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUpgradeable {
+contract ClassLevelAdaptor is IClassLevelAdaptor, ERC165, Initializable, OwnableUpgradeable, UUPSUpgradeable {
     /**
-    * @notice erc651 interfaceId
-    * @dev (this.levelRequirementsMet.selector ^ this.getExperienceForNextLevel.selector ^ this.supportsInterface.selector)
-    */
+     * @notice erc651 interfaceId
+     * @dev (this.levelRequirementsMet.selector ^ this.getExperienceForNextLevel.selector ^ this.supportsInterface.selector)
+     */
     bytes4 public constant INTERFACE_ID = 0xfe211eb1;
 
     uint256 public constant MAX_LEVEL = 20; // Maximum level
@@ -36,7 +37,7 @@ contract ClassLevelAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUpg
         _disableInitializers();
     }
 
-    function initialize(bytes calldata data) external initializer {
+    function initialize(address _classesContract, address _experienceContract) external initializer {
         _experiencePoints[0] = 0;
         _experiencePoints[1] = 300 * 10 ** 18;
         _experiencePoints[2] = 900 * 10 ** 18;
@@ -58,7 +59,8 @@ contract ClassLevelAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUpg
         _experiencePoints[18] = 305000 * 10 ** 18;
         _experiencePoints[19] = 355000 * 10 ** 18;
 
-        (classesContract, experienceContract) = abi.decode(data, (address, address));
+        classesContract = _classesContract;
+        experienceContract = _experienceContract;
         __Ownable_init();
     }
 
@@ -72,15 +74,15 @@ contract ClassLevelAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUpg
         emit ExperienceContractUpdated(newExperienceContract);
     }
 
-    function levelRequirementsMet(address account, uint256 classId) public returns (bool) {
+    function levelRequirementsMet(address account, uint256 classId) public view returns (bool) {
         // checks the number of class tokens held by account.  1 token = level 0.
-        uint256 currentLevel = IClasses(classesContract).balanceOf(account, classId);
+        uint256 currentLevel = IERC1155(classesContract).balanceOf(account, classId);
         if (currentLevel == 0) {
             revert Errors.InvalidClassLevel();
         }
 
         //current experience not locked in a class
-        uint256 currentExp = IExperience(experienceContract).balanceOf(account);
+        uint256 currentExp = IERC20(experienceContract).balanceOf(account);
 
         // check that the account holds the correct amount of exp to claim the next level + the amount already locked.  since 1 token = level 0.
         return getExperienceForNextLevel(currentLevel) <= currentExp;
@@ -104,8 +106,8 @@ contract ClassLevelAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUpg
         return _experiencePoints[currentLevel] - getLockedExperience(currentLevel);
     }
 
-    function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
-        return interfaceId == 0x01ffc9a7 || interfaceId == INTERFACE_ID;
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+        return interfaceId == 0x01ffc9a7 || interfaceId == INTERFACE_ID || super.supportsInterface(interfaceId);
     }
 
     // solhint-disable-next-line no-empty-blocks

@@ -65,7 +65,8 @@ contract Create is BaseFactoryExecutor {
     string public experienceBaseUri;
     string public classesBaseUri;
     address public characterSheetsAddress;
-    address public experienceAndItems;
+    address public items;
+    address public experience;
     address public classes;
     bytes public encodedData;
     CharacterSheetsFactory public factory;
@@ -83,10 +84,10 @@ contract Create is BaseFactoryExecutor {
         encodedData = abi.encode(characterSheetsMetadataUri, characterSheetsBaseUri, experienceBaseUri, classesBaseUri);
     }
 
-    function create() internal override returns (address, address, address) {
+    function create() internal override returns (address, address, address, address) {
         vm.startBroadcast(deployerPrivateKey);
-        (characterSheetsAddress, experienceAndItems, classes) = factory.create(dungeonMasters, dao, encodedData);
+        (characterSheetsAddress, classes, items, experience) = factory.create(dungeonMasters, dao, encodedData);
         vm.stopBroadcast();
-        return (characterSheetsAddress, experienceAndItems, classes);
+        return (characterSheetsAddress, classes, items, experience);
     }
 }

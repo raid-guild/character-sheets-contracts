@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {EligibilityAdaptor} from "../src/EligibilityAdaptor.sol";
+import {EligibilityAdaptor} from "../src/adaptors/EligibilityAdaptor.sol";
 
 import {BaseDeployer} from "./BaseDeployer.sol";
 import {BaseFactoryExecutor} from "./BaseExecutor.sol";

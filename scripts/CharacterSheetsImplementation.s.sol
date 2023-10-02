@@ -42,10 +42,8 @@ contract ExecuteCharacterSheetsImplementation is BaseExecutor {
 
         console2.log("SHEET URI: ", sheetUri);
 
-        bytes memory encodedData = abi.encode(characterName, sheetUri);
-
         vm.broadcast(deployerPrivateKey);
-        uint256 tokenId = sheetsImp.rollCharacterSheet(memberAddress, encodedData);
+        uint256 tokenId = sheetsImp.rollCharacterSheet(sheetUri);
         console.log("Character Id:", tokenId);
     }
 }

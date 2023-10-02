@@ -162,9 +162,9 @@ contract SetUp is Test {
 
         //initialize created adaptors
 
-        eligibility.initialize(abi.encode(address(dao)));
+        eligibility.initialize(address(dao));
 
-        classLevels.initialize(abi.encode(address(classes), address(experience)));
+        classLevels.initialize(address(classes), address(experience));
 
         //set registry in character Sheets Contract
         characterSheets.setERC6551Registry(address(erc6551Registry));
