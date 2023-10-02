@@ -10,85 +10,29 @@
     "Erc6551AccountImplementation": "",
     "ClassesImplementation": ""
   },
-  "sepolia": {
-    "chainId": "11155111",
-    "network": "sepolia",
-    "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
-    "Dao": "0x1E72EE79B681e69f807Fcc9BD14Ab806BfD62553",
-    "MockDao": "0x34998d45554480fab16360a367fe44b480987ee6",
-    "CharacterSheetsFactory": "0x28C02872016F61A0B3D67D4109dD6772aa375867",
-    "CharacterSheetsImplementation": "0xF115d872DCfe5d6a16ADFC97cEaD3c87fEd322DB",
-    "CharacterAccount": "0xA84a6E411bFF2aDAba677a92c1E0988D49bfe8B5",
-    "ItemsImplementation": "0xB14e29D750dc88A32EA194aaf185B1D176391414",
-    "ClassesImplementation": "0xcc74e49A67a73f90585819dA87ab79D9a6c14fC5",
-    "DungeonMasters": ["0x941E92c9Eff78a2b7217057752cf938040a59aE9"],
-    "CharacterSheetsMetadataUri": "sheet-metadata",
-    "CharacterSheetsBaseUri": "sheet",
-    "ExperienceBaseUri": "exp",
-    "ClassesBaseUri": "class",
-    "CreatedCharacterSheet": "0x1920a6b180C4D7d5acB6F3da29207C62F3408BEd",
-    "CreatedExperienceAndItems": "0xaDAf1d4B17D28Fdd57C636B3B8Bf6a62887FeEfF",
-    "CreatedClasses": "0xFf4F28f1D1d2294C9Ff8eb17D0b85419Eff8346D",
-    "Characters": [
-      {
-        "MemberAddress": "0x941E92c9Eff78a2b7217057752cf938040a59aE9",
-        "CharacterName": "MrDeadCe11",
-        "uri": "",
-        "Erc6551address": "0x3B39178c8AE4ef6290B6730f5f5485B938D3D7f4"
-      }
-    ],
-    "Items": [
-      {
-        "cid": "false",
-        "name": "invisiblefartofdeath",
-        "supply": "1000000",
-        "soulbound": false,
-        "requirements": {
-          "classRequirements": [],
-          "itemRequirements": [[0, 0]],
-          "claimable": [[0, 0]]
-        }
-      },
-      {
-        "cid": "false",
-        "name": "rusty_stick",
-        "supply": "100000",
-        "soulbound": false,
-        "requirements": {
-          "classRequirements": [],
-          "itemRequirements": [[0, 0]],
-          "claimable": [[0, 0]]
-        }
-      }
-    ],
-    "Classes": [
-      {
-        "ClassName": "wizard",
-        "ClassUri": null
-      },
-      {
-        "ClassName": "warrior",
-        "ClassUri": null
-      },
-      {
-        "ClassName": "warrior",
-        "ClassUri": null
-      }
-    ]
-  },
   "goerli": {
     "chainId": "5",
     "network": "goerli",
     "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
-    "Dao": "0x36a47AD35F782Fc922b15727b4df64Ea7A3735E5",
-    "CharacterSheetsMetadataUri": "sheet-metadata",
-    "CharacterSheetsBaseUri": "sheet",
-    "ExperienceBaseUri": "exp",
-    "ClassesBaseUri": "class",
-    "CharacterAccount": "0xcC90D67f37b71c2176BCDa42887E9Bc9E6E1b8A2",
-    "CharacterSheetsImplementation": "0x7f9B018c136F3403E42b46A9c246DA279fEfaEa6",
+    "CharacterAccount": "0xc7D1C5Ba5E02536a0067687E028F6F1F41A025FD",
+    "CharacterSheetsImplementation": "0x1b4fBaAA0f11A5Bd9152dFd9Fd584043C78182Ff",
     "ExperienceAndItemsImplementation": "0x43904C600A2061777d10fb72a565000c4c8c0390",
-    "ClassesImplementation": "0x64D8c4852Ad05bf24807b9541872d37B76F27FaD",
-    "CharacterSheetsFactory": "0x453C82CF49eA5eAa9535b19F858025416be98F79"
+    "ClassesImplementation": "0xfc105Dc5D5753Ff89964B539e02D93A9B70045F0",
+    "CharacterSheetsFactory": "0x6a4FBdA320eaF5E319178630384D8d633503267f",
+    "ItemsImplementation": "0x6b50ce1A4fa4f7f37283FB45b1CD60EB33741E69",
+    "EligibilityAdaptor": "0xaB19E8f97E4bcf467ed940ffc373bf4eB5cbb676",
+    "ClassLevelAdaptor": "0xAF9d240d08c3455D2b2D48B689763385D4834936"
+  },
+  "anvil": {
+    "chainId": "31337",
+    "network": "anvil",
+    "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
+    "CharacterAccount": "0x3Aa5ebB10DC797CAC828524e59A333d0A371443c",
+    "CharacterSheetsImplementation": "0xc6e7DF5E7b4f2A278906862b61205850344D4e7d",
+    "ItemsImplementation": "0x59b670e9fA9D0A427751Af201D676719a970857b",
+    "ClassesImplementation": "0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1",
+    "EligibilityAdaptor": "0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44",
+    "ClassLevelAdaptor": "0xa85233C63b9Ee964Add6F2cffe00Fd84eb32338f",
+    "CharacterSheetsFactory": "0x4A679253410272dd5232B3Ff7cF5dbB88f295319"
   }
 }

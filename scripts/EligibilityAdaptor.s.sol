@@ -11,22 +11,12 @@ import "forge-std/StdJson.sol";
 contract DeployEligibilityAdaptor is BaseDeployer {
     using stdJson for string;
 
-    address public dao;
-
     EligibilityAdaptor public eligibilityAdaptor;
 
-    function loadBaseAddresses(string memory json, string memory targetEnv) internal override {
-        dao = json.readAddress(string(abi.encodePacked(".", targetEnv, ".Dao")));
-    }
-
     function deploy() internal override returns (address) {
-        require(dao != address(0), "unknown erc6551AccountImplementation");
-
         vm.startBroadcast(deployerPrivateKey);
 
         eligibilityAdaptor = new EligibilityAdaptor();
-
-        eligibilityAdaptor.updateDaoAddress(dao);
 
         vm.stopBroadcast();
 
