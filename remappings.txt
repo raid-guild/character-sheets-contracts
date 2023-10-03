@@ -10,3 +10,4 @@ openzeppelin/=lib/openzeppelin-contracts-upgradeable/contracts/
 solady/=lib/hats-protocol/lib/solady/src/
 solbase/=lib/hats-protocol/lib/solbase/src/
 utils/=lib/hats-protocol/lib/utils/
+hats-module/=lib/hats-module/src/

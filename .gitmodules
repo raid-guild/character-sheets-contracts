@@ -13,3 +13,6 @@
 [submodule "lib/murky"]
 	path = lib/murky
 	url = https://github.com/dmfxyz/murky
+[submodule "lib/hats-module"]
+	path = lib/hats-module
+	url = https://github.com/Hats-Protocol/hats-module.git

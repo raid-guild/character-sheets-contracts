@@ -31,3 +31,18 @@ struct CharacterSheet {
     /// @dev the itemId of the equipped items in this chars inventory
     uint256[] inventory;
 }
+
+struct HatsData {
+    /// @dev the address of the hats contract
+    address hats;
+    /// @dev the address of the character hats eligibility module deployed from the hats module factory
+    address characterHatEligibility;
+    /// @dev the address of the player hats eligibility module deployed from the hats module factory
+    address playerHatEligibility;
+    /// @dev the uint256 hat id of the admin hat
+    uint256 adminHatId;
+    /// @dev the uint256 hat id of the player hat
+    uint256 playerHatId;
+    /// @dev the uint256 hat id of the character hat
+    uint256 characterHatId;
+}
