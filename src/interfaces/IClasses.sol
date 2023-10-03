@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
-pragma abicoder v2;
+
+import {Class} from "../lib/Structs.sol";
 
 interface IClasses {
-    function balanceOf(address account, uint256 classId) external returns (uint256);
+    function getClass(uint256 classId) external view returns (Class memory);
 }

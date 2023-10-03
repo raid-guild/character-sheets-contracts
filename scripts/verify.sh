@@ -68,8 +68,10 @@ fi
 
 if [[ $2 == *"Implementation"* ]]
 then
-
     forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $ETHERSCAN_API_KEY --num-of-optimizations 10000 $SAVED_ADDRESS src/implementations/$2.sol:$2 
+elif [[ $2 == *"Adaptor"* ]]
+then
+    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $ETHERSCAN_API_KEY --num-of-optimizations 10000 $SAVED_ADDRESS src/adaptors/$2.sol:$2 
 else
     forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $ETHERSCAN_API_KEY  --num-of-optimizations 10000 $SAVED_ADDRESS src/$2.sol:$2
 fi

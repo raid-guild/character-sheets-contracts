@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
-pragma abicoder v2;
 
 import {Item} from "../lib/Structs.sol";
 
 interface IItems {
-    function batchCreateItemType(bytes[] calldata itemDatas) external returns (uint256[] memory tokenIds);
-
-    function dropLoot(address[] calldata nftAddress, uint256[][] calldata itemIds, uint256[][] calldata amounts)
+    function dropLoot(address[] calldata characterAccounts, uint256[][] calldata itemIds, uint256[][] calldata amounts)
         external
         returns (bool success);
 
@@ -19,17 +16,11 @@ interface IItems {
 
     function createItemType(bytes calldata itemData) external returns (uint256 tokenId);
 
-    function addItemRequirement(uint256 itemId, uint256 requiredItemId, uint256 amount)
+    function addItemRequirement(uint256 itemId, uint8 category, address assetAddress, uint256 assetId, uint256 amount)
         external
-        returns (bool success);
+        returns (bool);
 
-    function addClassRequirement(uint256 itemId, uint256 requiredClassId) external returns (bool success);
-
-    function removeItemRequirement(uint256 itemId, uint256 removedItemId) external returns (bool);
-
-    function removeClassRequirement(uint256 itemId, uint256 removedClassId) external returns (bool);
+    function removeItemRequirement(uint256 itemId, address assetAddress, uint256 assetId) external returns (bool);
 
     function getItem(uint256 itemId) external view returns (Item memory);
-
-    function balanceOf(address account, uint256 itemId) external view returns (uint256);
 }

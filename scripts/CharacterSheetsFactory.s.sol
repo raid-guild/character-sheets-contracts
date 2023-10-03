@@ -17,6 +17,8 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
     address public characterSheetsImplementation;
     address public ItemsImplementation;
     address public classesImplementation;
+    address public eligibilityAdaptorImplementation;
+    address public classLevelAdaptorImplementation;
 
     CharacterSheetsFactory public characterSheetsFactory;
 
@@ -27,6 +29,10 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterSheetsImplementation")));
         ItemsImplementation = json.readAddress(string(abi.encodePacked(".", targetEnv, ".ItemsImplementation")));
         classesImplementation = json.readAddress(string(abi.encodePacked(".", targetEnv, ".ClassesImplementation")));
+        eligibilityAdaptorImplementation =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".EligibilityAdaptor")));
+        classLevelAdaptorImplementation =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".ClassLevelAdaptor")));
     }
 
     function deploy() internal override returns (address) {
@@ -35,6 +41,8 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
         require(characterSheetsImplementation != address(0), "unknown characterSheetsImplementation");
         require(ItemsImplementation != address(0), "unknown ItemsImplementation");
         require(classesImplementation != address(0), "unknown classesImplementation");
+        require(eligibilityAdaptorImplementation != address(0), "unknown eligibilityAdaptorImplementation");
+        require(classLevelAdaptorImplementation != address(0), "unknown classLevelAdaptorImplementation");
 
         vm.startBroadcast(deployerPrivateKey);
 
@@ -46,6 +54,8 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
         characterSheetsFactory.updateERC6551Registry(erc6551Registry);
         characterSheetsFactory.updateERC6551AccountImplementation(erc6551AccountImplementation);
         characterSheetsFactory.updateClassesImplementation(classesImplementation);
+        characterSheetsFactory.updateEligibilityAdaptorImplementation(eligibilityAdaptorImplementation);
+        characterSheetsFactory.updateClassLevelAdaptorImplementation(classLevelAdaptorImplementation);
 
         vm.stopBroadcast();
 
@@ -62,10 +72,11 @@ contract Create is BaseFactoryExecutor {
     address public characterSheets;
     string public characterSheetsMetadataUri;
     string public characterSheetsBaseUri;
-    string public experienceBaseUri;
+    string public itemsBaseUri;
     string public classesBaseUri;
     address public characterSheetsAddress;
-    address public experienceAndItems;
+    address public items;
+    address public experience;
     address public classes;
     bytes public encodedData;
     CharacterSheetsFactory public factory;
@@ -77,16 +88,16 @@ contract Create is BaseFactoryExecutor {
         characterSheetsMetadataUri =
             json.readString(string(abi.encodePacked(".", targetEnv, ".CharacterSheetsMetadataUri")));
         characterSheetsBaseUri = json.readString(string(abi.encodePacked(".", targetEnv, ".CharacterSheetsBaseUri")));
-        experienceBaseUri = json.readString(string(abi.encodePacked(".", targetEnv, ".ExperienceBaseUri")));
+        itemsBaseUri = json.readString(string(abi.encodePacked(".", targetEnv, ".ItemsBaseUri")));
         classesBaseUri = json.readString(string(abi.encodePacked(".", targetEnv, ".ClassesBaseUri")));
         factory = CharacterSheetsFactory(characterSheets);
-        encodedData = abi.encode(characterSheetsMetadataUri, characterSheetsBaseUri, experienceBaseUri, classesBaseUri);
+        encodedData = abi.encode(characterSheetsMetadataUri, characterSheetsBaseUri, itemsBaseUri, classesBaseUri);
     }
 
-    function create() internal override returns (address, address, address) {
+    function create() internal override returns (address, address, address, address) {
         vm.startBroadcast(deployerPrivateKey);
-        (characterSheetsAddress, experienceAndItems, classes) = factory.create(dungeonMasters, dao, encodedData);
+        (characterSheetsAddress, classes, items, experience) = factory.create(dungeonMasters, dao, encodedData);
         vm.stopBroadcast();
-        return (characterSheetsAddress, experienceAndItems, classes);
+        return (characterSheetsAddress, classes, items, experience);
     }
 }

@@ -18,19 +18,18 @@ contract ForkManagement is Script {
 
     function checkNetworkParams(string memory json, string memory targetEnv)
         internal
+        view
         returns (string memory network, uint256 chainId)
     {
-        console2.log(targetEnv);
         network = json.readString(string(abi.encodePacked(".", targetEnv, ".network")));
         chainId = json.readUint(string(abi.encodePacked(".", targetEnv, ".chainId")));
-        console2.log("ChainId: ", chainId);
-        console2.log("\nTarget environment:", targetEnv);
+        console2.log("Target environment:", targetEnv);
         console2.log("Network:", network);
-        if (block.chainid != chainId) revert("Wrong chainId");
         console2.log("ChainId:", chainId);
+        if (block.chainid != chainId) revert("Wrong chainId");
     }
 
-    function getNetwork(string memory json, string memory targetEnv) internal returns (string memory) {
+    function getNetwork(string memory json, string memory targetEnv) internal pure returns (string memory) {
         return json.readString(string(abi.encodePacked(".", targetEnv, ".network")));
     }
 }

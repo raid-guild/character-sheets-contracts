@@ -39,7 +39,7 @@ contract ExecuteClassesImplementation is BaseExecutor {
 
     function loadBaseData(string memory json, string memory targetEnv) internal override {
         address classes = json.readAddress(string(abi.encodePacked(".", targetEnv, ".CreatedClasses")));
-        claimabl = json.readBool(string(abi.encodePacked(".", targetEnv, ".Classes[", arrIndex, "].Claimable")));
+        claimable = json.readBool(string(abi.encodePacked(".", targetEnv, ".Classes[", arrIndex, "].Claimable")));
         classesImplementation = ClassesImplementation(classes);
         console2.log("ARR INDEX: ", arrIndex);
         className = json.readString(string(abi.encodePacked(".", targetEnv, ".Classes[", arrIndex, "].ClassName")));
@@ -47,7 +47,7 @@ contract ExecuteClassesImplementation is BaseExecutor {
     }
 
     function execute() internal override {
-        bytes memory encodedData = abi.encode(className, claimable, classUri);ClassName
+        bytes memory encodedData = abi.encode(className, claimable, classUri);
 
         vm.broadcast(deployerPrivateKey);
         classesImplementation.createClassType(encodedData);

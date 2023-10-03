@@ -3,16 +3,17 @@ pragma solidity ^0.8.9;
 
 import {ERC20Upgradeable} from "openzeppelin-contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {IAccessControl} from "openzeppelin-contracts/access/IAccessControl.sol";
 
-import {ICharacterSheets} from "../interfaces/ICharacterSheets.sol";
 import {Errors} from "../lib/Errors.sol";
+import {IExperience} from "../interfaces/IExperience.sol";
 
 /**
  * @title Experience and Items
  * @author MrDeadCe11 && dan13ram
  * @notice this is an ERC20 that is designed to intereact with the items, character sheets, and classes contracts to provide a measurable amount of character advancment
  */
-contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
+contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradeable {
     bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
     bytes32 public constant CHARACTER = keccak256("CHARACTER");
 
@@ -22,14 +23,14 @@ contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
     address public classesContract;
 
     modifier onlyDungeonMaster() {
-        if (!ICharacterSheets(characterSheets).hasRole(DUNGEON_MASTER, msg.sender)) {
+        if (!IAccessControl(characterSheets).hasRole(DUNGEON_MASTER, msg.sender)) {
             revert Errors.DungeonMasterOnly();
         }
         _;
     }
 
     modifier onlyCharacter() {
-        if (!ICharacterSheets(characterSheets).hasRole(CHARACTER, msg.sender)) {
+        if (!IAccessControl(characterSheets).hasRole(CHARACTER, msg.sender)) {
             revert Errors.CharacterOnly();
         }
         _;
@@ -51,16 +52,16 @@ contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
         __UUPSUpgradeable_init();
         (characterSheets, classesContract) = abi.decode(initializationData, (address, address));
     }
-    
+
     /**
-    * @notice Called by dungeon master to give experience to a character
-    * @param to the address of the character that will receive the exp
-    */
+     * @notice Called by dungeon master to give experience to a character
+     * @param to the address of the character that will receive the exp
+     */
     function dropExp(address to, uint256 amount) public onlyDungeonMaster {
         if (characterSheets == address(0)) {
             revert Errors.VariableNotSet();
         }
-        if (!ICharacterSheets(characterSheets).hasRole(CHARACTER, to)) {
+        if (!IAccessControl(characterSheets).hasRole(CHARACTER, to)) {
             revert Errors.CharacterError();
         }
         _mint(to, amount);
@@ -70,7 +71,7 @@ contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
         if (characterSheets == address(0) || classesContract == address(0)) {
             revert Errors.VariableNotSet();
         }
-        if (!ICharacterSheets(characterSheets).hasRole(CHARACTER, to)) {
+        if (!IAccessControl(characterSheets).hasRole(CHARACTER, to)) {
             revert Errors.CharacterError();
         }
         _mint(to, amount);

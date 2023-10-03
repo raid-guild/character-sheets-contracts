@@ -9,12 +9,15 @@ import {
 } from "openzeppelin-contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import {AccessControlUpgradeable} from "openzeppelin-contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {IERC1155} from "openzeppelin-contracts/token/ERC1155/IERC1155.sol";
 
 import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
 import {IEligibilityAdaptor} from "../interfaces/IEligibilityAdaptor.sol";
+import {ICharacterSheets} from "../interfaces/ICharacterSheets.sol";
 import {IItems} from "../interfaces/IItems.sol";
 import {CharacterSheet} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
+
 /**
  * @title Character Sheets
  * @author MrDeadCe11 && dan13ram
@@ -25,7 +28,12 @@ import {Errors} from "../lib/Errors.sol";
  * by the base character account.
  */
 
-contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
+contract CharacterSheetsImplementation is
+    ICharacterSheets,
+    ERC721URIStorageUpgradeable,
+    AccessControlUpgradeable,
+    UUPSUpgradeable
+{
     /// @dev the admin of the contract
     bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
     /// @dev the EOA of the dao member who owns a sheet
@@ -131,7 +139,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
         }
 
         // check the eligibility adaptor to see if the player is eligible to roll a character sheet
-        if (!IEligibilityAdaptor(eligibilityAdaptor).isEligible(msg.sender)) {
+        if (eligibilityAdaptor != address(0) && !IEligibilityAdaptor(eligibilityAdaptor).isEligible(msg.sender)) {
             revert Errors.EligibilityError();
         }
 
@@ -184,7 +192,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
             revert Errors.OwnershipError();
         }
 
-        if (IItems(items).balanceOf(msg.sender, itemId) == 0) {
+        if (IERC1155(items).balanceOf(msg.sender, itemId) == 0) {
             // TODO ensure that when items are transferred from a character sheet that they are unequipped
             revert Errors.InventoryError();
         }
@@ -228,7 +236,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
             revert Errors.OwnershipError();
         }
 
-        if (IItems(items).balanceOf(msg.sender, itemId) < 1) {
+        if (IERC1155(items).balanceOf(msg.sender, itemId) < 1) {
             revert Errors.InsufficientBalance();
         }
 
@@ -267,7 +275,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
         if (_ownerOf(characterId) != address(0)) {
             revert Errors.OwnershipError();
         }
-        if (!IEligibilityAdaptor(eligibilityAdaptor).isEligible(msg.sender)) {
+        if (eligibilityAdaptor != address(0) && !IEligibilityAdaptor(eligibilityAdaptor).isEligible(msg.sender)) {
             revert Errors.EligibilityError();
         }
         if (jailed[msg.sender]) {
@@ -303,7 +311,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
             revert Errors.CharacterError();
         }
 
-        if (IEligibilityAdaptor(eligibilityAdaptor).isEligible(playerAddress)) {
+        if (eligibilityAdaptor != address(0) && IEligibilityAdaptor(eligibilityAdaptor).isEligible(playerAddress)) {
             revert Errors.EligibilityError();
         }
 
