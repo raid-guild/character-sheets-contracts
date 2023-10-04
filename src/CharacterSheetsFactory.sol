@@ -27,7 +27,11 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     address public experienceImplementation;
     address public eligibilityAdaptorImplementation;
     address public classLevelAdaptorImplementation;
+
+    //hats addresses
     address public hatsModuleFactory;
+    address public characterHatsEligibilityModule;
+    address public playerHatsEligibilityModule;
 
     bytes4 public constant ELIGIBILITY_INTERFACE_ID = 0x671ccc5a;
     bytes4 public constant CLASS_LEVELS_INTERFACE_ID = 0xfe211eb1;
@@ -91,7 +95,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         emit ClassLevelAdaptorUpdated(_newClassLevelAdaptor);
     }
 
-    /// create functions must be called fist before the initialize call is made
+    /// create functions must be called first before the initialize call is made
     function create(address[] calldata dungeonMasters, address dao, bytes calldata data)
         external
         returns (address, address, address, address)
@@ -175,23 +179,53 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         return classLevelAdaptorClone;
     }
 
-    // adaptors must be initialized seperately
+    /**
+     * @notice the caller of this function must be wearing the admin hat for the characterHat and player Hat
+     */
 
-    /// @notice This will initialize all the contracts except the eligibility adaptors
-    /// @dev this function should be called immediately after all the create functions have been called
-    /// @param encodedAddresses the encoded addresses must include in this order:
-    /// -eligibility adaptor clone address
-    /// - class level adaptor clone address
-    /// - dungeon masters: an array of addresses that will have dungeonMaster permission on the character sheets contract
-    /// - character sheets clone address to be initialized
-    /// - experience clone to address be initialized
-    /// - items clone address to be initialized
-    /// - classes clone address to be initialized
-    /// @param data encoded string data strings to include must be in this order:
-    /// - the base metadata uri for the character sheets clone
-    /// - the base character token uri for the character sheets clone
-    /// - the base uri for the ITEMS clone
-    /// - the base uri for the CLASSES clone
+    function cloneHatsModules(uint256 characterHatId, uint256 playerHatId, address characterSheets)
+        public
+        returns (address, address)
+    {
+        if (
+            hatsModuleFactory == address(0) || characterHatsEligibilityModule == address(0)
+                || playerHatsEligibilityModule == address(0)
+        ) {
+            revert Errors.VariableNotSet();
+        }
+        bytes memory characterModuleData = abi.encode(erc6551Registry, erc6551AccountImplementation, characterSheets);
+        address characterHatsModule = HatsModuleFactory(hatsModuleFactory).createHatsModule(
+            characterHatsEligibilityModule, characterHatId, characterModuleData, ""
+        );
+
+        bytes memory playerModuleData = abi.encode(erc6551Registry, erc6551AccountImplementation, characterSheets);
+        address playerHatsModule = HatsModuleFactory(hatsModuleFactory).createHatsModule(
+            playerHatsEligibilityModule, playerHatId, playerModuleData, ""
+        );
+        return (characterHatsModule, playerHatsModule);
+    }
+
+    /**
+     * @notice adaptors must be initialized seperately  ***************
+     */
+
+    /**
+     * @notice This will initialize all the contracts except the eligibility adaptors
+     * @dev this function should be called immediately after all the create functions have been called
+     * @param encodedAddresses the encoded addresses must include in this order:
+     * -eligibility adaptor clone address
+     * - class level adaptor clone address
+     * - dungeon masters: an array of addresses that will have dungeonMaster permission on the character sheets contract
+     * - character sheets clone address to be initialized
+     * - experience clone to address be initialized
+     * - items clone address to be initialized
+     * - classes clone address to be initialized
+     * @param data encoded string data strings to include must be in this order:
+     * - the base metadata uri for the character sheets clone
+     * - the base character token uri for the character sheets clone
+     * - the base uri for the ITEMS clone
+     * - the base uri for the CLASSES clone
+     */
     function initializeContracts(bytes calldata encodedAddresses, bytes calldata data) public {
         (
             address eligibilityAdaptorClone,
