@@ -71,7 +71,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
 
     function updatePlayerHatModuleAddress(address newPlayerAddress) external onlyOwner {
         _hatsData.playerHatEligibilityModule = newPlayerAddress;
-        emit PlayerHatEligibilityModuleUpdated(newPlayerAddress);
+        emit PlayerHatEligibilityModuleAddressUpdated(newPlayerAddress);
     }
 
     function updateAdminHatId(uint256 newAdminHatId) external onlyOwner {
