@@ -9,8 +9,11 @@ import {CharacterSheetsImplementation} from "./implementations/CharacterSheetsIm
 import {ClassesImplementation} from "./implementations/ClassesImplementation.sol";
 import {ExperienceImplementation} from "./implementations/ExperienceImplementation.sol";
 import {ItemsImplementation} from "./implementations/ItemsImplementation.sol";
-import {IEligibilityAdaptor} from "./interfaces/IEligibilityAdaptor.sol";
-import {IClassLevelAdaptor} from "./interfaces/IClassLevelAdaptor.sol";
+import {EligibilityAdaptor} from "./adaptors/EligibilityAdaptor.sol";
+import {ClassLevelAdaptor} from "./adaptors/ClassLevelAdaptor.sol";
+
+import {IERC165} from "openzeppelin-contracts/utils/introspection/IERC165.sol";
+
 import {Errors} from "./lib/Errors.sol";
 
 // import "forge-std/console2.sol";
@@ -22,6 +25,8 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     address public erc6551Registry;
     address public erc6551AccountImplementation;
     address public experienceImplementation;
+    address public eligibilityAdaptorImplementation;
+    address public classLevelAdaptorImplementation;
     address public hatsModuleFactory;
 
     bytes4 public constant ELIGIBILITY_INTERFACE_ID = 0x671ccc5a;
@@ -30,7 +35,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     uint256 private _nonce;
 
     event CharacterSheetsCreated(
-        address creator, address characterSheets, address classes, address items, address experienceAndItems
+        address creator, address characterSheets, address classes, address items, address experience
     );
     event CharacterSheetsUpdated(address newCharacterSheets);
     event ExperienceUpdated(address newExperience);
@@ -38,6 +43,8 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     event RegistryUpdated(address newRegistry);
     event ERC6551AccountImplementationUpdated(address newImplementation);
     event ClassesImplementationUpdated(address newClasses);
+    event EligibilityAdaptorUpdated(address newAdaptor);
+    event ClassLevelAdaptorUpdated(address newAdaptor);
 
     function initialize() external initializer {
         __Context_init_unchained();
@@ -74,7 +81,29 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         emit ClassesImplementationUpdated(classesImplementation);
     }
 
+    function updateEligibilityAdaptorImplementation(address _newEligibilityAdaptor) external onlyOwner {
+        eligibilityAdaptorImplementation = _newEligibilityAdaptor;
+        emit EligibilityAdaptorUpdated(_newEligibilityAdaptor);
+    }
+
+    function updateClassLevelAdaptorImplementation(address _newClassLevelAdaptor) external onlyOwner {
+        classLevelAdaptorImplementation = _newClassLevelAdaptor;
+        emit ClassLevelAdaptorUpdated(_newClassLevelAdaptor);
+    }
+
     /// create functions must be called fist before the initialize call is made
+    function create(address[] calldata dungeonMasters, address dao, bytes calldata data)
+        external
+        returns (address, address, address, address)
+    {
+        (address characterSheetsClone, address itemsClone) = _createSheetsAndItems(dungeonMasters, dao, data);
+
+        (address classesClone, address experienceClone) = _createClassesAndExperience(characterSheetsClone, data);
+
+        emit CharacterSheetsCreated(msg.sender, characterSheetsClone, classesClone, itemsClone, experienceClone);
+
+        return (characterSheetsClone, classesClone, itemsClone, experienceClone);
+    }
 
     function createExperience() public returns (address) {
         if (experienceImplementation == address(0)) {
@@ -112,21 +141,37 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         return classesClone;
     }
 
-    function createEligibilityAdaptor(address eligibilityAdaptorImplementation) public returns (address) {
-        if (!IEligibilityAdaptor(eligibilityAdaptorImplementation).supportsInterface(ELIGIBILITY_INTERFACE_ID)) {
+    function createEligibilityAdaptor() public returns (address) {
+        if (eligibilityAdaptorImplementation == address(0)) {
+            revert Errors.NotInitialized();
+        }
+
+        return createEligibilityAdaptor(eligibilityAdaptorImplementation);
+    }
+
+    function createEligibilityAdaptor(address _eligibilityAdaptorImplementation) public returns (address) {
+        if (!IERC165(_eligibilityAdaptorImplementation).supportsInterface(ELIGIBILITY_INTERFACE_ID)) {
             revert Errors.UnsupportedInterface();
         }
 
-        address eligibilityAdaptorClone = address(new ERC1967Proxy(eligibilityAdaptorImplementation, ""));
+        address eligibilityAdaptorClone = address(new ERC1967Proxy(_eligibilityAdaptorImplementation, ""));
         return eligibilityAdaptorClone;
     }
 
-    function createClassLevelAdaptor(address classLevelAdaptorImplementation) public returns (address) {
-        if (!IClassLevelAdaptor(classLevelAdaptorImplementation).supportsInterface(CLASS_LEVELS_INTERFACE_ID)) {
+    function createClassLevelAdaptor() public returns (address) {
+        if (classLevelAdaptorImplementation == address(0)) {
+            revert Errors.NotInitialized();
+        }
+
+        return createClassLevelAdaptor(classLevelAdaptorImplementation);
+    }
+
+    function createClassLevelAdaptor(address _classLevelAdaptorImplementation) public returns (address) {
+        if (!IERC165(_classLevelAdaptorImplementation).supportsInterface(CLASS_LEVELS_INTERFACE_ID)) {
             revert Errors.UnsupportedInterface();
         }
 
-        address classLevelAdaptorClone = address(new ERC1967Proxy(classLevelAdaptorImplementation, ""));
+        address classLevelAdaptorClone = address(new ERC1967Proxy(_classLevelAdaptorImplementation, ""));
         return classLevelAdaptorClone;
     }
 
@@ -172,6 +217,47 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         );
 
         ExperienceImplementation(experienceClone).initialize(_encodeExpData(characterSheetsClone, classesClone));
+    }
+
+    function _createSheetsAndItems(address[] calldata dungeonMasters, address dao, bytes calldata data)
+        private
+        returns (address, address)
+    {
+        address characterSheetsClone = createCharacterSheets();
+        address itemsClone = createItems();
+
+        address eligibilityAdaptorClone = dao != address(0) ? createEligibilityAdaptor() : address(0);
+
+        bytes memory encodedCharInitAddresses = abi.encode(eligibilityAdaptorClone, dungeonMasters, itemsClone);
+
+        CharacterSheetsImplementation(characterSheetsClone).initialize(
+            _encodeCharacterInitData(encodedCharInitAddresses, data)
+        );
+
+        if (dao != address(0)) {
+            EligibilityAdaptor(eligibilityAdaptorClone).initialize(dao);
+        }
+
+        return (characterSheetsClone, itemsClone);
+    }
+
+    function _createClassesAndExperience(address characterSheetsClone, bytes calldata data)
+        private
+        returns (address, address)
+    {
+        address experienceClone = createExperience();
+        address classesClone = createClasses();
+        address classLevelAdaptorClone = createClassLevelAdaptor();
+
+        ClassesImplementation(classesClone).initialize(
+            _encodeClassesData(characterSheetsClone, experienceClone, classLevelAdaptorClone, data)
+        );
+
+        ExperienceImplementation(experienceClone).initialize(_encodeExpData(characterSheetsClone, classesClone));
+
+        ClassLevelAdaptor(classLevelAdaptorClone).initialize(classesClone, experienceClone);
+
+        return (classesClone, experienceClone);
     }
 
     function _encodeCharacterInitData(bytes memory encodedInitData, bytes memory data)

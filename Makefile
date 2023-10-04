@@ -30,7 +30,7 @@ format :; forge fmt
 # solhint should be installed globally
 lint :; solhint "src/**/*.sol"
 
-anvil :; anvil -m 'test test test test test test test test test test test junk' --fork-url ${SEPOLIA_RPC_URL}
+anvil :; anvil -m 'test test test test test test test test test test test junk'
 
 # deploy commands
 deploy-anvil :; ./scripts/deploy.sh anvil ${contract}
@@ -47,20 +47,16 @@ deploy-contracts :; make deploy-${network} contract=CharacterAccount && \
 	make deploy-${network} contract=CharacterSheetsImplementation && \
 	make deploy-${network} contract=ItemsImplementation && \
 	make deploy-${network} contract=ClassesImplementation && \
+	make deploy-${network} contract=EligibilityAdaptor && \
+	make deploy-${network} contract=ClassLevelAdaptor && \
 	make deploy-${network} contract=CharacterSheetsFactory;
-
-deploy-all :; make deploy-contracts ${network}&& \
-	make deploy-${network} contract=CharacterAccount && \
-	make deploy-${network} contract=CharacterSheetsImplementation && \
-	make deploy-${network} contract=ItemsImplementation && \
-	make deploy-${network} contract=ClassesImplementation && \
-	make deploy-${network} contract=CharacterSheetsFactory && \
-	make deploy-${network} contract=EligibilityAdaptor;
 
 verify-contracts :; make verify-${network} contract=CharacterAccount && \
 	make verify-${network} contract=CharacterSheetsImplementation && \
 	make verify-${network} contract=ItemsImplementation && \
 	make verify-${network} contract=ClassesImplementation && \
+	make verify-${network} contract=EligibilityAdaptor && \
+	make verify-${network} contract=ClassLevelAdaptor && \
 	make verify-${network} contract=CharacterSheetsFactory;
 
 # execute commands

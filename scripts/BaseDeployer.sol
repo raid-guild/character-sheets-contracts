@@ -28,7 +28,8 @@ abstract contract BaseDeployer is Script, ForkManagement {
             deployer = vm.addr(deployerPrivateKey);
         }
 
-        console2.log("\nDeployer address:", deployer);
+        console2.log("\n");
+        console2.log("Deployer address:", deployer);
         console2.log("Deployer balance:", deployer.balance);
     }
 

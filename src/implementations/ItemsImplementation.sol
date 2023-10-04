@@ -8,13 +8,14 @@ import {
     ERC1155ReceiverUpgradeable
 } from "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {IAccessControl} from "openzeppelin-contracts/access/IAccessControl.sol";
 // import {console2} from "forge-std/console2.sol";
 
-import {ICharacterSheets} from "../interfaces/ICharacterSheets.sol";
 import {Item} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
 import {MultiToken, Asset, Category} from "../lib/MultiToken.sol";
 
+import {IItems} from "../interfaces/IItems.sol";
 /**
  * @title Experience and Items
  * @author MrDeadCe11 && dan13ram
@@ -22,7 +23,8 @@ import {MultiToken, Asset, Category} from "../lib/MultiToken.sol";
  * Each item and class is an 1155 token that can soulbound or not to the erc6551 wallet of each player nft
  * in the characterSheets contract.
  */
-contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UUPSUpgradeable {
+
+contract ItemsImplementation is IItems, ERC1155HolderUpgradeable, ERC1155Upgradeable, UUPSUpgradeable {
     bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
     bytes32 public constant CHARACTER = keccak256("CHARACTER");
 
@@ -42,7 +44,7 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
     uint256 public totalItemTypes;
 
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
-    ICharacterSheets public characterSheets;
+    address public characterSheets;
 
     event NewItemTypeCreated(uint256 itemId);
     event ItemTransfered(address character, uint256 itemId, uint256 amount);
@@ -51,14 +53,14 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
     event RequirementRemoved(uint256 itemId, address assetAddress, uint256 assetId);
 
     modifier onlyDungeonMaster() {
-        if (!characterSheets.hasRole(DUNGEON_MASTER, msg.sender)) {
+        if (!IAccessControl(characterSheets).hasRole(DUNGEON_MASTER, msg.sender)) {
             revert Errors.DungeonMasterOnly();
         }
         _;
     }
 
     modifier onlyCharacter() {
-        if (!characterSheets.hasRole(CHARACTER, msg.sender)) {
+        if (!IAccessControl(characterSheets).hasRole(CHARACTER, msg.sender)) {
             revert Errors.CharacterOnly();
         }
         _;
@@ -72,9 +74,7 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
         __UUPSUpgradeable_init();
         __ERC1155Holder_init();
 
-        address characterSheetsAddress;
-        (characterSheetsAddress, _baseURI) = abi.decode(_encodedData, (address, string));
-        characterSheets = ICharacterSheets(characterSheetsAddress);
+        (characterSheets, _baseURI) = abi.decode(_encodedData, (address, string));
     }
 
     /**
@@ -291,7 +291,7 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
         public
         override
     {
-        if (to != address(0) && !characterSheets.hasRole(CHARACTER, to)) {
+        if (to != address(0) && !IAccessControl(characterSheets).hasRole(CHARACTER, to)) {
             revert Errors.CharacterOnly();
         }
         if (_items[id].soulbound) {
@@ -307,7 +307,7 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
         uint256[] memory amounts,
         bytes memory data
     ) public override {
-        if (to != address(0) && !characterSheets.hasRole(CHARACTER, to)) {
+        if (to != address(0) && !IAccessControl(characterSheets).hasRole(CHARACTER, to)) {
             revert Errors.CharacterOnly();
         }
 
@@ -434,7 +434,7 @@ contract ItemsImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UU
      */
 
     function _transferItem(address characterAccount, uint256 itemId, uint256 amount) internal returns (bool success) {
-        if (!characterSheets.hasRole(CHARACTER, characterAccount)) {
+        if (!IAccessControl(characterSheets).hasRole(CHARACTER, characterAccount)) {
             revert Errors.CharacterOnly();
         }
 

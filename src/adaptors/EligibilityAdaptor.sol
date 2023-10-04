@@ -8,12 +8,13 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UU
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {IMolochDAO} from "../interfaces/IMolochDAO.sol";
+import {IEligibilityAdaptor} from "../interfaces/IEligibilityAdaptor.sol";
 import {Errors} from "../lib/Errors.sol";
 
 /**
-* @notice this contract is to check and make sure that an address is eligible to roll a character sheet
+ * @notice this contract is to check and make sure that an address is eligible to roll a character sheet
  */
-contract EligibilityAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUpgradeable {
+contract EligibilityAdaptor is IEligibilityAdaptor, ERC165, Initializable, OwnableUpgradeable, UUPSUpgradeable {
     //(this.isEligible.selector ^ this.supportsInterface.selector);
     bytes4 public constant INTERFACE_ID = 0x671ccc5a;
 
@@ -28,8 +29,8 @@ contract EligibilityAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUp
         _disableInitializers();
     }
 
-    function initialize(bytes calldata data) external initializer {
-        dao = abi.decode(data, (address));
+    function initialize(address _dao) external initializer {
+        dao = _dao;
         __Ownable_init();
     }
 
@@ -38,7 +39,7 @@ contract EligibilityAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUp
         emit DaoUpdated(newDao);
     }
 
-    function isEligible(address account) public returns (bool) {
+    function isEligible(address account) public view returns (bool) {
         if (dao == address(0)) {
             revert Errors.NotInitialized();
         }
@@ -47,8 +48,8 @@ contract EligibilityAdaptor is ERC165, Initializable, OwnableUpgradeable, UUPSUp
         return (newMember.shares >= 100 && newMember.jailed == 0);
     }
 
-    function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
-        return interfaceId == 0x01ffc9a7 || interfaceId == INTERFACE_ID;
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+        return interfaceId == 0x01ffc9a7 || interfaceId == INTERFACE_ID || super.supportsInterface(interfaceId);
     }
 
     //solhint-disable-next-line no-empty-blocks

@@ -36,9 +36,9 @@ if [[ $NETWORK == "" ]]
         exit 1
 fi
 
-SAVED_ADDRESS=$(node scripts/helpers/readAddress.js $1 $2)
+echo "Deploying $2 to $1"
 
-echo $SAVED_ADDRESS
+SAVED_ADDRESS=$(node scripts/helpers/readAddress.js $1 $2)
 
 if [[ $SAVED_ADDRESS != "" ]]
     then
@@ -51,9 +51,10 @@ if [[ $SAVED_ADDRESS != "" ]]
         fi
 fi
 
-if [[ $PRIVATE_KEY == "" && $1 == "anvil" ]]
+if [[ $1 == "anvil" ]]
     then
-      PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+        PRIVATE_KEY="ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+        NETWORK="http://localhost:8545"
 fi
 
 CALLDATA=$(cast calldata "run(string)" $1)
@@ -62,7 +63,7 @@ PRIVATE_KEY=$PRIVATE_KEY forge script scripts/$2.s.sol:Deploy$2 -s $CALLDATA --r
 read -p "Please verify the data and confirm the deployment (y/n):" CONFIRMATION
 if [[ $CONFIRMATION == "y" || $CONFIRMATION == "Y" ]]
 then
-FORGE_OUTPUT=$(forge script scripts/$2.s.sol:Deploy$2 --broadcast -s $CALLDATA --rpc-url $NETWORK)
+FORGE_OUTPUT=$(PRIVATE_KEY=$PRIVATE_KEY forge script scripts/$2.s.sol:Deploy$2 --broadcast -s $CALLDATA --rpc-url $NETWORK)
 
 DEPLOYED_ADDRESS=$(echo "$FORGE_OUTPUT" | grep "Contract Address:" | sed -n 's/.*: \(0x[0-9a-hA-H]\{40\}\)/\1/p')
 fi
