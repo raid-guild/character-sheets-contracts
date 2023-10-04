@@ -64,16 +64,6 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         emit HatsAddressUpdated(newHatsAddress);
     }
 
-    function updateAdminHatId(uint256 newAdminHatId) external onlyOwner {
-        _hatsData.adminHatId = newAdminHatId;
-        emit AdminHatIdUpdated(newAdminHatId);
-    }
-
-    function updateDungeonMasterHatId(uint256 newDungeonMasterHatId) external onlyOwner {
-        _hatsData.dungeonMasterHatId = newDungeonMasterHatId;
-        emit DungeonMasterHatIdUpdated(newDungeonMasterHatId);
-    }
-
     function updateCharacterHatModuleAddress(address newCharacterHatAddress) external onlyOwner {
         _hatsData.characterHatEligibilityModule = newCharacterHatAddress;
         emit CharacterHatEligibilityModuleAddressUpdated(newCharacterHatAddress);
@@ -84,15 +74,24 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         emit PlayerHatEligibilityModuleUpdated(newPlayerAddress);
     }
 
-    function mintCharacterHat(address wearer) external returns (bool) {
-        if (_hatsData.characterHatId == uint256(0)) {
-            revert Errors.VariableNotSet();
-        }
-        (bool eligible,) = checkCharacterHatEligibility(wearer);
-        if (!eligible) {
-            revert Errors.CharacterError();
-        }
-        return IHats(_hatsData.hats).mintHat(_hatsData.characterHatId, wearer);
+    function updateAdminHatId(uint256 newAdminHatId) external onlyOwner {
+        _hatsData.adminHatId = newAdminHatId;
+        emit AdminHatIdUpdated(newAdminHatId);
+    }
+
+    function updateDungeonMasterHatId(uint256 newDungeonMasterHatId) external onlyOwner {
+        _hatsData.dungeonMasterHatId = newDungeonMasterHatId;
+        emit DungeonMasterHatIdUpdated(newDungeonMasterHatId);
+    }
+
+    function updatePlayerHatId(uint256 newPlayerHatId) external onlyOwner {
+        _hatsData.playerHatId = newPlayerHatId;
+        emit PlayerHatIdUpdated(newPlayerHatId);
+    }
+
+    function updateCharacterHatId(uint256 newCharacterHatId) external onlyOwner {
+        _hatsData.characterHatId = newCharacterHatId;
+        emit CharacterHatIdUpdated(newCharacterHatId);
     }
 
     function mintPlayerHat(address wearer) external returns (bool) {
@@ -103,7 +102,20 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         if (!eligible) {
             revert Errors.PlayerError();
         }
+        // look for emitted event from hats contract
         return IHats(_hatsData.hats).mintHat(_hatsData.playerHatId, wearer);
+    }
+
+    function mintCharacterHat(address wearer) external returns (bool) {
+        if (_hatsData.characterHatId == uint256(0)) {
+            revert Errors.VariableNotSet();
+        }
+        (bool eligible,) = checkCharacterHatEligibility(wearer);
+        if (!eligible) {
+            revert Errors.CharacterError();
+        }
+        // look for emitted event from hats contract
+        return IHats(_hatsData.hats).mintHat(_hatsData.characterHatId, wearer);
     }
 
     function checkCharacterHatEligibility(address account) public view returns (bool eligible, bool standing) {

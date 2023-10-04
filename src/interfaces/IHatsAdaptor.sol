@@ -4,7 +4,8 @@ pragma solidity ^0.8.9;
 /**
  * @title IHats Adaptor
  * @author MrDeadCe11
- * @notice This is an adaptor interface that allows the characterSheetsImplementation to check mint hats to players and characters
+ * @notice This is an adaptor interface that allows contracts to  mint hats to players and characters
+ * and check which accounts are wearing which hats.
  */
 
 interface IHatsAdaptor {
