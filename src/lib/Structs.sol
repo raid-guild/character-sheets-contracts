@@ -39,10 +39,10 @@ struct HatsData {
     address characterHatEligibilityModule;
     /// @dev the address of the player hats eligibility module deployed from the hats module factory
     address playerHatEligibilityModule;
-    /// @dev the address of the hats module factory on this chain
-    address hatsModuleFactory;
     /// @dev the uint256 hat id of the admin hat
     uint256 adminHatId;
+    /// @dev the uint256 id of the dungeonMaster hat
+    uint256 dungeonMasterHatId;
     /// @dev the uint256 hat id of the player hat
     uint256 playerHatId;
     /// @dev the uint256 hat id of the character hat
