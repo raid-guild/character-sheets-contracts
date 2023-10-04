@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
 
 import {CharacterSheetsImplementation} from "./implementations/CharacterSheetsImplementation.sol";
 import {ClassesImplementation} from "./implementations/ClassesImplementation.sol";
@@ -21,6 +22,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     address public erc6551Registry;
     address public erc6551AccountImplementation;
     address public experienceImplementation;
+    address public hatsModuleFactory;
 
     bytes4 public constant ELIGIBILITY_INTERFACE_ID = 0x671ccc5a;
     bytes4 public constant CLASS_LEVELS_INTERFACE_ID = 0xfe211eb1;

@@ -36,9 +36,11 @@ struct HatsData {
     /// @dev the address of the hats contract
     address hats;
     /// @dev the address of the character hats eligibility module deployed from the hats module factory
-    address characterHatEligibility;
+    address characterHatEligibilityModule;
     /// @dev the address of the player hats eligibility module deployed from the hats module factory
-    address playerHatEligibility;
+    address playerHatEligibilityModule;
+    /// @dev the address of the hats module factory on this chain
+    address hatsModuleFactory;
     /// @dev the uint256 hat id of the admin hat
     uint256 adminHatId;
     /// @dev the uint256 hat id of the player hat

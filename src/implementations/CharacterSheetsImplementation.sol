@@ -9,12 +9,11 @@ import {
 } from "openzeppelin-contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import {AccessControlUpgradeable} from "openzeppelin-contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {IHats} from "hats-protocol/interfaces/IHats.sol";
 
 import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
 import {IEligibilityAdaptor} from "../interfaces/IEligibilityAdaptor.sol";
 import {IItems} from "../interfaces/IItems.sol";
-import {CharacterSheet, HatsData} from "../lib/Structs.sol";
+import {CharacterSheet} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
 /**
  * @title Character Sheets
@@ -34,8 +33,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
     /// @dev the tokenbound account of the sheet nft
     bytes32 public constant CHARACTER = keccak256("CHARACTER");
 
-    HatsData public hatsData;
-
     address public items;
 
     string public baseTokenURI;
@@ -43,6 +40,8 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, AccessCon
 
     address public erc6551Registry;
     address public erc6551AccountImplementation;
+
+    address eligibilityAdaptor;
 
     // characterId => characterSheet
     mapping(uint256 => CharacterSheet) private _sheets;
