@@ -32,6 +32,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     address public hatsModuleFactory;
     address public characterHatsEligibilityModule;
     address public playerHatsEligibilityModule;
+    address public hatsAdaptorImplementation;
 
     bytes4 public constant ELIGIBILITY_INTERFACE_ID = 0x671ccc5a;
     bytes4 public constant CLASS_LEVELS_INTERFACE_ID = 0xfe211eb1;
@@ -183,7 +184,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
      * @notice the caller of this function must be wearing the admin hat for the characterHat and player Hat
      */
 
-    function cloneHatsModules(uint256 characterHatId, uint256 playerHatId, address characterSheets)
+    function createHatsModules(uint256 characterHatId, uint256 playerHatId, address characterSheets)
         public
         returns (address, address)
     {
@@ -203,6 +204,11 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
             playerHatsEligibilityModule, playerHatId, playerModuleData, ""
         );
         return (characterHatsModule, playerHatsModule);
+    }
+
+    function createHatsAdaptor()public returns(address){expeexperienceImplementationrienceImplementation
+        address hatsAdaptor = address(new ERC1967Proxy(hatsAdaptorImplementation, ""));
+        return hatsAdaptor;
     }
 
     /**

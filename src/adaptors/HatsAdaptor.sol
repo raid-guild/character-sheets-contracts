@@ -118,6 +118,16 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         return IHats(_hatsData.hats).mintHat(_hatsData.characterHatId, wearer);
     }
 
+    // only owner function to create dungeon masters.
+    function mintDungeonMasterHat(address wearer) external onlyOwner returns (bool) {
+        if (_hatsData.dungeonMasterHatId == uint256(0)) {
+            revert Errors.VariableNotSet();
+        }
+
+        // look for emitted event from hats contract
+        return IHats(_hatsData.hats).mintHat(_hatsData.dungeonMasterHatId, wearer);
+    }
+
     function checkCharacterHatEligibility(address account) public view returns (bool eligible, bool standing) {
         return
             IHatsEligibility(_hatsData.characterHatEligibilityModule).getWearerStatus(account, _hatsData.characterHatId);
