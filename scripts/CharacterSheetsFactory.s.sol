@@ -15,7 +15,8 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
     address public erc6551Registry;
     address public erc6551AccountImplementation;
     address public characterSheetsImplementation;
-    address public ItemsImplementation;
+    address public itemsImplementation;
+    address public experienceImplementation;
     address public classesImplementation;
     address public eligibilityAdaptorImplementation;
     address public classLevelAdaptorImplementation;
@@ -27,7 +28,8 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
         erc6551AccountImplementation = json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterAccount")));
         characterSheetsImplementation =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterSheetsImplementation")));
-        ItemsImplementation = json.readAddress(string(abi.encodePacked(".", targetEnv, ".ItemsImplementation")));
+        itemsImplementation = json.readAddress(string(abi.encodePacked(".", targetEnv, ".ItemsImplementation")));
+        experienceImplementation = json.readAddress(string(abi.encodePacked(".", targetEnv, ".ExperienceImplementation")));
         classesImplementation = json.readAddress(string(abi.encodePacked(".", targetEnv, ".ClassesImplementation")));
         eligibilityAdaptorImplementation =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".EligibilityAdaptor")));
@@ -36,13 +38,14 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
     }
 
     function deploy() internal override returns (address) {
-        require(erc6551AccountImplementation != address(0), "unknown erc6551AccountImplementation");
-        require(erc6551Registry != address(0), "unknown erc6551Registry");
-        require(characterSheetsImplementation != address(0), "unknown characterSheetsImplementation");
-        require(ItemsImplementation != address(0), "unknown ItemsImplementation");
-        require(classesImplementation != address(0), "unknown classesImplementation");
-        require(eligibilityAdaptorImplementation != address(0), "unknown eligibilityAdaptorImplementation");
-        require(classLevelAdaptorImplementation != address(0), "unknown classLevelAdaptorImplementation");
+        require(erc6551AccountImplementation != address(0), "zero erc6551AccountImplementation");
+        require(erc6551Registry != address(0), "zero erc6551Registry");
+        require(characterSheetsImplementation != address(0), "zero characterSheetsImplementation");
+        require(itemsImplementation != address(0), "zero itemsImplementation");
+        require(experienceImplementation != address(0), "zero experienceImplementation");
+        require(classesImplementation != address(0), "zero classesImplementation");
+        require(eligibilityAdaptorImplementation != address(0), "zero eligibilityAdaptorImplementation");
+        require(classLevelAdaptorImplementation != address(0), "zero classLevelAdaptorImplementation");
 
         vm.startBroadcast(deployerPrivateKey);
 
@@ -50,7 +53,8 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
 
         characterSheetsFactory.initialize();
         characterSheetsFactory.updateCharacterSheetsImplementation(characterSheetsImplementation);
-        characterSheetsFactory.updateItemsImplementation(ItemsImplementation);
+        characterSheetsFactory.updateItemsImplementation(itemsImplementation);
+        characterSheetsFactory.updateExperienceImplementation(experienceImplementation);
         characterSheetsFactory.updateERC6551Registry(erc6551Registry);
         characterSheetsFactory.updateERC6551AccountImplementation(erc6551AccountImplementation);
         characterSheetsFactory.updateClassesImplementation(classesImplementation);

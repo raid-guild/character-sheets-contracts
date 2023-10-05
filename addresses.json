@@ -16,12 +16,12 @@
     "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
     "CharacterAccount": "0xc7D1C5Ba5E02536a0067687E028F6F1F41A025FD",
     "CharacterSheetsImplementation": "0x1b4fBaAA0f11A5Bd9152dFd9Fd584043C78182Ff",
-    "ExperienceAndItemsImplementation": "0x43904C600A2061777d10fb72a565000c4c8c0390",
     "ClassesImplementation": "0xfc105Dc5D5753Ff89964B539e02D93A9B70045F0",
     "CharacterSheetsFactory": "0x6a4FBdA320eaF5E319178630384D8d633503267f",
     "ItemsImplementation": "0x6b50ce1A4fa4f7f37283FB45b1CD60EB33741E69",
     "EligibilityAdaptor": "0xaB19E8f97E4bcf467ed940ffc373bf4eB5cbb676",
-    "ClassLevelAdaptor": "0xAF9d240d08c3455D2b2D48B689763385D4834936"
+    "ClassLevelAdaptor": "0xAF9d240d08c3455D2b2D48B689763385D4834936",
+    "ExperienceImplementation": "0x2824913cda209dc82d92a51AcaA7fAC02924Ab38"
   },
   "anvil": {
     "chainId": "31337",

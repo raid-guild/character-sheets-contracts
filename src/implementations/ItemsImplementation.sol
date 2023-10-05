@@ -276,6 +276,7 @@ contract ItemsImplementation is IItems, ERC1155HolderUpgradeable, ERC1155Upgrade
      */
     function setBaseURI(string memory _baseUri) external onlyDungeonMaster {
         _baseURI = _baseUri;
+        // TODO: add event
     }
 
     /**

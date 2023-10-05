@@ -89,6 +89,7 @@ contract ClassesImplementation is IClasses, ERC1155HolderUpgradeable, ERC1155Upg
      */
     function setBaseURI(string memory _baseUri) external onlyDungeonMaster {
         _baseURI = _baseUri;
+        // TODO: add event
     }
 
     /**
@@ -247,6 +248,8 @@ contract ClassesImplementation is IClasses, ERC1155HolderUpgradeable, ERC1155Upg
 
         //return amount of exp minted
 
+        // TODO add event
+        // TODO allow game master to delevel class
         return expToRedeem;
     }
 
