@@ -11,6 +11,25 @@ import "../src/lib/Structs.sol";
 import "./helpers/SetUp.sol";
 
 contract ItemsTest is Test, SetUp {
+    function testCreateItemTypeWithoutRequirements() public {
+        bytes memory newItem = createNewItemWithoutRequirements(false, false, bytes32(0));
+        vm.prank(admin);
+        uint256 _itemId = items.createItemType(newItem);
+
+        Item memory returnedItem = items.getItem(_itemId);
+        Asset[] memory itemRequirements = items.getItemRequirements(_itemId);
+        string memory cid = items.uri(_itemId);
+
+        assertEq(_itemId, 1);
+        assertEq(items.totalItemTypes(), 2);
+        assertEq(returnedItem.supply, 10 ** 18);
+        assertEq(returnedItem.supplied, 0);
+        assertEq(itemRequirements.length, 0);
+        assertEq(returnedItem.soulbound, false);
+        assertEq(returnedItem.claimable, bytes32(0));
+        assertEq(cid, "test_base_uri_items/test_item_cid/", "incorrect CID");
+    }
+
     function testCreateItemType() public {
         bytes memory newItem = createNewItem(false, false, bytes32(0));
         vm.prank(admin);
