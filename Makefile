@@ -45,6 +45,7 @@ verify-gnosis :; ./scripts/verify.sh gnosis ${contract}
 
 deploy-contracts :; make deploy-${network} contract=CharacterAccount && \
 	make deploy-${network} contract=CharacterSheetsImplementation && \
+	make deploy-${network} contract=ExperienceImplementation && \
 	make deploy-${network} contract=ItemsImplementation && \
 	make deploy-${network} contract=ClassesImplementation && \
 	make deploy-${network} contract=EligibilityAdaptor && \
@@ -53,6 +54,7 @@ deploy-contracts :; make deploy-${network} contract=CharacterAccount && \
 
 verify-contracts :; make verify-${network} contract=CharacterAccount && \
 	make verify-${network} contract=CharacterSheetsImplementation && \
+	make verify-${network} contract=ExperienceImplementation && \
 	make verify-${network} contract=ItemsImplementation && \
 	make verify-${network} contract=ClassesImplementation && \
 	make verify-${network} contract=EligibilityAdaptor && \
