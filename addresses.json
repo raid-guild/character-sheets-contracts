@@ -14,14 +14,14 @@
     "chainId": "5",
     "network": "goerli",
     "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
-    "CharacterAccount": "0xc7D1C5Ba5E02536a0067687E028F6F1F41A025FD",
-    "CharacterSheetsImplementation": "0x1b4fBaAA0f11A5Bd9152dFd9Fd584043C78182Ff",
-    "ClassesImplementation": "0xfc105Dc5D5753Ff89964B539e02D93A9B70045F0",
-    "CharacterSheetsFactory": "0x6a4FBdA320eaF5E319178630384D8d633503267f",
-    "ItemsImplementation": "0x6b50ce1A4fa4f7f37283FB45b1CD60EB33741E69",
-    "EligibilityAdaptor": "0xaB19E8f97E4bcf467ed940ffc373bf4eB5cbb676",
-    "ClassLevelAdaptor": "0xAF9d240d08c3455D2b2D48B689763385D4834936",
-    "ExperienceImplementation": "0x2824913cda209dc82d92a51AcaA7fAC02924Ab38"
+    "CharacterAccount": "0x90CE0EAB508AF2d316621bD3a2f19f4cD622c446",
+    "CharacterSheetsImplementation": "0xF40a06AaF8dD0F8a6C631B81404284f496cBe577",
+    "ClassesImplementation": "0x4833c41BEdfA12F919eeb83fb80aF9fD01Af8967",
+    "CharacterSheetsFactory": "0x7ded952DE30bf80c43744F96Fb72397e715aE49E",
+    "ItemsImplementation": "0x9a90C1E32aa86d92e1D09308f5a5929A5C70Bd72",
+    "EligibilityAdaptor": "0x0ff3A1eaa129393916dBe8Cd69cF72d156f86e46",
+    "ClassLevelAdaptor": "0xdd3B0d628134606d71B52e42FaDcCE101F33f45a",
+    "ExperienceImplementation": "0xa5828e36aE9aCC55ff8a3c111556c71E591C7751"
   },
   "anvil": {
     "chainId": "31337",
