@@ -25,9 +25,9 @@ import "forge-std/console2.sol";
  */
 
 contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1155HolderUpgradeable {
-    HatsData public _hatsData;
+    HatsData private _hatsData;
 
-    IHats public _hats;
+    IHats private _hats;
 
     address public adminHatEligibilityModule;
     address public dungeonMasterHatEligibilityModule;

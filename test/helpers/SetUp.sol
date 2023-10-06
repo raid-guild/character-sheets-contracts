@@ -201,6 +201,35 @@ contract SetUp is Test {
 
         classLevels.initialize(admin, address(classes), address(experience));
 
+        // initialize hats adaptor
+        bytes memory encodedHatsAddresses = abi.encode(
+            address(hats),
+            address(hatsModuleFactory),
+            storedImp.adminHatEligibilityModuleImplementation,
+            storedImp.dungeonMasterHatEligibilityModuleImplementation,
+            storedImp.playerHatEligibilityModuleImplementation,
+            storedImp.characterHatEligibilityModuleImplementation,
+            adminArray,
+            dungeonMastersArray,
+            storedCreated.characterSheets,
+            address(erc6551Registry),
+            address(erc6551Implementation)
+        );
+
+        bytes memory encodedHatsStrings = abi.encode(
+            "test_hats_base_img",
+            "test tophat description",
+            "test_admin_uri",
+            "test_admin_description",
+            "test_dungeon_uri",
+            "test_dungeon_description",
+            "test_player_uri",
+            "test_player_description",
+            "test_character_uri",
+            "test_character_description"
+        );
+        hatsAdaptor.initialize(admin, encodedHatsAddresses, encodedHatsStrings);
+
         //set registry in character Sheets Contract
         characterSheets.setERC6551Registry(address(erc6551Registry));
 
