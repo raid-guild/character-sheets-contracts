@@ -429,7 +429,8 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         ) {
             revert Errors.VariableNotSet();
         }
-        bytes memory characterModuleData = abi.encode(erc6551Registry, erc6551AccountImplementation, characterSheets);
+        bytes memory characterModuleData =
+            abi.encodePacked(erc6551Registry, erc6551AccountImplementation, characterSheets);
         address characterHatsModule = HatsModuleFactory(_hatsData.hatsModuleFactory).createHatsModule(
             _hatsData.characterHatEligibilityModuleImplementation, characterHatId, characterModuleData, ""
         );
@@ -446,7 +447,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         ) {
             revert Errors.VariableNotSet();
         }
-        bytes memory playerModuleData = abi.encode(characterSheets, uint256(1));
+        bytes memory playerModuleData = abi.encodePacked(characterSheets, uint256(1));
         address playerHatsModule = HatsModuleFactory(_hatsData.hatsModuleFactory).createHatsModule(
             _hatsData.playerHatEligibilityModuleImplementation, playerHatId, playerModuleData, ""
         );

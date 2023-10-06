@@ -70,7 +70,7 @@ contract CharacterHatEligibilityModule is HatsModule, HatsEligibilityModule {
         override
         returns (bool eligible, bool standing)
     {
-        uint256 characterId = ICharacterSheets(CHARACTERSHEETS()).getCharacterIdByPlayerAddress(_wearer);
+        uint256 characterId = ICharacterSheets(CHARACTERSHEETS()).getCharacterIdByAccountAddress(_wearer);
         address createdAddress = IERC6551Registry(ERC6551_REGISTRY()).account(
             ACCOUNT_IMPLEMENTATION(), block.chainid, CHARACTERSHEETS(), characterId, characterId
         );

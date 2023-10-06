@@ -7,6 +7,7 @@ import {IAccessControl} from "openzeppelin-contracts/access/IAccessControl.sol";
 
 import {Errors} from "../lib/Errors.sol";
 import {IExperience} from "../interfaces/IExperience.sol";
+import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 
 /**
  * @title Experience and Items
@@ -21,16 +22,17 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
     address public characterSheets;
     address public itemsContract;
     address public classesContract;
+    address public hatsAdaptor;
 
     modifier onlyDungeonMaster() {
-        if (!IAccessControl(characterSheets).hasRole(DUNGEON_MASTER, msg.sender)) {
+        if (!IHatsAdaptor(hatsAdaptor).isDungeonMaster(msg.sender)) {
             revert Errors.DungeonMasterOnly();
         }
         _;
     }
 
     modifier onlyCharacter() {
-        if (!IAccessControl(characterSheets).hasRole(CHARACTER, msg.sender)) {
+        if (!IHatsAdaptor(hatsAdaptor).isCharacter(msg.sender)) {
             revert Errors.CharacterOnly();
         }
         _;
@@ -50,7 +52,7 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
     function initialize(bytes calldata initializationData) external initializer {
         __ERC20_init_unchained("Experience", "EXP");
         __UUPSUpgradeable_init();
-        (characterSheets, classesContract) = abi.decode(initializationData, (address, address));
+        (characterSheets, classesContract, hatsAdaptor) = abi.decode(initializationData, (address, address, address));
     }
 
     /**
@@ -61,7 +63,7 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
         if (characterSheets == address(0)) {
             revert Errors.VariableNotSet();
         }
-        if (!IAccessControl(characterSheets).hasRole(CHARACTER, to)) {
+        if (!IHatsAdaptor(hatsAdaptor).isCharacter(to)) {
             revert Errors.CharacterError();
         }
         _mint(to, amount);
@@ -71,7 +73,7 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
         if (characterSheets == address(0) || classesContract == address(0)) {
             revert Errors.VariableNotSet();
         }
-        if (!IAccessControl(characterSheets).hasRole(CHARACTER, to)) {
+        if (!IHatsAdaptor(hatsAdaptor).isCharacter(to)) {
             revert Errors.CharacterError();
         }
         _mint(to, amount);

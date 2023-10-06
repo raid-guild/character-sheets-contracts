@@ -7,16 +7,18 @@ import {
     ERC721Upgradeable,
     IERC721Upgradeable
 } from "openzeppelin-contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
-import {AccessControlUpgradeable} from "openzeppelin-contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {IERC1155} from "openzeppelin-contracts/token/ERC1155/IERC1155.sol";
 
 import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
 import {IEligibilityAdaptor} from "../interfaces/IEligibilityAdaptor.sol";
 import {ICharacterSheets} from "../interfaces/ICharacterSheets.sol";
+import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 import {IItems} from "../interfaces/IItems.sol";
 import {CharacterSheet} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
+
+import "forge-std/console2.sol";
 
 /**
  * @title Character Sheets
@@ -28,12 +30,7 @@ import {Errors} from "../lib/Errors.sol";
  * by the base character account.
  */
 
-contract CharacterSheetsImplementation is
-    ICharacterSheets,
-    ERC721URIStorageUpgradeable,
-    AccessControlUpgradeable,
-    UUPSUpgradeable
-{
+contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgradeable, UUPSUpgradeable {
     /// @dev the admin of the contract
     bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
     /// @dev the EOA of the dao member who owns a sheet
@@ -49,12 +46,16 @@ contract CharacterSheetsImplementation is
     address public erc6551Registry;
     address public erc6551AccountImplementation;
 
-    address eligibilityAdaptor;
+    address public eligibilityAdaptor;
+
+    address public hatsAdaptor;
 
     // characterId => characterSheet
     mapping(uint256 => CharacterSheet) private _sheets;
     // playerAddress => characterId
     mapping(address => uint256) public _playerSheets;
+    // characterAddress => characterId
+    mapping(address => uint256) public _characterSheets;
 
     mapping(address => bool) public jailed;
 
@@ -75,6 +76,27 @@ contract CharacterSheetsImplementation is
     modifier onlyContract() {
         if (msg.sender != items) {
             revert Errors.CallerNotApproved();
+        }
+        _;
+    }
+
+    modifier onlyDungeonMaster() {
+        if (!IHatsAdaptor(hatsAdaptor).isDungeonMaster(msg.sender)) {
+            revert Errors.DungeonMasterOnly();
+        }
+        _;
+    }
+
+    modifier onlyPlayer() {
+        if (!IHatsAdaptor(hatsAdaptor).isPlayer(msg.sender)) {
+            revert Errors.PlayerOnly();
+        }
+        _;
+    }
+
+    modifier onlyCharacter() {
+        if (!IHatsAdaptor(hatsAdaptor).isCharacter(msg.sender)) {
+            revert Errors.CharacterOnly();
         }
         _;
     }
@@ -106,25 +128,15 @@ contract CharacterSheetsImplementation is
         __ERC721_init_unchained("CharacterSheet", "CHAS");
         __UUPSUpgradeable_init();
 
-        address[] memory _dungeonMasters;
-        address _owner;
-
         (
             eligibilityAdaptor,
-            _dungeonMasters,
-            _owner,
+            hatsAdaptor,
             items,
             erc6551Registry,
             erc6551AccountImplementation,
             metadataURI,
             baseTokenURI
-        ) = abi.decode(_encodedParameters, (address, address[], address, address, address, address, string, string));
-
-        _grantRole(DEFAULT_ADMIN_ROLE, _owner);
-
-        for (uint256 i = 0; i < _dungeonMasters.length; i++) {
-            _grantRole(DUNGEON_MASTER, _dungeonMasters[i]);
-        }
+        ) = abi.decode(_encodedParameters, (address, address, address, address, address, string, string));
     }
 
     /**
@@ -172,9 +184,10 @@ contract CharacterSheetsImplementation is
         _safeMint(msg.sender, characterId);
         _setTokenURI(characterId, _tokenURI);
         _playerSheets[msg.sender] = characterId;
+        _characterSheets[characterAccount] = characterId;
 
-        _grantRole(PLAYER, msg.sender);
-        _grantRole(CHARACTER, characterAccount);
+        IHatsAdaptor(hatsAdaptor).mintPlayerHat(msg.sender);
+        IHatsAdaptor(hatsAdaptor).mintCharacterHat(characterAccount);
 
         totalSheets++;
         emit NewCharacterSheetRolled(msg.sender, characterAccount, characterId);
@@ -187,7 +200,7 @@ contract CharacterSheetsImplementation is
      * @param characterId the erc1155 token id of the item to be unequipped
      */
 
-    function unequipItemFromCharacter(uint256 characterId, uint256 itemId) external onlyRole(CHARACTER) {
+    function unequipItemFromCharacter(uint256 characterId, uint256 itemId) external onlyCharacter {
         if (msg.sender != _sheets[characterId].accountAddress) {
             revert Errors.OwnershipError();
         }
@@ -231,7 +244,7 @@ contract CharacterSheetsImplementation is
      * @param itemId the itemId of the item
      */
 
-    function equipItemToCharacter(uint256 characterId, uint256 itemId) external onlyRole(CHARACTER) {
+    function equipItemToCharacter(uint256 characterId, uint256 itemId) external onlyCharacter {
         if (msg.sender != _sheets[characterId].accountAddress) {
             revert Errors.OwnershipError();
         }
@@ -252,7 +265,7 @@ contract CharacterSheetsImplementation is
      * this will burn the nft of the player.  only a player can burn their own token.
      */
 
-    function renounceSheet() external onlyRole(PLAYER) {
+    function renounceSheet() external onlyPlayer {
         uint256 _characterId = _playerSheets[msg.sender];
 
         if (_ownerOf(_characterId) != msg.sender) {
@@ -269,7 +282,7 @@ contract CharacterSheetsImplementation is
      * @return the ERC6551 account address
      */
 
-    function restoreSheet() external onlyRole(PLAYER) returns (address) {
+    function restoreSheet() external returns (address) {
         uint256 characterId = _playerSheets[msg.sender];
 
         if (_ownerOf(characterId) != address(0)) {
@@ -305,7 +318,7 @@ contract CharacterSheetsImplementation is
      * @param characterId the characterId of the player to be removed.
      */
 
-    function removeSheet(uint256 characterId) external onlyRole(DUNGEON_MASTER) {
+    function removeSheet(uint256 characterId) external onlyDungeonMaster {
         address playerAddress = _ownerOf(characterId);
         if (playerAddress == address(0)) {
             revert Errors.CharacterError();
@@ -328,7 +341,7 @@ contract CharacterSheetsImplementation is
      * allows a player to update the character metadata in the contract
      * @param newCid the new metadata URI
      */
-    function updateCharacterMetadata(string calldata newCid) external onlyRole(PLAYER) {
+    function updateCharacterMetadata(string calldata newCid) external onlyPlayer {
         uint256 characterId = _playerSheets[msg.sender];
 
         if (_ownerOf(characterId) != msg.sender) {
@@ -340,27 +353,27 @@ contract CharacterSheetsImplementation is
         emit CharacterUpdated(characterId);
     }
 
-    function jailPlayer(address playerAddress, bool throwInJail) external onlyRole(DUNGEON_MASTER) {
+    function jailPlayer(address playerAddress, bool throwInJail) external onlyDungeonMaster {
         jailed[playerAddress] = throwInJail;
         emit PlayerJailed(playerAddress, throwInJail);
     }
 
-    function updateItemsContract(address expContract) public onlyRole(DUNGEON_MASTER) {
+    function updateItemsContract(address expContract) public onlyDungeonMaster {
         items = expContract;
         emit ItemsUpdated(expContract);
     }
 
-    function updateEligibilityAdaptor(address newAdaptor) public onlyRole(DUNGEON_MASTER) {
+    function updateEligibilityAdaptor(address newAdaptor) public onlyDungeonMaster {
         eligibilityAdaptor = newAdaptor;
         emit EligibilityAdaptorUpdated(newAdaptor);
     }
 
-    function setBaseUri(string memory _uri) public onlyRole(DUNGEON_MASTER) {
+    function setBaseUri(string memory _uri) public onlyDungeonMaster {
         baseTokenURI = _uri;
         emit BaseURIUpdated(_uri);
     }
 
-    function setMetadataUri(string memory _uri) public onlyRole(DUNGEON_MASTER) {
+    function setMetadataUri(string memory _uri) public onlyDungeonMaster {
         metadataURI = _uri;
         emit MetadataURIUpdated(_uri);
     }
@@ -368,14 +381,14 @@ contract CharacterSheetsImplementation is
     /**
      * @dev Sets the address of the ERC6551 registry
      */
-    function setERC6551Registry(address registry) public onlyRole(DUNGEON_MASTER) {
+    function setERC6551Registry(address registry) public onlyDungeonMaster {
         erc6551Registry = registry;
     }
 
     /**
      * @dev Sets the address of the ERC6551 account implementation
      */
-    function setERC6551Implementation(address implementation) public onlyRole(DUNGEON_MASTER) {
+    function setERC6551Implementation(address implementation) public onlyDungeonMaster {
         erc6551AccountImplementation = implementation;
     }
 
@@ -407,7 +420,7 @@ contract CharacterSheetsImplementation is
         public
         virtual
         override(ERC721Upgradeable, IERC721Upgradeable)
-        onlyRole(DUNGEON_MASTER)
+        onlyDungeonMaster
     {
         if (_playerSheets[to] != 0) {
             revert Errors.TokenBalanceError();
@@ -428,7 +441,7 @@ contract CharacterSheetsImplementation is
         public
         virtual
         override(ERC721Upgradeable, IERC721Upgradeable)
-        onlyRole(DUNGEON_MASTER)
+        onlyDungeonMaster
     {
         if (_sheets[_playerSheets[to]].playerAddress != address(0)) {
             revert Errors.CharacterError();
@@ -448,7 +461,7 @@ contract CharacterSheetsImplementation is
         public
         virtual
         override(ERC721Upgradeable, IERC721Upgradeable)
-        onlyRole(DUNGEON_MASTER)
+        onlyDungeonMaster
     {
         if (_sheets[_playerSheets[to]].playerAddress != address(0)) {
             revert Errors.CharacterError();
@@ -468,13 +481,8 @@ contract CharacterSheetsImplementation is
         return _sheets[characterId];
     }
 
-    function getCharacterIdByAccountAddress(address _account) public view returns (uint256) {
-        for (uint256 i = 0; i < totalSheets; i++) {
-            if (_sheets[i].accountAddress == _account) {
-                return i;
-            }
-        }
-        revert Errors.CharacterError();
+    function getCharacterIdByAccountAddress(address _account) public view returns (uint256 id) {
+        return _characterSheets[_account];
     }
 
     function getCharacterIdByPlayerAddress(address _player) public view returns (uint256) {
@@ -511,17 +519,12 @@ contract CharacterSheetsImplementation is
         return super.tokenURI(characterId);
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721URIStorageUpgradeable, AccessControlUpgradeable)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721URIStorageUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 
     //solhint-disable-next-line no-empty-blocks
-    function _authorizeUpgrade(address newImplementation) internal override onlyRole(DUNGEON_MASTER) {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {}
 
     function _baseURI() internal view virtual override returns (string memory) {
         return baseTokenURI;

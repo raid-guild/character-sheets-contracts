@@ -170,7 +170,7 @@ contract SetUp is Test {
             abi.encode(
                 storedCreated.eligibility,
                 storedCreated.classLevels,
-                dungeonMastersArray,
+                storedCreated.hatsAdaptor,
                 storedCreated.characterSheets,
                 storedCreated.experience,
                 storedCreated.items,
@@ -241,12 +241,6 @@ contract SetUp is Test {
         uint256 tokenId1 = characterSheets.rollCharacterSheet("test_character_token_uri/");
         assertEq(tokenId1, 0, "incorrect tokenId for player1");
         npc1 = characterSheets.getCharacterSheetByCharacterId(tokenId1).accountAddress;
-
-        assertTrue(
-            characterSheets.hasRole(keccak256("DUNGEON_MASTER"), admin),
-            "wrong dungeon master role assignment for character sheets"
-        );
-        assertTrue(characterSheets.hasRole(bytes32(0), admin), "wrong ADMIN role assignment for character sheets");
     }
 
     function dropExp(address player, uint256 amount) public {

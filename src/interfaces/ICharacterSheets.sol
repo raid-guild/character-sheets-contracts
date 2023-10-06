@@ -7,4 +7,6 @@ interface ICharacterSheets {
     function getCharacterSheetByCharacterId(uint256 characterId) external view returns (CharacterSheet memory);
 
     function getCharacterIdByPlayerAddress(address _playerAddress) external view returns (uint256);
+
+    function getCharacterIdByAccountAddress(address _account) external view returns (uint256);
 }

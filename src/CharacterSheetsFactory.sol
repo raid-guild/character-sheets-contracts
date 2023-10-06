@@ -107,21 +107,19 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
     /**
      * @dev create function for all contracts and adaptors
-     *     @param dungeonMasters an array of all addresses with dungeonMasterPermissions
      *     @param dao the address of a dao to be used with the character sheets elegibility adaptor pass in address(0) to have no elegibilty limitations
      *     @param _classLevelAdaptorImplementation the class Level adaptor address to be used.  pass in address(0) to use the default adaptor with D&D style leveling requirements
      *     @param data the encoded bytes of the correct initilization data see init function notes for correct data to be encoded
      */
-    function create(
-        address[] calldata dungeonMasters,
-        address dao,
-        address _classLevelAdaptorImplementation,
-        bytes calldata data
-    ) external returns (address, address, address, address) {
-        (address characterSheetsClone, address itemsClone) = _createSheetsAndItems(dungeonMasters, dao, data);
+    function create(address dao, address _classLevelAdaptorImplementation, bytes calldata data)
+        external
+        returns (address, address, address, address)
+    {
+        address hatsAdaptor = createHatsAdaptor();
+        (address characterSheetsClone, address itemsClone) = _createSheetsAndItems(dao, hatsAdaptor, data);
 
         (address classesClone, address experienceClone) =
-            _createClassesAndExperience(characterSheetsClone, _classLevelAdaptorImplementation, data);
+            _createClassesAndExperience(characterSheetsClone, _classLevelAdaptorImplementation, hatsAdaptor, data);
 
         emit CharacterSheetsCreated(msg.sender, characterSheetsClone, classesClone, itemsClone, experienceClone);
 
@@ -237,30 +235,32 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         (
             address eligibilityAdaptorClone,
             address classLevelAdaptorClone,
-            address[] memory dungeonMasters,
+            address hatsAdaptor,
             address characterSheetsClone,
             address experienceClone,
             address itemsClone,
             address classesClone
-        ) = abi.decode(encodedAddresses, (address, address, address[], address, address, address, address));
+        ) = abi.decode(encodedAddresses, (address, address, address, address, address, address, address));
 
         //stacc too dank
-        bytes memory encodedCharInitAddresses = abi.encode(eligibilityAdaptorClone, dungeonMasters, itemsClone);
+        bytes memory encodedCharInitAddresses = abi.encode(eligibilityAdaptorClone, hatsAdaptor, itemsClone);
 
         CharacterSheetsImplementation(characterSheetsClone).initialize(
             _encodeCharacterInitData(encodedCharInitAddresses, data)
         );
 
-        ItemsImplementation(itemsClone).initialize(_encodeItemsData(characterSheetsClone, data));
+        ItemsImplementation(itemsClone).initialize(_encodeItemsData(hatsAdaptor, data));
 
-        ClassesImplementation(classesClone).initialize(
-            _encodeClassesData(characterSheetsClone, experienceClone, classLevelAdaptorClone, data)
+        bytes memory encodedClassesInitdata =
+            abi.encode(characterSheetsClone, experienceClone, hatsAdaptor, classLevelAdaptorClone);
+        ClassesImplementation(classesClone).initialize(_encodeClassesData(encodedClassesInitdata, data));
+
+        ExperienceImplementation(experienceClone).initialize(
+            _encodeExpData(characterSheetsClone, classesClone, hatsAdaptor)
         );
-
-        ExperienceImplementation(experienceClone).initialize(_encodeExpData(characterSheetsClone, classesClone));
     }
 
-    function _createSheetsAndItems(address[] calldata dungeonMasters, address dao, bytes calldata data)
+    function _createSheetsAndItems(address dao, address hatsAdaptor, bytes calldata data)
         private
         returns (address, address)
     {
@@ -269,7 +269,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
         address eligibilityAdaptorClone = dao != address(0) ? createEligibilityAdaptor() : address(0);
 
-        bytes memory encodedCharInitAddresses = abi.encode(eligibilityAdaptorClone, dungeonMasters, itemsClone);
+        bytes memory encodedCharInitAddresses = abi.encode(eligibilityAdaptorClone, hatsAdaptor, itemsClone);
 
         CharacterSheetsImplementation(characterSheetsClone).initialize(
             _encodeCharacterInitData(encodedCharInitAddresses, data)
@@ -285,6 +285,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     function _createClassesAndExperience(
         address characterSheetsClone,
         address _classLevelAdaptorImplementation,
+        address hatsAdaptorClone,
         bytes calldata data
     ) private returns (address, address) {
         address experienceClone = createExperience();
@@ -292,12 +293,13 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         address classLevelAdaptorClone = _classLevelAdaptorImplementation == address(0)
             ? createClassLevelAdaptor()
             : createClassLevelAdaptor(_classLevelAdaptorImplementation);
+        bytes memory encodedClassData =
+            abi.encode(characterSheetsClone, experienceClone, hatsAdaptorClone, classLevelAdaptorClone);
+        ClassesImplementation(classesClone).initialize(_encodeClassesData(encodedClassData, data));
 
-        ClassesImplementation(classesClone).initialize(
-            _encodeClassesData(characterSheetsClone, experienceClone, classLevelAdaptorClone, data)
+        ExperienceImplementation(experienceClone).initialize(
+            _encodeExpData(characterSheetsClone, classesClone, hatsAdaptorClone)
         );
-
-        ExperienceImplementation(experienceClone).initialize(_encodeExpData(characterSheetsClone, classesClone));
 
         ClassLevelAdaptor(classLevelAdaptorClone).initialize(msg.sender, classesClone, experienceClone);
 
@@ -311,13 +313,12 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     {
         (string memory characterSheetsMetadataUri, string memory characterSheetsBaseUri,,) = _decodeStrings(data);
 
-        (address eligibilityAdaptorClone, address[] memory dungeonMasters, address itemsClone) =
-            abi.decode(encodedInitData, (address, address[], address));
+        (address eligibilityAdaptorClone, address hatsAdaptor, address itemsClone) =
+            abi.decode(encodedInitData, (address, address, address));
 
         bytes memory encodedCharacterSheetParameters = abi.encode(
             eligibilityAdaptorClone,
-            dungeonMasters,
-            msg.sender,
+            hatsAdaptor,
             itemsClone,
             erc6551Registry,
             erc6551AccountImplementation,
@@ -334,18 +335,28 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         return abi.encode(characterSheetsClone, itemsBaseUri);
     }
 
-    function _encodeClassesData(
-        address characterSheetsClone,
-        address experienceClone,
-        address classLevelAdaptorClone,
-        bytes memory data
-    ) private pure returns (bytes memory) {
+    function _encodeClassesData(bytes memory encodedClassesData, bytes memory data)
+        private
+        pure
+        returns (bytes memory)
+    {
+        (
+            address characterSheetsClone,
+            address experienceClone,
+            address hatsAdaptorClone,
+            address classLevelAdaptorClone
+        ) = abi.decode(encodedClassesData, (address, address, address, address));
         (,,, string memory classesBaseUri) = _decodeStrings(data);
-        return abi.encode(characterSheetsClone, experienceClone, classLevelAdaptorClone, classesBaseUri);
+        return
+            abi.encode(characterSheetsClone, experienceClone, hatsAdaptorClone, classLevelAdaptorClone, classesBaseUri);
     }
 
-    function _encodeExpData(address characterSheetsClone, address classesClone) private pure returns (bytes memory) {
-        return abi.encode(characterSheetsClone, classesClone);
+    function _encodeExpData(address characterSheetsClone, address classesClone, address hatsAdaptor)
+        private
+        pure
+        returns (bytes memory)
+    {
+        return abi.encode(characterSheetsClone, classesClone, hatsAdaptor);
     }
 
     function _decodeStrings(bytes memory data)

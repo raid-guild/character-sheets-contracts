@@ -15,6 +15,7 @@ import {Errors} from "../lib/Errors.sol";
 
 import {IClassLevelAdaptor} from "../interfaces/IClassLevelAdaptor.sol";
 import {IClasses} from "../interfaces/IClasses.sol";
+import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 
 /**
  * @title Experience and Items
@@ -47,6 +48,7 @@ contract ClassesImplementation is IClasses, ERC1155HolderUpgradeable, ERC1155Upg
     address public experience;
 
     address public classLevelAdaptor;
+    address public hatsAdaptor;
 
     event NewClassCreated(uint256 tokenId);
     event ClassAssigned(address character, uint256 classId);
@@ -57,14 +59,14 @@ contract ClassesImplementation is IClasses, ERC1155HolderUpgradeable, ERC1155Upg
     event ClassLeveled(address character, uint256 classId, uint256 newLevel);
 
     modifier onlyDungeonMaster() {
-        if (!IAccessControl(characterSheets).hasRole(DUNGEON_MASTER, msg.sender)) {
+        if (!IHatsAdaptor(hatsAdaptor).isDungeonMaster(msg.sender)) {
             revert Errors.DungeonMasterOnly();
         }
         _;
     }
 
     modifier onlyCharacter() {
-        if (!IAccessControl(characterSheets).hasRole(CHARACTER, msg.sender)) {
+        if (!IHatsAdaptor(hatsAdaptor).isCharacter(msg.sender)) {
             revert Errors.CharacterOnly();
         }
         _;
@@ -79,8 +81,8 @@ contract ClassesImplementation is IClasses, ERC1155HolderUpgradeable, ERC1155Upg
         __ERC1155Holder_init();
 
         string memory baseUri;
-        (characterSheets, experience, classLevelAdaptor, baseUri) =
-            abi.decode(_encodedData, (address, address, address, string));
+        (characterSheets, experience, hatsAdaptor, classLevelAdaptor, baseUri) =
+            abi.decode(_encodedData, (address, address, address, address, string));
         _baseURI = baseUri;
     }
 
@@ -101,9 +103,6 @@ contract ClassesImplementation is IClasses, ERC1155HolderUpgradeable, ERC1155Upg
     }
 
     function claimClass(uint256 classId) external onlyCharacter returns (bool) {
-        if (!IAccessControl(characterSheets).hasRole(CHARACTER, msg.sender)) {
-            revert Errors.CharacterError();
-        }
         Class storage newClass = _classes[classId];
 
         if (!newClass.claimable) {
@@ -327,7 +326,7 @@ contract ClassesImplementation is IClasses, ERC1155HolderUpgradeable, ERC1155Upg
         uint256[] memory amounts,
         bytes memory data
     ) public override onlyDungeonMaster {
-        if (!IAccessControl(characterSheets).hasRole(CHARACTER, to)) {
+        if (!IHatsAdaptor(hatsAdaptor).isCharacter(to)) {
             revert Errors.CharacterOnly();
         }
 
@@ -339,7 +338,7 @@ contract ClassesImplementation is IClasses, ERC1155HolderUpgradeable, ERC1155Upg
         override
         onlyDungeonMaster
     {
-        if (!IAccessControl(characterSheets).hasRole(CHARACTER, to)) {
+        if (!IHatsAdaptor(hatsAdaptor).isCharacter(to)) {
             revert Errors.CharacterOnly();
         }
         super._safeTransferFrom(from, to, id, amount, data);

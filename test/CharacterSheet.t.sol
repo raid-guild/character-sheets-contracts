@@ -42,9 +42,7 @@ contract CharacterSheetsTest is Test, SetUp {
     function testChangeBaseUriAccessControlRevert() public {
         string memory newBaseUri = "new_base_uri/";
         vm.prank(player1);
-        vm.expectRevert(
-            "AccessControl: account 0x000000000000000000000000000000000000beef is missing role 0x9f5957e014b94f6c4458eb946e74e5d7e489dfaff6e0bddd07dd7d48100ca913"
-        );
+        vm.expectRevert(Errors.DungeonMasterOnly.selector);
         characterSheets.setBaseUri(newBaseUri);
     }
 
@@ -301,9 +299,6 @@ contract CharacterSheetsTest is Test, SetUp {
         assertEq(characterSheets.getCharacterIdByAccountAddress(sheet.accountAddress), 0, "Incorrect playerId");
 
         assertEq(characterSheets.getCharacterIdByAccountAddress(npc1), 0, "Incorrect playerId");
-
-        vm.expectRevert();
-        characterSheets.getCharacterIdByAccountAddress(player2);
     }
 
     function testUpdateCharacterMetadata() public {
@@ -314,9 +309,7 @@ contract CharacterSheetsTest is Test, SetUp {
         assertEq(uri, "test_base_uri_character_sheets/new_cid", "Incorrect token uri");
 
         vm.prank(player2);
-        vm.expectRevert(
-            "AccessControl: account 0x000000000000000000000000000000000000babe is missing role 0x0f98b3a5774fbfdf19646dba94a6c08f13f4c341502334a57724de46497192c3"
-        );
+        vm.expectRevert(Errors.PlayerOnly.selector);
         characterSheets.updateCharacterMetadata("new_cid");
     }
 }

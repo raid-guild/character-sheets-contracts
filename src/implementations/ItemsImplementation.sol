@@ -8,7 +8,6 @@ import {
     ERC1155ReceiverUpgradeable
 } from "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {IAccessControl} from "openzeppelin-contracts/access/IAccessControl.sol";
 // import {console2} from "forge-std/console2.sol";
 
 import {Item} from "../lib/Structs.sol";
@@ -16,6 +15,7 @@ import {Errors} from "../lib/Errors.sol";
 import {MultiToken, Asset, Category} from "../lib/MultiToken.sol";
 
 import {IItems} from "../interfaces/IItems.sol";
+import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 /**
  * @title Experience and Items
  * @author MrDeadCe11 && dan13ram
@@ -44,7 +44,7 @@ contract ItemsImplementation is IItems, ERC1155HolderUpgradeable, ERC1155Upgrade
     uint256 public totalItemTypes;
 
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
-    address public characterSheets;
+    address public hatsAdaptor;
 
     event NewItemTypeCreated(uint256 itemId);
     event ItemTransfered(address character, uint256 itemId, uint256 amount);
@@ -53,14 +53,14 @@ contract ItemsImplementation is IItems, ERC1155HolderUpgradeable, ERC1155Upgrade
     event RequirementRemoved(uint256 itemId, address assetAddress, uint256 assetId);
 
     modifier onlyDungeonMaster() {
-        if (!IAccessControl(characterSheets).hasRole(DUNGEON_MASTER, msg.sender)) {
+        if (!IHatsAdaptor(hatsAdaptor).isDungeonMaster(msg.sender)) {
             revert Errors.DungeonMasterOnly();
         }
         _;
     }
 
     modifier onlyCharacter() {
-        if (!IAccessControl(characterSheets).hasRole(CHARACTER, msg.sender)) {
+        if (!IHatsAdaptor(hatsAdaptor).isCharacter(msg.sender)) {
             revert Errors.CharacterOnly();
         }
         _;
@@ -74,7 +74,7 @@ contract ItemsImplementation is IItems, ERC1155HolderUpgradeable, ERC1155Upgrade
         __UUPSUpgradeable_init();
         __ERC1155Holder_init();
 
-        (characterSheets, _baseURI) = abi.decode(_encodedData, (address, string));
+        (hatsAdaptor, _baseURI) = abi.decode(_encodedData, (address, string));
     }
 
     /**
@@ -292,7 +292,7 @@ contract ItemsImplementation is IItems, ERC1155HolderUpgradeable, ERC1155Upgrade
         public
         override
     {
-        if (to != address(0) && !IAccessControl(characterSheets).hasRole(CHARACTER, to)) {
+        if (to != address(0) && !IHatsAdaptor(hatsAdaptor).isCharacter(msg.sender)) {
             revert Errors.CharacterOnly();
         }
         if (_items[id].soulbound) {
@@ -308,7 +308,7 @@ contract ItemsImplementation is IItems, ERC1155HolderUpgradeable, ERC1155Upgrade
         uint256[] memory amounts,
         bytes memory data
     ) public override {
-        if (to != address(0) && !IAccessControl(characterSheets).hasRole(CHARACTER, to)) {
+        if (to != address(0) && !IHatsAdaptor(hatsAdaptor).isCharacter(msg.sender)) {
             revert Errors.CharacterOnly();
         }
 
@@ -435,7 +435,7 @@ contract ItemsImplementation is IItems, ERC1155HolderUpgradeable, ERC1155Upgrade
      */
 
     function _transferItem(address characterAccount, uint256 itemId, uint256 amount) internal returns (bool success) {
-        if (!IAccessControl(characterSheets).hasRole(CHARACTER, characterAccount)) {
+        if (!IHatsAdaptor(hatsAdaptor).isCharacter(characterAccount)) {
             revert Errors.CharacterOnly();
         }
 
