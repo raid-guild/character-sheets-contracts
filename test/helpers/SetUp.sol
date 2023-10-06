@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 pragma abicoder v2;
-//solhint-disable
 
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";
@@ -20,54 +19,75 @@ import "murky/src/Merkle.sol";
 import {ERC6551Registry} from "../../src/mocks/ERC6551Registry.sol";
 import {CharacterAccount} from "../../src/CharacterAccount.sol";
 import {MultiSend} from "../../src/lib/MultiSend.sol";
+import {Category} from "../../src/lib/MultiToken.sol";
 
-struct StoredAddresses {
+// hats imports
+import {HatsAdaptor} from "../../src/adaptors/HatsAdaptor.sol";
+import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
+import {Hats} from "hats-protocol/Hats.sol";
+import {AdminHatEligibilityModule} from "../../src/adaptors/hats_modules/AdminHatEligibilityModule.sol";
+import {DungeonMasterHatEligibilityModule} from "../../src/adaptors/hats_modules/DungeonMasterHatEligibilityModule.sol";
+import {PlayerHatEligibilityModule} from "../../src/adaptors/hats_modules/PlayerHatEligibilityModule.sol";
+import {CharacterHatEligibilityModule} from "../../src/adaptors/hats_modules/CharacterHatEligibilityModule.sol";
+
+struct StoredImplementationAddresses {
     address characterSheetsImplementation;
     address experienceImplementation;
     address itemsImplementation;
     address classesImplementation;
-    address createdCharacterSheets;
-    address createdItems;
-    address createdClasses;
-    address createdExperience;
-    address createdEligibility;
-    address createdClassLevels;
-    address factory;
+    address hatsAdaptorImplementation;
+    address adminHatEligibilityModuleImplementation;
+    address dungeonMasterHatEligibilityModuleImplementation;
+    address playerHatEligibilityModuleImplementation;
+    address characterHatEligibilityModuleImplementation;
+}
+
+struct StoredCreatedContracts {
+    address characterSheets;
+    address items;
+    address classes;
+    address experience;
+    address eligibility;
+    address classLevels;
+    address hatsAdaptor;
 }
 
 contract SetUp is Test {
     using stdJson for string;
 
-    ItemsImplementation items;
-    CharacterSheetsFactory characterSheetsFactory;
-    CharacterSheetsImplementation characterSheets;
-    ExperienceImplementation experience;
-    ClassesImplementation classes;
-    EligibilityAdaptor eligibility;
-    ClassLevelAdaptor classLevels;
+    CharacterSheetsImplementation public characterSheets;
+    ExperienceImplementation public experience;
+    ItemsImplementation public items;
+    ClassesImplementation public classes;
 
-    StoredAddresses public stored;
+    CharacterSheetsFactory public characterSheetsFactory;
+    EligibilityAdaptor public eligibility;
+    ClassLevelAdaptor public classLevels;
+    HatsAdaptor public hatsAdaptor;
+    HatsModuleFactory public hatsModuleFactory;
+    Hats public hats;
 
-    address admin = address(0xdeadce11);
-    address player1 = address(0xbeef);
-    address player2 = address(0xbabe);
-    address rando = address(0xc0ffee);
-    address npc1;
-    uint256 testClassId;
-    uint256 testItemId;
-    Moloch dao;
+    Moloch public dao;
 
-    Merkle merkle = new Merkle();
+    StoredImplementationAddresses public storedImp;
+    StoredCreatedContracts public storedCreated;
+
+    address public admin = address(0xdeadce11);
+    address public player1 = address(0xbeef);
+    address public player2 = address(0xbabe);
+    address public rando = address(0xc0ffee);
+    address public npc1;
+    uint256 public testClassId;
+    uint256 public testItemId;
+
+    Merkle public merkle = new Merkle();
 
     ERC6551Registry erc6551Registry;
     CharacterAccount erc6551Implementation;
     MultiSend multiSend;
 
-    enum Category {
-        ERC20,
-        ERC721,
-        ERC1155
-    }
+    address[] adminArray;
+    address[] dungeonMastersArray;
 
     function setUp() public {
         vm.startPrank(admin);
@@ -84,18 +104,26 @@ contract SetUp is Test {
         vm.label(address(eligibility), "Eligibility Adaptor");
 
         characterSheetsFactory = new CharacterSheetsFactory();
-        items = new ItemsImplementation();
-        classes = new ClassesImplementation();
-        characterSheets = new CharacterSheetsImplementation();
-        experience = new ExperienceImplementation();
+
+        // hats contract deployments
+        hats = new Hats("Test Hats", "test_hats_base_img_uri");
+        hatsModuleFactory = new HatsModuleFactory(hats, "test hats factory");
+
+        // deploy and store implementation addresses
+        storedImp.itemsImplementation = address(new ItemsImplementation());
+        storedImp.classesImplementation = address(new ClassesImplementation());
+        storedImp.characterSheetsImplementation = address(new CharacterSheetsImplementation());
+        storedImp.experienceImplementation = address(new ExperienceImplementation());
+
+        // hats integration
+        storedImp.hatsAdaptorImplementation = address(new HatsAdaptor());
+        storedImp.adminHatEligibilityModuleImplementation = address(new AdminHatEligibilityModule("v 0.1"));
+        storedImp.dungeonMasterHatEligibilityModuleImplementation =
+            address(new DungeonMasterHatEligibilityModule("v 0.1"));
+        storedImp.playerHatEligibilityModuleImplementation = address(new PlayerHatEligibilityModule("v 0.1"));
+        storedImp.characterHatEligibilityModuleImplementation = address(new CharacterHatEligibilityModule("v 0.1"));
 
         characterSheetsFactory.initialize();
-
-        stored.itemsImplementation = address(items);
-        stored.factory = address(characterSheetsFactory);
-        stored.classesImplementation = address(classes);
-        stored.characterSheetsImplementation = address(characterSheets);
-        stored.experienceImplementation = address(experience);
 
         erc6551Registry = new ERC6551Registry();
         erc6551Implementation = new CharacterAccount();
@@ -104,12 +132,14 @@ contract SetUp is Test {
         dao.addMember(player1);
         dao.addMember(admin);
 
-        characterSheetsFactory.updateCharacterSheetsImplementation(address(stored.characterSheetsImplementation));
-        characterSheetsFactory.updateItemsImplementation(address(stored.itemsImplementation));
-        characterSheetsFactory.updateClassesImplementation(address(stored.classesImplementation));
-        characterSheetsFactory.updateExperienceImplementation(address(stored.experienceImplementation));
-        address[] memory dungeonMasters = new address[](1);
-        dungeonMasters[0] = admin;
+        characterSheetsFactory.updateCharacterSheetsImplementation(address(storedImp.characterSheetsImplementation));
+        characterSheetsFactory.updateItemsImplementation(address(storedImp.itemsImplementation));
+        characterSheetsFactory.updateClassesImplementation(address(storedImp.classesImplementation));
+        characterSheetsFactory.updateExperienceImplementation(address(storedImp.experienceImplementation));
+        characterSheetsFactory.updateHatsAdaptorImplementation(address(storedImp.hatsAdaptorImplementation));
+
+        dungeonMastersArray.push(admin);
+        adminArray.push(admin);
 
         characterSheetsFactory.updateERC6551Registry(address(erc6551Registry));
         characterSheetsFactory.updateERC6551AccountImplementation(address(erc6551Implementation));
@@ -121,50 +151,55 @@ contract SetUp is Test {
             "test_base_uri_classes/"
         );
 
-        stored.createdCharacterSheets = characterSheetsFactory.createCharacterSheets();
+        storedCreated.characterSheets = characterSheetsFactory.createCharacterSheets();
 
-        stored.createdItems = characterSheetsFactory.createItems();
+        storedCreated.items = characterSheetsFactory.createItems();
 
-        stored.createdExperience = characterSheetsFactory.createExperience();
+        storedCreated.experience = characterSheetsFactory.createExperience();
 
-        stored.createdClasses = characterSheetsFactory.createClasses();
+        storedCreated.classes = characterSheetsFactory.createClasses();
 
-        stored.createdEligibility = characterSheetsFactory.createEligibilityAdaptor(address(eligibility));
+        storedCreated.eligibility = characterSheetsFactory.createEligibilityAdaptor(address(eligibility));
 
-        stored.createdClassLevels = characterSheetsFactory.createClassLevelAdaptor(address(classLevels));
+        storedCreated.classLevels = characterSheetsFactory.createClassLevelAdaptor(address(classLevels));
+
+        storedCreated.hatsAdaptor =
+            characterSheetsFactory.createHatsAdaptor(address(storedImp.hatsAdaptorImplementation));
 
         characterSheetsFactory.initializeContracts(
             abi.encode(
-                stored.createdEligibility,
-                stored.createdClassLevels,
-                dungeonMasters,
-                stored.createdCharacterSheets,
-                stored.createdExperience,
-                stored.createdItems,
-                stored.createdClasses
+                storedCreated.eligibility,
+                storedCreated.classLevels,
+                dungeonMastersArray,
+                storedCreated.characterSheets,
+                storedCreated.experience,
+                storedCreated.items,
+                storedCreated.classes
             ),
             baseUriData
         );
 
-        characterSheets = CharacterSheetsImplementation(stored.createdCharacterSheets);
+        characterSheets = CharacterSheetsImplementation(storedCreated.characterSheets);
 
-        assertEq(address(characterSheets.items()), stored.createdItems, "incorrect items address in setup");
+        assertEq(address(characterSheets.items()), storedCreated.items, "incorrect items address in setup");
 
-        items = ItemsImplementation(stored.createdItems);
+        items = ItemsImplementation(storedCreated.items);
 
-        classes = ClassesImplementation(stored.createdClasses);
+        classes = ClassesImplementation(storedCreated.classes);
 
-        experience = ExperienceImplementation(stored.createdExperience);
+        experience = ExperienceImplementation(storedCreated.experience);
 
-        eligibility = EligibilityAdaptor(stored.createdEligibility);
+        eligibility = EligibilityAdaptor(storedCreated.eligibility);
 
-        classLevels = ClassLevelAdaptor(stored.createdClassLevels);
+        classLevels = ClassLevelAdaptor(storedCreated.classLevels);
+
+        hatsAdaptor = HatsAdaptor(storedCreated.hatsAdaptor);
 
         //initialize created adaptors
 
-        eligibility.initialize(address(dao));
+        eligibility.initialize(admin, address(dao));
 
-        classLevels.initialize(address(classes), address(experience));
+        classLevels.initialize(admin, address(classes), address(experience));
 
         //set registry in character Sheets Contract
         characterSheets.setERC6551Registry(address(erc6551Registry));
@@ -193,6 +228,22 @@ contract SetUp is Test {
     function createNewItemType() public returns (uint256 itemId) {
         bytes memory newItem = createNewItem(false, false, bytes32(0));
         itemId = items.createItemType(newItem);
+    }
+
+    function dropItems(address player, uint256 itemId, uint256 amount) public {
+        address[] memory players = new address[](1);
+        players[0] = player;
+
+        uint256[][] memory itemIds = new uint256[][](1);
+        itemIds[0] = new uint256[](1);
+        itemIds[0][0] = itemId;
+
+        uint256[][] memory amounts = new uint256[][](1);
+        amounts[0] = new uint256[](1);
+        amounts[0][0] = amount;
+
+        vm.prank(admin);
+        items.dropLoot(players, itemIds, amounts);
     }
 
     function generateMerkleRootAndProof(
@@ -231,21 +282,5 @@ contract SetUp is Test {
 
     function createNewClass(bool claimable) public pure returns (bytes memory data) {
         return abi.encode(claimable, "test_class_cid/");
-    }
-
-    function dropItems(address player, uint256 itemId, uint256 amount) public {
-        address[] memory players = new address[](1);
-        players[0] = player;
-
-        uint256[][] memory itemIds = new uint256[][](1);
-        itemIds[0] = new uint256[](1);
-        itemIds[0][0] = itemId;
-
-        uint256[][] memory amounts = new uint256[][](1);
-        amounts[0] = new uint256[](1);
-        amounts[0][0] = amount;
-
-        vm.prank(admin);
-        items.dropLoot(players, itemIds, amounts);
     }
 }

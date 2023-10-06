@@ -50,6 +50,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
     event ClassesImplementationUpdated(address newClasses);
     event EligibilityAdaptorUpdated(address newAdaptor);
     event ClassLevelAdaptorUpdated(address newAdaptor);
+    event HatsAdaptorUpdated(address newHatsAdaptor);
 
     function initialize() external initializer {
         __Context_init_unchained();
@@ -96,14 +97,31 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         emit ClassLevelAdaptorUpdated(_newClassLevelAdaptor);
     }
 
+    function updateHatsAdaptorImplementation(address _newHatsAdaptor) external onlyOwner {
+        hatsAdaptorImplementation = _newHatsAdaptor;
+
+        emit HatsAdaptorUpdated(_newHatsAdaptor);
+    }
+
     /// create functions must be called first before the initialize call is made
-    function create(address[] calldata dungeonMasters, address dao, bytes calldata data)
-        external
-        returns (address, address, address, address)
-    {
+
+    /**
+     * @dev create function for all contracts and adaptors
+     *     @param dungeonMasters an array of all addresses with dungeonMasterPermissions
+     *     @param dao the address of a dao to be used with the character sheets elegibility adaptor pass in address(0) to have no elegibilty limitations
+     *     @param _classLevelAdaptorImplementation the class Level adaptor address to be used.  pass in address(0) to use the default adaptor with D&D style leveling requirements
+     *     @param data the encoded bytes of the correct initilization data see init function notes for correct data to be encoded
+     */
+    function create(
+        address[] calldata dungeonMasters,
+        address dao,
+        address _classLevelAdaptorImplementation,
+        bytes calldata data
+    ) external returns (address, address, address, address) {
         (address characterSheetsClone, address itemsClone) = _createSheetsAndItems(dungeonMasters, dao, data);
 
-        (address classesClone, address experienceClone) = _createClassesAndExperience(characterSheetsClone, data);
+        (address classesClone, address experienceClone) =
+            _createClassesAndExperience(characterSheetsClone, _classLevelAdaptorImplementation, data);
 
         emit CharacterSheetsCreated(msg.sender, characterSheetsClone, classesClone, itemsClone, experienceClone);
 
@@ -180,34 +198,16 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         return classLevelAdaptorClone;
     }
 
-    /**
-     * @notice the caller of this function must be wearing the admin hat for the characterHat and player Hat
-     */
-
-    function createHatsModules(uint256 characterHatId, uint256 playerHatId, address characterSheets)
-        public
-        returns (address, address)
-    {
-        if (
-            hatsModuleFactory == address(0) || characterHatsEligibilityModule == address(0)
-                || playerHatsEligibilityModule == address(0)
-        ) {
+    function createHatsAdaptor() public returns (address) {
+        if (hatsAdaptorImplementation == address(0)) {
             revert Errors.VariableNotSet();
         }
-        bytes memory characterModuleData = abi.encode(erc6551Registry, erc6551AccountImplementation, characterSheets);
-        address characterHatsModule = HatsModuleFactory(hatsModuleFactory).createHatsModule(
-            characterHatsEligibilityModule, characterHatId, characterModuleData, ""
-        );
 
-        bytes memory playerModuleData = abi.encode(erc6551Registry, erc6551AccountImplementation, characterSheets);
-        address playerHatsModule = HatsModuleFactory(hatsModuleFactory).createHatsModule(
-            playerHatsEligibilityModule, playerHatId, playerModuleData, ""
-        );
-        return (characterHatsModule, playerHatsModule);
+        return createHatsAdaptor(hatsAdaptorImplementation);
     }
 
-    function createHatsAdaptor()public returns(address){expeexperienceImplementationrienceImplementation
-        address hatsAdaptor = address(new ERC1967Proxy(hatsAdaptorImplementation, ""));
+    function createHatsAdaptor(address _hatsAdaptorImplementation) public returns (address) {
+        address hatsAdaptor = address(new ERC1967Proxy(_hatsAdaptorImplementation, ""));
         return hatsAdaptor;
     }
 
@@ -216,7 +216,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
      */
 
     /**
-     * @notice This will initialize all the contracts except the eligibility adaptors
+     * @notice This will initialize all the contracts except the adaptors
      * @dev this function should be called immediately after all the create functions have been called
      * @param encodedAddresses the encoded addresses must include in this order:
      * -eligibility adaptor clone address
@@ -226,6 +226,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
      * - experience clone to address be initialized
      * - items clone address to be initialized
      * - classes clone address to be initialized
+     * -
      * @param data encoded string data strings to include must be in this order:
      * - the base metadata uri for the character sheets clone
      * - the base character token uri for the character sheets clone
@@ -243,7 +244,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
             address classesClone
         ) = abi.decode(encodedAddresses, (address, address, address[], address, address, address, address));
 
-        //stacc too dank again
+        //stacc too dank
         bytes memory encodedCharInitAddresses = abi.encode(eligibilityAdaptorClone, dungeonMasters, itemsClone);
 
         CharacterSheetsImplementation(characterSheetsClone).initialize(
@@ -275,19 +276,22 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         );
 
         if (dao != address(0)) {
-            EligibilityAdaptor(eligibilityAdaptorClone).initialize(dao);
+            EligibilityAdaptor(eligibilityAdaptorClone).initialize(msg.sender, dao);
         }
 
         return (characterSheetsClone, itemsClone);
     }
 
-    function _createClassesAndExperience(address characterSheetsClone, bytes calldata data)
-        private
-        returns (address, address)
-    {
+    function _createClassesAndExperience(
+        address characterSheetsClone,
+        address _classLevelAdaptorImplementation,
+        bytes calldata data
+    ) private returns (address, address) {
         address experienceClone = createExperience();
         address classesClone = createClasses();
-        address classLevelAdaptorClone = createClassLevelAdaptor();
+        address classLevelAdaptorClone = _classLevelAdaptorImplementation == address(0)
+            ? createClassLevelAdaptor()
+            : createClassLevelAdaptor(_classLevelAdaptorImplementation);
 
         ClassesImplementation(classesClone).initialize(
             _encodeClassesData(characterSheetsClone, experienceClone, classLevelAdaptorClone, data)
@@ -295,7 +299,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
         ExperienceImplementation(experienceClone).initialize(_encodeExpData(characterSheetsClone, classesClone));
 
-        ClassLevelAdaptor(classLevelAdaptorClone).initialize(classesClone, experienceClone);
+        ClassLevelAdaptor(classLevelAdaptorClone).initialize(msg.sender, classesClone, experienceClone);
 
         return (classesClone, experienceClone);
     }

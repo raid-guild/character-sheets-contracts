@@ -37,7 +37,7 @@ contract ClassLevelAdaptor is IClassLevelAdaptor, ERC165, Initializable, Ownable
         _disableInitializers();
     }
 
-    function initialize(address _classesContract, address _experienceContract) external initializer {
+    function initialize(address _owner, address _classesContract, address _experienceContract) external initializer {
         _experiencePoints[0] = 0;
         _experiencePoints[1] = 300 * 10 ** 18;
         _experiencePoints[2] = 900 * 10 ** 18;
@@ -62,6 +62,7 @@ contract ClassLevelAdaptor is IClassLevelAdaptor, ERC165, Initializable, Ownable
         classesContract = _classesContract;
         experienceContract = _experienceContract;
         __Ownable_init();
+        transferOwnership(_owner);
     }
 
     function updateClassesContract(address newClassesContract) public onlyOwner {
