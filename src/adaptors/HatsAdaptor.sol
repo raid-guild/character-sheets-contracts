@@ -19,9 +19,9 @@ import "forge-std/console2.sol";
 /**
  * @title Hats Adaptor
  * @author MrDeadCe11
- * @notice This is an adaptor that allows the minting of hats to players and characters and also allows
- *  all contracts to check if any address is wearing the player or character hat.
- *
+ * @notice This is an adaptor that will automatically create the appropriate hat tree for the
+ * character sheets contracts.  It also allows the minting of hats to players and characters
+ * and checks if any address is wearing the player or character hat.
  */
 
 contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1155HolderUpgradeable {
@@ -29,6 +29,10 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
 
     IHats private _hats;
 
+    /**
+     * @notice these are the addresses of the eligibility modules after they are created by
+     * the hats module factory during contract initialization.
+     */
     address public adminHatEligibilityModule;
     address public dungeonMasterHatEligibilityModule;
     address public playerHatEligibilityModule;
@@ -39,6 +43,8 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     string private _baseHatImgUri;
 
     event HatsAddressUpdated(address);
+    event AdminHatEligibilityModuleAddressUpdated(address);
+    event DungeonMasterHatEligibilityModuleAddressUpdated(address);
     event CharacterHatEligibilityModuleAddressUpdated(address);
     event PlayerHatEligibilityModuleAddressUpdated(address);
     event AdminHatIdUpdated(uint256);
@@ -50,39 +56,39 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         _disableInitializers();
     }
 
+    /**
+     * HATS ADDRESSES
+     *        1.  address hats,
+     *        2.  address hatsModuleFactory,
+     *        3.  address adminHatEligibilityModule
+     *        4.  address dungeonMasterEligibilityModuleImplementation
+     *        5.  address playerHatEligibilityModuleImplementation
+     *        6.  address characterHatEligibilityModuleImplementation
+     *        7.  address[]  admins
+     *        8.  address[] dungeon masters
+     *        9.  address character sheets
+     *        10.  address erc6551 registry
+     *        11. address erc6551 account implementation
+     */
+
+    /**
+     * HATS STRINGS
+     *        1.  string _baseImgUri
+     *        2.  string topHatDescription
+     *        3.  string adminUri
+     *        4.  string adminDescription
+     *        5.  string dungeonMasterUri
+     *        6.  string dungeonMasterDescription
+     *        7.  string playerUri
+     *        8.  string playerDescription
+     *        9.  string characterUri
+     *        10. string characterDescription
+     */
+
     function initialize(address _owner, bytes calldata hatsAddresses, bytes calldata hatsStrings)
         external
         initializer
     {
-        /**
-         * HATS ADDRESSES
-         *        1.  address hats,
-         *        2.  address hatsModuleFactory,
-         *        3.  address adminHatEligibilityModule
-         *        4.  address dungeonMasterEligibilityModuleImplementation
-         *        5.  address playerHatEligibilityModuleImplementation
-         *        6.  address characterHatEligibilityModuleImplementation
-         *        7.  address[]  admins
-         *        8.  address[] dungeon masters
-         *        9.  address character sheets
-         *        10.  address erc6551 registry
-         *        11. address erc6551 account implementation
-         */
-
-        /**
-         * HATS STRINGS
-         *        1.  string _baseImgUri
-         *        2.  string topHatDescription
-         *        3.  string adminUri
-         *        4.  string adminDescription
-         *        5.  string dungeonMasterUri
-         *        6.  string dungeonMasterDescription
-         *        7.  string playerUri
-         *        8.  string playerDescription
-         *        9.  string characterUri
-         *        10. string characterDescription
-         */
-
         (
             _hatsData.hats,
             _hatsData.hatsModuleFactory,
@@ -121,6 +127,16 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     function updatePlayerHatModuleImplementationAddress(address newPlayerAddress) external onlyOwner {
         _hatsData.playerHatEligibilityModuleImplementation = newPlayerAddress;
         emit PlayerHatEligibilityModuleAddressUpdated(newPlayerAddress);
+    }
+
+    function updateadminHatModuleImplementationAddress(address newadminAddress) external onlyOwner {
+        _hatsData.adminHatEligibilityModuleImplementation = newadminAddress;
+        emit AdminHatEligibilityModuleAddressUpdated(newadminAddress);
+    }
+
+    function updateDungeonMasterHatModuleImplementationAddress(address newDungeonMasterAddress) external onlyOwner {
+        _hatsData.dungeonMasterHatEligibilityModuleImplementation = newDungeonMasterAddress;
+        emit DungeonMasterHatEligibilityModuleAddressUpdated(newDungeonMasterAddress);
     }
 
     function updateAdminHatId(uint256 newAdminHatId) external onlyOwner {
@@ -166,6 +182,10 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         }
         // look for emitted event from hats contract
         return _hats.mintHat(_hatsData.characterHatId, wearer);
+    }
+
+    function getHatsData() external view returns (HatsData memory) {
+        return _hatsData;
     }
 
     function checkCharacterHatEligibility(address account) public view returns (bool eligible, bool standing) {

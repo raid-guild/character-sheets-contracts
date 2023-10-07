@@ -13,7 +13,8 @@ import {Errors} from "../../lib/Errors.sol";
  * @title character hat eligibility module
  * @author MrDeadCe11
  * @notice A Hats Protocol eligibility module that checks if the address of the wearer is the
- * correct address of the ERC6551 account implementation used in the character sheets contract
+ * correct address of the ERC6551 account implementation used in the character sheets contract.
+ * if a player is removed, or renounces their sheet the character retains it's character hat.
  */
 contract CharacterHatEligibilityModule is HatsModule, HatsEligibilityModule {
     /*//////////////////////////////////////////////////////////////

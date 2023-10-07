@@ -163,6 +163,8 @@ contract CharacterSheetsTest is Test, SetUp {
 
         assertEq(npc2, restored, "Incorrect Address restored");
         assertEq(characterSheets.balanceOf(player2), 1, "sheet not restored");
+        assertEq(hatsAdaptor.isPlayer(player2), true, "player hat not restored");
+        assertEq(hatsAdaptor.isCharacter(npc2), true, "character hat not restored");
     }
 
     function testRemovePlayer() public {
@@ -184,6 +186,7 @@ contract CharacterSheetsTest is Test, SetUp {
         characterSheets.removeSheet(0);
 
         assertEq(characterSheets.balanceOf(player1), 0, "Player 1 has not been removed");
+        assertEq(hatsAdaptor.isPlayer(player1), false, "player hat not removed");
 
         vm.prank(admin);
         vm.expectRevert();
