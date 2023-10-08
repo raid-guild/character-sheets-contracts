@@ -210,6 +210,13 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         return _hats.balanceOf(wearer, _hatsData.playerHatId) > 0;
     }
 
+    function isAdmin(address wearer) public view returns (bool) {
+        if (_hatsData.adminHatId == uint256(0)) {
+            revert Errors.VariableNotSet();
+        }
+        return _hats.balanceOf(wearer, _hatsData.adminHatId) > 0;
+    }
+
     function isDungeonMaster(address wearer) public view returns (bool) {
         if (_hatsData.dungeonMasterHatId == uint256(0)) {
             revert Errors.VariableNotSet();

@@ -77,17 +77,17 @@ contract SetUp is Test {
     address public player2 = address(0xbabe);
     address public rando = address(0xc0ffee);
     address public npc1;
-    uint256 public testClassId;
-    uint256 public testItemId;
+    uint256 public classId;
+    uint256 public itemId;
 
     Merkle public merkle = new Merkle();
 
-    ERC6551Registry erc6551Registry;
-    CharacterAccount erc6551Implementation;
-    MultiSend multiSend;
+    ERC6551Registry public erc6551Registry;
+    CharacterAccount public erc6551Implementation;
+    MultiSend public multiSend;
 
-    address[] adminArray;
-    address[] dungeonMastersArray;
+    address[] public adminArray;
+    address[] public dungeonMastersArray;
 
     function setUp() public {
         vm.startPrank(admin);
@@ -233,9 +233,9 @@ contract SetUp is Test {
         //set registry in character Sheets Contract
         characterSheets.setERC6551Registry(address(erc6551Registry));
 
-        testClassId = classes.createClassType(createNewClass(true));
+        classId = classes.createClassType(createNewClass(true));
 
-        testItemId = items.createItemType(createNewItem(false, false, bytes32(0)));
+        itemId = items.createItemType(createNewItem(false, false, bytes32(0)));
         vm.stopPrank();
         vm.prank(player1);
         uint256 tokenId1 = characterSheets.rollCharacterSheet("test_character_token_uri/");
@@ -248,18 +248,18 @@ contract SetUp is Test {
         experience.dropExp(player, amount);
     }
 
-    function createNewItemType() public returns (uint256 itemId) {
+    function createNewItemType() public returns (uint256 _itemId) {
         bytes memory newItem = createNewItem(false, false, bytes32(0));
-        itemId = items.createItemType(newItem);
+        _itemId = items.createItemType(newItem);
     }
 
-    function dropItems(address player, uint256 itemId, uint256 amount) public {
+    function dropItems(address player, uint256 _itemId, uint256 amount) public {
         address[] memory players = new address[](1);
         players[0] = player;
 
         uint256[][] memory itemIds = new uint256[][](1);
         itemIds[0] = new uint256[](1);
-        itemIds[0][0] = itemId;
+        itemIds[0][0] = _itemId;
 
         uint256[][] memory amounts = new uint256[][](1);
         amounts[0] = new uint256[](1);

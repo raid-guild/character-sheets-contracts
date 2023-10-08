@@ -53,9 +53,9 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
     // characterId => characterSheet
     mapping(uint256 => CharacterSheet) private _sheets;
     // playerAddress => characterId
-    mapping(address => uint256) public _playerSheets;
+    mapping(address => uint256) private _playerSheets;
     // characterAddress => characterId
-    mapping(address => uint256) public _characterSheets;
+    mapping(address => uint256) private _characterSheets;
 
     mapping(address => bool) public jailed;
 
@@ -66,6 +66,7 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
     event BaseURIUpdated(string newURI);
     event CharacterRemoved(uint256 characterId);
     event ItemsUpdated(address items);
+    event HatsAdaptorUpdated(address newAdaptor);
     event ItemEquipped(uint256 characterId, uint256 itemId);
     event ItemUnequipped(uint256 characterId, uint256 itemId);
     event CharacterUpdated(uint256 characterId);
@@ -75,6 +76,13 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
 
     modifier onlyContract() {
         if (msg.sender != items) {
+            revert Errors.CallerNotApproved();
+        }
+        _;
+    }
+
+    modifier onlyAdmin() {
+        if (!IHatsAdaptor(hatsAdaptor).isAdmin(msg.sender)) {
             revert Errors.CallerNotApproved();
         }
         _;
@@ -358,14 +366,19 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
         emit PlayerJailed(playerAddress, throwInJail);
     }
 
-    function updateItemsContract(address expContract) public onlyDungeonMaster {
+    function updateItemsContract(address expContract) public onlyAdmin {
         items = expContract;
         emit ItemsUpdated(expContract);
     }
 
-    function updateEligibilityAdaptor(address newAdaptor) public onlyDungeonMaster {
+    function updateEligibilityAdaptor(address newAdaptor) public onlyAdmin {
         eligibilityAdaptor = newAdaptor;
         emit EligibilityAdaptorUpdated(newAdaptor);
+    }
+
+    function updateHatsAdaptor(address newHatsAdaptor) public onlyAdmin {
+        hatsAdaptor = newHatsAdaptor;
+        emit HatsAdaptorUpdated(newHatsAdaptor);
     }
 
     function setBaseUri(string memory _uri) public onlyDungeonMaster {
@@ -524,7 +537,7 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
     }
 
     //solhint-disable-next-line no-empty-blocks
-    function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
 
     function _baseURI() internal view virtual override returns (string memory) {
         return baseTokenURI;

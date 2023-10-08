@@ -315,4 +315,35 @@ contract CharacterSheetsTest is Test, SetUp {
         vm.expectRevert(Errors.PlayerOnly.selector);
         characterSheets.updateCharacterMetadata("new_cid");
     }
+
+    function testUpdateContractImplementation() public {
+        address newSheetImp = address(new CharacterSheetsImplementation());
+        HatsData memory hatsData = hatsAdaptor.getHatsData();
+        //should revert if called by non admin
+        vm.prank(player1);
+        vm.expectRevert(Errors.CallerNotApproved.selector);
+        characterSheets.upgradeTo(newSheetImp);
+
+        address[] memory newAdmins = new address[](1);
+        newAdmins[0] = player1;
+        assertTrue(hats.isWearerOfHat(admin, hatsData.adminHatId), "admin not admin");
+        address dungHatElig = hatsAdaptor.dungeonMasterHatEligibilityModule();
+
+        vm.startPrank(admin);
+        //admin adds player1 to eligible addresses array in admins module.
+        DungeonMasterHatEligibilityModule(dungHatElig).addEligibleAddresses(newAdmins);
+
+        // admin mints dmHat to player1
+        hats.mintHat(hatsData.dungeonMasterHatId, player1);
+        vm.stopPrank();
+
+        //should revert if called by dm;
+        vm.expectRevert(Errors.CallerNotApproved.selector);
+        vm.prank(player1);
+        characterSheets.upgradeTo(newSheetImp);
+
+        //should succeed if called by admin
+        vm.prank(admin);
+        characterSheets.upgradeTo(newSheetImp);
+    }
 }

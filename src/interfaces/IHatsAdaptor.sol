@@ -32,4 +32,6 @@ interface IHatsAdaptor {
     function isPlayer(address wearer) external view returns (bool);
 
     function isDungeonMaster(address wearer) external view returns (bool);
+
+    function isAdmin(address wearer) external view returns (bool);
 }

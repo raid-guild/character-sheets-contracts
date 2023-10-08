@@ -7,7 +7,7 @@ import {IERC721} from "openzeppelin-contracts/token/ERC721/IERC721.sol";
 
 /**
  * @title player hat eligibility module
- * @author MrDeadCe11
+ * @author MrDeadCe11 && pumpedLunch
  * @notice A Hats Protocol eligibility module.  Addresses must own a character sheet to be eligible to be a player.
  */
 contract PlayerHatEligibilityModule is HatsModule, HatsEligibilityModule {
