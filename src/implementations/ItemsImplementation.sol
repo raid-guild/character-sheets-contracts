@@ -117,21 +117,16 @@ contract ItemsImplementation is IItems, ERC1155HolderUpgradeable, ERC1155Upgrade
         }
 
         for (uint256 i = 0; i < itemIds.length; i++) {
-            if (itemIds[i] == 0) {
-                revert Errors.ItemError();
+            Item storage claimableItem = _items[itemIds[i]];
+            if (claimableItem.claimable == bytes32(0)) {
+                _transferItem(msg.sender, itemIds[i], amounts[i]);
             } else {
-                Item storage claimableItem = _items[itemIds[i]];
-                if (claimableItem.claimable == bytes32(0)) {
-                    _transferItem(msg.sender, itemIds[i], amounts[i]);
-                } else {
-                    bytes32 leaf =
-                        keccak256(bytes.concat(keccak256(abi.encodePacked(itemIds[i], msg.sender, amounts[i]))));
+                bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encodePacked(itemIds[i], msg.sender, amounts[i]))));
 
-                    if (!MerkleProof.verify(proofs[i], claimableItem.claimable, leaf)) {
-                        revert Errors.InvalidProof();
-                    }
-                    _transferItem(msg.sender, itemIds[i], amounts[i]);
+                if (!MerkleProof.verify(proofs[i], claimableItem.claimable, leaf)) {
+                    revert Errors.InvalidProof();
                 }
+                _transferItem(msg.sender, itemIds[i], amounts[i]);
             }
         }
         success = true;
