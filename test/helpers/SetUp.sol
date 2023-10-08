@@ -303,6 +303,26 @@ contract SetUp is Test {
         return abi.encode(craftable, soulbound, claimable, 10 ** 18, abi.encodePacked("test_item_cid/"), requiredAssets);
     }
 
+    function createNewItemWithoutRequirements(bool craftable, bool soulbound, bytes32 claimable)
+        public
+        pure
+        returns (bytes memory)
+    {
+        bytes memory requiredAssets;
+
+        {
+            uint8[] memory requiredAssetCategories = new uint8[](0);
+            address[] memory requiredAssetAddresses = new address[](0);
+            uint256[] memory requiredAssetIds = new uint256[](0);
+            uint256[] memory requiredAssetAmounts = new uint256[](0);
+
+            requiredAssets =
+                abi.encode(requiredAssetCategories, requiredAssetAddresses, requiredAssetIds, requiredAssetAmounts);
+        }
+
+        return abi.encode(craftable, soulbound, claimable, 10 ** 18, abi.encodePacked("test_item_cid/"), requiredAssets);
+    }
+
     function createNewClass(bool claimable) public pure returns (bytes memory data) {
         return abi.encode(claimable, "test_class_cid/");
     }

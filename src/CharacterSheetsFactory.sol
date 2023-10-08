@@ -278,6 +278,8 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
             EligibilityAdaptor(eligibilityAdaptorClone).initialize(msg.sender, dao);
         }
 
+        ItemsImplementation(itemsClone).initialize(_encodeItemsData(characterSheetsClone, data));
+
         return (characterSheetsClone, itemsClone);
     }
 
