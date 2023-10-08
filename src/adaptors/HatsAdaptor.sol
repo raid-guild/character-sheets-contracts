@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {ERC165} from "openzeppelin-contracts/utils/introspection/ERC165.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -13,8 +12,6 @@ import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
 
 import {Errors} from "../lib/Errors.sol";
 import {HatsData} from "../lib/Structs.sol";
-
-import "forge-std/console2.sol";
 
 /**
  * @title Hats Adaptor
@@ -223,6 +220,9 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         }
         return _hats.balanceOf(wearer, _hatsData.dungeonMasterHatId) > 0;
     }
+
+    //solhint-disable-next-line no-empty-blocks
+    function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
 
     function _initHatTree(address _owner, bytes calldata hatsStrings, bytes calldata hatsAddresses)
         private
@@ -480,6 +480,4 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         );
         return playerHatsModule;
     }
-
-    function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
 }

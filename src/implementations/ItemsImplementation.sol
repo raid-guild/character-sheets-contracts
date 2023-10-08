@@ -8,7 +8,6 @@ import {
     ERC1155ReceiverUpgradeable
 } from "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-// import {console2} from "forge-std/console2.sol";
 
 import {Item} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";

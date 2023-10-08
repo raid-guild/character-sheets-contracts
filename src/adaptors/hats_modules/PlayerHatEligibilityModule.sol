@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
+//solhint-disable
 
-// import { console2 } from "forge-std/Test.sol"; // remove before deploy
 import {HatsEligibilityModule, HatsModule} from "hats-module/HatsEligibilityModule.sol";
 import {IERC721} from "openzeppelin-contracts/token/ERC721/IERC721.sol";
 

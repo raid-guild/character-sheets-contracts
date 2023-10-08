@@ -3,7 +3,6 @@ pragma solidity ^0.8.9;
 
 import {ERC20Upgradeable} from "openzeppelin-contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {IAccessControl} from "openzeppelin-contracts/access/IAccessControl.sol";
 
 import {Errors} from "../lib/Errors.sol";
 import {IExperience} from "../interfaces/IExperience.sol";

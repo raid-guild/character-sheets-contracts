@@ -7,7 +7,6 @@ import {
     ERC1155ReceiverUpgradeable
 } from "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {IAccessControl} from "openzeppelin-contracts/access/IAccessControl.sol";
 
 import {IExperience} from "../interfaces/IExperience.sol";
 import {Class} from "../lib/Structs.sol";

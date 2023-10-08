@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
 
 import {CharacterSheetsImplementation} from "./implementations/CharacterSheetsImplementation.sol";
 import {ClassesImplementation} from "./implementations/ClassesImplementation.sol";

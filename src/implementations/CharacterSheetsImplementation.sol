@@ -18,8 +18,6 @@ import {IItems} from "../interfaces/IItems.sol";
 import {CharacterSheet} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
 
-import "forge-std/console2.sol";
-
 /**
  * @title Character Sheets
  * @author MrDeadCe11 && dan13ram
