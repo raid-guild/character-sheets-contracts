@@ -154,12 +154,12 @@ if [[ $CHARACTERSHEETSMETADATAURI != '' ]]
 fi
 
 
-EXPERIENCEBASEURI=$(node scripts/helpers/readAddress.js $1 ExperienceBaseUri)
+ITEMSBASEURI=$(node scripts/helpers/readAddress.js $1 ItemsBaseUri)
 
-if [[ $EXPERIENCEBASEURI != '' ]]
+if [[ $ITEMSBASEURI != '' ]]
     then
         echo "==============================================================="
-        echo "EXPERIENCE AND ITEMS base uri detected."
+        echo "ITEMS base uri detected."
         echo "---------------------------------------------------------------"
             read -p "Would you like to use a different uri? (y/n): " EXPCONF
         echo "==============================================================="
@@ -167,15 +167,15 @@ if [[ $EXPERIENCEBASEURI != '' ]]
     if [[ $EXPCONF == "y" || $EXPCONF == "Y" ]]
         then
             echo "==============================================================="
-                read -p "Enter new EXPERIENCE AND ITEMS base uri: " NEWEXPURI
+                read -p "Enter new ITEMS base uri: " NEWITEMSURI
 
-            node scripts/helpers/saveCreationData.js $1 ExperienceBaseUri $NEWEXPURI
+            node scripts/helpers/saveCreationData.js $1 ItemsBaseUri $NEWITEMSURI
     fi
     else        
             echo "==============================================================="
-                read -p "Enter new EXPERIENCE AND ITEMS base uri: " NEWEXPURI
+                read -p "Enter new ITEMS base uri: " NEWITEMSURI
 
-            node scripts/helpers/saveCreationData.js $1 ExperienceBaseUri $NEWEXPURI
+            node scripts/helpers/saveCreationData.js $1 ItemsBaseUri $NEWITEMSURI
 fi
 
 CLASSESBASEURI=$(node scripts/helpers/readAddress.js $1 ClassesBaseUri)
@@ -203,6 +203,8 @@ if [[ $CLASSESBASEURI != '' ]]
 fi
 
 
+
+
 CALLDATA=$(cast calldata "run(string)" $1)
 PRIVATE_KEY=$PRIVATE_KEY forge script scripts/CharacterSheetsFactory.s.sol:Create -s $CALLDATA --rpc-url $NETWORK
 
@@ -226,9 +228,9 @@ if [[ $CONFIRMATION == "y" || $CONFIRMATION == "Y" ]]
 
                 echo "================================"
                 node scripts/helpers/saveCreationData.js $1 CreatedCharacterSheet "${ADDRESSES_ARRAY[0]}"
-                node scripts/helpers/saveCreationData.js $1 CreatedExperienceAndItems "${ADDRESSES_ARRAY[1]}"
+                node scripts/helpers/saveCreationData.js $1 CreatedItems "${ADDRESSES_ARRAY[1]}"
                 node scripts/helpers/saveCreationData.js $1 CreatedClasses "${ADDRESSES_ARRAY[2]}"
-
+                node scripts/helpers/saveCreationData.js $1 CreatedExperience "${ADDRESSES_ARRAY[3]}"
         fi
     else
         echo "Deployment cancelled. Execution terminated."

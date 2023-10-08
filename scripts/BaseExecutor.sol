@@ -78,7 +78,8 @@ abstract contract BaseFactoryExecutor is Script, ForkManagement {
         loadBaseData(json, targetEnv);
         loadPrivateKeys();
 
-        (address characterSheetsAddresss, address classesAddress, address itemsAddress, address experienceAddress) = create();
+        (address characterSheetsAddresss, address classesAddress, address itemsAddress, address experienceAddress) =
+            create();
         console.log("New Character Sheets Address:", characterSheetsAddresss);
         console.log("New Classes Address:", classesAddress);
         console.log("New Items Address:", itemsAddress);
@@ -86,4 +87,6 @@ abstract contract BaseFactoryExecutor is Script, ForkManagement {
     }
 
     function create() internal virtual returns (address, address, address, address) {}
+
+    function initializeContracts() internal virtual {}
 }
