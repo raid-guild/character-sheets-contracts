@@ -13,10 +13,10 @@ import {HatsErrors} from "hats-protocol/Interfaces/HatsErrors.sol";
 import {HatsAdaptor} from "../src/adaptors/HatsAdaptor.sol";
 import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
 import {Hats} from "hats-protocol/Hats.sol";
-import {AdminHatEligibilityModule} from "../src/adaptors/hats_modules/AdminHatEligibilityModule.sol";
-import {DungeonMasterHatEligibilityModule} from "../src/adaptors/hats_modules/DungeonMasterHatEligibilityModule.sol";
-import {PlayerHatEligibilityModule} from "../src/adaptors/hats_modules/PlayerHatEligibilityModule.sol";
-import {CharacterHatEligibilityModule} from "../src/adaptors/hats_modules/CharacterHatEligibilityModule.sol";
+import {AdminHatEligibilityModule} from "../src/adaptors/hats-modules/AdminHatEligibilityModule.sol";
+import {DungeonMasterHatEligibilityModule} from "../src/adaptors/hats-modules/DungeonMasterHatEligibilityModule.sol";
+import {PlayerHatEligibilityModule} from "../src/adaptors/hats-modules/PlayerHatEligibilityModule.sol";
+import {CharacterHatEligibilityModule} from "../src/adaptors/hats-modules/CharacterHatEligibilityModule.sol";
 
 contract HatsEligibilityModulesTest is Test, SetUp {
     HatsAdaptor public newAdaptor;

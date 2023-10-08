@@ -25,10 +25,10 @@ import {Category} from "../../src/lib/MultiToken.sol";
 import {HatsAdaptor} from "../../src/adaptors/HatsAdaptor.sol";
 import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
 import {Hats} from "hats-protocol/Hats.sol";
-import {AdminHatEligibilityModule} from "../../src/adaptors/hats_modules/AdminHatEligibilityModule.sol";
-import {DungeonMasterHatEligibilityModule} from "../../src/adaptors/hats_modules/DungeonMasterHatEligibilityModule.sol";
-import {PlayerHatEligibilityModule} from "../../src/adaptors/hats_modules/PlayerHatEligibilityModule.sol";
-import {CharacterHatEligibilityModule} from "../../src/adaptors/hats_modules/CharacterHatEligibilityModule.sol";
+import {AdminHatEligibilityModule} from "../../src/adaptors/hats-modules/AdminHatEligibilityModule.sol";
+import {DungeonMasterHatEligibilityModule} from "../../src/adaptors/hats-modules/DungeonMasterHatEligibilityModule.sol";
+import {PlayerHatEligibilityModule} from "../../src/adaptors/hats-modules/PlayerHatEligibilityModule.sol";
+import {CharacterHatEligibilityModule} from "../../src/adaptors/hats-modules/CharacterHatEligibilityModule.sol";
 
 struct StoredImplementationAddresses {
     address characterSheetsImplementation;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {AdminHatEligibilityModule} from "../src/adaptors/hats_modules/AdminHatEligibilityModule.sol";
+import {AdminHatEligibilityModule} from "../src/adaptors/hats-modules/AdminHatEligibilityModule.sol";
 
 import {BaseDeployer} from "./BaseDeployer.sol";
 import {BaseFactoryExecutor} from "./BaseExecutor.sol";
