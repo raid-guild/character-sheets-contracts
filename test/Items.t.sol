@@ -315,6 +315,16 @@ contract ItemsTest is Test, SetUp {
 
         assertEq(items.balanceOf(npc1, craftableItemId), 1, "item not burnt");
         assertEq(experience.balanceOf(npc1), 200, "exp not returned");
+
+        // should revert if called with balance larger than available
+
+        vm.expectRevert(Errors.InsufficientBalance.selector);
+        items.dismantleItems(craftableItemId, 3);
+
+        //should dismantle remaining items
+        items.dismantleItems(craftableItemId, 1);
+        assertEq(items.balanceOf(npc1, craftableItemId), 0, "item not burnt");
+        assertEq(experience.balanceOf(npc1), 300, "exp not returned");
         vm.stopPrank();
     }
 }

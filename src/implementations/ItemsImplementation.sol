@@ -268,7 +268,7 @@ contract ItemsImplementation is
             latestReceipt.amountCrafted -= amount;
             _craftingReceipt[to][itemId][_craftingReceipt[to][itemId].length - 1] = latestReceipt;
         } else if (amount == latestReceipt.amountCrafted) {
-            remainder += 0;
+            remainder = 0;
             refund = Asset({
                 category: latestReceipt.category,
                 assetAddress: latestReceipt.assetAddress,
