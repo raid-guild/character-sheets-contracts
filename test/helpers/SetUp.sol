@@ -248,8 +248,8 @@ contract SetUp is Test {
         experience.dropExp(player, amount);
     }
 
-    function createNewItemType() public returns (uint256 _itemId) {
-        bytes memory newItem = createNewItem(false, false, bytes32(0));
+    function createNewItemType(bool craftable, bool soulbound) public returns (uint256 _itemId) {
+        bytes memory newItem = createNewItem(craftable, soulbound, bytes32(0));
         _itemId = items.createItemType(newItem);
     }
 

@@ -7,14 +7,21 @@ import {
     ERC1155HolderUpgradeable,
     ERC1155ReceiverUpgradeable
 } from "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import {
+    ERC721HolderUpgradeable,
+    IERC721ReceiverUpgradeable
+} from "openzeppelin-contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {Item} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
 import {MultiToken, Asset, Category} from "../lib/MultiToken.sol";
+import "../lib/Structs.sol";
 
 import {IItems} from "../interfaces/IItems.sol";
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
+
+import "forge-std/console2.sol";
 /**
  * @title Experience and Items
  * @author MrDeadCe11 && dan13ram
@@ -23,7 +30,13 @@ import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
  * in the characterSheets contract.
  */
 
-contract ItemsImplementation is IItems, ERC1155HolderUpgradeable, ERC1155Upgradeable, UUPSUpgradeable {
+contract ItemsImplementation is
+    IItems,
+    ERC1155HolderUpgradeable,
+    ERC1155Upgradeable,
+    ERC721HolderUpgradeable,
+    UUPSUpgradeable
+{
     bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
     bytes32 public constant CHARACTER = keccak256("CHARACTER");
 
@@ -38,12 +51,18 @@ contract ItemsImplementation is IItems, ERC1155HolderUpgradeable, ERC1155Upgrade
     mapping(uint256 => Item) private _items;
     /// @dev an array of requirements to transfer this item
     mapping(uint256 => Asset[]) private _requirements;
+    /// @dev stores the items used in crafting at the time the item was crafted.
+    /// character => itemId => receipts Assets used in crafting
+    mapping(address => mapping(uint256 => Receipt[])) private _craftingReceipt;
 
     /// @dev the total number of item types that have been created
     uint256 public totalItemTypes;
 
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
     address public hatsAdaptor;
+
+    /// @dev address of the classes contract for item requirements check
+    address public classesContract;
 
     event NewItemTypeCreated(uint256 itemId);
     event ItemTransfered(address character, uint256 itemId, uint256 amount);
@@ -73,7 +92,7 @@ contract ItemsImplementation is IItems, ERC1155HolderUpgradeable, ERC1155Upgrade
         __UUPSUpgradeable_init();
         __ERC1155Holder_init();
 
-        (hatsAdaptor, _baseURI) = abi.decode(_encodedData, (address, string));
+        (hatsAdaptor, classesContract, _baseURI) = abi.decode(_encodedData, (address, address, string));
     }
 
     /**
@@ -88,12 +107,15 @@ contract ItemsImplementation is IItems, ERC1155HolderUpgradeable, ERC1155Upgrade
         onlyDungeonMaster
         returns (bool success)
     {
-        if (characterAccounts.length != itemIds.length && itemIds.length != amounts.length) {
+        if (characterAccounts.length != itemIds.length || itemIds.length != amounts.length) {
             revert Errors.LengthMismatch();
         }
         for (uint256 i; i < characterAccounts.length; i++) {
             for (uint256 j; j < itemIds[i].length; j++) {
-                _transferItem(characterAccounts[i], itemIds[i][j], amounts[i][j]);
+                // dm should be able to drop loot without requirements being met.
+                // requirements should be checked when equipping the item.
+                super._safeTransferFrom(address(this), characterAccounts[i], itemIds[i][j], amounts[i][j], "");
+                _items[itemIds[i][j]].supplied += amounts[i][j];
             }
         }
         success = true;
@@ -115,9 +137,12 @@ contract ItemsImplementation is IItems, ERC1155HolderUpgradeable, ERC1155Upgrade
         if (itemIds.length != amounts.length || itemIds.length != proofs.length) {
             revert Errors.LengthMismatch();
         }
-
         for (uint256 i = 0; i < itemIds.length; i++) {
             Item storage claimableItem = _items[itemIds[i]];
+            // if item is craftable this item must be claimed by calling the (craftItem) function
+            if (claimableItem.craftable) {
+                revert Errors.ClaimableError();
+            }
             if (claimableItem.claimable == bytes32(0)) {
                 _transferItem(msg.sender, itemIds[i], amounts[i]);
             } else {
@@ -133,7 +158,7 @@ contract ItemsImplementation is IItems, ERC1155HolderUpgradeable, ERC1155Upgrade
     }
 
     /**
-     * @notice Checks the item requirements to create a new item then burns the requirements in the character's inventory to create the new item
+     * @notice Checks the item requirements to create a new item then transfers the requirements in the character's inventory to this contract to create the new item
      * @dev Explain to a developer any extra details
      * @param itemId the itemId of the item to be crafted
      * @param amount the number of new items to be created
@@ -152,21 +177,133 @@ contract ItemsImplementation is IItems, ERC1155HolderUpgradeable, ERC1155Upgrade
         }
 
         Asset[] storage itemRequirements = _requirements[itemId];
+
         for (uint256 i; i < itemRequirements.length; i++) {
             Asset memory newRequirement = itemRequirements[i];
-            newRequirement.amount = newRequirement.amount * amount;
-            MultiToken.safeTransferAssetFrom(newRequirement, address(this), address(0));
-            // TODO create a dismatle function that returns the items to the player
+            //if required item is not a class
+            if (newRequirement.assetAddress != classesContract) {
+                //issue crafting receipt before amounts change
+                _craftingReceipt[msg.sender][itemId].push(
+                    Receipt({
+                        category: newRequirement.category,
+                        assetAddress: newRequirement.assetAddress,
+                        assetId: newRequirement.id,
+                        amountCrafted: amount,
+                        amountRequired: newRequirement.amount
+                    })
+                );
+
+                //add asset amounts
+                newRequirement.amount = newRequirement.amount * amount;
+
+                //transfer assets to this contract must have approval
+                MultiToken.safeTransferAssetFrom(newRequirement, msg.sender, address(this));
+
+                // TODO create a dismatle function that returns the items to the player
+            }
         }
 
-        _transferItem(msg.sender, itemId, amount);
+        super._safeTransferFrom(address(this), msg.sender, itemId, amount, "");
         success = true;
         return success;
+    }
+
+    Asset[] private currentRefunds;
+
+    function dismantleItems(uint256 itemId, uint256 amount) external onlyCharacter returns (bool succes) {
+        //check crafted items array if any assets exist
+        if (_craftingReceipt[msg.sender][itemId].length == 0) {
+            revert Errors.ItemError();
+        }
+        if (balanceOf(msg.sender, itemId) < amount) {
+            revert Errors.InsufficientBalance();
+        }
+
+        for (uint256 i = _craftingReceipt[msg.sender][itemId].length; i > 0; i--) {
+            // remaing number of items to dismantle
+            uint256 remainingAmount = amount;
+            //calculate refunds
+            while (remainingAmount > 0) {
+                Asset memory refund;
+                uint256 remainder;
+                (remainder, refund) = _calculateRefund(msg.sender, itemId, remainingAmount);
+                remainingAmount = remainder;
+                // // add refund to refunds array
+                currentRefunds.push(refund);
+            }
+        }
+        /// refund assets
+        for (uint256 i; i < currentRefunds.length; i++) {
+            console2.log(currentRefunds[i].amount);
+            MultiToken.safeTransferAssetFrom(currentRefunds[i], address(this), msg.sender);
+        }
+
+        //burn items
+        _burn(msg.sender, itemId, amount);
+
+        //clear refunds
+        delete currentRefunds;
+
+        return true;
+    }
+
+    function _calculateRefund(address to, uint256 itemId, uint256 amount)
+        private
+        returns (uint256 remainder, Asset memory refund)
+    {
+        //get last receipt in array
+        Receipt memory latestReceipt = _craftingReceipt[to][itemId][_craftingReceipt[to][itemId].length - 1];
+
+        remainder = amount;
+
+        //if amount > crafted amounts remainder = amount - crafted amounts
+        if (amount < latestReceipt.amountCrafted) {
+            remainder = 0;
+            refund = Asset({
+                category: latestReceipt.category,
+                assetAddress: latestReceipt.assetAddress,
+                id: itemId,
+                amount: amount * latestReceipt.amountRequired
+            });
+            latestReceipt.amountCrafted -= amount;
+            _craftingReceipt[to][itemId][_craftingReceipt[to][itemId].length - 1] = latestReceipt;
+        } else if (amount == latestReceipt.amountCrafted) {
+            remainder += 0;
+            refund = Asset({
+                category: latestReceipt.category,
+                assetAddress: latestReceipt.assetAddress,
+                id: itemId,
+                amount: latestReceipt.amountCrafted * latestReceipt.amountRequired
+            });
+            _craftingReceipt[to][itemId].pop();
+        } else {
+            refund = Asset({
+                category: latestReceipt.category,
+                assetAddress: latestReceipt.assetAddress,
+                id: itemId,
+                amount: latestReceipt.amountCrafted * latestReceipt.amountRequired
+            });
+
+            remainder -= latestReceipt.amountCrafted;
+            _craftingReceipt[to][itemId].pop();
+        }
+
+        return (remainder, refund);
     }
 
     /**
      * Creates a new type of item
      * @param _itemData the encoded data to create the item struct
+     * - bool craftable
+     * - bool soulbound_createItem
+     * - bytes32 claimable
+     * - uint256 supply
+     * - string cid
+     * - bytes requiredAssets encoded required assets,
+     *             - uint8[] memory requiredAssetCategories;
+     *             - address[] memory requiredAssetAddresses;
+     *             - uint256[] memory requiredAssetIds;
+     *             - uint256[] memory requiredAssetAmounts;
      * @return _itemId the ERC1155 tokenId
      */
 
@@ -471,12 +608,13 @@ contract ItemsImplementation is IItems, ERC1155HolderUpgradeable, ERC1155Upgrade
             newRequirement = itemRequirements[i];
 
             uint256 balance = MultiToken.balanceOf(newRequirement, characterAccount);
-            uint256 itemBalance = balanceOf(characterAccount, itemId);
 
-            // we check the amount + itemBalance because if the player has 1 item and the requirement is 2
-            // then we need to check if the player has 3 items in total
-            // this is because the player is crafting 2 more items
-            if (balance < newRequirement.amount * (amount + itemBalance)) {
+            // if the required asset is a class check that the balance is not less than the required level.
+            if (newRequirement.assetAddress == classesContract) {
+                if (balance < newRequirement.amount) {
+                    return false;
+                }
+            } else if (balance < newRequirement.amount * amount) {
                 return false;
             }
         }

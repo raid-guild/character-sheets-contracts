@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {Category} from "./MultiToken.sol";
+
 struct Item {
     /// @dev  claimable: if bytes32(0) then  items are claimable by anyone, otherwise upload a merkle root
     /// of all addresses allowed to claim.  if not claimable at all use any random bytes32(n) besides bytes32(0)
@@ -16,12 +18,26 @@ struct Item {
     uint256 supply;
 }
 
+struct Receipt {
+    Category category;
+    address assetAddress;
+    uint256 assetId;
+    uint256 amountCrafted;
+    uint256 amountRequired;
+}
+
 struct Class {
     /// @dev the number of this class that have been minted
     uint256 supply;
     /// @dev set to true if you want characters to be able to claim this class instead of being assined
     bool claimable;
 }
+
+// enum Category {
+//     ERC20,
+//     ERC721,
+//     ERC1155
+// }
 
 struct CharacterSheet {
     /// @dev the address of the player who owns this character sheet

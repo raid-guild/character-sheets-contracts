@@ -68,10 +68,10 @@ contract ItemsTest is Test, SetUp {
 
         address player2NPC = characterSheets.getCharacterSheetByCharacterId(player2Id).accountAddress;
 
-        uint256 _itemId = createNewItemType();
+        uint256 _itemId = createNewItemType(false, false);
         assertEq(_itemId, 1);
 
-        uint256 _itemId2 = createNewItemType();
+        uint256 _itemId2 = createNewItemType(false, false);
         assertEq(_itemId2, 2);
 
         address[] memory players = new address[](2);
@@ -110,7 +110,7 @@ contract ItemsTest is Test, SetUp {
 
     function testDropLootRevert() public {
         vm.prank(admin);
-        uint256 _itemId = createNewItemType();
+        uint256 _itemId = createNewItemType(false, false);
         assertEq(_itemId, 1);
 
         address[] memory players = new address[](1);
@@ -132,20 +132,21 @@ contract ItemsTest is Test, SetUp {
         amounts[1][0] = 1111;
         amounts[1][1] = 11;
 
-        //revert incorrect caller
-        vm.prank(player1);
-        vm.expectRevert();
-        items.dropLoot(players, itemIds, amounts);
         //revert wrong array lengths
         vm.prank(admin);
+        vm.expectRevert();
+        items.dropLoot(players, itemIds, amounts);
+
+        //revert incorrect caller
+        vm.prank(address(1));
         vm.expectRevert();
         items.dropLoot(players, itemIds, amounts);
     }
 
     function testClaimItem() public {
         vm.startPrank(admin);
-        uint256 _itemId1 = createNewItemType();
-        uint256 _itemId2 = createNewItemType();
+        uint256 _itemId1 = createNewItemType(false, false);
+        uint256 _itemId2 = createNewItemType(false, false);
 
         items.addItemRequirement(_itemId1, uint8(Category.ERC1155), address(classes), classId, 1);
 
@@ -210,7 +211,7 @@ contract ItemsTest is Test, SetUp {
 
     function testAddItemRequirement() public {
         vm.prank(admin);
-        uint256 tokenId = createNewItemType();
+        uint256 tokenId = createNewItemType(false, false);
 
         vm.prank(admin);
         items.addItemRequirement(0, uint8(Category.ERC1155), address(items), tokenId, 100);
@@ -228,7 +229,7 @@ contract ItemsTest is Test, SetUp {
 
     function testRemoveItemRequirement() public {
         vm.prank(admin);
-        uint256 tokenId = createNewItemType();
+        uint256 tokenId = createNewItemType(false, false);
 
         vm.prank(admin);
         items.addItemRequirement(0, uint8(Category.ERC1155), address(items), tokenId, 1000);
@@ -261,5 +262,59 @@ contract ItemsTest is Test, SetUp {
         vm.prank(npc1);
         vm.expectRevert();
         items.craftItem(0, 1);
+
+        vm.prank(admin);
+        uint256 craftableItemId = createNewItemType(true, false);
+
+        //should revert if requirements not met
+        vm.prank(npc1);
+        vm.expectRevert(Errors.RequirementNotMet.selector);
+        items.craftItem(craftableItemId, 1);
+
+        vm.prank(admin);
+        experience.dropExp(npc1, 100);
+
+        // should succeed with requirements met
+        vm.startPrank(npc1);
+        experience.approve(address(items), 100);
+        items.craftItem(craftableItemId, 1);
+
+        vm.stopPrank();
+
+        assertEq(items.balanceOf(npc1, craftableItemId), 1, "item not crafted");
+        assertEq(experience.balanceOf(npc1), 0, "exp not consumed");
+    }
+
+    function testDismantleItems() public {
+        // should revert if item is not set to craftable
+        vm.prank(npc1);
+        vm.expectRevert();
+        items.craftItem(0, 1);
+
+        vm.prank(admin);
+        uint256 craftableItemId = createNewItemType(true, false);
+
+        vm.prank(admin);
+        experience.dropExp(npc1, 300);
+
+        // should succeed with requirements met
+        vm.startPrank(npc1);
+        experience.approve(address(items), 300);
+        items.craftItem(craftableItemId, 3);
+
+        // should revert if trying to dismantle un-crafted item
+        vm.expectRevert(Errors.ItemError.selector);
+        items.dismantleItems(0, 1);
+
+        //should revert if trying to dismantle more than have been crafted
+        vm.expectRevert(Errors.InsufficientBalance.selector);
+        items.dismantleItems(craftableItemId, 4);
+
+        //should succeed
+        items.dismantleItems(craftableItemId, 2);
+
+        assertEq(items.balanceOf(npc1, craftableItemId), 1, "item not burnt");
+        assertEq(experience.balanceOf(npc1), 200, "exp not returned");
+        vm.stopPrank();
     }
 }

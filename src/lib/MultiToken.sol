@@ -97,9 +97,9 @@ library MultiToken {
     function _transferAssetFrom(Asset memory asset, address source, address dest, bool isSafe) private {
         if (asset.category == Category.ERC20) {
             if (source == address(this)) {
-                IERC20(asset.assetAddress).safeTransfer(dest, asset.amount);
+                IERC20(asset.assetAddress).transfer(dest, asset.amount);
             } else {
-                IERC20(asset.assetAddress).safeTransferFrom(source, dest, asset.amount);
+                IERC20(asset.assetAddress).transferFrom(source, dest, asset.amount);
             }
         } else if (asset.category == Category.ERC721) {
             if (!isSafe) {

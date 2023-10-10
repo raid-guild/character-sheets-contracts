@@ -8,6 +8,8 @@ import {Errors} from "../lib/Errors.sol";
 import {IExperience} from "../interfaces/IExperience.sol";
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 
+import "forge-std/console2.sol";
+
 /**
  * @title Experience and Items
  * @author MrDeadCe11 && dan13ram
@@ -38,7 +40,10 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
     }
 
     modifier onlyContract() {
-        if (msg.sender != itemsContract && msg.sender != characterSheets && msg.sender != classesContract) {
+        if (
+            msg.sender != itemsContract && msg.sender != characterSheets && msg.sender != classesContract
+                && msg.sender != itemsContract
+        ) {
             revert Errors.CallerNotApproved();
         }
         _;
@@ -51,7 +56,8 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
     function initialize(bytes calldata initializationData) external initializer {
         __ERC20_init_unchained("Experience", "EXP");
         __UUPSUpgradeable_init();
-        (characterSheets, classesContract, hatsAdaptor) = abi.decode(initializationData, (address, address, address));
+        (characterSheets, classesContract, itemsContract, hatsAdaptor) =
+            abi.decode(initializationData, (address, address, address, address));
     }
 
     /**
@@ -87,16 +93,18 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
     }
 
     // overrides
-    //Experience is non transferable
+    //Experience is non transferable except by approved contracts
 
     //solhint-disable-next-line no-unused-vars
-    function transferFrom(address, address, uint256) public pure override returns (bool) {
-        revert Errors.TransferError();
+    function transferFrom(address from, address to, uint256 amount) public override onlyContract returns (bool) {
+        super.transferFrom(from, to, amount);
+        return true;
     }
 
     //solhint-disable-next-line no-unused-vars
-    function transfer(address, uint256) public pure override returns (bool) {
-        revert Errors.TransferError();
+    function transfer(address to, uint256 amount) public override onlyContract returns (bool) {
+        super.transfer(to, amount);
+        return true;
     }
 
     //solhint-disable-next-line no-empty-blocks

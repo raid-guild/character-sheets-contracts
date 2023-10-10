@@ -120,6 +120,11 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         (address classesClone, address experienceClone) =
             _createClassesAndExperience(characterSheetsClone, _classLevelAdaptorImplementation, hatsAdaptor, data);
 
+        ItemsImplementation(itemsClone).initialize(_encodeItemsData(characterSheetsClone, classesClone, data));
+
+        ExperienceImplementation(experienceClone).initialize(
+            _encodeExpData(characterSheetsClone, classesClone, itemsClone, hatsAdaptor)
+        );
         emit CharacterSheetsCreated(msg.sender, characterSheetsClone, classesClone, itemsClone, experienceClone);
 
         return (characterSheetsClone, classesClone, itemsClone, experienceClone);
@@ -248,14 +253,14 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
             _encodeCharacterInitData(encodedCharInitAddresses, data)
         );
 
-        ItemsImplementation(itemsClone).initialize(_encodeItemsData(hatsAdaptor, data));
+        ItemsImplementation(itemsClone).initialize(_encodeItemsData(hatsAdaptor, classesClone, data));
 
         bytes memory encodedClassesInitdata =
             abi.encode(characterSheetsClone, experienceClone, hatsAdaptor, classLevelAdaptorClone);
         ClassesImplementation(classesClone).initialize(_encodeClassesData(encodedClassesInitdata, data));
 
         ExperienceImplementation(experienceClone).initialize(
-            _encodeExpData(characterSheetsClone, classesClone, hatsAdaptor)
+            _encodeExpData(characterSheetsClone, classesClone, itemsClone, hatsAdaptor)
         );
     }
 
@@ -278,8 +283,6 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
             EligibilityAdaptor(eligibilityAdaptorClone).initialize(msg.sender, dao);
         }
 
-        ItemsImplementation(itemsClone).initialize(_encodeItemsData(characterSheetsClone, data));
-
         return (characterSheetsClone, itemsClone);
     }
 
@@ -297,10 +300,6 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         bytes memory encodedClassData =
             abi.encode(characterSheetsClone, experienceClone, hatsAdaptorClone, classLevelAdaptorClone);
         ClassesImplementation(classesClone).initialize(_encodeClassesData(encodedClassData, data));
-
-        ExperienceImplementation(experienceClone).initialize(
-            _encodeExpData(characterSheetsClone, classesClone, hatsAdaptorClone)
-        );
 
         ClassLevelAdaptor(classLevelAdaptorClone).initialize(msg.sender, classesClone, experienceClone);
 
@@ -330,10 +329,14 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         return (encodedCharacterSheetParameters);
     }
 
-    function _encodeItemsData(address characterSheetsClone, bytes memory data) private pure returns (bytes memory) {
+    function _encodeItemsData(address characterSheetsClone, address classesClone, bytes memory data)
+        private
+        pure
+        returns (bytes memory)
+    {
         (,, string memory itemsBaseUri,) = _decodeStrings(data);
 
-        return abi.encode(characterSheetsClone, itemsBaseUri);
+        return abi.encode(characterSheetsClone, classesClone, itemsBaseUri);
     }
 
     function _encodeClassesData(bytes memory encodedClassesData, bytes memory data)
@@ -352,12 +355,12 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
             abi.encode(characterSheetsClone, experienceClone, hatsAdaptorClone, classLevelAdaptorClone, classesBaseUri);
     }
 
-    function _encodeExpData(address characterSheetsClone, address classesClone, address hatsAdaptor)
+    function _encodeExpData(address characterSheetsClone, address classesClone, address itemsClone, address hatsAdaptor)
         private
         pure
         returns (bytes memory)
     {
-        return abi.encode(characterSheetsClone, classesClone, hatsAdaptor);
+        return abi.encode(characterSheetsClone, classesClone, itemsClone, hatsAdaptor);
     }
 
     function _decodeStrings(bytes memory data)
