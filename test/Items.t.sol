@@ -277,6 +277,7 @@ contract ItemsTest is Test, SetUp {
         // should succeed with requirements met
         vm.startPrank(npc1);
         experience.approve(address(items), 100);
+
         items.craftItem(craftableItemId, 1);
 
         vm.stopPrank();
@@ -286,20 +287,25 @@ contract ItemsTest is Test, SetUp {
     }
 
     function testDismantleItems() public {
-        // should revert if item is not set to craftable
-        vm.prank(npc1);
-        vm.expectRevert();
-        items.craftItem(0, 1);
-
-        vm.prank(admin);
+        vm.startPrank(admin);
         uint256 craftableItemId = createNewItemType(true, false);
+        items.addItemRequirement(craftableItemId, uint8(Category.ERC1155), address(storedCreated.classes), 0, 1);
 
-        vm.prank(admin);
+        uint256 newItem = createNewItemType(false, false);
+
+        items.addItemRequirement(craftableItemId, uint8(Category.ERC1155), address(items), newItem, 1);
+
         experience.dropExp(npc1, 300);
+        classes.assignClass(npc1, 0);
+        vm.stopPrank();
+
+        dropItems(npc1, newItem, 3);
 
         // should succeed with requirements met
         vm.startPrank(npc1);
         experience.approve(address(items), 300);
+        items.setApprovalForAll(address(items), true);
+
         items.craftItem(craftableItemId, 3);
 
         // should revert if trying to dismantle un-crafted item
@@ -307,6 +313,7 @@ contract ItemsTest is Test, SetUp {
         items.dismantleItems(0, 1);
 
         //should revert if trying to dismantle more than have been crafted
+
         vm.expectRevert(Errors.InsufficientBalance.selector);
         items.dismantleItems(craftableItemId, 4);
 
@@ -323,8 +330,9 @@ contract ItemsTest is Test, SetUp {
 
         //should dismantle remaining items
         items.dismantleItems(craftableItemId, 1);
-        assertEq(items.balanceOf(npc1, craftableItemId), 0, "item not burnt");
-        assertEq(experience.balanceOf(npc1), 300, "exp not returned");
+
+        assertEq(items.balanceOf(npc1, craftableItemId), 0, "item 2 not burnt");
+        assertEq(experience.balanceOf(npc1), 300, "exp 2 not returned");
         vm.stopPrank();
     }
 }

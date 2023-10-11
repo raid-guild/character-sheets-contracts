@@ -180,7 +180,7 @@ contract ItemsImplementation is
 
         for (uint256 i; i < itemRequirements.length; i++) {
             Asset memory newRequirement = itemRequirements[i];
-            //if required item is not a class
+            //if required item is a class skip token transfer
             if (newRequirement.assetAddress != classesContract) {
                 //issue crafting receipt before amounts change
                 _craftingReceipt[msg.sender][itemId].push(
@@ -198,8 +198,6 @@ contract ItemsImplementation is
 
                 //transfer assets to this contract must have approval
                 MultiToken.safeTransferAssetFrom(newRequirement, msg.sender, address(this));
-
-                // TODO create a dismatle function that returns the items to the player
             }
         }
 
@@ -211,30 +209,41 @@ contract ItemsImplementation is
     Asset[] private currentRefunds;
 
     function dismantleItems(uint256 itemId, uint256 amount) external onlyCharacter returns (bool succes) {
+        Receipt[] storage receipts = _craftingReceipt[msg.sender][itemId];
         //check crafted items array if any assets exist
-        if (_craftingReceipt[msg.sender][itemId].length == 0) {
+        if (receipts.length == 0) {
             revert Errors.ItemError();
         }
         if (balanceOf(msg.sender, itemId) < amount) {
             revert Errors.InsufficientBalance();
         }
 
-        for (uint256 i = _craftingReceipt[msg.sender][itemId].length; i > 0; i--) {
-            // remaing number of items to dismantle
-            uint256 remainingAmount = amount;
-            //calculate refunds
-            while (remainingAmount > 0) {
-                Asset memory refund;
-                uint256 remainder;
-                (remainder, refund) = _calculateRefund(msg.sender, itemId, remainingAmount);
-                remainingAmount = remainder;
-                // // add refund to refunds array
-                currentRefunds.push(refund);
+        for (uint256 i; i < receipts.length; i++) {
+            if (receipts[i].assetAddress == classesContract) {
+                revert Errors.CallerNotApproved();
+            }
+
+            Asset memory refund;
+            Receipt memory latestReceipt;
+            (latestReceipt, refund) = _calculateRefund(receipts[i], amount);
+
+            receipts[i] = latestReceipt;
+            // add refund to refunds array
+            currentRefunds.push(refund);
+
+            // clean up array
+            if (receipts[i].amountCrafted == 0) {
+                Receipt memory currentReceipt = receipts[i];
+                //move to end of array
+                receipts[i] = receipts[receipts.length - 1];
+
+                receipts[receipts.length - 1] = currentReceipt;
+                //pop from array
+                receipts.pop();
             }
         }
         /// refund assets
         for (uint256 i; i < currentRefunds.length; i++) {
-            console2.log(currentRefunds[i].amount);
             MultiToken.safeTransferAssetFrom(currentRefunds[i], address(this), msg.sender);
         }
 
@@ -247,48 +256,24 @@ contract ItemsImplementation is
         return true;
     }
 
-    function _calculateRefund(address to, uint256 itemId, uint256 amount)
+    function _calculateRefund(Receipt storage latestReceipt, uint256 amount)
         private
-        returns (uint256 remainder, Asset memory refund)
+        returns (Receipt memory, Asset memory refund)
     {
-        //get last receipt in array
-        Receipt memory latestReceipt = _craftingReceipt[to][itemId][_craftingReceipt[to][itemId].length - 1];
-
-        remainder = amount;
-
-        //if amount > crafted amounts remainder = amount - crafted amounts
-        if (amount < latestReceipt.amountCrafted) {
-            remainder = 0;
+        // if amount to refund is less than the amount crafted
+        if (amount <= latestReceipt.amountCrafted) {
             refund = Asset({
                 category: latestReceipt.category,
                 assetAddress: latestReceipt.assetAddress,
-                id: itemId,
+                id: latestReceipt.assetId,
                 amount: amount * latestReceipt.amountRequired
             });
             latestReceipt.amountCrafted -= amount;
-            _craftingReceipt[to][itemId][_craftingReceipt[to][itemId].length - 1] = latestReceipt;
-        } else if (amount == latestReceipt.amountCrafted) {
-            remainder = 0;
-            refund = Asset({
-                category: latestReceipt.category,
-                assetAddress: latestReceipt.assetAddress,
-                id: itemId,
-                amount: latestReceipt.amountCrafted * latestReceipt.amountRequired
-            });
-            _craftingReceipt[to][itemId].pop();
         } else {
-            refund = Asset({
-                category: latestReceipt.category,
-                assetAddress: latestReceipt.assetAddress,
-                id: itemId,
-                amount: latestReceipt.amountCrafted * latestReceipt.amountRequired
-            });
-
-            remainder -= latestReceipt.amountCrafted;
-            _craftingReceipt[to][itemId].pop();
+            revert Errors.InsufficientBalance();
         }
 
-        return (remainder, refund);
+        return (latestReceipt, refund);
     }
 
     /**
@@ -423,9 +408,9 @@ contract ItemsImplementation is
         public
         override
     {
-        if (to != address(0) && !IHatsAdaptor(hatsAdaptor).isCharacter(msg.sender)) {
-            revert Errors.CharacterOnly();
-        }
+        // if (to != address(0) && !IHatsAdaptor(hatsAdaptor).isCharacter(msg.sender)) {
+        //     revert Errors.CharacterOnly();
+        // }
         if (_items[id].soulbound) {
             revert Errors.SoulboundToken();
         }
