@@ -13,12 +13,11 @@ import {
 } from "openzeppelin-contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import {Item} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
 import {MultiToken, Asset, Category} from "../lib/MultiToken.sol";
+import {CraftingManager} from "../lib/CraftingManager.sol";
 import "../lib/Structs.sol";
 
-import {IItems} from "../interfaces/IItems.sol";
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 
 import "forge-std/console2.sol";
@@ -31,11 +30,11 @@ import "forge-std/console2.sol";
  */
 
 contract ItemsImplementation is
-    IItems,
     ERC1155HolderUpgradeable,
     ERC1155Upgradeable,
     ERC721HolderUpgradeable,
-    UUPSUpgradeable
+    UUPSUpgradeable,
+    CraftingManager
 {
     bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
     bytes32 public constant CHARACTER = keccak256("CHARACTER");
@@ -51,9 +50,6 @@ contract ItemsImplementation is
     mapping(uint256 => Item) private _items;
     /// @dev an array of requirements to transfer this item
     mapping(uint256 => Asset[]) private _requirements;
-    /// @dev stores the items used in crafting at the time the item was crafted.
-    /// character => itemId => receipts Assets used in crafting
-    mapping(address => mapping(uint256 => Receipt[])) private _craftingReceipt;
 
     /// @dev the total number of item types that have been created
     uint256 public totalItemTypes;
@@ -122,7 +118,7 @@ contract ItemsImplementation is
     }
 
     /**
-     * this is to be claimed from the ERC6551 wallet of the player sheet.
+     * @dev this function must be called from the ERC6551 wallet of the player sheet (character account).
      * @param itemIds an array of item ids
      * @param amounts an array of amounts to claim, must match the order of item ids
      * @param proofs an array of proofs allowing this address to claim the item,
@@ -166,114 +162,33 @@ contract ItemsImplementation is
      */
 
     function craftItem(uint256 itemId, uint256 amount) external onlyCharacter returns (bool success) {
-        Item storage newItem = _items[itemId];
-
-        if (!newItem.craftable) {
-            revert Errors.ItemError();
-        }
-
         if (!_checkRequirements(msg.sender, itemId, amount)) {
             revert Errors.RequirementNotMet();
         }
-
-        Asset[] storage itemRequirements = _requirements[itemId];
-
-        for (uint256 i; i < itemRequirements.length; i++) {
-            Asset memory newRequirement = itemRequirements[i];
-            //if required item is a class skip token transfer
-            if (newRequirement.assetAddress != classesContract) {
-                //issue crafting receipt before amounts change
-                _craftingReceipt[msg.sender][itemId].push(
-                    Receipt({
-                        category: newRequirement.category,
-                        assetAddress: newRequirement.assetAddress,
-                        assetId: newRequirement.id,
-                        amountCrafted: amount,
-                        amountRequired: newRequirement.amount
-                    })
-                );
-
-                //add asset amounts
-                newRequirement.amount = newRequirement.amount * amount;
-
-                //transfer assets to this contract must have approval
-                MultiToken.safeTransferAssetFrom(newRequirement, msg.sender, address(this));
-            }
+        Item memory item = _items[itemId];
+        Asset[] memory requirements = _requirements[itemId];
+        if (_craftItem(item, itemId, requirements, amount, classesContract)) {
+            //transfer item after succesful crafting
+            super._safeTransferFrom(address(this), msg.sender, itemId, amount, "");
+            success = true;
+        } else {
+            success = false;
         }
-
-        super._safeTransferFrom(address(this), msg.sender, itemId, amount, "");
-        success = true;
-        return success;
     }
 
-    Asset[] private currentRefunds;
-
     function dismantleItems(uint256 itemId, uint256 amount) external onlyCharacter returns (bool succes) {
-        Receipt[] storage receipts = _craftingReceipt[msg.sender][itemId];
-        //check crafted items array if any assets exist
-        if (receipts.length == 0) {
-            revert Errors.ItemError();
-        }
         if (balanceOf(msg.sender, itemId) < amount) {
             revert Errors.InsufficientBalance();
         }
 
-        for (uint256 i; i < receipts.length; i++) {
-            if (receipts[i].assetAddress == classesContract) {
-                revert Errors.CallerNotApproved();
-            }
+        if (_dismantleItems(itemId, amount)) {
+            //burn items
+            _burn(msg.sender, itemId, amount);
 
-            Asset memory refund;
-            Receipt memory latestReceipt;
-            (latestReceipt, refund) = _calculateRefund(receipts[i], amount);
-
-            receipts[i] = latestReceipt;
-            // add refund to refunds array
-            currentRefunds.push(refund);
-
-            // clean up array
-            if (receipts[i].amountCrafted == 0) {
-                Receipt memory currentReceipt = receipts[i];
-                //move to end of array
-                receipts[i] = receipts[receipts.length - 1];
-
-                receipts[receipts.length - 1] = currentReceipt;
-                //pop from array
-                receipts.pop();
-            }
-        }
-        /// refund assets
-        for (uint256 i; i < currentRefunds.length; i++) {
-            MultiToken.safeTransferAssetFrom(currentRefunds[i], address(this), msg.sender);
-        }
-
-        //burn items
-        _burn(msg.sender, itemId, amount);
-
-        //clear refunds
-        delete currentRefunds;
-
-        return true;
-    }
-
-    function _calculateRefund(Receipt storage latestReceipt, uint256 amount)
-        private
-        returns (Receipt memory, Asset memory refund)
-    {
-        // if amount to refund is less than the amount crafted
-        if (amount <= latestReceipt.amountCrafted) {
-            refund = Asset({
-                category: latestReceipt.category,
-                assetAddress: latestReceipt.assetAddress,
-                id: latestReceipt.assetId,
-                amount: amount * latestReceipt.amountRequired
-            });
-            latestReceipt.amountCrafted -= amount;
+            return true;
         } else {
-            revert Errors.InsufficientBalance();
+            return false;
         }
-
-        return (latestReceipt, refund);
     }
 
     /**

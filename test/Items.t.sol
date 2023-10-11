@@ -300,6 +300,7 @@ contract ItemsTest is Test, SetUp {
         vm.stopPrank();
 
         dropItems(npc1, newItem, 3);
+        dropItems(npc1, 0, 1);
 
         // should succeed with requirements met
         vm.startPrank(npc1);
