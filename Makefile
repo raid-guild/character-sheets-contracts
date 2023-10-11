@@ -30,7 +30,7 @@ format :; forge fmt
 # solhint should be installed globally
 lint :; solhint "src/**/*.sol"
 
-anvil :; anvil -m 'test test test test test test test test test test test junk'
+anvil :; anvil -m 'junk junk junk junk junk junk junk junk junk junk junk junk'
 
 # deploy commands
 deploy-anvil :; ./scripts/deploy.sh anvil ${contract}

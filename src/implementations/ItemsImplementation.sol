@@ -15,7 +15,7 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UU
 
 import {Errors} from "../lib/Errors.sol";
 import {MultiToken, Asset, Category} from "../lib/MultiToken.sol";
-import {CraftingManager} from "../lib/CraftingManager.sol";
+import {ItemsManager} from "../lib/ItemsManager.sol";
 import "../lib/Structs.sol";
 
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
@@ -34,11 +34,8 @@ contract ItemsImplementation is
     ERC1155Upgradeable,
     ERC721HolderUpgradeable,
     UUPSUpgradeable,
-    CraftingManager
+    ItemsManager
 {
-    bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
-    bytes32 public constant CHARACTER = keccak256("CHARACTER");
-
     bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
 
     /// @dev base URI
@@ -48,8 +45,6 @@ contract ItemsImplementation is
     mapping(uint256 => string) private _itemURIs;
     /// @dev mapping itemId => item struct for item types
     mapping(uint256 => Item) private _items;
-    /// @dev an array of requirements to transfer this item
-    mapping(uint256 => Asset[]) private _requirements;
 
     /// @dev the total number of item types that have been created
     uint256 public totalItemTypes;
@@ -57,14 +52,9 @@ contract ItemsImplementation is
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
     address public hatsAdaptor;
 
-    /// @dev address of the classes contract for item requirements check
-    address public classesContract;
-
     event NewItemTypeCreated(uint256 itemId);
     event ItemTransfered(address character, uint256 itemId, uint256 amount);
     event ItemClaimableUpdated(uint256 itemId, bytes32 merkleRoot);
-    event RequirementAdded(uint256 itemId, uint8 category, address assetAddress, uint256 assetId, uint256 amount);
-    event RequirementRemoved(uint256 itemId, address assetAddress, uint256 assetId);
 
     modifier onlyDungeonMaster() {
         if (!IHatsAdaptor(hatsAdaptor).isDungeonMaster(msg.sender)) {
@@ -167,7 +157,7 @@ contract ItemsImplementation is
         }
         Item memory item = _items[itemId];
         Asset[] memory requirements = _requirements[itemId];
-        if (_craftItem(item, itemId, requirements, amount, classesContract)) {
+        if (_craftItem(item, itemId, requirements, amount)) {
             //transfer item after succesful crafting
             super._safeTransferFrom(address(this), msg.sender, itemId, amount, "");
             success = true;
@@ -236,14 +226,8 @@ contract ItemsImplementation is
         if (assetAddress == address(this) && (itemId == assetId || (_items[assetId].supply == 0))) {
             revert Errors.ItemError();
         }
-        Asset memory newRequirement =
-            Asset({category: Category(category), assetAddress: assetAddress, id: assetId, amount: amount});
 
-        _requirements[itemId].push(newRequirement);
-        success = true;
-
-        emit RequirementAdded(itemId, category, assetAddress, assetId, amount);
-        return success;
+        return _addItemRequirement(itemId, category, assetAddress, assetId, amount);
     }
 
     /**
@@ -259,32 +243,7 @@ contract ItemsImplementation is
         onlyDungeonMaster
         returns (bool)
     {
-        Asset[] storage arr = _requirements[itemId];
-        bool success = false;
-        for (uint256 i; i < arr.length; i++) {
-            Asset storage asset = arr[i];
-            if (asset.assetAddress == assetAddress && asset.id == assetId) {
-                for (uint256 j = i; j < arr.length; j++) {
-                    if (j + 1 < arr.length) {
-                        arr[j] = arr[j + 1];
-                    } else if (j + 1 >= arr.length) {
-                        arr[j] = MultiToken.ERC20(address(0), 0);
-                    }
-                }
-                success = true;
-            }
-        }
-
-        if (success == true) {
-            _requirements[itemId] = arr;
-            _requirements[itemId].pop();
-        } else {
-            revert Errors.ItemError();
-        }
-
-        emit RequirementRemoved(itemId, assetAddress, assetId);
-
-        return success;
+        return _removeItemRequirement(itemId, assetAddress, assetId);
     }
 
     /**
@@ -396,6 +355,7 @@ contract ItemsImplementation is
     {
         return super.supportsInterface(interfaceId);
     }
+    /// end overrides
 
     function getItem(uint256 itemId) public view returns (Item memory) {
         return _items[itemId];
@@ -404,8 +364,6 @@ contract ItemsImplementation is
     function getItemRequirements(uint256 itemId) public view returns (Asset[] memory) {
         return _requirements[itemId];
     }
-
-    /// end overrides
 
     function _createItem(bytes memory _data, uint256 _itemId) internal {
         bool craftable;
@@ -491,33 +449,4 @@ contract ItemsImplementation is
 
     //solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {}
-
-    function _checkRequirements(address characterAccount, uint256 itemId, uint256 amount)
-        internal
-        view
-        returns (bool)
-    {
-        Asset[] storage itemRequirements = _requirements[itemId];
-        if (itemRequirements.length == 0) {
-            return true;
-        }
-
-        Asset storage newRequirement;
-
-        for (uint256 i; i < itemRequirements.length; i++) {
-            newRequirement = itemRequirements[i];
-
-            uint256 balance = MultiToken.balanceOf(newRequirement, characterAccount);
-
-            // if the required asset is a class check that the balance is not less than the required level.
-            if (newRequirement.assetAddress == classesContract) {
-                if (balance < newRequirement.amount) {
-                    return false;
-                }
-            } else if (balance < newRequirement.amount * amount) {
-                return false;
-            }
-        }
-        return true;
-    }
 }

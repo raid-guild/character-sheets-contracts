@@ -5,6 +5,7 @@ pragma abicoder v2;
 //solhint-disable
 
 import "forge-std/Test.sol";
+import "forge-std/console2.sol";
 
 import "../src/implementations/ItemsImplementation.sol";
 import "../src/lib/Structs.sol";
@@ -309,6 +310,8 @@ contract ItemsTest is Test, SetUp {
 
         items.craftItem(craftableItemId, 3);
 
+        assertEq(items.balanceOf(npc1, newItem), 0, "new item not consumed in crafting");
+
         // should revert if trying to dismantle un-crafted item
         vm.expectRevert(Errors.ItemError.selector);
         items.dismantleItems(0, 1);
@@ -322,6 +325,7 @@ contract ItemsTest is Test, SetUp {
         items.dismantleItems(craftableItemId, 2);
 
         assertEq(items.balanceOf(npc1, craftableItemId), 1, "item not burnt");
+        assertEq(items.balanceOf(npc1, newItem), 2, "new Item not returned");
         assertEq(experience.balanceOf(npc1), 200, "exp not returned");
 
         // should revert if called with balance larger than available
@@ -333,6 +337,7 @@ contract ItemsTest is Test, SetUp {
         items.dismantleItems(craftableItemId, 1);
 
         assertEq(items.balanceOf(npc1, craftableItemId), 0, "item 2 not burnt");
+        assertEq(items.balanceOf(npc1, newItem), 3, "new Item not returned");
         assertEq(experience.balanceOf(npc1), 300, "exp 2 not returned");
         vm.stopPrank();
     }
