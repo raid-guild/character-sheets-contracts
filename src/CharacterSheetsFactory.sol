@@ -112,34 +112,34 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
     /// create functions must be called first before the initialize call is made
 
-    // /**
-    //  * @dev create function for all contracts and adaptors
-    //  *     @param dao the address of a dao to be used with the character sheets elegibility adaptor pass in address(0) to have no elegibilty limitations
-    //  *     @param _classLevelAdaptorImplementation the class Level adaptor address to be used.  pass in address(0) to use the default adaptor with D&D style leveling requirements
-    //  *     @param data the encoded bytes of the correct initilization data see init function notes for correct data to be encoded
-    //  */
-    // function create(address dao, address _classLevelAdaptorImplementation, bytes calldata data)
-    //     external
-    //     returns (address, address, address, address, address)
-    // {
-    //     address itemsManager = createItemsManager();
-    //     address hatsAdaptor = createHatsAdaptor();
-    //     // (address characterSheetsClone, address itemsClone) = _createSheetsAndItems(dao, hatsAdaptor, data);
+    /**
+     * @dev create function for all contracts and adaptors
+     *     @param dao the address of a dao to be used with the character sheets elegibility adaptor pass in address(0) to have no elegibilty limitations
+     *     @param _classLevelAdaptorImplementation the class Level adaptor address to be used.  pass in address(0) to use the default adaptor with D&D style leveling requirements
+     *     @param data the encoded bytes of the correct initilization data see init function notes for correct data to be encoded
+     */
+    function create(address dao, address _classLevelAdaptorImplementation, bytes calldata data)
+        external
+        returns (address, address, address, address, address)
+    {
+        address itemsManager = createItemsManager();
+        address hatsAdaptor = createHatsAdaptor();
+        (address characterSheetsClone, address itemsClone) = _createSheetsAndItems(dao, hatsAdaptor, data);
 
-    //     // (address classesClone, address experienceClone) =
-    //     //     _createClassesAndExperience(characterSheetsClone, _classLevelAdaptorImplementation, hatsAdaptor, data);
+        (address classesClone, address experienceClone) =
+            _createClassesAndExperience(characterSheetsClone, _classLevelAdaptorImplementation, hatsAdaptor, data);
 
-    //     // ItemsImplementation(itemsClone).initialize(
-    //     //     _encodeItemsData(characterSheetsClone, classesClone, itemsManager, data)
-    //     // );
+        ItemsImplementation(itemsClone).initialize(
+            _encodeItemsData(characterSheetsClone, classesClone, itemsManager, data)
+        );
 
-    //     // ExperienceImplementation(experienceClone).initialize(
-    //     //     _encodeExpData(characterSheetsClone, classesClone, itemsClone, hatsAdaptor)
-    //     // );
-    //     emit CharacterSheetsCreated(msg.sender, characterSheetsClone, classesClone, itemsClone, experienceClone);
+        ExperienceImplementation(experienceClone).initialize(
+            _encodeExpData(characterSheetsClone, classesClone, itemsClone, hatsAdaptor)
+        );
+        emit CharacterSheetsCreated(msg.sender, characterSheetsClone, classesClone, itemsClone, experienceClone);
 
-    //     return (characterSheetsClone, classesClone, itemsClone, experienceClone, itemsManager);
-    // }
+        return (characterSheetsClone, classesClone, itemsClone, experienceClone, itemsManager);
+    }
 
     function createExperience() public returns (address) {
         if (experienceImplementation == address(0)) {
