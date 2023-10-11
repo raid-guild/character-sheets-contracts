@@ -18,7 +18,7 @@ contract ItemsTest is Test, SetUp {
         uint256 _itemId = items.createItemType(newItem);
 
         Item memory returnedItem = items.getItem(_itemId);
-        Asset[] memory itemRequirements = items.getItemRequirements(_itemId);
+        Asset[] memory itemRequirements = itemsManager.getItemRequirements(_itemId);
         string memory cid = items.uri(_itemId);
 
         assertEq(_itemId, 1);
@@ -37,7 +37,7 @@ contract ItemsTest is Test, SetUp {
         uint256 _itemId = items.createItemType(newItem);
 
         Item memory returnedItem = items.getItem(_itemId);
-        Asset[] memory itemRequirements = items.getItemRequirements(_itemId);
+        Asset[] memory itemRequirements = itemsManager.getItemRequirements(_itemId);
         string memory cid = items.uri(_itemId);
 
         assertEq(_itemId, 1);
@@ -217,7 +217,7 @@ contract ItemsTest is Test, SetUp {
         vm.prank(admin);
         items.addItemRequirement(0, uint8(Category.ERC1155), address(items), tokenId, 100);
 
-        Asset[] memory requiredAssets = items.getItemRequirements(0);
+        Asset[] memory requiredAssets = itemsManager.getItemRequirements(0);
 
         assertEq(requiredAssets.length, 2, "Requirement not added");
 
@@ -235,7 +235,7 @@ contract ItemsTest is Test, SetUp {
         vm.prank(admin);
         items.addItemRequirement(0, uint8(Category.ERC1155), address(items), tokenId, 1000);
 
-        Asset[] memory requiredAssets = items.getItemRequirements(0);
+        Asset[] memory requiredAssets = itemsManager.getItemRequirements(0);
 
         assertEq(requiredAssets.length, 2, "Requirement not added");
 
@@ -248,7 +248,7 @@ contract ItemsTest is Test, SetUp {
         vm.prank(admin);
         items.removeItemRequirement(0, address(items), tokenId);
 
-        requiredAssets = items.getItemRequirements(0);
+        requiredAssets = itemsManager.getItemRequirements(0);
         assertEq(requiredAssets.length, 1, "requirement not removed");
 
         requiredAsset = requiredAssets[0];
@@ -277,7 +277,7 @@ contract ItemsTest is Test, SetUp {
 
         // should succeed with requirements met
         vm.startPrank(npc1);
-        experience.approve(address(items), 100);
+        experience.approve(address(itemsManager), 100);
 
         items.craftItem(craftableItemId, 1);
 
@@ -305,8 +305,8 @@ contract ItemsTest is Test, SetUp {
 
         // should succeed with requirements met
         vm.startPrank(npc1);
-        experience.approve(address(items), 300);
-        items.setApprovalForAll(address(items), true);
+        experience.approve(address(itemsManager), 300);
+        items.setApprovalForAll(address(itemsManager), true);
 
         items.craftItem(craftableItemId, 3);
 

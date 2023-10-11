@@ -24,6 +24,7 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
     address public itemsContract;
     address public classesContract;
     address public hatsAdaptor;
+    address public itemsManagerContract;
 
     modifier onlyDungeonMaster() {
         if (!IHatsAdaptor(hatsAdaptor).isDungeonMaster(msg.sender)) {
@@ -42,7 +43,7 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
     modifier onlyContract() {
         if (
             msg.sender != itemsContract && msg.sender != characterSheets && msg.sender != classesContract
-                && msg.sender != itemsContract
+                && msg.sender != itemsContract && msg.sender != itemsManagerContract
         ) {
             revert Errors.CallerNotApproved();
         }
@@ -56,8 +57,8 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
     function initialize(bytes calldata initializationData) external initializer {
         __ERC20_init_unchained("Experience", "EXP");
         __UUPSUpgradeable_init();
-        (characterSheets, classesContract, itemsContract, hatsAdaptor) =
-            abi.decode(initializationData, (address, address, address, address));
+        (characterSheets, classesContract, itemsContract, hatsAdaptor, itemsManagerContract) =
+            abi.decode(initializationData, (address, address, address, address, address));
     }
 
     /**

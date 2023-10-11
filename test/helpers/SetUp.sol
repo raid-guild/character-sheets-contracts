@@ -29,6 +29,7 @@ import {AdminHatEligibilityModule} from "../../src/adaptors/hats-modules/AdminHa
 import {DungeonMasterHatEligibilityModule} from "../../src/adaptors/hats-modules/DungeonMasterHatEligibilityModule.sol";
 import {PlayerHatEligibilityModule} from "../../src/adaptors/hats-modules/PlayerHatEligibilityModule.sol";
 import {CharacterHatEligibilityModule} from "../../src/adaptors/hats-modules/CharacterHatEligibilityModule.sol";
+import {ItemsManagerImplementation} from "../../src/implementations/ItemsManagerImplementation.sol";
 
 struct StoredImplementationAddresses {
     address characterSheetsImplementation;
@@ -40,6 +41,7 @@ struct StoredImplementationAddresses {
     address dungeonMasterHatEligibilityModuleImplementation;
     address playerHatEligibilityModuleImplementation;
     address characterHatEligibilityModuleImplementation;
+    address itemsManagerImplementation;
 }
 
 struct StoredCreatedContracts {
@@ -50,6 +52,7 @@ struct StoredCreatedContracts {
     address eligibility;
     address classLevels;
     address hatsAdaptor;
+    address itemsManager;
 }
 
 contract SetUp is Test {
@@ -66,6 +69,7 @@ contract SetUp is Test {
     HatsAdaptor public hatsAdaptor;
     HatsModuleFactory public hatsModuleFactory;
     Hats public hats;
+    ItemsManagerImplementation public itemsManager;
 
     Moloch public dao;
 
@@ -114,6 +118,7 @@ contract SetUp is Test {
         storedImp.classesImplementation = address(new ClassesImplementation());
         storedImp.characterSheetsImplementation = address(new CharacterSheetsImplementation());
         storedImp.experienceImplementation = address(new ExperienceImplementation());
+        storedImp.itemsManagerImplementation = address(new ItemsManagerImplementation());
 
         // hats integration
         storedImp.hatsAdaptorImplementation = address(new HatsAdaptor());
@@ -137,6 +142,7 @@ contract SetUp is Test {
         characterSheetsFactory.updateClassesImplementation(address(storedImp.classesImplementation));
         characterSheetsFactory.updateExperienceImplementation(address(storedImp.experienceImplementation));
         characterSheetsFactory.updateHatsAdaptorImplementation(address(storedImp.hatsAdaptorImplementation));
+        characterSheetsFactory.updateItemsManagerImplementation(address(storedImp.itemsManagerImplementation));
 
         dungeonMastersArray.push(admin);
         adminArray.push(admin);
@@ -163,6 +169,8 @@ contract SetUp is Test {
 
         storedCreated.classLevels = characterSheetsFactory.createClassLevelAdaptor(address(classLevels));
 
+        storedCreated.itemsManager = characterSheetsFactory.createItemsManager();
+
         storedCreated.hatsAdaptor =
             characterSheetsFactory.createHatsAdaptor(address(storedImp.hatsAdaptorImplementation));
 
@@ -174,6 +182,7 @@ contract SetUp is Test {
                 storedCreated.characterSheets,
                 storedCreated.experience,
                 storedCreated.items,
+                storedCreated.itemsManager,
                 storedCreated.classes
             ),
             baseUriData
@@ -194,6 +203,8 @@ contract SetUp is Test {
         classLevels = ClassLevelAdaptor(storedCreated.classLevels);
 
         hatsAdaptor = HatsAdaptor(storedCreated.hatsAdaptor);
+
+        itemsManager = ItemsManagerImplementation(storedCreated.itemsManager);
 
         //initialize created adaptors
 

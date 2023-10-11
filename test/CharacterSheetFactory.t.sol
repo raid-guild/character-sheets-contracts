@@ -129,10 +129,20 @@ contract CharacterSheetsTest is Test, SetUp {
         address newEligibility = characterSheetsFactory.createEligibilityAdaptor(address(eligibility));
 
         address newClassLevel = characterSheetsFactory.createClassLevelAdaptor(address(classLevels));
+
+        address newItemsManager = characterSheetsFactory.createItemsManager();
         address[] memory dungeonMasters = new address[](1);
         dungeonMasters[0] = player1;
-        bytes memory encodedInitData =
-            abi.encode(newEligibility, newClassLevel, dungeonMasters, newSheets, newExperience, newItems, newClasses);
+        bytes memory encodedInitData = abi.encode(
+            newEligibility,
+            newClassLevel,
+            dungeonMasters,
+            newSheets,
+            newExperience,
+            newItems,
+            newItemsManager,
+            newClasses
+        );
 
         bytes memory stringData = abi.encode(
             "test_metadata_uri_character_sheets/",

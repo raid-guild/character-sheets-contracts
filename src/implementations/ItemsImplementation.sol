@@ -15,7 +15,7 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UU
 
 import {Errors} from "../lib/Errors.sol";
 import {MultiToken, Asset, Category} from "../lib/MultiToken.sol";
-import {ItemsManager} from "../lib/ItemsManager.sol";
+import {ItemsManagerImplementation} from "./ItemsManagerImplementation.sol";
 import "../lib/Structs.sol";
 
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
@@ -33,8 +33,7 @@ contract ItemsImplementation is
     ERC1155HolderUpgradeable,
     ERC1155Upgradeable,
     ERC721HolderUpgradeable,
-    UUPSUpgradeable,
-    ItemsManager
+    UUPSUpgradeable
 {
     bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
 
@@ -51,6 +50,8 @@ contract ItemsImplementation is
 
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
     address public hatsAdaptor;
+
+    ItemsManagerImplementation public itemsManager;
 
     event NewItemTypeCreated(uint256 itemId);
     event ItemTransfered(address character, uint256 itemId, uint256 amount);
@@ -78,7 +79,9 @@ contract ItemsImplementation is
         __UUPSUpgradeable_init();
         __ERC1155Holder_init();
 
-        (hatsAdaptor, classesContract, _baseURI) = abi.decode(_encodedData, (address, address, string));
+        address _itemsManager;
+        (hatsAdaptor, _itemsManager, _baseURI) = abi.decode(_encodedData, (address, address, string));
+        itemsManager = ItemsManagerImplementation(_itemsManager);
     }
 
     /**
@@ -152,12 +155,12 @@ contract ItemsImplementation is
      */
 
     function craftItem(uint256 itemId, uint256 amount) external onlyCharacter returns (bool success) {
-        if (!_checkRequirements(msg.sender, itemId, amount)) {
+        if (!itemsManager.checkRequirements(msg.sender, itemId, amount)) {
             revert Errors.RequirementNotMet();
         }
         Item memory item = _items[itemId];
-        Asset[] memory requirements = _requirements[itemId];
-        if (_craftItem(item, itemId, requirements, amount)) {
+        Asset[] memory requirements = itemsManager.getItemRequirements(itemId);
+        if (itemsManager.craftItem(item, itemId, requirements, amount, msg.sender)) {
             //transfer item after succesful crafting
             super._safeTransferFrom(address(this), msg.sender, itemId, amount, "");
             success = true;
@@ -171,7 +174,7 @@ contract ItemsImplementation is
             revert Errors.InsufficientBalance();
         }
 
-        if (_dismantleItems(itemId, amount)) {
+        if (itemsManager.dismantleItems(itemId, amount, msg.sender)) {
             //burn items
             _burn(msg.sender, itemId, amount);
 
@@ -227,7 +230,7 @@ contract ItemsImplementation is
             revert Errors.ItemError();
         }
 
-        return _addItemRequirement(itemId, category, assetAddress, assetId, amount);
+        return itemsManager.addItemRequirement(itemId, category, assetAddress, assetId, amount);
     }
 
     /**
@@ -243,7 +246,7 @@ contract ItemsImplementation is
         onlyDungeonMaster
         returns (bool)
     {
-        return _removeItemRequirement(itemId, assetAddress, assetId);
+        return itemsManager.removeItemRequirement(itemId, assetAddress, assetId);
     }
 
     /**
@@ -361,10 +364,6 @@ contract ItemsImplementation is
         return _items[itemId];
     }
 
-    function getItemRequirements(uint256 itemId) public view returns (Asset[] memory) {
-        return _requirements[itemId];
-    }
-
     function _createItem(bytes memory _data, uint256 _itemId) internal {
         bool craftable;
         bool soulbound;
@@ -394,16 +393,13 @@ contract ItemsImplementation is
                         revert Errors.LengthMismatch();
                     }
 
-                    Asset[] storage itemRequirements = _requirements[_itemId];
-
                     for (uint256 i = 0; i < requiredAssetAddresses.length; i++) {
-                        itemRequirements.push(
-                            Asset({
-                                category: Category(requiredAssetCategories[i]),
-                                assetAddress: requiredAssetAddresses[i],
-                                id: requiredAssetIds[i],
-                                amount: requiredAssetAmounts[i]
-                            })
+                        itemsManager.addItemRequirement(
+                            _itemId,
+                            uint8(Category(requiredAssetCategories[i])),
+                            requiredAssetAddresses[i],
+                            requiredAssetIds[i],
+                            requiredAssetAmounts[i]
                         );
                     }
                 }
@@ -433,7 +429,7 @@ contract ItemsImplementation is
             revert Errors.ItemError();
         }
 
-        if (!_checkRequirements(characterAccount, itemId, amount)) {
+        if (!itemsManager.checkRequirements(characterAccount, itemId, amount)) {
             revert Errors.RequirementNotMet();
         }
 
