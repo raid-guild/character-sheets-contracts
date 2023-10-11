@@ -27,11 +27,11 @@ contract CharacterSheetsTest is Test, SetUp {
         address _experienceImpementation = characterSheetsFactory.experienceImplementation();
 
         assertEq(
-            _characterSheetsImplementation, address(stored.characterSheetsImplementation), "wrong character sheets"
+            _characterSheetsImplementation, address(storedImp.characterSheetsImplementation), "wrong character sheets"
         );
-        assertEq(_itemsImplementation, address(stored.itemsImplementation), "wrong items");
-        assertEq(_experienceImpementation, address(stored.experienceImplementation), "wrong experience");
-        assertEq(_classesImplementation, address(stored.classesImplementation), "wrong Classes");
+        assertEq(_itemsImplementation, address(storedImp.itemsImplementation), "wrong items");
+        assertEq(_experienceImpementation, address(storedImp.experienceImplementation), "wrong experience");
+        assertEq(_classesImplementation, address(storedImp.classesImplementation), "wrong Classes");
         assertEq(_erc6551Registry, address(erc6551Registry), "wrong registry");
         assertEq(_erc6551AccountImplementation, address(erc6551Implementation), "wrong erc6551 account implementation.");
     }

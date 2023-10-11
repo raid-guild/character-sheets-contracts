@@ -50,6 +50,11 @@ deploy-contracts :; make deploy-${network} contract=CharacterAccount && \
 	make deploy-${network} contract=ClassesImplementation && \
 	make deploy-${network} contract=EligibilityAdaptor && \
 	make deploy-${network} contract=ClassLevelAdaptor && \
+	make deploy-${network} contract=HatsAdaptor && \
+	make deploy-${network} contract=AdminHatEligibilityModule && \
+	make deploy-${network} contract=DungeonMasterHatEligibilityModule && \
+	make deploy-${network} contract=PlayerHatEligibilityModule && \
+	make deploy-${network} contract=CharacterHatEligibilityModule && \
 	make deploy-${network} contract=CharacterSheetsFactory;
 
 verify-contracts :; make verify-${network} contract=CharacterAccount && \
@@ -59,6 +64,11 @@ verify-contracts :; make verify-${network} contract=CharacterAccount && \
 	make verify-${network} contract=ClassesImplementation && \
 	make verify-${network} contract=EligibilityAdaptor && \
 	make verify-${network} contract=ClassLevelAdaptor && \
+	make verify-${network} contract=HatsAdaptor && \
+	make verify-${network} contract=AdminHatEligibilityModule && \
+	make verify-${network} contract=DungeonMasterHatEligibilityModule && \
+	make verify-${network} contract=PlayerHatEligibilityModule && \
+	make verify-${network} contract=CharacterHatEligibilityModule && \
 	make verify-${network} contract=CharacterSheetsFactory;
 
 # execute commands

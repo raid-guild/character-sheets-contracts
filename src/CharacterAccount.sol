@@ -27,6 +27,7 @@ contract CharacterAccount is IERC165, IERC1271, IERC6551Account, IERC6551Executa
 
     event Executed();
 
+    // solhint-disable-next-line no-empty-blocks
     receive() external payable {}
 
     function execute(address to, uint256 value, bytes calldata data, uint256 operation)

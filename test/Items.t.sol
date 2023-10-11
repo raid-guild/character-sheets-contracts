@@ -147,7 +147,7 @@ contract ItemsTest is Test, SetUp {
         uint256 _itemId1 = createNewItemType();
         uint256 _itemId2 = createNewItemType();
 
-        items.addItemRequirement(_itemId1, uint8(Category.ERC1155), address(classes), testClassId, 1);
+        items.addItemRequirement(_itemId1, uint8(Category.ERC1155), address(classes), classId, 1);
 
         // need atleast two leafs to create merkle tree
         uint256[] memory itemIds = new uint256[](2);
@@ -186,7 +186,7 @@ contract ItemsTest is Test, SetUp {
         items.claimItems(itemIds2, amounts2, proofs);
 
         vm.prank(admin);
-        classes.assignClass(npc1, testClassId);
+        classes.assignClass(npc1, classId);
 
         //revert invalid proof
         vm.prank(npc1);

@@ -11,6 +11,7 @@ import {ForkManagement} from "./helpers/ForkManagement.sol";
 abstract contract BaseDeployer is Script, ForkManagement {
     using stdJson for string;
 
+    string public _version = "version 0.1";
     uint256 deployerPrivateKey;
     address deployer;
 

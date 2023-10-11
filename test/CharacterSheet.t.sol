@@ -42,9 +42,7 @@ contract CharacterSheetsTest is Test, SetUp {
     function testChangeBaseUriAccessControlRevert() public {
         string memory newBaseUri = "new_base_uri/";
         vm.prank(player1);
-        vm.expectRevert(
-            "AccessControl: account 0x000000000000000000000000000000000000beef is missing role 0x9f5957e014b94f6c4458eb946e74e5d7e489dfaff6e0bddd07dd7d48100ca913"
-        );
+        vm.expectRevert(Errors.DungeonMasterOnly.selector);
         characterSheets.setBaseUri(newBaseUri);
     }
 
@@ -165,6 +163,8 @@ contract CharacterSheetsTest is Test, SetUp {
 
         assertEq(npc2, restored, "Incorrect Address restored");
         assertEq(characterSheets.balanceOf(player2), 1, "sheet not restored");
+        assertEq(hatsAdaptor.isPlayer(player2), true, "player hat not restored");
+        assertEq(hatsAdaptor.isCharacter(npc2), true, "character hat not restored");
     }
 
     function testRemovePlayer() public {
@@ -186,6 +186,7 @@ contract CharacterSheetsTest is Test, SetUp {
         characterSheets.removeSheet(0);
 
         assertEq(characterSheets.balanceOf(player1), 0, "Player 1 has not been removed");
+        assertEq(hatsAdaptor.isPlayer(player1), false, "player hat not removed");
 
         vm.prank(admin);
         vm.expectRevert();
@@ -301,9 +302,6 @@ contract CharacterSheetsTest is Test, SetUp {
         assertEq(characterSheets.getCharacterIdByAccountAddress(sheet.accountAddress), 0, "Incorrect playerId");
 
         assertEq(characterSheets.getCharacterIdByAccountAddress(npc1), 0, "Incorrect playerId");
-
-        vm.expectRevert();
-        characterSheets.getCharacterIdByAccountAddress(player2);
     }
 
     function testUpdateCharacterMetadata() public {
@@ -314,9 +312,38 @@ contract CharacterSheetsTest is Test, SetUp {
         assertEq(uri, "test_base_uri_character_sheets/new_cid", "Incorrect token uri");
 
         vm.prank(player2);
-        vm.expectRevert(
-            "AccessControl: account 0x000000000000000000000000000000000000babe is missing role 0x0f98b3a5774fbfdf19646dba94a6c08f13f4c341502334a57724de46497192c3"
-        );
+        vm.expectRevert(Errors.PlayerOnly.selector);
         characterSheets.updateCharacterMetadata("new_cid");
+    }
+
+    function testUpdateContractImplementation() public {
+        address newSheetImp = address(new CharacterSheetsImplementation());
+        HatsData memory hatsData = hatsAdaptor.getHatsData();
+        //should revert if called by non admin
+        vm.prank(player1);
+        vm.expectRevert(Errors.CallerNotApproved.selector);
+        characterSheets.upgradeTo(newSheetImp);
+
+        address[] memory newAdmins = new address[](1);
+        newAdmins[0] = player1;
+        assertTrue(hats.isWearerOfHat(admin, hatsData.adminHatId), "admin not admin");
+        address dungHatElig = hatsAdaptor.dungeonMasterHatEligibilityModule();
+
+        vm.startPrank(admin);
+        //admin adds player1 to eligible addresses array in admins module.
+        DungeonMasterHatEligibilityModule(dungHatElig).addEligibleAddresses(newAdmins);
+
+        // admin mints dmHat to player1
+        hats.mintHat(hatsData.dungeonMasterHatId, player1);
+        vm.stopPrank();
+
+        //should revert if called by dm;
+        vm.expectRevert(Errors.CallerNotApproved.selector);
+        vm.prank(player1);
+        characterSheets.upgradeTo(newSheetImp);
+
+        //should succeed if called by admin
+        vm.prank(admin);
+        characterSheets.upgradeTo(newSheetImp);
     }
 }

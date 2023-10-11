@@ -13,8 +13,8 @@ import "./helpers/SetUp.sol";
 
 contract ExperienceTest is Test, SetUp {
     function testExperienceDeployment() public {
-        assertEq(address(experience), stored.createdExperience, "Incorrect Experience Address");
-        assertEq(experience.characterSheets(), stored.createdCharacterSheets, "incorrect character sheets address");
+        assertEq(address(experience), storedCreated.experience, "Incorrect Experience Address");
+        assertEq(experience.characterSheets(), storedCreated.characterSheets, "incorrect character sheets address");
         // assertEq(experience.itemsContract(), stored.createdItems, "incorrect items address");
 
         vm.prank(admin);
