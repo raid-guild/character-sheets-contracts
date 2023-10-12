@@ -16,6 +16,7 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UU
 import {Errors} from "../lib/Errors.sol";
 import {MultiToken, Asset, Category} from "../lib/MultiToken.sol";
 import {ItemsManagerImplementation} from "./ItemsManagerImplementation.sol";
+import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 import "../lib/Structs.sol";
 
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
@@ -48,8 +49,7 @@ contract ItemsImplementation is
     /// @dev the total number of item types that have been created
     uint256 public totalItemTypes;
 
-    /// @dev the interface to the characterSheets erc721 implementation that this is tied to
-    address public hatsAdaptor;
+    IClonesAddressStorage public clones;
 
     ItemsManagerImplementation public itemsManager;
 
@@ -57,15 +57,22 @@ contract ItemsImplementation is
     event ItemTransfered(address character, uint256 itemId, uint256 amount);
     event ItemClaimableUpdated(uint256 itemId, bytes32 merkleRoot);
 
+    modifier onlyAdmin() {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isAdmin(msg.sender)) {
+            revert Errors.AdminOnly();
+        }
+        _;
+    }
+
     modifier onlyDungeonMaster() {
-        if (!IHatsAdaptor(hatsAdaptor).isDungeonMaster(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isDungeonMaster(msg.sender)) {
             revert Errors.DungeonMasterOnly();
         }
         _;
     }
 
     modifier onlyCharacter() {
-        if (!IHatsAdaptor(hatsAdaptor).isCharacter(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(msg.sender)) {
             revert Errors.CharacterOnly();
         }
         _;
@@ -79,9 +86,10 @@ contract ItemsImplementation is
         __UUPSUpgradeable_init();
         __ERC1155Holder_init();
 
-        address _itemsManager;
-        (hatsAdaptor, _itemsManager, _baseURI) = abi.decode(_encodedData, (address, address, string));
-        itemsManager = ItemsManagerImplementation(_itemsManager);
+        address clonesStorage;
+        (clonesStorage, _baseURI) = abi.decode(_encodedData, (address, string));
+        clones = IClonesAddressStorage(clonesStorage);
+        itemsManager = ItemsManagerImplementation(clones.itemsManagerClone());
     }
 
     /**
@@ -169,7 +177,7 @@ contract ItemsImplementation is
         }
     }
 
-    function dismantleItems(uint256 itemId, uint256 amount) external onlyCharacter returns (bool succes) {
+    function dismantleItems(uint256 itemId, uint256 amount) external onlyCharacter returns (bool success) {
         if (balanceOf(msg.sender, itemId) < amount) {
             revert Errors.InsufficientBalance();
         }
@@ -301,7 +309,7 @@ contract ItemsImplementation is
         uint256[] memory amounts,
         bytes memory data
     ) public override {
-        if (to != address(0) && !IHatsAdaptor(hatsAdaptor).isCharacter(msg.sender)) {
+        if (to != address(0) && !IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(msg.sender)) {
             revert Errors.CharacterOnly();
         }
 
@@ -420,7 +428,7 @@ contract ItemsImplementation is
      */
 
     function _transferItem(address characterAccount, uint256 itemId, uint256 amount) internal returns (bool success) {
-        if (!IHatsAdaptor(hatsAdaptor).isCharacter(characterAccount)) {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(characterAccount)) {
             revert Errors.CharacterOnly();
         }
 

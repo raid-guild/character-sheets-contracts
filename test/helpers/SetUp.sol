@@ -31,17 +31,25 @@ import {PlayerHatEligibilityModule} from "../../src/adaptors/hats-modules/Player
 import {CharacterHatEligibilityModule} from "../../src/adaptors/hats-modules/CharacterHatEligibilityModule.sol";
 import {ItemsManagerImplementation} from "../../src/implementations/ItemsManagerImplementation.sol";
 
+import {ImplementationAddressStorage} from "../../src/lib/ImplementationAddressStorage.sol";
+import {ClonesAddressStorage} from "../../src/lib/ClonesAddressStorage.sol";
+
+import {Contracts} from "./Contracts.sol";
+
 struct StoredImplementationAddresses {
     address characterSheetsImplementation;
     address experienceImplementation;
     address itemsImplementation;
     address classesImplementation;
     address hatsAdaptorImplementation;
-    address adminHatEligibilityModuleImplementation;
-    address dungeonMasterHatEligibilityModuleImplementation;
-    address playerHatEligibilityModuleImplementation;
-    address characterHatEligibilityModuleImplementation;
+    address adminHatsEligibilityModuleImplementation;
+    address dungeonMasterHatsEligibilityModuleImplementation;
+    address playerHatsEligibilityModuleImplementation;
+    address characterHatsEligibilityModuleImplementation;
     address itemsManagerImplementation;
+    address clonesAddressStorageImplementation;
+    address eligibilityAdaptorImplementation;
+    address classLevelAdaptorImplementation;
 }
 
 struct StoredCreatedContracts {
@@ -55,23 +63,27 @@ struct StoredCreatedContracts {
     address itemsManager;
 }
 
+struct Contracts {
+    CharacterSheetsImplementation characterSheets;
+    ExperienceImplementation experience;
+    ItemsImplementation items;
+    ClassesImplementation classes;
+    CharacterSheetsFactory characterSheetsFactory;
+    EligibilityAdaptor eligibility;
+    ClassLevelAdaptor classLevels;
+    HatsAdaptor hatsAdaptor;
+    HatsModuleFactory hatsModuleFactory;
+    Hats hats;
+    ItemsManagerImplementation itemsManager;
+    ClonesAddressStorage clones;
+    ImplementationAddressStorage implementationsStorage;
+    Moloch dao;
+}
+
 contract SetUp is Test {
     using stdJson for string;
 
-    CharacterSheetsImplementation public characterSheets;
-    ExperienceImplementation public experience;
-    ItemsImplementation public items;
-    ClassesImplementation public classes;
-
-    CharacterSheetsFactory public characterSheetsFactory;
-    EligibilityAdaptor public eligibility;
-    ClassLevelAdaptor public classLevels;
-    HatsAdaptor public hatsAdaptor;
-    HatsModuleFactory public hatsModuleFactory;
-    Hats public hats;
-    ItemsManagerImplementation public itemsManager;
-
-    Moloch public dao;
+    Contracts public contracts;
 
     StoredImplementationAddresses public storedImp;
     StoredCreatedContracts public storedCreated;
@@ -97,23 +109,29 @@ contract SetUp is Test {
         vm.startPrank(admin);
 
         //create mock moloch dao for test
-        dao = new Moloch();
+        contracts.dao = new Moloch();
 
         // create eligibilityAdaptor implementation
-        eligibility = new EligibilityAdaptor();
+        contracts.eligibility = new EligibilityAdaptor();
         // create class level adaptor implementation
-        classLevels = new ClassLevelAdaptor();
+        contracts.classLevels = new ClassLevelAdaptor();
+
+        contracts.erc6551Registry = new ERC6551Registry();
+        contracts.erc6551Implementation = new CharacterAccount();
+        contracts.multiSend = new MultiSend();
 
         vm.label(address(dao), "Moloch");
         vm.label(address(eligibility), "Eligibility Adaptor");
 
-        characterSheetsFactory = new CharacterSheetsFactory();
+        contracts.characterSheetsFactory = new CharacterSheetsFactory();
 
         // hats contract deployments
-        hats = new Hats("Test Hats", "test_hats_base_img_uri");
-        hatsModuleFactory = new HatsModuleFactory(hats, "test hats factory");
+        contracts.hats = new Hats("Test Hats", "test_hats_base_img_uri");
+
+        contracts.hatsModuleFactory = new HatsModuleFactory(hats, "test hats factory");
 
         // deploy and store implementation addresses
+        contracts.implementationsStorage = ImplementationAddressStorage(new ImplementationAddressStorage());
         storedImp.itemsImplementation = address(new ItemsImplementation());
         storedImp.classesImplementation = address(new ClassesImplementation());
         storedImp.characterSheetsImplementation = address(new CharacterSheetsImplementation());
@@ -122,33 +140,44 @@ contract SetUp is Test {
 
         // hats integration
         storedImp.hatsAdaptorImplementation = address(new HatsAdaptor());
-        storedImp.adminHatEligibilityModuleImplementation = address(new AdminHatEligibilityModule("v 0.1"));
-        storedImp.dungeonMasterHatEligibilityModuleImplementation =
+        storedImp.adminHatsEligibilityModuleImplementation = address(new AdminHatEligibilityModule("v 0.1"));
+        storedImp.dungeonMasterHatsEligibilityModuleImplementation =
             address(new DungeonMasterHatEligibilityModule("v 0.1"));
-        storedImp.playerHatEligibilityModuleImplementation = address(new PlayerHatEligibilityModule("v 0.1"));
-        storedImp.characterHatEligibilityModuleImplementation = address(new CharacterHatEligibilityModule("v 0.1"));
-
-        characterSheetsFactory.initialize();
-
-        erc6551Registry = new ERC6551Registry();
-        erc6551Implementation = new CharacterAccount();
-        multiSend = new MultiSend();
+        storedImp.playerHatsEligibilityModuleImplementation = address(new PlayerHatEligibilityModule("v 0.1"));
+        storedImp.characterHatsEligibilityModuleImplementation = address(new CharacterHatEligibilityModule("v 0.1"));
+        storedImp.clonesAddressStorageImplementation = address(new ClonesAddressStorage());
+        storedImp.classLevelAdaptorImplementation = address(contracts.classLevels);
+        storedImp.eligibilityAdaptorImplementation = address(contracts.eligibility);
+        // initialize implementationsStorage
+        bytes memory encodedImplementations = abi.encode(
+            storedImp.characterSheetsImplementation,
+            storedImp.itemsImplementation,
+            storedImp.classesImplementation,
+            address(contracts.erc6551Registry),
+            address(contracts.erc6551Implementation),
+            storedImp.experienceImplementation,
+            storedImp.eligibilityAdaptorImplementation,
+            storedImp.classLevelAdaptorImplementation,
+            storedImp.itemsManagerImplementation,
+            storedImp.hatsAdaptorImplementation,
+            storedImp.clonesAddressStorageImplementation,
+            //hats addresses
+            address(contracts.hats),
+            address(contracts.hatsModuleFactory),
+            //eligibility modules
+            storedImp.adminHatsEligibilityModuleImplementation,
+            storedImp.dungeonMasterHatsEligibilityModuleImplementation,
+            storedImp.playerHatsEligibilityModuleImplementation,
+            storedImp.characterHatsEligibilityModuleImplementation
+        );
+        implementationsStorage.initialize(encodedImplementations);
+        characterSheetsFactory.initialize(address(contracts.implementationsStorage));
 
         dao.addMember(player1);
         dao.addMember(admin);
 
-        characterSheetsFactory.updateCharacterSheetsImplementation(address(storedImp.characterSheetsImplementation));
-        characterSheetsFactory.updateItemsImplementation(address(storedImp.itemsImplementation));
-        characterSheetsFactory.updateClassesImplementation(address(storedImp.classesImplementation));
-        characterSheetsFactory.updateExperienceImplementation(address(storedImp.experienceImplementation));
-        characterSheetsFactory.updateHatsAdaptorImplementation(address(storedImp.hatsAdaptorImplementation));
-        characterSheetsFactory.updateItemsManagerImplementation(address(storedImp.itemsManagerImplementation));
-
         dungeonMastersArray.push(admin);
         adminArray.push(admin);
-
-        characterSheetsFactory.updateERC6551Registry(address(erc6551Registry));
-        characterSheetsFactory.updateERC6551AccountImplementation(address(erc6551Implementation));
 
         bytes memory baseUriData = abi.encode(
             "test_metadata_uri_character_sheets/",
@@ -173,59 +202,63 @@ contract SetUp is Test {
 
         storedCreated.hatsAdaptor =
             characterSheetsFactory.createHatsAdaptor(address(storedImp.hatsAdaptorImplementation));
+        clones = ClonesAddressStorage(characterSheetsFactory.createClonesStorage());
 
         characterSheetsFactory.initializeContracts(
+            address(clones),
             abi.encode(
-                storedCreated.eligibility,
-                storedCreated.classLevels,
-                storedCreated.hatsAdaptor,
                 storedCreated.characterSheets,
-                storedCreated.experience,
                 storedCreated.items,
                 storedCreated.itemsManager,
-                storedCreated.classes
+                storedCreated.classes,
+                storedCreated.experience,
+                storedCreated.eligibility,
+                storedCreated.classLevels,
+                storedCreated.hatsAdaptor
             ),
             baseUriData
         );
 
-        characterSheets = CharacterSheetsImplementation(storedCreated.characterSheets);
+        contracts.characterSheets = CharacterSheetsImplementation(storedCreated.characterSheets);
 
         assertEq(address(characterSheets.items()), storedCreated.items, "incorrect items address in setup");
 
-        items = ItemsImplementation(storedCreated.items);
+        contracts.items = ItemsImplementation(storedCreated.items);
 
-        classes = ClassesImplementation(storedCreated.classes);
+        contracts.classes = ClassesImplementation(storedCreated.classes);
 
-        experience = ExperienceImplementation(storedCreated.experience);
+        contracts.experience = ExperienceImplementation(storedCreated.experience);
 
-        eligibility = EligibilityAdaptor(storedCreated.eligibility);
+        contracts.eligibility = EligibilityAdaptor(storedCreated.eligibility);
 
-        classLevels = ClassLevelAdaptor(storedCreated.classLevels);
+        contracts.classLevels = ClassLevelAdaptor(storedCreated.classLevels);
 
-        hatsAdaptor = HatsAdaptor(storedCreated.hatsAdaptor);
+        contracts.hatsAdaptor = HatsAdaptor(storedCreated.hatsAdaptor);
 
-        itemsManager = ItemsManagerImplementation(storedCreated.itemsManager);
+        contracts.itemsManager = ItemsManagerImplementation(storedCreated.itemsManager);
 
         //initialize created adaptors
 
-        eligibility.initialize(admin, address(dao));
+        // eligibility.initialize(admin, address(dao));
 
-        classLevels.initialize(admin, address(classes), address(experience));
+        // classLevels.initialize(admin, address(classes), address(experience));
 
         // initialize hats adaptor
-        bytes memory encodedHatsAddresses = abi.encode(
-            address(hats),
-            address(hatsModuleFactory),
-            storedImp.adminHatEligibilityModuleImplementation,
-            storedImp.dungeonMasterHatEligibilityModuleImplementation,
-            storedImp.playerHatEligibilityModuleImplementation,
-            storedImp.characterHatEligibilityModuleImplementation,
-            adminArray,
-            dungeonMastersArray,
-            storedCreated.characterSheets,
-            address(erc6551Registry),
-            address(erc6551Implementation)
-        );
+        // bytes memory encodedHatsAddresses = abi.encode(
+        //     address(hats),
+        //     address(hatsModuleFactory),
+        //     storedImp.adminHatEligibilityModuleImplementation,
+        //     storedImp.dungeonMasterHatEligibilityModuleImplementation,
+        //     storedImp.playerHatEligibilityModuleImplementation,
+        //     storedImp.characterHatEligibilityModuleImplementation,
+        //     adminArray,
+        //     dungeonMastersArray,
+        //     storedCreated.characterSheets,
+        //     address(erc6551Registry),
+        //     address(erc6551Implementation)
+        // );
+        bytes memory encodedHatsAddresses =
+            abi.encode(adminArray, dungeonMastersArray, address(contracts.implementationsStorage));
 
         bytes memory encodedHatsStrings = abi.encode(
             "test_hats_base_img",
@@ -242,7 +275,7 @@ contract SetUp is Test {
         hatsAdaptor.initialize(admin, encodedHatsAddresses, encodedHatsStrings);
 
         //set registry in character Sheets Contract
-        characterSheets.setERC6551Registry(address(erc6551Registry));
+        // characterSheets.setERC6551Registry(address(erc6551Registry));
 
         classId = classes.createClassType(createNewClass(true));
 
@@ -256,12 +289,12 @@ contract SetUp is Test {
 
     function dropExp(address player, uint256 amount) public {
         vm.prank(admin);
-        experience.dropExp(player, amount);
+        contracts.experience.dropExp(player, amount);
     }
 
     function createNewItemType(bool craftable, bool soulbound) public returns (uint256 _itemId) {
         bytes memory newItem = createNewItem(craftable, soulbound, bytes32(0));
-        _itemId = items.createItemType(newItem);
+        _itemId = contracts.items.createItemType(newItem);
     }
 
     function dropItems(address player, uint256 _itemId, uint256 amount) public {
@@ -277,7 +310,7 @@ contract SetUp is Test {
         amounts[0][0] = amount;
 
         vm.prank(admin);
-        items.dropLoot(players, itemIds, amounts);
+        contracts.items.dropLoot(players, itemIds, amounts);
     }
 
     function generateMerkleRootAndProof(
@@ -290,8 +323,8 @@ contract SetUp is Test {
         for (uint256 i = 0; i < itemIds.length; i++) {
             leaves[i] = keccak256(bytes.concat(keccak256(abi.encodePacked(itemIds[i], claimers[i], amounts[i]))));
         }
-        proof = merkle.getProof(leaves, indexOfProof);
-        root = merkle.getRoot(leaves);
+        proof = contracts.merkle.getProof(leaves, indexOfProof);
+        root = contracts.merkle.getRoot(leaves);
     }
 
     function createNewItem(bool craftable, bool soulbound, bytes32 claimable) public view returns (bytes memory) {

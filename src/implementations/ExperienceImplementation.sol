@@ -7,7 +7,7 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UU
 import {Errors} from "../lib/Errors.sol";
 import {IExperience} from "../interfaces/IExperience.sol";
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
-
+import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 import "forge-std/console2.sol";
 
 /**
@@ -20,21 +20,17 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
     bytes32 public constant CHARACTER = keccak256("CHARACTER");
 
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
-    address public characterSheets;
-    address public itemsContract;
-    address public classesContract;
-    address public hatsAdaptor;
-    address public itemsManagerContract;
+    IClonesAddressStorage public clones;
 
     modifier onlyDungeonMaster() {
-        if (!IHatsAdaptor(hatsAdaptor).isDungeonMaster(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isDungeonMaster(msg.sender)) {
             revert Errors.DungeonMasterOnly();
         }
         _;
     }
 
     modifier onlyCharacter() {
-        if (!IHatsAdaptor(hatsAdaptor).isCharacter(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(msg.sender)) {
             revert Errors.CharacterOnly();
         }
         _;
@@ -42,8 +38,9 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
 
     modifier onlyContract() {
         if (
-            msg.sender != itemsContract && msg.sender != characterSheets && msg.sender != classesContract
-                && msg.sender != itemsContract && msg.sender != itemsManagerContract
+            msg.sender != clones.itemsClone() && msg.sender != clones.characterSheetsClone()
+                && msg.sender != clones.classesClone() && msg.sender != clones.itemsClone()
+                && msg.sender != clones.itemsManagerClone()
         ) {
             revert Errors.CallerNotApproved();
         }
@@ -54,11 +51,10 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
         _disableInitializers();
     }
 
-    function initialize(bytes calldata initializationData) external initializer {
+    function initialize(address clonesStorage) external initializer {
         __ERC20_init_unchained("Experience", "EXP");
         __UUPSUpgradeable_init();
-        (characterSheets, classesContract, itemsContract, hatsAdaptor, itemsManagerContract) =
-            abi.decode(initializationData, (address, address, address, address, address));
+        clones = IClonesAddressStorage(clonesStorage);
     }
 
     /**
@@ -66,20 +62,14 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
      * @param to the address of the character that will receive the exp
      */
     function dropExp(address to, uint256 amount) public onlyDungeonMaster {
-        if (characterSheets == address(0)) {
-            revert Errors.VariableNotSet();
-        }
-        if (!IHatsAdaptor(hatsAdaptor).isCharacter(to)) {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(to)) {
             revert Errors.CharacterError();
         }
         _mint(to, amount);
     }
 
     function giveExp(address to, uint256 amount) public onlyContract {
-        if (characterSheets == address(0) || classesContract == address(0)) {
-            revert Errors.VariableNotSet();
-        }
-        if (!IHatsAdaptor(hatsAdaptor).isCharacter(to)) {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(to)) {
             revert Errors.CharacterError();
         }
         _mint(to, amount);

@@ -50,10 +50,10 @@ contract HatsEligibilityModulesTest is Test, SetUp {
         bytes memory encodedHatsAddresses = abi.encode(
             address(hats),
             address(hatsModuleFactory),
-            storedImp.adminHatEligibilityModuleImplementation,
-            storedImp.dungeonMasterHatEligibilityModuleImplementation,
-            storedImp.playerHatEligibilityModuleImplementation,
-            storedImp.characterHatEligibilityModuleImplementation,
+            storedImp.adminHatsEligibilityModuleImplementation,
+            storedImp.dungeonMasterHatsEligibilityModuleImplementation,
+            storedImp.playerHatsEligibilityModuleImplementation,
+            storedImp.characterHatsEligibilityModuleImplementation,
             _adminArray,
             _dungeonMasterArray,
             storedCreated.characterSheets,
@@ -81,8 +81,8 @@ contract HatsEligibilityModulesTest is Test, SetUp {
         characterModule = CharacterHatEligibilityModule(newAdaptor.characterHatEligibilityModule());
         playerModule = PlayerHatEligibilityModule(newAdaptor.playerHatEligibilityModule());
 
-        vm.prank(admin);
-        characterSheets.updateHatsAdaptor(address(newAdaptor));
+        // vm.prank(admin);
+        // characterSheets.updateHatsAdaptor(address(newAdaptor));
 
         dao.addMember(playerHatWearer);
         vm.prank(playerHatWearer);

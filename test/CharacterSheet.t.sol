@@ -280,12 +280,12 @@ contract CharacterSheetsTest is Test, SetUp {
         assertEq(characterSheets.balanceOf(player2), 1, "sheet not restored");
     }
 
-    function testUpdateItemsContract() public {
-        vm.expectEmit(false, false, false, true);
-        emit ItemsUpdated(player2);
-        vm.prank(admin);
-        characterSheets.updateItemsContract(player2);
-    }
+    // function testUpdateItemsContract() public {
+    //     vm.expectEmit(false, false, false, true);
+    //     emit ItemsUpdated(player2);
+    //     vm.prank(admin);
+    //     characterSheets.updateItemsContract(player2);
+    // }
 
     function testGetCharacterSheetByCharacterId() public {
         CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(0);

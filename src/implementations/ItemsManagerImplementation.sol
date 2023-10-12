@@ -17,6 +17,8 @@ import {
     IERC721ReceiverUpgradeable
 } from "openzeppelin-contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 
+import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
+
 // import "forge-std/console2.sol";  //remove for launch
 
 contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable, ERC721HolderUpgradeable {
@@ -27,12 +29,8 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
     //temporary array for refund calulations
     Asset[] internal _currentRefunds;
 
-    /// @dev address of the classes contract for item requirements check
-    address public classesContract;
-
-    address public itemsContract;
-
-    address public hatsAdaptor;
+    /// @dev clones address storage contract
+    IClonesAddressStorage public clones;
 
     // item requirements storage
     /// @dev an array of requirements to transfer this item
@@ -42,14 +40,14 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
     event RequirementRemoved(uint256 itemId, address assetAddress, uint256 assetId);
 
     modifier onlyItemsContract() {
-        if (msg.sender != itemsContract) {
+        if (msg.sender != clones.itemsClone()) {
             revert Errors.ItemError();
         }
         _;
     }
 
     modifier onlyDungeonMaster() {
-        if (!IHatsAdaptor(hatsAdaptor).isDungeonMaster(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isDungeonMaster(msg.sender)) {
             revert Errors.DungeonMasterOnly();
         }
         _;
@@ -59,12 +57,10 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         _disableInitializers();
     }
 
-    function initialize(address _itemsContract, address _classesContract, address _hatsAdaptor) external initializer {
+    function initialize(address clonesAddressStorage) external initializer {
         __UUPSUpgradeable_init();
         __ERC1155Holder_init();
-        itemsContract = _itemsContract;
-        classesContract = _classesContract;
-        hatsAdaptor = _hatsAdaptor;
+        clones = IClonesAddressStorage(clonesAddressStorage);
     }
 
     /**
@@ -89,7 +85,7 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         for (uint256 i; i < itemRequirements.length; i++) {
             newRequirement = itemRequirements[i];
             //if required item is a class skip token transfer
-            if (newRequirement.assetAddress != classesContract) {
+            if (newRequirement.assetAddress != clones.classesClone()) {
                 //issue crafting receipt before amounts change
                 _craftingReceipts[caller][itemId].push(
                     Receipt({
@@ -221,7 +217,7 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
             uint256 balance = MultiToken.balanceOf(newRequirement, characterAccount);
 
             // if the required asset is a class check that the balance is not less than the required level.
-            if (newRequirement.assetAddress == classesContract) {
+            if (newRequirement.assetAddress == clones.classesClone()) {
                 if (balance < newRequirement.amount) {
                     return false;
                 }

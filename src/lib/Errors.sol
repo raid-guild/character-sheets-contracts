@@ -15,6 +15,7 @@ abstract contract Errors {
     error DuplicateError();
     error DungeonMasterOnly();
     error PlayerOnly();
+    error AdminOnly();
     error CharacterOnly();
     error ClassError();
     error RequirementError();

@@ -2,13 +2,15 @@
 pragma solidity ^0.8.9;
 
 import {ERC165} from "openzeppelin-contracts/utils/introspection/ERC165.sol";
-import {IClassLevelAdaptor} from "../interfaces/IClassLevelAdaptor.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IERC1155} from "openzeppelin-contracts/token/ERC1155/IERC1155.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import {Errors} from "../lib/Errors.sol";
+
+import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
+import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 
 /**
  * @title Class Level Adaptor
@@ -17,7 +19,7 @@ import {Errors} from "../lib/Errors.sol";
  * @dev any variation to this contract must implement the levelRequirementsMet and getExperienceForNextLevel functions
  */
 
-contract ClassLevelAdaptor is IClassLevelAdaptor, ERC165, Initializable, OwnableUpgradeable, UUPSUpgradeable {
+contract ClassLevelAdaptor is ERC165, Initializable, UUPSUpgradeable {
     /**
      * @notice erc651 interfaceId
      * @dev (this.levelRequirementsMet.selector ^ this.getExperienceForNextLevel.selector ^ this.supportsInterface.selector)
@@ -27,17 +29,22 @@ contract ClassLevelAdaptor is IClassLevelAdaptor, ERC165, Initializable, Ownable
     uint256 public constant MAX_LEVEL = 20; // Maximum level
     uint256[20] private _experiencePoints; // Array to store XP for each level
 
-    address public classesContract;
-    address public experienceContract;
+    IClonesAddressStorage public clones;
 
-    event ClassesContractUpdated(address newClassesContract);
-    event ExperienceContractUpdated(address newExperienceContract);
+    event ClonesAddressStorageUpdated(address newClonesAddressStorage);
+
+    modifier onlyAdmin() {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isAdmin(msg.sender)) {
+            revert Errors.AdminOnly();
+        }
+        _;
+    }
 
     constructor() {
         _disableInitializers();
     }
 
-    function initialize(address _owner, address _classesContract, address _experienceContract) external initializer {
+    function initialize(address _clonesAddressStorage) external initializer {
         _experiencePoints[0] = 0;
         _experiencePoints[1] = 300 * 10 ** 18;
         _experiencePoints[2] = 900 * 10 ** 18;
@@ -59,31 +66,23 @@ contract ClassLevelAdaptor is IClassLevelAdaptor, ERC165, Initializable, Ownable
         _experiencePoints[18] = 305000 * 10 ** 18;
         _experiencePoints[19] = 355000 * 10 ** 18;
 
-        classesContract = _classesContract;
-        experienceContract = _experienceContract;
-        __Ownable_init();
-        transferOwnership(_owner);
+        clones = IClonesAddressStorage(_clonesAddressStorage);
     }
 
-    function updateClassesContract(address newClassesContract) public onlyOwner {
-        classesContract = newClassesContract;
-        emit ClassesContractUpdated(newClassesContract);
-    }
-
-    function updateExperienceContract(address newExperienceContract) public onlyOwner {
-        experienceContract = newExperienceContract;
-        emit ExperienceContractUpdated(newExperienceContract);
+    function updateClonesAddressStorage(address newClonesAddressStorage) public onlyAdmin {
+        clones = IClonesAddressStorage(newClonesAddressStorage);
+        emit ClonesAddressStorageUpdated(newClonesAddressStorage);
     }
 
     function levelRequirementsMet(address account, uint256 classId) public view returns (bool) {
         // checks the number of class tokens held by account.  1 token = level 0.
-        uint256 currentLevel = IERC1155(classesContract).balanceOf(account, classId);
+        uint256 currentLevel = IERC1155(clones.classesClone()).balanceOf(account, classId);
         if (currentLevel == 0) {
             revert Errors.InvalidClassLevel();
         }
 
         //current experience not locked in a class
-        uint256 currentExp = IERC20(experienceContract).balanceOf(account);
+        uint256 currentExp = IERC20(clones.experienceClone()).balanceOf(account);
 
         // check that the account holds the correct amount of exp to claim the next level + the amount already locked.  since 1 token = level 0.
         return getExperienceForNextLevel(currentLevel) <= currentExp;
@@ -112,5 +111,5 @@ contract ClassLevelAdaptor is IClassLevelAdaptor, ERC165, Initializable, Ownable
     }
 
     // solhint-disable-next-line no-empty-blocks
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
 }

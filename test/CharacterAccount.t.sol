@@ -12,12 +12,12 @@ import "../src/lib/Errors.sol";
 contract CharacterAccountTest is Test, SetUp {
     function testEquipItemToCharacter() public {
         vm.prank(admin);
-        uint256 tokenId = characterSheets.rollCharacterSheet("test_token_uri/");
+        uint256 tokenId = contracts.characterSheets.rollCharacterSheet("test_token_uri/");
         assertEq(tokenId, 1, "characterId not assigned");
 
-        assertEq(characterSheets.tokenURI(1), "test_base_uri_character_sheets/test_token_uri/");
+        assertEq(contracts.characterSheets.tokenURI(1), "test_base_uri_character_sheets/test_token_uri/");
 
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(1);
+        CharacterSheet memory sheet = contracts.characterSheets.getCharacterSheetByCharacterId(1);
 
         CharacterAccount account = CharacterAccount(payable(sheet.accountAddress));
 
@@ -30,19 +30,19 @@ contract CharacterAccountTest is Test, SetUp {
         vm.prank(admin);
         account.execute(address(characterSheets), 0, data, 0);
 
-        sheet = characterSheets.getCharacterSheetByCharacterId(1);
+        sheet = contracts.characterSheets.getCharacterSheetByCharacterId(1);
         assertEq(sheet.inventory.length, 1, "item not assigned");
         assertEq(sheet.inventory[0], 0, "item not assigned");
     }
 
     function testUnequipItemToCharacter() public {
         vm.prank(admin);
-        uint256 tokenId = characterSheets.rollCharacterSheet("test_token_uri/");
+        uint256 tokenId = contracts.characterSheets.rollCharacterSheet("test_token_uri/");
         assertEq(tokenId, 1, "characterId not assigned");
 
-        assertEq(characterSheets.tokenURI(1), "test_base_uri_character_sheets/test_token_uri/");
+        assertEq(contracts.characterSheets.tokenURI(1), "test_base_uri_character_sheets/test_token_uri/");
 
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(1);
+        CharacterSheet memory sheet = contracts.characterSheets.getCharacterSheetByCharacterId(1);
 
         CharacterAccount account = CharacterAccount(payable(sheet.accountAddress));
 
@@ -53,9 +53,9 @@ contract CharacterAccountTest is Test, SetUp {
         bytes memory data = abi.encodeWithSelector(selector, 1, 0);
 
         vm.prank(admin);
-        account.execute(address(characterSheets), 0, data, 0);
+        contracts.account.execute(address(characterSheets), 0, data, 0);
 
-        sheet = characterSheets.getCharacterSheetByCharacterId(1);
+        sheet = contracts.characterSheets.getCharacterSheetByCharacterId(1);
         assertEq(sheet.inventory.length, 1, "item not assigned");
         assertEq(sheet.inventory[0], 0, "item not assigned");
 
@@ -71,12 +71,12 @@ contract CharacterAccountTest is Test, SetUp {
 
     function testEquipViaMultiSendDelegateCall() public {
         vm.prank(admin);
-        uint256 tokenId = characterSheets.rollCharacterSheet("test_token_uri/");
+        uint256 tokenId = contracts.characterSheets.rollCharacterSheet("test_token_uri/");
         assertEq(tokenId, 1, "characterId not assigned");
 
-        assertEq(characterSheets.tokenURI(1), "test_base_uri_character_sheets/test_token_uri/");
+        assertEq(contracts.characterSheets.tokenURI(1), "test_base_uri_character_sheets/test_token_uri/");
 
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(1);
+        CharacterSheet memory sheet = contracts.characterSheets.getCharacterSheetByCharacterId(1);
 
         CharacterAccount account = CharacterAccount(payable(sheet.accountAddress));
 
@@ -87,27 +87,27 @@ contract CharacterAccountTest is Test, SetUp {
         bytes memory data = abi.encodeWithSelector(selector, 1, 0);
 
         bytes memory transaction =
-            abi.encodePacked(uint8(0), address(characterSheets), uint256(0), uint256(data.length), data);
+            abi.encodePacked(uint8(0), address(contracts.characterSheets), uint256(0), uint256(data.length), data);
 
         selector = bytes4(keccak256("multiSend(bytes)"));
         data = abi.encodeWithSelector(selector, transaction);
 
         vm.prank(admin);
-        account.execute(address(multiSend), 0, data, 1);
+        account.execute(address(contracts.multiSend), 0, data, 1);
 
-        sheet = characterSheets.getCharacterSheetByCharacterId(1);
+        sheet = contracts.characterSheets.getCharacterSheetByCharacterId(1);
         assertEq(sheet.inventory.length, 1, "item not assigned");
         assertEq(sheet.inventory[0], 0, "item not assigned");
     }
 
     function testEquipAndUnequipViaMultiSendDelegateCall() public {
         vm.prank(admin);
-        uint256 tokenId = characterSheets.rollCharacterSheet("test_token_uri/");
+        uint256 tokenId = contracts.characterSheets.rollCharacterSheet("test_token_uri/");
         assertEq(tokenId, 1, "characterId not assigned");
 
-        assertEq(characterSheets.tokenURI(1), "test_base_uri_character_sheets/test_token_uri/");
+        assertEq(contracts.characterSheets.tokenURI(1), "test_base_uri_character_sheets/test_token_uri/");
 
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(1);
+        CharacterSheet memory sheet = contracts.characterSheets.getCharacterSheetByCharacterId(1);
 
         CharacterAccount account = CharacterAccount(payable(sheet.accountAddress));
 
@@ -134,7 +134,7 @@ contract CharacterAccountTest is Test, SetUp {
         vm.prank(admin);
         account.execute(address(multiSend), 0, data, 1);
 
-        sheet = characterSheets.getCharacterSheetByCharacterId(1);
+        sheet = contracts.characterSheets.getCharacterSheetByCharacterId(1);
         assertEq(sheet.inventory.length, 0, "item still assigned");
     }
 }

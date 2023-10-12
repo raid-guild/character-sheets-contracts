@@ -12,9 +12,12 @@ import {IERC1155} from "openzeppelin-contracts/token/ERC1155/IERC1155.sol";
 
 import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
 import {IEligibilityAdaptor} from "../interfaces/IEligibilityAdaptor.sol";
-import {ICharacterSheets} from "../interfaces/ICharacterSheets.sol";
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 import {IItems} from "../interfaces/IItems.sol";
+import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
+
+import {ImplementationAddressStorage} from "../lib/ImplementationAddressStorage.sol";
+
 import {CharacterSheet} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
 
@@ -28,7 +31,7 @@ import {Errors} from "../lib/Errors.sol";
  * by the base character account.
  */
 
-contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgradeable, UUPSUpgradeable {
+contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgradeable {
     /// @dev the admin of the contract
     bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
     /// @dev the EOA of the dao member who owns a sheet
@@ -41,12 +44,8 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
     string public baseTokenURI;
     string public metadataURI;
 
-    address public erc6551Registry;
-    address public erc6551AccountImplementation;
-
-    address public eligibilityAdaptor;
-
-    address public hatsAdaptor;
+    ImplementationAddressStorage public erc6551Addresses;
+    IClonesAddressStorage public clones;
 
     // characterId => characterSheet
     mapping(uint256 => CharacterSheet) private _sheets;
@@ -63,45 +62,44 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
     event MetadataURIUpdated(string newURI);
     event BaseURIUpdated(string newURI);
     event CharacterRemoved(uint256 characterId);
-    event ItemsUpdated(address items);
-    event HatsAdaptorUpdated(address newAdaptor);
+    event Erc6551AddressesUpdated(address newErc6551Storage);
+    event ClonesAddressStorageUpdated(address newClonesStorageAddress);
     event ItemEquipped(uint256 characterId, uint256 itemId);
     event ItemUnequipped(uint256 characterId, uint256 itemId);
     event CharacterUpdated(uint256 characterId);
     event PlayerJailed(address playerAddress, bool thrownInJail);
     event CharacterRestored(address player, address account, uint256 characterId);
-    event EligibilityAdaptorUpdated(address newAdaptor);
 
     modifier onlyContract() {
-        if (msg.sender != items) {
+        if (msg.sender != clones.itemsClone()) {
             revert Errors.CallerNotApproved();
         }
         _;
     }
 
     modifier onlyAdmin() {
-        if (!IHatsAdaptor(hatsAdaptor).isAdmin(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isAdmin(msg.sender)) {
             revert Errors.CallerNotApproved();
         }
         _;
     }
 
     modifier onlyDungeonMaster() {
-        if (!IHatsAdaptor(hatsAdaptor).isDungeonMaster(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isDungeonMaster(msg.sender)) {
             revert Errors.DungeonMasterOnly();
         }
         _;
     }
 
     modifier onlyPlayer() {
-        if (!IHatsAdaptor(hatsAdaptor).isPlayer(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isPlayer(msg.sender)) {
             revert Errors.PlayerOnly();
         }
         _;
     }
 
     modifier onlyCharacter() {
-        if (!IHatsAdaptor(hatsAdaptor).isCharacter(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(msg.sender)) {
             revert Errors.CharacterOnly();
         }
         _;
@@ -134,15 +132,13 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
         __ERC721_init_unchained("CharacterSheet", "CHAS");
         __UUPSUpgradeable_init();
 
-        (
-            eligibilityAdaptor,
-            hatsAdaptor,
-            items,
-            erc6551Registry,
-            erc6551AccountImplementation,
-            metadataURI,
-            baseTokenURI
-        ) = abi.decode(_encodedParameters, (address, address, address, address, address, string, string));
+        address clonesStorage;
+        address implementationStorage;
+
+        (clonesStorage, implementationStorage, metadataURI, baseTokenURI) =
+            abi.decode(_encodedParameters, (address, address, string, string));
+        clones = IClonesAddressStorage(clonesStorage);
+        erc6551Addresses = ImplementationAddressStorage(implementationStorage);
     }
 
     /**
@@ -152,12 +148,18 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
      */
 
     function rollCharacterSheet(string calldata _tokenURI) external returns (uint256) {
-        if (erc6551AccountImplementation == address(0) || erc6551Registry == address(0)) {
+        if (
+            erc6551Addresses.erc6551AccountImplementation() == address(0)
+                || erc6551Addresses.erc6551Registry() == address(0)
+        ) {
             revert Errors.NotInitialized();
         }
 
         // check the eligibility adaptor to see if the player is eligible to roll a character sheet
-        if (eligibilityAdaptor != address(0) && !IEligibilityAdaptor(eligibilityAdaptor).isEligible(msg.sender)) {
+        if (
+            clones.eligibilityAdaptorClone() != address(0)
+                && !IEligibilityAdaptor(clones.eligibilityAdaptorClone()).isEligible(msg.sender)
+        ) {
             revert Errors.EligibilityError();
         }
 
@@ -179,8 +181,8 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
         uint256 characterId = totalSheets;
 
         // calculate ERC6551 account address
-        address characterAccount = IERC6551Registry(erc6551Registry).createAccount(
-            erc6551AccountImplementation, block.chainid, address(this), characterId, characterId, ""
+        address characterAccount = IERC6551Registry(erc6551Addresses.erc6551Registry()).createAccount(
+            erc6551Addresses.erc6551AccountImplementation(), block.chainid, address(this), characterId, characterId, ""
         );
         // setting salt as characterId
 
@@ -192,8 +194,8 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
         _playerSheets[msg.sender] = characterId;
         _characterSheets[characterAccount] = characterId;
 
-        IHatsAdaptor(hatsAdaptor).mintPlayerHat(msg.sender);
-        IHatsAdaptor(hatsAdaptor).mintCharacterHat(characterAccount);
+        IHatsAdaptor(clones.hatsAdaptorClone()).mintPlayerHat(msg.sender);
+        IHatsAdaptor(clones.hatsAdaptorClone()).mintCharacterHat(characterAccount);
 
         totalSheets++;
         emit NewCharacterSheetRolled(msg.sender, characterAccount, characterId);
@@ -211,7 +213,7 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
             revert Errors.OwnershipError();
         }
 
-        if (IERC1155(items).balanceOf(msg.sender, itemId) == 0) {
+        if (IERC1155(clones.itemsClone()).balanceOf(msg.sender, itemId) == 0) {
             // TODO ensure that when items are transferred from a character sheet that they are unequipped
             revert Errors.InventoryError();
         }
@@ -294,14 +296,17 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
         if (_ownerOf(characterId) != address(0)) {
             revert Errors.OwnershipError();
         }
-        if (eligibilityAdaptor != address(0) && !IEligibilityAdaptor(eligibilityAdaptor).isEligible(msg.sender)) {
+        if (
+            clones.eligibilityAdaptorClone() != address(0)
+                && !IEligibilityAdaptor(clones.eligibilityAdaptorClone()).isEligible(msg.sender)
+        ) {
             revert Errors.EligibilityError();
         }
         if (jailed[msg.sender]) {
             revert Errors.Jailed();
         }
-        address restoredAccount = IERC6551Registry(erc6551Registry).createAccount(
-            erc6551AccountImplementation, block.chainid, address(this), characterId, characterId, ""
+        address restoredAccount = IERC6551Registry(erc6551Addresses.erc6551Registry()).createAccount(
+            erc6551Addresses.erc6551AccountImplementation(), block.chainid, address(this), characterId, characterId, ""
         );
         // setting salt as characterId
 
@@ -330,7 +335,10 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
             revert Errors.CharacterError();
         }
 
-        if (eligibilityAdaptor != address(0) && IEligibilityAdaptor(eligibilityAdaptor).isEligible(playerAddress)) {
+        if (
+            clones.eligibilityAdaptorClone() != address(0)
+                && IEligibilityAdaptor(clones.eligibilityAdaptorClone()).isEligible(playerAddress)
+        ) {
             revert Errors.EligibilityError();
         }
 
@@ -364,19 +372,14 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
         emit PlayerJailed(playerAddress, throwInJail);
     }
 
-    function updateItemsContract(address expContract) public onlyAdmin {
-        items = expContract;
-        emit ItemsUpdated(expContract);
+    function updateClones(address clonesStorage) public onlyAdmin {
+        clones = IClonesAddressStorage(clonesStorage);
+        emit ClonesAddressStorageUpdated(clonesStorage);
     }
 
-    function updateEligibilityAdaptor(address newAdaptor) public onlyAdmin {
-        eligibilityAdaptor = newAdaptor;
-        emit EligibilityAdaptorUpdated(newAdaptor);
-    }
-
-    function updateHatsAdaptor(address newHatsAdaptor) public onlyAdmin {
-        hatsAdaptor = newHatsAdaptor;
-        emit HatsAdaptorUpdated(newHatsAdaptor);
+    function updateErc6551Addresses(address newErc6551Storage) public onlyAdmin {
+        erc6551Addresses = ImplementationAddressStorage(newErc6551Storage);
+        emit Erc6551AddressesUpdated(newErc6551Storage);
     }
 
     function setBaseUri(string memory _uri) public onlyDungeonMaster {
@@ -387,20 +390,6 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
     function setMetadataUri(string memory _uri) public onlyDungeonMaster {
         metadataURI = _uri;
         emit MetadataURIUpdated(_uri);
-    }
-
-    /**
-     * @dev Sets the address of the ERC6551 registry
-     */
-    function setERC6551Registry(address registry) public onlyDungeonMaster {
-        erc6551Registry = registry;
-    }
-
-    /**
-     * @dev Sets the address of the ERC6551 account implementation
-     */
-    function setERC6551Implementation(address implementation) public onlyDungeonMaster {
-        erc6551AccountImplementation = implementation;
     }
 
     // transfer overrides since these tokens should be soulbound or only transferable by the dungeonMaster

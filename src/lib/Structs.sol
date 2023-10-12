@@ -49,18 +49,6 @@ struct CharacterSheet {
 }
 
 struct HatsData {
-    /// @dev the address of the hats contract
-    address hats;
-    /// @dev the address of the hatsModuleFactory
-    address hatsModuleFactory;
-    /// @dev the adress of the eligibility module for the Hats admins.
-    address adminHatEligibilityModuleImplementation;
-    /// @dev the address of the dungeonMasterEligibilityModule
-    address dungeonMasterHatEligibilityModuleImplementation;
-    /// @dev the address of the character hats eligibility module deployed from the hats module factory
-    address characterHatEligibilityModuleImplementation;
-    /// @dev the address of the player hats eligibility module deployed from the hats module factory
-    address playerHatEligibilityModuleImplementation;
     /// @dev uint256 id of top hat
     uint256 topHatId;
     /// @dev the uint256 hat id of the admin hat

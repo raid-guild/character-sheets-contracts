@@ -8,13 +8,13 @@ import {
 } from "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import {IExperience} from "../interfaces/IExperience.sol";
 import {Class} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
 
 import {IClassLevelAdaptor} from "../interfaces/IClassLevelAdaptor.sol";
-import {IClasses} from "../interfaces/IClasses.sol";
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
+import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
+import {IExperience} from "../interfaces/IExperience.sol";
 
 /**
  * @title Experience and Items
@@ -23,10 +23,7 @@ import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
  * Each item and class is an 1155 token that can soulbound or not to the erc6551 wallet of each player nft
  * in the characterSheets contract.
  */
-contract ClassesImplementation is IClasses, ERC1155HolderUpgradeable, ERC1155Upgradeable, UUPSUpgradeable {
-    bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
-    bytes32 public constant CHARACTER = keccak256("CHARACTER");
-
+contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UUPSUpgradeable {
     /// @dev individual mapping for token URIs
     mapping(uint256 => string) private _classURIs;
 
@@ -42,30 +39,30 @@ contract ClassesImplementation is IClasses, ERC1155HolderUpgradeable, ERC1155Upg
     /// @dev the total number of class types that have been created
     uint256 public totalClasses;
 
-    /// @dev the interface to the characterSheets erc721 implementation that this is tied to
-    address public characterSheets;
-    address public experience;
-
-    address public classLevelAdaptor;
-    address public hatsAdaptor;
+    IClonesAddressStorage public clones;
 
     event NewClassCreated(uint256 tokenId);
     event ClassAssigned(address character, uint256 classId);
     event ClassRevoked(address character, uint256 classId);
-    event CharacterSheetsUpdated(address newCharacterSheets);
-    event ExperienceUpdated(address newExperience);
-    event ClassLevelAdaptorUpdated(address newClassLevelAdaptor);
-    event ClassLeveled(address character, uint256 classId, uint256 newLevel);
+    event ClassLeveled(address character, uint256 classId, uint256 newBalance);
+    event ClonesAddressStorageUpdated(address newClonesAddressStorage);
+
+    modifier onlyAdmin() {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isAdmin(msg.sender)) {
+            revert Errors.AdminOnly();
+        }
+        _;
+    }
 
     modifier onlyDungeonMaster() {
-        if (!IHatsAdaptor(hatsAdaptor).isDungeonMaster(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isDungeonMaster(msg.sender)) {
             revert Errors.DungeonMasterOnly();
         }
         _;
     }
 
     modifier onlyCharacter() {
-        if (!IHatsAdaptor(hatsAdaptor).isCharacter(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(msg.sender)) {
             revert Errors.CharacterOnly();
         }
         _;
@@ -80,9 +77,10 @@ contract ClassesImplementation is IClasses, ERC1155HolderUpgradeable, ERC1155Upg
         __ERC1155Holder_init();
 
         string memory baseUri;
-        (characterSheets, experience, hatsAdaptor, classLevelAdaptor, baseUri) =
-            abi.decode(_encodedData, (address, address, address, address, string));
+        address _clonesStorageAdaptor;
+        (_clonesStorageAdaptor, baseUri) = abi.decode(_encodedData, (address, string));
         _baseURI = baseUri;
+        clones = IClonesAddressStorage(_clonesStorageAdaptor);
     }
 
     /**
@@ -118,19 +116,9 @@ contract ClassesImplementation is IClasses, ERC1155HolderUpgradeable, ERC1155Upg
         return success;
     }
 
-    function updateCharacterSheetsContract(address newCharSheets) external onlyDungeonMaster {
-        characterSheets = newCharSheets;
-        emit CharacterSheetsUpdated(newCharSheets);
-    }
-
-    function updateExperienceContract(address newExperience) external onlyDungeonMaster {
-        experience = newExperience;
-        emit ExperienceUpdated(newExperience);
-    }
-
-    function updateClassLevelAdaptor(address newClassLevelAdaptor) external onlyDungeonMaster {
-        classLevelAdaptor = newClassLevelAdaptor;
-        emit ClassLevelAdaptorUpdated(newClassLevelAdaptor);
+    function updateClonesAddressStorage(address newClonesStorage) external onlyAdmin {
+        clones = IClonesAddressStorage(newClonesStorage);
+        emit ClonesAddressStorageUpdated(newClonesStorage);
     }
 
     /**
@@ -198,20 +186,21 @@ contract ClassesImplementation is IClasses, ERC1155HolderUpgradeable, ERC1155Upg
      */
 
     function levelClass(address character, uint256 classId) public onlyDungeonMaster returns (uint256) {
-        if (classLevelAdaptor == address(0)) {
+        if (clones.classLevelAdaptorClone() == address(0)) {
             revert Errors.NotInitialized();
         }
-        if (!IClassLevelAdaptor(classLevelAdaptor).levelRequirementsMet(character, classId)) {
+        if (!IClassLevelAdaptor(clones.classLevelAdaptorClone()).levelRequirementsMet(character, classId)) {
             revert Errors.ClassError();
         }
 
         uint256 currentLevel = balanceOf(character, classId);
-        uint256 requiredAmount = IClassLevelAdaptor(classLevelAdaptor).getExperienceForNextLevel(currentLevel);
+        uint256 requiredAmount =
+            IClassLevelAdaptor(clones.classLevelAdaptorClone()).getExperienceForNextLevel(currentLevel);
 
         //stake appropriate exp
         classLevels[character][classId] += requiredAmount;
 
-        IExperience(experience).burnExp(character, requiredAmount);
+        IExperience(clones.experienceClone()).burnExp(character, requiredAmount);
 
         //mint another class token
 
@@ -225,7 +214,7 @@ contract ClassesImplementation is IClasses, ERC1155HolderUpgradeable, ERC1155Upg
     }
 
     function deLevelClass(uint256 classId, uint256 numberOfLevels) public onlyCharacter returns (uint256) {
-        if (classLevelAdaptor == address(0)) {
+        if (clones.classLevelAdaptorClone() == address(0)) {
             revert Errors.NotInitialized();
         }
         uint256 currentLevel = balanceOf(msg.sender, classId) - 1;
@@ -234,15 +223,15 @@ contract ClassesImplementation is IClasses, ERC1155HolderUpgradeable, ERC1155Upg
             revert Errors.InsufficientBalance();
         }
 
-        uint256 expToRedeem = IClassLevelAdaptor(classLevelAdaptor).getExpForLevel(currentLevel)
-            - IClassLevelAdaptor(classLevelAdaptor).getExpForLevel(currentLevel - numberOfLevels);
+        uint256 expToRedeem = IClassLevelAdaptor(clones.classLevelAdaptorClone()).getExpForLevel(currentLevel)
+            - IClassLevelAdaptor(clones.classLevelAdaptorClone()).getExpForLevel(currentLevel - numberOfLevels);
 
         //remove level tokens
         _burn(msg.sender, classId, numberOfLevels);
 
         //mint replacement exp
 
-        IExperience(experience).giveExp(msg.sender, expToRedeem);
+        IExperience(clones.experienceClone()).giveExp(msg.sender, expToRedeem);
 
         //return amount of exp minted
 
@@ -325,7 +314,7 @@ contract ClassesImplementation is IClasses, ERC1155HolderUpgradeable, ERC1155Upg
         uint256[] memory amounts,
         bytes memory data
     ) public override onlyDungeonMaster {
-        if (!IHatsAdaptor(hatsAdaptor).isCharacter(to)) {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(to)) {
             revert Errors.CharacterOnly();
         }
 
@@ -337,7 +326,7 @@ contract ClassesImplementation is IClasses, ERC1155HolderUpgradeable, ERC1155Upg
         override
         onlyDungeonMaster
     {
-        if (!IHatsAdaptor(hatsAdaptor).isCharacter(to)) {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(to)) {
             revert Errors.CharacterOnly();
         }
         super._safeTransferFrom(from, to, id, amount, data);
