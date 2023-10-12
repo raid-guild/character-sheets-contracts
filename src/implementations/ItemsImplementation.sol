@@ -456,7 +456,7 @@ contract ItemsImplementation is IItems, ERC1155HolderUpgradeable, ERC1155Upgrade
     //solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {}
 
-    function _checkRequirements(address characterAccount, uint256 itemId, uint256 amount)
+    function _checkRequirements(address characterAccount, uint256 itemId, uint256)
         internal
         view
         returns (bool)
@@ -472,14 +472,17 @@ contract ItemsImplementation is IItems, ERC1155HolderUpgradeable, ERC1155Upgrade
             newRequirement = itemRequirements[i];
 
             uint256 balance = MultiToken.balanceOf(newRequirement, characterAccount);
-            uint256 itemBalance = balanceOf(characterAccount, itemId);
-
-            // we check the amount + itemBalance because if the player has 1 item and the requirement is 2
-            // then we need to check if the player has 3 items in total
-            // this is because the player is crafting 2 more items
-            if (balance < newRequirement.amount * (amount + itemBalance)) {
+            if (balance < newRequirement.amount) {
                 return false;
             }
+            // uint256 itemBalance = balanceOf(characterAccount, itemId);
+
+            // // we check the amount + itemBalance because if the player has 1 item and the requirement is 2
+            // // then we need to check if the player has 3 items in total
+            // // this is because the player is crafting 2 more items
+            // if (balance < newRequirement.amount * (amount + itemBalance)) {
+            //     return false;
+            // }
         }
         return true;
     }
