@@ -15,7 +15,7 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
     address public erc6551Registry;
     address public erc6551AccountImplementation;
     address public experienceImplementation;
-    address public eligibilityAdaptorImplementation;
+    address public CharacterEligibilityAdaptorImplementation;
     address public classLevelAdaptorImplementation;
     address public itemsManagerImplementation;
     address public hatsAdaptorImplementation;
@@ -38,7 +38,7 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
     event RegistryUpdated(address newRegistry);
     event ERC6551AccountImplementationUpdated(address newImplementation);
     event ClassesImplementationUpdated(address newClasses);
-    event EligibilityAdaptorUpdated(address newAdaptor);
+    event CharacterEligibilityAdaptorUpdated(address newAdaptor);
     event ClassLevelAdaptorUpdated(address newAdaptor);
     event HatsAdaptorUpdated(address newHatsAdaptor);
     event ItemsManagerUpdated(address newItemsManager);
@@ -64,7 +64,7 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
             erc6551Registry,
             erc6551AccountImplementation,
             experienceImplementation,
-            eligibilityAdaptorImplementation,
+            CharacterEligibilityAdaptorImplementation,
             classLevelAdaptorImplementation,
             itemsManagerImplementation,
             hatsAdaptorImplementation,
@@ -129,9 +129,12 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         emit ClassesImplementationUpdated(classesImplementation);
     }
 
-    function updateEligibilityAdaptorImplementation(address _newEligibilityAdaptor) external onlyOwner {
-        eligibilityAdaptorImplementation = _newEligibilityAdaptor;
-        emit EligibilityAdaptorUpdated(_newEligibilityAdaptor);
+    function updateCharacterEligibilityAdaptorImplementation(address _newCharacterEligibilityAdaptor)
+        external
+        onlyOwner
+    {
+        CharacterEligibilityAdaptorImplementation = _newCharacterEligibilityAdaptor;
+        emit CharacterEligibilityAdaptorUpdated(_newCharacterEligibilityAdaptor);
     }
 
     function updateClassLevelAdaptorImplementation(address _newClassLevelAdaptor) external onlyOwner {

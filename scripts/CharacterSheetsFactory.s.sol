@@ -18,7 +18,7 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
     address public itemsImplementation;
     address public experienceImplementation;
     address public classesImplementation;
-    address public eligibilityAdaptorImplementation;
+    address public CharacterEligibilityAdaptorImplementation;
     address public classLevelAdaptorImplementation;
 
     CharacterSheetsFactory public characterSheetsFactory;
@@ -29,10 +29,11 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
         characterSheetsImplementation =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterSheetsImplementation")));
         itemsImplementation = json.readAddress(string(abi.encodePacked(".", targetEnv, ".ItemsImplementation")));
-        experienceImplementation = json.readAddress(string(abi.encodePacked(".", targetEnv, ".ExperienceImplementation")));
+        experienceImplementation =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".ExperienceImplementation")));
         classesImplementation = json.readAddress(string(abi.encodePacked(".", targetEnv, ".ClassesImplementation")));
-        eligibilityAdaptorImplementation =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".EligibilityAdaptor")));
+        CharacterEligibilityAdaptorImplementation =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterEligibilityAdaptor")));
         classLevelAdaptorImplementation =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".ClassLevelAdaptor")));
     }
@@ -44,7 +45,9 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
         require(itemsImplementation != address(0), "zero itemsImplementation");
         require(experienceImplementation != address(0), "zero experienceImplementation");
         require(classesImplementation != address(0), "zero classesImplementation");
-        require(eligibilityAdaptorImplementation != address(0), "zero eligibilityAdaptorImplementation");
+        require(
+            CharacterEligibilityAdaptorImplementation != address(0), "zero CharacterEligibilityAdaptorImplementation"
+        );
         require(classLevelAdaptorImplementation != address(0), "zero classLevelAdaptorImplementation");
 
         vm.startBroadcast(deployerPrivateKey);
@@ -58,7 +61,9 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
         characterSheetsFactory.updateERC6551Registry(erc6551Registry);
         characterSheetsFactory.updateERC6551AccountImplementation(erc6551AccountImplementation);
         characterSheetsFactory.updateClassesImplementation(classesImplementation);
-        characterSheetsFactory.updateEligibilityAdaptorImplementation(eligibilityAdaptorImplementation);
+        characterSheetsFactory.updateCharacterEligibilityAdaptorImplementation(
+            CharacterEligibilityAdaptorImplementation
+        );
         characterSheetsFactory.updateClassLevelAdaptorImplementation(classLevelAdaptorImplementation);
 
         vm.stopBroadcast();

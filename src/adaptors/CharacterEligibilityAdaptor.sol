@@ -8,13 +8,19 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UU
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {IMolochDAO} from "../interfaces/IMolochDAO.sol";
-import {IEligibilityAdaptor} from "../interfaces/IEligibilityAdaptor.sol";
+import {ICharacterEligibilityAdaptor} from "../interfaces/ICharacterEligibilityAdaptor.sol";
 import {Errors} from "../lib/Errors.sol";
 
 /**
  * @notice this contract is to check and make sure that an address is eligible to roll a character sheet
  */
-contract EligibilityAdaptor is IEligibilityAdaptor, ERC165, Initializable, OwnableUpgradeable, UUPSUpgradeable {
+contract CharacterEligibilityAdaptor is
+    ICharacterEligibilityAdaptor,
+    ERC165,
+    Initializable,
+    OwnableUpgradeable,
+    UUPSUpgradeable
+{
     //(this.isEligible.selector ^ this.supportsInterface.selector);
     bytes4 public constant INTERFACE_ID = 0x671ccc5a;
 

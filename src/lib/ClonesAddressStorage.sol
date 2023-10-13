@@ -16,7 +16,7 @@ contract ClonesAddressStorage is UUPSUpgradeable {
     address public itemsManagerClone;
     address public classesClone;
     address public experienceClone;
-    address public eligibilityAdaptorClone;
+    address public CharacterEligibilityAdaptorClone;
     address public classLevelAdaptorClone;
     address public hatsAdaptorClone;
 
@@ -25,7 +25,7 @@ contract ClonesAddressStorage is UUPSUpgradeable {
     event ItemsCloneUpdated(address newItemsClone);
     event ClassesCloneUpdated(address newClassesClone);
     event ExperienceCloneUpdated(address newExperienceClone);
-    event EligibilityAdaptorCloneUpdated(address newEligibilityAdaptorCloneModule);
+    event CharacterEligibilityAdaptorCloneUpdated(address newCharacterEligibilityAdaptorCloneModule);
     event ClassLevelAdaptorCloneUpdated(address newClassLevelAdaptorClone);
     event ItemsManagerCloneUpdated(address newItemsManagerClone);
     event HatsAdaptorCloneUpdated(address newHatsAdaptorClone);
@@ -55,7 +55,7 @@ contract ClonesAddressStorage is UUPSUpgradeable {
             itemsManagerClone,
             classesClone,
             experienceClone,
-            eligibilityAdaptorClone,
+            CharacterEligibilityAdaptorClone,
             classLevelAdaptorClone,
             hatsAdaptorClone
         ) = abi.decode(encodedClonesAddresses, (address, address, address, address, address, address, address, address));
@@ -81,9 +81,9 @@ contract ClonesAddressStorage is UUPSUpgradeable {
         emit ClassesCloneUpdated(classesClone);
     }
 
-    function updateEligibilityAdaptorClone(address _newEligibilityAdaptor) external onlyAdmin {
-        eligibilityAdaptorClone = _newEligibilityAdaptor;
-        emit EligibilityAdaptorCloneUpdated(_newEligibilityAdaptor);
+    function updateCharacterEligibilityAdaptorClone(address _newCharacterEligibilityAdaptor) external onlyAdmin {
+        CharacterEligibilityAdaptorClone = _newCharacterEligibilityAdaptor;
+        emit CharacterEligibilityAdaptorCloneUpdated(_newCharacterEligibilityAdaptor);
     }
 
     function updateClassLevelAdaptorClone(address _newClassLevelAdaptor) external onlyAdmin {

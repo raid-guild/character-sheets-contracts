@@ -7,7 +7,7 @@ interface IClonesAddressStorage {
     function itemsClone() external pure returns (address);
     function classesClone() external pure returns (address);
     function experienceClone() external pure returns (address);
-    function eligibilityAdaptorClone() external pure returns (address);
+    function CharacterEligibilityAdaptorClone() external pure returns (address);
     function classLevelAdaptorClone() external pure returns (address);
     function itemsManagerClone() external pure returns (address);
     function hatsAdaptorClone() external pure returns (address);

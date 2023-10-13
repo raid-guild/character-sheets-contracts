@@ -18,7 +18,7 @@ import {HatsData} from "../lib/Structs.sol";
  * @title Hats Adaptor
  * @author MrDeadCe11
  * @notice This is an adaptor that will automatically create the appropriate hat tree for the
- * character sheets contracts.  It also allows the minting of hats to players and characters
+ * character sheets   It also allows the minting of hats to players and characters
  * and checks if any address is wearing the player or character hat.
  */
 

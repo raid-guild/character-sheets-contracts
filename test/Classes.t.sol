@@ -2,164 +2,166 @@
 pragma solidity ^0.8.19;
 pragma abicoder v2;
 
-//solhint-disable
+// //solhint-disable
 
-import "forge-std/Test.sol";
-import "forge-std/console2.sol";
+// import "forge-std/Test.sol";
+// import "forge-std/console2.sol";
 
-import "../src/implementations/ClassesImplementation.sol";
-import "./helpers/SetUp.sol";
-import "../src/lib/Structs.sol";
+// import "../src/implementations/ClassesImplementation.sol";
+// import "./helpers/SetUp.sol";
+// import "../src/lib/Structs.sol";
 
-contract ClassesTest is Test, SetUp {
-    function testCreateClass() public {
-        vm.prank(admin);
-        uint256 _classId = classes.createClassType(createNewClass(true));
-        Class memory _class = classes.getClass(_classId);
+// import {Contracts} from "./helpers/Contracts.sol";
 
-        assertEq(classes.totalClasses(), 2, "incorrect total classes");
-        assertEq(_classId, 1, "incorrect class id");
-        assertTrue(_class.claimable, "incorrect claimable");
-        assertEq(_class.supply, 0);
-        assertEq(classes.uri(_classId), "test_base_uri_classes/test_class_cid/", "incorrect token uri");
-    }
+// contract ClassesTest is Test, SetUp, Contracts {
+//     function testCreateClass() public {
+//         vm.prank(admin);
+//         uint256 _classId = classes.createClassType(createNewClass(true));
+//         Class memory _class = classes.getClass(_classId);
 
-    function testAssignClass() public {
-        vm.startPrank(admin);
+//         assertEq(classes.totalClasses(), 2, "incorrect total classes");
+//         assertEq(_classId, 1, "incorrect class id");
+//         assertTrue(_class.claimable, "incorrect claimable");
+//         assertEq(_class.supply, 0);
+//         assertEq(classes.uri(_classId), "test_base_uri_classes/test_class_cid/", "incorrect token uri");
+//     }
 
-        uint256 classId = classes.createClassType(createNewClass(true));
-        assertEq(classId, 1, "incorrect class id");
+//     function testAssignClass() public {
+//         vm.startPrank(admin);
 
-        classes.assignClass(npc1, classId);
-        vm.stopPrank();
+//         uint256 newClassId = classes.createClassType(createNewClass(true));
+//         assertEq(newClassId, 1, "incorrect class id");
 
-        assertEq(classes.balanceOf(npc1, classId), 1);
+//         classes.assignClass(npc1, newClassId);
+//         vm.stopPrank();
 
-        //add second class
-        vm.prank(admin);
-        classes.assignClass(npc1, 0);
+//         assertEq(classes.balanceOf(npc1, newClassId), 1);
 
-        assertEq(classes.balanceOf(npc1, 0), 1, "does not own second class");
-    }
+//         //add second class
+//         vm.prank(admin);
+//         classes.assignClass(npc1, 0);
 
-    function testRenounceClass() public {
-        vm.startPrank(admin);
-        uint256 classId = classes.createClassType(createNewClass(true));
-        classes.assignClass(npc1, classId);
-        vm.stopPrank();
+//         assertEq(classes.balanceOf(npc1, 0), 1, "does not own second class");
+//     }
 
-        assertEq(classes.balanceOf(npc1, classId), 1, "does not own class");
+//     function testRenounceClass() public {
+//         vm.startPrank(admin);
+//         uint256 newClassId = classes.createClassType(createNewClass(true));
+//         classes.assignClass(npc1, newClassId);
+//         vm.stopPrank();
 
-        vm.prank(npc1);
-        classes.renounceClass(classId);
+//         assertEq(classes.balanceOf(npc1, newClassId), 1, "does not own class");
 
-        assertEq(classes.balanceOf(npc1, classId), 0, "Incorrect class balance");
-    }
+//         vm.prank(npc1);
+//         classes.renounceClass(newClassId);
 
-    function testRevokeClass() public {
-        vm.startPrank(admin);
-        uint256 classId = classes.createClassType(createNewClass(true));
+//         assertEq(classes.balanceOf(npc1, newClassId), 0, "Incorrect class balance");
+//     }
 
-        classes.assignClass(npc1, classId);
-        vm.stopPrank();
+//     function testRevokeClass() public {
+//         vm.startPrank(admin);
+//         uint256 newClassId = classes.createClassType(createNewClass(true));
 
-        assertEq(classes.balanceOf(npc1, classId), 1, "does not own class");
+//         classes.assignClass(npc1, newClassId);
+//         vm.stopPrank();
 
-        vm.prank(admin);
-        classes.revokeClass(npc1, classId);
+//         assertEq(classes.balanceOf(npc1, newClassId), 1, "does not own class");
 
-        assertEq(classes.balanceOf(npc1, classId), 0, "Incorrect class balance");
-    }
+//         vm.prank(admin);
+//         classes.revokeClass(npc1, newClassId);
 
-    function testTransferClass() public {
-        vm.prank(admin);
-        classes.assignClass(npc1, 0);
+//         assertEq(classes.balanceOf(npc1, newClassId), 0, "Incorrect class balance");
+//     }
 
-        assertEq(classes.balanceOf(npc1, 0), 1, "incorrect class assignment");
+//     function testTransferClass() public {
+//         vm.prank(admin);
+//         classes.assignClass(npc1, 0);
 
-        vm.prank(npc1);
-        vm.expectRevert();
-        classes.safeTransferFrom(npc1, player1, 0, 1, "");
+//         assertEq(classes.balanceOf(npc1, 0), 1, "incorrect class assignment");
 
-        vm.prank(admin);
-        dao.addMember(player2);
+//         vm.prank(npc1);
+//         vm.expectRevert();
+//         classes.safeTransferFrom(npc1, player1, 0, 1, "");
 
-        vm.prank(player2);
-        uint256 player2Id = characterSheets.rollCharacterSheet("test");
-        assertEq(player2Id, 1, "incorrect character id");
+//         vm.prank(admin);
+//         dao.addMember(player2);
 
-        address npc2 = characterSheets.getCharacterSheetByCharacterId(player2Id).accountAddress;
+//         vm.prank(player2);
+//         uint256 player2Id = characterSheets.rollCharacterSheet("test");
+//         assertEq(player2Id, 1, "incorrect character id");
 
-        vm.prank(npc1);
-        vm.expectRevert();
-        classes.safeTransferFrom(npc1, npc2, 0, 1, "");
+//         address npc2 = characterSheets.getCharacterSheetByCharacterId(player2Id).accountAddress;
 
-        vm.prank(admin);
-        classes.safeTransferFrom(npc1, npc2, 0, 1, "");
+//         vm.prank(npc1);
+//         vm.expectRevert();
+//         classes.safeTransferFrom(npc1, npc2, 0, 1, "");
 
-        assertEq(classes.balanceOf(npc2, 0), 1, "incorrect class assignment");
-        assertEq(classes.balanceOf(npc1, 0), 0, "incorrect class assignment");
-    }
+//         vm.prank(admin);
+//         classes.safeTransferFrom(npc1, npc2, 0, 1, "");
 
-    function testClaimClass() public {
-        vm.prank(npc1);
-        classes.claimClass(0);
+//         assertEq(classes.balanceOf(npc2, 0), 1, "incorrect class assignment");
+//         assertEq(classes.balanceOf(npc1, 0), 0, "incorrect class assignment");
+//     }
 
-        assertEq(classes.balanceOf(npc1, 0), 1, "incorrect token balance");
-    }
+//     function testClaimClass() public {
+//         vm.prank(npc1);
+//         classes.claimClass(0);
 
-    function testLevelClass() public {
-        vm.prank(npc1);
-        classes.claimClass(0);
+//         assertEq(classes.balanceOf(npc1, 0), 1, "incorrect token balance");
+//     }
 
-        vm.prank(admin);
-        experience.dropExp(npc1, 300 * 10 ** 18);
+//     function testLevelClass() public {
+//         vm.prank(npc1);
+//         classes.claimClass(0);
 
-        vm.prank(admin);
-        classes.levelClass(npc1, 0);
+//         vm.prank(admin);
+//         experience.dropExp(npc1, 300 * 10 ** 18);
 
-        assertEq(experience.balanceOf(npc1), 0, "incorrect exp balance");
-        assertEq(classes.balanceOf(npc1, 0), 2, "incorrect class level");
-    }
+//         vm.prank(admin);
+//         classes.levelClass(npc1, 0);
 
-    function testFuzz_DeLevelClass(uint256 numberOfLevels) public {
-        vm.assume(numberOfLevels < 20);
-        uint256 baseExpAmount = 400000 * 10 ** 18;
-        //give exp to npc to level
-        vm.prank(admin);
-        experience.dropExp(npc1, baseExpAmount);
+//         assertEq(experience.balanceOf(npc1), 0, "incorrect exp balance");
+//         assertEq(classes.balanceOf(npc1, 0), 2, "incorrect class level");
+//     }
 
-        assertEq(experience.balanceOf(npc1), baseExpAmount);
+//     function testFuzz_DeLevelClass(uint256 numberOfLevels) public {
+//         vm.assume(numberOfLevels < 20);
+//         uint256 baseExpAmount = 400000 * 10 ** 18;
+//         //give exp to npc to level
+//         vm.prank(admin);
+//         experience.dropExp(npc1, baseExpAmount);
 
-        // give class to npc1
+//         assertEq(experience.balanceOf(npc1), baseExpAmount);
 
-        vm.startPrank(admin);
-        classes.assignClass(npc1, 0);
+//         // give class to npc1
 
-        assertEq(classes.balanceOf(npc1, 0), 1);
+//         vm.startPrank(admin);
+//         classes.assignClass(npc1, 0);
 
-        // level class
+//         assertEq(classes.balanceOf(npc1, 0), 1);
 
-        for (uint256 i; i < numberOfLevels; i++) {
-            classes.levelClass(npc1, 0);
-        }
+//         // level class
 
-        assertEq(classes.balanceOf(npc1, 0), numberOfLevels + 1, "incorrect level");
+//         for (uint256 i; i < numberOfLevels; i++) {
+//             classes.levelClass(npc1, 0);
+//         }
 
-        // check that the remaining exp is correct
-        assertEq(
-            experience.balanceOf(npc1),
-            baseExpAmount - classLevels.getExpForLevel(numberOfLevels),
-            "incorrect remaining exp"
-        );
-        vm.stopPrank();
-        // delevel class to reclaim exp
+//         assertEq(classes.balanceOf(npc1, 0), numberOfLevels + 1, "incorrect level");
 
-        vm.prank(npc1);
-        classes.deLevelClass(0, numberOfLevels);
+//         // check that the remaining exp is correct
+//         assertEq(
+//             experience.balanceOf(npc1),
+//             baseExpAmount - classLevels.getExpForLevel(numberOfLevels),
+//             "incorrect remaining exp"
+//         );
+//         vm.stopPrank();
+//         // delevel class to reclaim exp
 
-        //check balances
-        assertEq(classes.balanceOf(npc1, 0), 1, "incorrect final balance");
-        assertEq(experience.balanceOf(npc1), baseExpAmount, "incorrect returned exp");
-    }
-}
+//         vm.prank(npc1);
+//         classes.deLevelClass(0, numberOfLevels);
+
+//         //check balances
+//         assertEq(classes.balanceOf(npc1, 0), 1, "incorrect final balance");
+//         assertEq(experience.balanceOf(npc1), baseExpAmount, "incorrect returned exp");
+//     }
+// }

@@ -10,7 +10,7 @@ clean  :; forge clean
 # Remove modules
 remove :; rm -rf .gitmodules && rm -rf .git/modules/* && rm -rf lib && touch .gitmodules && git add . && git commit -m "modules"
 
-install :; forge install --no-commit foundry-rs/forge-std openzeppelin/openzeppelin-contracts https://github.com/Hats-Protocol/hats-protocol.git https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable.git https://github.com/dmfxyz/murky.git
+install :; forge install --no-commit foundry-rs/forge-std openzeppelin/openzeppelin-contracts https://github.com/Hats-Protocol/hats-protocol.git https://github.com/Hats-Protocol/hats-module https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable.git https://github.com/dmfxyz/murky.git
 
 # Update Dependencies
 update:; forge update
@@ -48,7 +48,7 @@ deploy-contracts :; make deploy-${network} contract=CharacterAccount && \
 	make deploy-${network} contract=ExperienceImplementation && \
 	make deploy-${network} contract=ItemsImplementation && \
 	make deploy-${network} contract=ClassesImplementation && \
-	make deploy-${network} contract=EligibilityAdaptor && \
+	make deploy-${network} contract=CharacterEligibilityAdaptor && \
 	make deploy-${network} contract=ClassLevelAdaptor && \
 	make deploy-${network} contract=HatsAdaptor && \
 	make deploy-${network} contract=AdminHatEligibilityModule && \
@@ -62,7 +62,7 @@ verify-contracts :; make verify-${network} contract=CharacterAccount && \
 	make verify-${network} contract=ExperienceImplementation && \
 	make verify-${network} contract=ItemsImplementation && \
 	make verify-${network} contract=ClassesImplementation && \
-	make verify-${network} contract=EligibilityAdaptor && \
+	make verify-${network} contract=CharacterEligibilityAdaptor && \
 	make verify-${network} contract=ClassLevelAdaptor && \
 	make verify-${network} contract=HatsAdaptor && \
 	make verify-${network} contract=AdminHatEligibilityModule && \

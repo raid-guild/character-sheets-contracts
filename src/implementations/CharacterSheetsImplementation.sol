@@ -11,7 +11,7 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UU
 import {IERC1155} from "openzeppelin-contracts/token/ERC1155/IERC1155.sol";
 
 import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
-import {IEligibilityAdaptor} from "../interfaces/IEligibilityAdaptor.sol";
+import {ICharacterEligibilityAdaptor} from "../interfaces/ICharacterEligibilityAdaptor.sol";
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 import {IItems} from "../interfaces/IItems.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
@@ -157,8 +157,8 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
 
         // check the eligibility adaptor to see if the player is eligible to roll a character sheet
         if (
-            clones.eligibilityAdaptorClone() != address(0)
-                && !IEligibilityAdaptor(clones.eligibilityAdaptorClone()).isEligible(msg.sender)
+            clones.CharacterEligibilityAdaptorClone() != address(0)
+                && !ICharacterEligibilityAdaptor(clones.CharacterEligibilityAdaptorClone()).isEligible(msg.sender)
         ) {
             revert Errors.EligibilityError();
         }
@@ -297,8 +297,8 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
             revert Errors.OwnershipError();
         }
         if (
-            clones.eligibilityAdaptorClone() != address(0)
-                && !IEligibilityAdaptor(clones.eligibilityAdaptorClone()).isEligible(msg.sender)
+            clones.CharacterEligibilityAdaptorClone() != address(0)
+                && !ICharacterEligibilityAdaptor(clones.CharacterEligibilityAdaptorClone()).isEligible(msg.sender)
         ) {
             revert Errors.EligibilityError();
         }
@@ -336,8 +336,8 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         }
 
         if (
-            clones.eligibilityAdaptorClone() != address(0)
-                && IEligibilityAdaptor(clones.eligibilityAdaptorClone()).isEligible(playerAddress)
+            clones.CharacterEligibilityAdaptorClone() != address(0)
+                && ICharacterEligibilityAdaptor(clones.CharacterEligibilityAdaptorClone()).isEligible(playerAddress)
         ) {
             revert Errors.EligibilityError();
         }
