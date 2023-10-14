@@ -31,10 +31,6 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
     event CharacterHatsEligibilityModuleUpdated(address newCharacterModule);
     event CloneAddressStorageUpdated(address newCloneAddressStorage);
 
-    constructor() {
-        _disableInitializers();
-    }
-
     function initialize(
         bytes calldata encodedImplementationAddresses,
         bytes calldata encodedAdaptorsAndMOduleAddresses,

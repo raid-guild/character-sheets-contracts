@@ -140,10 +140,10 @@ contract SetUp is Test, Accounts, TestStructs {
             implementations.characterSheets,
             implementations.items,
             implementations.classes,
-            address(erc6551Contracts.erc6551Implementation),
             implementations.experience,
+            implementations.clonesAddressStorage,
             implementations.itemsManager,
-            implementations.clonesAddressStorage
+            address(erc6551Contracts.erc6551Implementation)
         );
 
         bytes memory encodedAdaptorsAndModuleAddresses = abi.encode(

@@ -34,10 +34,6 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
     event NewGameStarted(address creator, address clonesAddressStorage);
     event ImplementationAddressStorageUpdated(address newImplementationAddressStorage);
 
-    constructor() {
-        _disableInitializers();
-    }
-
     function initialize(address _implementationAddressStorage) external initializer {
         __Context_init_unchained();
         __Ownable_init_unchained(msg.sender);
@@ -238,6 +234,10 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         ClassesImplementation(clones.classesClone()).initialize(_encodeClassesData(clonesStorageAddress, data));
         ItemsManagerImplementation(clones.itemsManagerClone()).initialize(clonesStorageAddress);
         ExperienceImplementation(clones.experienceClone()).initialize(clonesStorageAddress);
+    }
+
+    function getImplementationsAddressStorageAddress() public view returns (address) {
+        return address(implementations);
     }
 
     function _createSheetsAndItems() private returns (address, address) {
