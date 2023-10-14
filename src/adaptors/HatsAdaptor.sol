@@ -10,6 +10,7 @@ import {ERC1155HolderUpgradeable} from
 import {IHatsEligibility} from "hats-protocol/Interfaces/IHatsEligibility.sol";
 import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
 import {ImplementationAddressStorage} from "../lib/ImplementationAddressStorage.sol";
+import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 
 import {Errors} from "../lib/Errors.sol";
 import {HatsData} from "../lib/Structs.sol";
@@ -33,6 +34,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
      */
 
     ImplementationAddressStorage public implementations;
+    IClonesAddressStorage public clones;
 
     address public adminHatEligibilityModule;
     address public dungeonMasterHatEligibilityModule;
@@ -84,9 +86,11 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         initializer
     {
         address _implementations;
-        (,, _implementations) = abi.decode(hatsAddresses, (address[], address[], address));
+        address _clonesStorage;
+        (,, _implementations, _clonesStorage) = abi.decode(hatsAddresses, (address[], address[], address, address));
 
         implementations = ImplementationAddressStorage(_implementations);
+        clones = IClonesAddressStorage(_clonesStorage);
         _hats = IHats(implementations.hatsContract());
 
         __Ownable_init(_owner);
@@ -368,8 +372,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
 
         playerHatId = _hats.getNextId(_hatsData.dungeonMasterHatId);
 
-        playerHatEligibilityModule =
-            _createPlayerHatEligibilityModule(playerHatId, implementations.characterSheetsImplementation());
+        playerHatEligibilityModule = _createPlayerHatEligibilityModule(playerHatId, clones.characterSheetsClone());
 
         _hatsData.playerHatId = _hats.createHat(
             _hatsData.dungeonMasterHatId,
@@ -419,7 +422,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         bytes memory characterModuleData = abi.encodePacked(
             implementations.erc6551Registry(),
             implementations.erc6551AccountImplementation(),
-            implementations.characterSheetsImplementation()
+            clones.characterSheetsClone()
         );
         address characterHatsModule = HatsModuleFactory(implementations.hatsModuleFactory()).createHatsModule(
             implementations.characterHatsEligibilityModule(), characterHatId, characterModuleData, ""

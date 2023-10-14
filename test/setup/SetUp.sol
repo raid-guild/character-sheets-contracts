@@ -58,6 +58,10 @@ contract SetUp is Test, Accounts, TestStructs {
     HatsContracts public hatsContracts;
     ERC6551Contracts public erc6551Contracts;
 
+    ClassesData public classData;
+    SheetsData public sheetsData;
+    ItemsData public itemsData;
+
     Moloch public dao;
     Merkle public merkle;
 
@@ -77,6 +81,70 @@ contract SetUp is Test, Accounts, TestStructs {
         _initializeContracts(address(deployments.clones), address(dao));
         _activateContracts(address(deployments.clones));
         vm.stopPrank();
+
+        vm.startPrank(accounts.dungeonMaster);
+        //create a claimable class
+        classData.classIdClaimable = deployments.classes.createClassType(createNewClass(true));
+        // create a non claimable class
+        classData.classId = deployments.classes.createClassType(createNewClass(false));
+
+        //create a soulbound item
+        itemsData.itemIdSoulbound =
+            deployments.items.createItemType(createNewItem(false, true, bytes32(keccak256("null"))));
+        //create claimable Item
+        itemsData.itemIdClaimable = deployments.items.createItemType(createNewItem(false, true, bytes32(0)));
+        // create craftable item
+        itemsData.itemIdCraftable =
+            deployments.items.createItemType(createNewItem(true, false, bytes32(keccak256("null"))));
+        //create free item
+        itemsData.itemIdFree = deployments.items.createItemType(createNewItem(true, false, bytes32(0)));
+        vm.stopPrank();
+
+        vm.startPrank(accounts.player1);
+        //add player to dao
+        dao.addMember(accounts.player1);
+        // roll characterSheet for player 1
+        sheetsData.characterId1 = deployments.characterSheets.rollCharacterSheet("player1_test_uri");
+
+        //store character address
+        accounts.character1 =
+            deployments.characterSheets.getCharacterSheetByCharacterId(sheetsData.characterId1).accountAddress;
+        vm.stopPrank();
+
+        vm.startPrank(accounts.player2);
+        //add player to dao
+        dao.addMember(accounts.player2);
+        // roll characterSheet for player 2
+        sheetsData.characterId2 = deployments.characterSheets.rollCharacterSheet("player2_test_uri");
+
+        //store character address
+        accounts.character2 =
+            deployments.characterSheets.getCharacterSheetByCharacterId(sheetsData.characterId2).accountAddress;
+        vm.stopPrank();
+    }
+
+    function createNewItem(bool craftable, bool soulbound, bytes32 claimable) public view returns (bytes memory) {
+        bytes memory requiredAssets;
+
+        {
+            uint8[] memory requiredAssetCategories = new uint8[](1);
+            requiredAssetCategories[0] = uint8(Category.ERC20);
+            address[] memory requiredAssetAddresses = new address[](1);
+            requiredAssetAddresses[0] = address(deployments.experience);
+            uint256[] memory requiredAssetIds = new uint256[](1);
+            requiredAssetIds[0] = 0;
+            uint256[] memory requiredAssetAmounts = new uint256[](1);
+            requiredAssetAmounts[0] = 100;
+
+            requiredAssets =
+                abi.encode(requiredAssetCategories, requiredAssetAddresses, requiredAssetIds, requiredAssetAmounts);
+        }
+
+        return abi.encode(craftable, soulbound, claimable, 10 ** 18, abi.encodePacked("test_item_cid/"), requiredAssets);
+    }
+
+    function createNewClass(bool claimable) public pure returns (bytes memory data) {
+        return abi.encode(claimable, "test_class_cid/");
     }
 
     function createAddressMemoryArray(uint256 length) public pure returns (address[] memory newArray) {
@@ -84,7 +152,7 @@ contract SetUp is Test, Accounts, TestStructs {
     }
 
     function _activateContracts(address clonesAddress) internal {
-        ClonesAddressStorage memory internalClones = ClonesAddressStorage(clonesAddress);
+        ClonesAddressStorage internalClones = ClonesAddressStorage(clonesAddress);
 
         deployments.characterSheets = CharacterSheetsImplementation(internalClones.characterSheetsClone());
         deployments.experience = ExperienceImplementation(internalClones.experienceClone());
@@ -209,7 +277,8 @@ contract SetUp is Test, Accounts, TestStructs {
         address[] memory dungeonMastersArray = createAddressMemoryArray(1);
         dungeonMastersArray[0] = accounts.dungeonMaster;
 
-        bytes memory encodedHatsAddresses = abi.encode(adminArray, dungeonMastersArray, address(implementationStorage));
+        bytes memory encodedHatsAddresses =
+            abi.encode(adminArray, dungeonMastersArray, address(implementationStorage), address(deployments.clones));
 
         bytes memory encodedHatsStrings = abi.encode(
             "test_hats_base_img",

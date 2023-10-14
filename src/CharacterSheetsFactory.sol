@@ -195,6 +195,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
      *          -- address[] admins the list of addresses that will have admin priviledges
      *          -- address[] dungeonMasters the list of addresses that will have dungeonMasterpriviledges
      *          -- address Implementations the address of the ImplementationAddressStorage contract
+     *          -- address clonesStorage the address of the clones storageContract;
      *
      * @param encodedHatsStrings the encoded strings needed for the hats adaptor init.
      *        1.  string _baseImgUri

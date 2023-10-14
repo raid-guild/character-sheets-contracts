@@ -58,6 +58,23 @@ interface TestStructs {
         HatsAdaptor hatsAdaptor;
     }
 
+    struct SheetsData {
+        uint256 characterId1;
+        uint256 characterId2;
+    }
+
+    struct ClassesData {
+        uint256 classId;
+        uint256 classIdClaimable;
+    }
+
+    struct ItemsData {
+        uint256 itemIdSoulbound;
+        uint256 itemIdCraftable;
+        uint256 itemIdClaimable;
+        uint256 itemIdFree;
+    }
+
     struct Accounts {
         address admin;
         address dungeonMaster;
