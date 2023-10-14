@@ -75,11 +75,35 @@ contract SetUp is Test, Accounts, TestStructs {
         _createContracts();
 
         _initializeContracts(address(deployments.clones), address(dao));
+        _activateContracts(address(deployments.clones));
         vm.stopPrank();
     }
 
     function createAddressMemoryArray(uint256 length) public pure returns (address[] memory newArray) {
         newArray = new address[](length);
+    }
+
+    function _activateContracts(address clonesAddress) internal {
+        ClonesAddressStorage memory internalClones = ClonesAddressStorage(clonesAddress);
+
+        deployments.characterSheets = CharacterSheetsImplementation(internalClones.characterSheetsClone());
+        deployments.experience = ExperienceImplementation(internalClones.experienceClone());
+        deployments.items = ItemsImplementation(internalClones.itemsClone());
+        deployments.itemsManager = ItemsManagerImplementation(internalClones.itemsManagerClone());
+        deployments.classes = ClassesImplementation(internalClones.classesClone());
+        deployments.characterEligibility =
+            CharacterEligibilityAdaptor(internalClones.characterEligibilityAdaptorClone());
+        deployments.classLevels = ClassLevelAdaptor(internalClones.classLevelAdaptorClone());
+        deployments.hatsAdaptor = HatsAdaptor(internalClones.hatsAdaptorClone());
+
+        vm.label(address(deployments.characterSheets), "Character Sheets Clone");
+        vm.label(address(deployments.experience), "Experience Clone");
+        vm.label(address(deployments.items), "Items Clone");
+        vm.label(address(deployments.itemsManager), "Items Manager Clone");
+        vm.label(address(deployments.classes), "Classes Clone");
+        vm.label(address(deployments.characterEligibility), "Character Eligibility Adaptor Clone");
+        vm.label(address(deployments.classLevels), "Class Levels Adaptor Clone");
+        vm.label(address(deployments.hatsAdaptor), "Hats Adaptor Clone");
     }
 
     function _deployImplementations() internal {
@@ -101,21 +125,21 @@ contract SetUp is Test, Accounts, TestStructs {
         implementations.playerModule = new PlayerHatEligibilityModule("v 0.1");
         implementations.characterModule = new CharacterHatEligibilityModule("v 0.1");
 
-        vm.label(address(dao), "Moloch");
-        vm.label(address(merkle), "Merkle");
-        vm.label(address(implementations.characterSheets), "Character Sheets");
-        vm.label(address(implementations.items), "Items");
-        vm.label(address(implementations.itemsManager), "Items Manager");
-        vm.label(address(implementations.experience), "Experience");
-        vm.label(address(implementations.classes), "Classes");
-        vm.label(address(implementations.clonesAddressStorage), "Clones Address Storage");
-        vm.label(address(implementations.characterEligibilityAdaptor), "Character Eligibility adaptor");
-        vm.label(address(implementations.classLevelAdaptor), "Class Level adaptor");
-        vm.label(address(implementations.hatsAdaptor), "Hats adaptor");
-        vm.label(address(implementations.adminModule), "Admin Hats Eligibility adaptor");
-        vm.label(address(implementations.dmModule), "Dungeon Master Hats Eligibility adaptor");
-        vm.label(address(implementations.playerModule), "Player Hats Eligibility adaptor");
-        vm.label(address(implementations.characterModule), "Character Hats Eligibility adaptor");
+        vm.label(address(dao), "Moloch Implementation");
+        vm.label(address(merkle), "Merkle Implementation");
+        vm.label(address(implementations.characterSheets), "Character Sheets Implementation");
+        vm.label(address(implementations.items), "Items Implementation");
+        vm.label(address(implementations.itemsManager), "Items Manager Implementation");
+        vm.label(address(implementations.experience), "Experience Implementation");
+        vm.label(address(implementations.classes), "Classes Implementation");
+        vm.label(address(implementations.clonesAddressStorage), "Clones Address Storage Implementation");
+        vm.label(address(implementations.characterEligibilityAdaptor), "Character Eligibility adaptor Implementation");
+        vm.label(address(implementations.classLevelAdaptor), "Class Level adaptor Implementation");
+        vm.label(address(implementations.hatsAdaptor), "Hats adaptor Implementation");
+        vm.label(address(implementations.adminModule), "Admin Hats Eligibility adaptor Implementation");
+        vm.label(address(implementations.dmModule), "Dungeon Master Hats Eligibility adaptor Implementation");
+        vm.label(address(implementations.playerModule), "Player Hats Eligibility adaptor Implementation");
+        vm.label(address(implementations.characterModule), "Character Hats Eligibility adaptor Implementation");
     }
 
     function _deployHatsContracts() internal {

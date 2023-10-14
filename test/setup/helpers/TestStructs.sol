@@ -53,13 +53,9 @@ interface TestStructs {
         ItemsManagerImplementation itemsManager;
         ClassesImplementation classes;
         ClonesAddressStorage clones;
-        ImplementationAddressStorage implementationsStorage;
-        CharacterSheetsFactory characterSheetsFactory;
         CharacterEligibilityAdaptor characterEligibility;
         ClassLevelAdaptor classLevels;
         HatsAdaptor hatsAdaptor;
-        Moloch dao;
-        Merkle merkle;
     }
 
     struct Accounts {
