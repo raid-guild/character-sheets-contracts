@@ -53,7 +53,7 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
 
     function initialize() external initializer {
         __Context_init_unchained();
-        __Ownable_init_unchained();
+        __Ownable_init_unchained(msg.sender);
     }
 
     function updateCharacterSheetsImplementation(address _sheetImplementation) external onlyOwner {

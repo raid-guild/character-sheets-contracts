@@ -2,10 +2,8 @@
 pragma solidity ^0.8.9;
 
 import {ERC1155Upgradeable} from "openzeppelin-contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
-import {
-    ERC1155HolderUpgradeable,
-    ERC1155ReceiverUpgradeable
-} from "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import {ERC1155HolderUpgradeable} from
+    "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {IExperience} from "../interfaces/IExperience.sol";
@@ -270,7 +268,7 @@ contract ClassesImplementation is IClasses, ERC1155HolderUpgradeable, ERC1155Upg
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC1155Upgradeable, ERC1155ReceiverUpgradeable)
+        override(ERC1155Upgradeable, ERC1155HolderUpgradeable)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);

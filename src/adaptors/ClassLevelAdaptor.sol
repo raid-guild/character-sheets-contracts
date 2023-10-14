@@ -61,8 +61,7 @@ contract ClassLevelAdaptor is IClassLevelAdaptor, ERC165, Initializable, Ownable
 
         classesContract = _classesContract;
         experienceContract = _experienceContract;
-        __Ownable_init();
-        transferOwnership(_owner);
+        __Ownable_init(_owner);
     }
 
     function updateClassesContract(address newClassesContract) public onlyOwner {

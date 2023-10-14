@@ -322,7 +322,7 @@ contract CharacterSheetsTest is Test, SetUp {
         //should revert if called by non admin
         vm.prank(player1);
         vm.expectRevert(Errors.CallerNotApproved.selector);
-        characterSheets.upgradeTo(newSheetImp);
+        characterSheets.upgradeToAndCall(newSheetImp, "");
 
         address[] memory newAdmins = new address[](1);
         newAdmins[0] = player1;
@@ -340,10 +340,10 @@ contract CharacterSheetsTest is Test, SetUp {
         //should revert if called by dm;
         vm.expectRevert(Errors.CallerNotApproved.selector);
         vm.prank(player1);
-        characterSheets.upgradeTo(newSheetImp);
+        characterSheets.upgradeToAndCall(newSheetImp, "");
 
         //should succeed if called by admin
         vm.prank(admin);
-        characterSheets.upgradeTo(newSheetImp);
+        characterSheets.upgradeToAndCall(newSheetImp, "");
     }
 }

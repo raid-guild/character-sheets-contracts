@@ -4,9 +4,9 @@ pragma abicoder v2;
 
 import {
     ERC721URIStorageUpgradeable,
-    ERC721Upgradeable,
-    IERC721Upgradeable
+    ERC721Upgradeable
 } from "openzeppelin-contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
+import {IERC721} from "openzeppelin-contracts/token/ERC721/IERC721.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {IERC1155} from "openzeppelin-contracts/token/ERC1155/IERC1155.sol";
 
@@ -409,18 +409,14 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
      * @dev See {IERC721-approve}.
      */
 
-    function approve(address to, uint256 characterId) public virtual override(ERC721Upgradeable, IERC721Upgradeable) {
+    function approve(address to, uint256 characterId) public virtual override(ERC721Upgradeable, IERC721) {
         return super.approve(to, characterId);
     }
 
     /**
      * @dev See {IERC721-setApprovalForAll}.
      */
-    function setApprovalForAll(address operator, bool approved)
-        public
-        virtual
-        override(ERC721Upgradeable, IERC721Upgradeable)
-    {
+    function setApprovalForAll(address operator, bool approved) public virtual override(ERC721Upgradeable, IERC721) {
         return super.setApprovalForAll(operator, approved);
     }
 
@@ -430,7 +426,7 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
     function transferFrom(address from, address to, uint256 characterId)
         public
         virtual
-        override(ERC721Upgradeable, IERC721Upgradeable)
+        override(ERC721Upgradeable, IERC721)
         onlyDungeonMaster
     {
         if (_playerSheets[to] != 0) {
@@ -448,22 +444,22 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
      * revert(Errors."This token cannot be transfered");
      * @dev See {IERC721-safeTransferFrom}.
      */
-    function safeTransferFrom(address from, address to, uint256 characterId)
-        public
-        virtual
-        override(ERC721Upgradeable, IERC721Upgradeable)
-        onlyDungeonMaster
-    {
-        if (_sheets[_playerSheets[to]].playerAddress != address(0)) {
-            revert Errors.CharacterError();
-        }
-        _playerSheets[to] = characterId;
-        _sheets[characterId].playerAddress = to;
+    // function safeTransferFrom(address from, address to, uint256 characterId)
+    //     public
+    //     virtual
+    //     override(ERC721Upgradeable, IERC721)
+    //     onlyDungeonMaster
+    // {
+    //     if (_sheets[_playerSheets[to]].playerAddress != address(0)) {
+    //         revert Errors.CharacterError();
+    //     }
+    //     _playerSheets[to] = characterId;
+    //     _sheets[characterId].playerAddress = to;
 
-        // TODO: update sheet erc6551 account address
+    //     // TODO: update sheet erc6551 account address
 
-        return super.safeTransferFrom(from, to, characterId);
-    }
+    //     return super.safeTransferFrom(from, to, characterId);
+    // }
 
     /**
      * @dev See {IERC721-safeTransferFrom}.
@@ -471,7 +467,7 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
     function safeTransferFrom(address from, address to, uint256 characterId, bytes memory data)
         public
         virtual
-        override(ERC721Upgradeable, IERC721Upgradeable)
+        override(ERC721Upgradeable, IERC721)
         onlyDungeonMaster
     {
         if (_sheets[_playerSheets[to]].playerAddress != address(0)) {

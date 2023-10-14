@@ -5,11 +5,7 @@ import {IERC165} from "openzeppelin-contracts/utils/introspection/IERC165.sol";
 import {IERC721} from "openzeppelin-contracts/token/ERC721/IERC721.sol";
 import {IERC1271} from "openzeppelin-contracts/interfaces/IERC1271.sol";
 import {SignatureChecker} from "openzeppelin-contracts/utils/cryptography/SignatureChecker.sol";
-import {
-    ERC1155Holder,
-    ERC1155Receiver,
-    IERC1155Receiver
-} from "openzeppelin-contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import {ERC1155Holder, IERC1155Receiver} from "openzeppelin-contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
 import {IERC6551Account} from "./interfaces/IERC6551Account.sol";
 import {IERC6551Executable} from "./interfaces/IERC6551Executable.sol";
@@ -96,7 +92,7 @@ contract CharacterAccount is IERC165, IERC1271, IERC6551Account, IERC6551Executa
         return IERC721(tokenContract).ownerOf(tokenId);
     }
 
-    function supportsInterface(bytes4 interfaceId) public pure override(ERC1155Receiver, IERC165) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public pure override(IERC165, ERC1155Holder) returns (bool) {
         return (
             interfaceId == type(IERC165).interfaceId || interfaceId == type(IERC6551Account).interfaceId
                 || interfaceId == type(IERC6551Executable).interfaceId || interfaceId == type(IERC1155Receiver).interfaceId

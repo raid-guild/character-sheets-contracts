@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
 import "openzeppelin-contracts/interfaces/IERC20.sol";
 import "openzeppelin-contracts/interfaces/IERC721.sol";
 import "openzeppelin-contracts/interfaces/IERC1155.sol";
-import "openzeppelin-contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
+import "openzeppelin-contracts/token/ERC20/extensions/IERC20Permit.sol";
 import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import "openzeppelin-contracts/utils/introspection/ERC165Checker.sol";
 
@@ -300,7 +300,7 @@ library MultiToken {
      */
     function approveAsset(Asset memory asset, address target) internal {
         if (asset.category == Category.ERC20) {
-            IERC20(asset.assetAddress).safeApprove(target, asset.amount);
+            IERC20(asset.assetAddress).approve(target, asset.amount);
         } else if (asset.category == Category.ERC721) {
             IERC721(asset.assetAddress).approve(target, asset.id);
         } else if (asset.category == Category.ERC1155) {

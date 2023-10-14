@@ -104,11 +104,9 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
 
         _hats = IHats(_hatsData.hats);
 
-        __Ownable_init();
-
         _initHatTree(_owner, hatsStrings, hatsAddresses);
 
-        transferOwnership(_owner);
+        __Ownable_init(_owner);
     }
 
     function updateHatsAddress(address newHatsAddress) external onlyOwner {
