@@ -7,17 +7,9 @@ import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 
 import {Errors} from "./Errors.sol";
 
-// import "forge-std/console2.sol";
-struct ClonesAddresses {
-    address characterSheetsClone;
-    address itemsClone;
-    address itemsManagerClone;
-    address classesClone;
-    address experienceClone;
-    address characterEligibilityAdaptorClone;
-    address classLevelAdaptorClone;
-    address hatsAdaptorClone;
-}
+import "./Structs.sol";
+
+// // import "forge-std/console2.sol";
 
 contract ClonesAddressStorage is UUPSUpgradeable {
     //cloned contracts
@@ -49,19 +41,13 @@ contract ClonesAddressStorage is UUPSUpgradeable {
         _disableInitializers();
     }
 
-    function initialize(bytes calldata encodedClonesAddresses) external initializer {
+    function initialize(bytes calldata encodedClonesAddresses, bytes calldata encodedAdaptorAddresses)
+        external
+        initializer
+    {
         __UUPSUpgradeable_init();
-
-        (
-            _clones.characterSheetsClone,
-            _clones.itemsClone,
-            _clones.itemsManagerClone,
-            _clones.classesClone,
-            _clones.experienceClone,
-            _clones.characterEligibilityAdaptorClone,
-            _clones.classLevelAdaptorClone,
-            _clones.hatsAdaptorClone
-        ) = abi.decode(encodedClonesAddresses, (address, address, address, address, address, address, address, address));
+        _initClones(encodedClonesAddresses);
+        _initAdaptors(encodedAdaptorAddresses);
     }
 
     function updateCharacterSheetsClone(address newCharacterSheetsClone) external onlyAdmin {
@@ -135,6 +121,21 @@ contract ClonesAddressStorage is UUPSUpgradeable {
 
     function hatsAdaptorClone() public view returns (address) {
         return _clones.hatsAdaptorClone;
+    }
+
+    function _initClones(bytes calldata encodedClonesAddresses) internal {
+        (
+            _clones.characterSheetsClone,
+            _clones.itemsClone,
+            _clones.itemsManagerClone,
+            _clones.classesClone,
+            _clones.experienceClone
+        ) = abi.decode(encodedClonesAddresses, (address, address, address, address, address));
+    }
+
+    function _initAdaptors(bytes calldata encodedAdaptorAddresses) internal {
+        (_clones.characterEligibilityAdaptorClone, _clones.classLevelAdaptorClone, _clones.hatsAdaptorClone) =
+            abi.decode(encodedAdaptorAddresses, (address, address, address));
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}

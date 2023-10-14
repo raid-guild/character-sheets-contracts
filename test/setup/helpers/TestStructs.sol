@@ -90,8 +90,6 @@ interface TestStructs {
         DungeonMasterHatEligibilityModule dmModule;
         PlayerHatEligibilityModule playerModule;
         CharacterHatEligibilityModule characterModule;
-        Moloch dao;
-        Merkle merkle;
     }
 
     struct ERC6551Contracts {

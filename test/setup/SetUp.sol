@@ -58,6 +58,9 @@ contract SetUp is Test, Accounts, TestStructs {
     HatsContracts public hatsContracts;
     ERC6551Contracts public erc6551Contracts;
 
+    Moloch public dao;
+    Merkle public merkle;
+
     MultiSend public multisend;
 
     function setUp() public {
@@ -68,12 +71,13 @@ contract SetUp is Test, Accounts, TestStructs {
 
         implementationStorage = new ImplementationAddressStorage();
 
+        _deployCharacterSheetsFactory();
         vm.stopPrank();
     }
 
     function _deployImplementations() internal {
-        implementations.dao = new Moloch();
-        implementations.merkle = new Merkle();
+        dao = new Moloch();
+        merkle = new Merkle();
 
         implementations.characterSheets = new CharacterSheetsImplementation();
         implementations.items = new ItemsImplementation();
@@ -90,8 +94,8 @@ contract SetUp is Test, Accounts, TestStructs {
         implementations.playerModule = new PlayerHatEligibilityModule("v 0.1");
         implementations.characterModule = new CharacterHatEligibilityModule("v 0.1");
 
-        vm.label(address(implementations.dao), "Moloch");
-        vm.label(address(implementations.merkle), "Merkle");
+        vm.label(address(dao), "Moloch");
+        vm.label(address(merkle), "Merkle");
         vm.label(address(implementations.characterSheets), "Character Sheets");
         vm.label(address(implementations.items), "Items");
         vm.label(address(implementations.itemsManager), "Items Manager");
@@ -136,24 +140,30 @@ contract SetUp is Test, Accounts, TestStructs {
             implementations.characterSheets,
             implementations.items,
             implementations.classes,
-            address(erc6551Contracts.erc6551Registry),
             address(erc6551Contracts.erc6551Implementation),
             implementations.experience,
-            implementations.characterEligibilityAdaptor,
-            implementations.classLevelAdaptor,
             implementations.itemsManager,
-            implementations.hatsAdaptor,
-            implementations.clonesAddressStorage,
-            //hats addresses
-            address(hatsContracts.hats),
-            address(hatsContracts.hatsModuleFactory),
-            //eligibility modules
+            implementations.clonesAddressStorage
+        );
+
+        bytes memory encodedAdaptorsAndModuleAddresses = abi.encode(
             implementations.adminModule,
             implementations.dmModule,
             implementations.playerModule,
-            implementations.characterModule
+            implementations.characterModule,
+            implementations.hatsAdaptor,
+            implementations.characterEligibilityAdaptor,
+            implementations.classLevelAdaptor
         );
-        implementationStorage.initialize(encodedImplementationAddresses);
+
+        bytes memory encodedExternalAddresses = abi.encode(
+            address(erc6551Contracts.erc6551Registry),
+            address(hatsContracts.hats),
+            address(hatsContracts.hatsModuleFactory)
+        );
+        implementationStorage.initialize(
+            encodedImplementationAddresses, encodedAdaptorsAndModuleAddresses, encodedExternalAddresses
+        );
         characterSheetsFactory.initialize(address(implementationStorage));
     }
 }

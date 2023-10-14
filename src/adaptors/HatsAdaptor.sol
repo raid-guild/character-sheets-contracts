@@ -31,6 +31,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
      * @notice these are the addresses of the eligibility modules after they are created by
      * the hats module factory during contract initialization.
      */
+
     ImplementationAddressStorage public implementations;
 
     address public adminHatEligibilityModule;
@@ -42,11 +43,16 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
 
     string private _baseHatImgUri;
 
-    event ImplementationAddressStorageUpdated(address newImplementationsAddress);
-    event AdminHatIdUpdated(uint256);
-    event DungeonMasterHatIdUpdated(uint256);
-    event PlayerHatIdUpdated(uint256);
-    event CharacterHatIdUpdated(uint256);
+    event AdminHatIdUpdated(uint256 newAdminHatId);
+    event DungeonMasterHatIdUpdated(uint256 newDungeonMasterHatId);
+    event PlayerHatIdUpdated(uint256 newPlayerHatId);
+    event CharacterHatIdUpdated(uint256 newCharacterHatId);
+    event HatsUpdated(address newHats);
+    event ImplementationAddressStorageUpdated(address newImplementations);
+    event DungeonMasterHatEligibilityModuleUpdated(address newDungeonMasterHatEligibilityModule);
+    event PlayerHatEligibilityModuleUpdated(address newPlayerHatEligibilityModule);
+    event CharacterHatEligibilityModuleUpdated(address newCharacterHatEligibilityModule);
+    event AdminEligibilityModuleUpdated(address newAdminEligibilityModule);
 
     constructor() {
         _disableInitializers();
@@ -108,9 +114,34 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         emit PlayerHatIdUpdated(newPlayerHatId);
     }
 
-    function updateCharacterHatId(uint256 newCharacterHatId) external onlyOwner {
-        _hatsData.characterHatId = newCharacterHatId;
-        emit CharacterHatIdUpdated(newCharacterHatId);
+    /// @notice the following update functions will use the base implementation addresses stored in the implementationAddressStorage contract.
+
+    function updateAdminEligibilityModule(uint256 adminId, bytes calldata encodedAdmins) external onlyOwner {
+        adminHatEligibilityModule = _createAdminHatEligibilityModule(adminId, encodedAdmins);
+        emit AdminEligibilityModuleUpdated(adminHatEligibilityModule);
+    }
+
+    function updateDungeonMasterHatEligibilityModule(uint256 dungeonMasterId, bytes calldata dungeonMasters)
+        external
+        onlyOwner
+    {
+        dungeonMasterHatEligibilityModule = _createDungeonMasterHatEligibilityModule(dungeonMasterId, dungeonMasters);
+        emit DungeonMasterHatEligibilityModuleUpdated(dungeonMasterHatEligibilityModule);
+    }
+
+    function updatePlayerHatEligibilityModule(uint256 playerHatId, address characterSheets) external onlyOwner {
+        playerHatEligibilityModule = _createPlayerHatEligibilityModule(playerHatId, characterSheets);
+        emit PlayerHatEligibilityModuleUpdated(playerHatEligibilityModule);
+    }
+
+    function updateCharacterHatEligibilityModule(uint256 characterHatId) external onlyOwner {
+        characterHatEligibilityModule = _createCharacterHatEligibilityModule(characterHatId);
+        emit CharacterHatEligibilityModuleUpdated(characterHatEligibilityModule);
+    }
+
+    function updateHats(address newHats) external onlyOwner {
+        _hats = IHats(newHats);
+        emit HatsUpdated(newHats);
     }
 
     function mintPlayerHat(address wearer) external returns (bool) {

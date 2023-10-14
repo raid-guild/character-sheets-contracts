@@ -15,6 +15,7 @@ import {ItemsImplementation} from "./implementations/ItemsImplementation.sol";
 import {CharacterEligibilityAdaptor} from "./adaptors/CharacterEligibilityAdaptor.sol";
 import {ClassLevelAdaptor} from "./adaptors/ClassLevelAdaptor.sol";
 import {ItemsManagerImplementation} from "./implementations/ItemsManagerImplementation.sol";
+import {HatsAdaptor} from "./adaptors/HatsAdaptor.sol";
 
 import {IERC165} from "openzeppelin-contracts/utils/introspection/IERC165.sol";
 
@@ -54,35 +55,28 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
      * @dev create function for all contracts and adaptors
      *     @param dao the address of a dao to be used with the character sheets elegibility adaptor pass in address(0) to have no elegibilty limitations
      *     @param _classLevelAdaptorImplementation the class Level adaptor address to be used.  pass in address(0) to use the default adaptor with D&D style leveling requirements
-     *     @param data the encoded bytes of the correct initilization data see init function notes for correct data to be encoded
+     *     @return (clonesAddressStorage)  this is the data needed to pass into the initialize function to initialize all the contracts.
      */
-    function create(address dao, address _classLevelAdaptorImplementation, bytes calldata data)
-        external
-        returns (address)
-    {
+    function create(address dao, address _classLevelAdaptorImplementation) external returns (address) {
         address clonesAddressStorage = createClonesStorage();
         address itemsManagerClone = createItemsManager();
         address hatsAdaptorClone = createHatsAdaptor();
-        (address characterSheetsClone, address itemsClone, address CharacterEligibilityAdaptorClone) =
-            _createSheetsAndItems(dao, clonesAddressStorage, data);
+
+        address characterEligibilityAdaptorClone = dao != address(0) ? createCharacterEligibilityAdaptor() : address(0);
+
+        (address characterSheetsClone, address itemsClone) = _createSheetsAndItems();
 
         (address classesClone, address experienceClone, address classLevelAdaptorClone) =
-            _createClassesAndExperience(clonesAddressStorage, _classLevelAdaptorImplementation, data);
+            _createClassesAndExperience(_classLevelAdaptorImplementation);
 
-        bytes memory encodedAddresses = abi.encode(
-            characterSheetsClone,
-            itemsClone,
-            itemsManagerClone,
-            classesClone,
-            experienceClone,
-            CharacterEligibilityAdaptorClone,
-            classLevelAdaptorClone,
-            hatsAdaptorClone
-        );
+        bytes memory encodedCloneAddresses =
+            abi.encode(characterSheetsClone, itemsClone, itemsManagerClone, classesClone, experienceClone);
 
-        IClonesAddressStorage(clonesAddressStorage).initialize(encodedAddresses);
+        bytes memory encodedAdaptorAddresses =
+            abi.encode(characterEligibilityAdaptorClone, classLevelAdaptorClone, hatsAdaptorClone);
 
-        // initializeContracts(clonesAddressStorage, encodedAddresses, data);
+        // initialize clones address storage contract
+        IClonesAddressStorage(clonesAddressStorage).initialize(encodedCloneAddresses, encodedAdaptorAddresses);
 
         emit NewGameStarted(msg.sender, clonesAddressStorage);
 
@@ -194,33 +188,49 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
      */
 
     /**
-     * @notice This will initialize all the contracts except the adaptors
+     * @notice This will initialize all the contracts
      * @dev this function should be called immediately after all the create functions have been called
-     * @param encodedAddresses the encoded addresses must include in this order:
-     * -eligibility adaptor clone address
-     * - class level adaptor clone address
-     * - dungeon masters: an array of addresses that will have dungeonMaster permission on the character sheets contract
-     * - character sheets clone address to be initialized
-     * - experience clone to address be initialized
-     * - items clone address to be initialized
-     * - classes clone address to be initialized
-     * -
+     * @param clonesStorageAddress the address of the cloned ClonesAddressStorage contract.
+     * @param dao the address of the dao who's membership will restrict character sheets eligibility.  address(0) for no dao restriction;
+     * @param encodedHatsAddresses this will be the hats adaptor initialization data
+     *          -- address[] admins the list of addresses that will have admin priviledges
+     *          -- address[] dungeonMasters the list of addresses that will have dungeonMasterpriviledges
+     *          -- address Implementations the address of the ImplementationAddressStorage contract
+     *
+     * @param encodedHatsStrings the encoded strings needed for the hats adaptor init.
+     *        1.  string _baseImgUri
+     *        2.  string topHatDescription
+     *        3.  string adminUri
+     *        4.  string adminDescription
+     *        5.  string dungeonMasterUri
+     *        6.  string dungeonMasterDescription
+     *        7.  string playerUri
+     *        8.  string playerDescription
+     *        9.  string characterUri
+     *        10. string characterDescription
+     *
      * @param data encoded string data strings to include must be in this order:
      * - the base metadata uri for the character sheets clone
      * - the base character token uri for the character sheets clone
      * - the base uri for the ITEMS clone
      * - the base uri for the CLASSES clone
      */
-    function initializeContracts(address clonesStorageAddress, bytes memory encodedAddresses, bytes calldata data)
-        public
-    {
-        IClonesAddressStorage(clonesStorageAddress).initialize(encodedAddresses);
+    function initializeContracts(
+        address clonesStorageAddress,
+        address dao,
+        bytes calldata encodedHatsAddresses,
+        bytes calldata encodedHatsStrings,
+        bytes calldata data
+    ) public {
         IClonesAddressStorage clones = IClonesAddressStorage(clonesStorageAddress);
+
         //stacc too dank
-        bytes memory encodedCharInitAddresses = abi.encode(clonesStorageAddress, address(implementations));
+        CharacterEligibilityAdaptor(clones.characterEligibilityAdaptorClone()).initialize(msg.sender, dao);
+        ClassLevelAdaptor(clones.classLevelAdaptorClone()).initialize(clonesStorageAddress);
+        HatsAdaptor(clones.hatsAdaptorClone()).initialize(msg.sender, encodedHatsAddresses, encodedHatsStrings);
 
         CharacterSheetsImplementation(clones.characterSheetsClone()).initialize(
-            _encodeCharacterInitData(encodedCharInitAddresses, data)
+            _encodeCharacterInitData(clonesStorageAddress, data)
         );
 
         ItemsImplementation(clones.itemsClone()).initialize(_encodeItemsData(clonesStorageAddress, data));
@@ -230,57 +240,41 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         ExperienceImplementation(clones.experienceClone()).initialize(clonesStorageAddress);
     }
 
-    function _createSheetsAndItems(address dao, address cloneAddressStorage, bytes calldata data)
-        private
-        returns (address, address, address)
-    {
+    function _createSheetsAndItems() private returns (address, address) {
         address characterSheetsClone = createCharacterSheets();
         address itemsClone = createItems();
 
-        address CharacterEligibilityAdaptorClone = dao != address(0) ? createCharacterEligibilityAdaptor() : address(0);
+        // bytes memory encodedCharInitAddresses = abi.encode(cloneAddressStorage, address(implementations));
 
-        bytes memory encodedCharInitAddresses = abi.encode(cloneAddressStorage, address(implementations));
+        // CharacterSheetsImplementation(characterSheetsClone).initialize(
+        //     _encodeCharacterInitData(encodedCharInitAddresses, data)
+        // );
 
-        CharacterSheetsImplementation(characterSheetsClone).initialize(
-            _encodeCharacterInitData(encodedCharInitAddresses, data)
-        );
+        // if (dao != address(0)) {
+        //     CharacterEligibilityAdaptor(characterEligibilityAdaptorClone).initialize(msg.sender, dao);
+        // }
 
-        if (dao != address(0)) {
-            CharacterEligibilityAdaptor(CharacterEligibilityAdaptorClone).initialize(msg.sender, dao);
-        }
-
-        return (characterSheetsClone, itemsClone, CharacterEligibilityAdaptorClone);
+        return (characterSheetsClone, itemsClone);
     }
 
-    function _createClassesAndExperience(
-        address clonesAddressStorage,
-        address _classLevelAdaptorImplementation,
-        bytes calldata data
-    ) private returns (address, address, address) {
+    function _createClassesAndExperience(address _classLevelAdaptorImplementation)
+        private
+        returns (address, address, address)
+    {
         address experienceClone = createExperience();
         address classesClone = createClasses();
         address classLevelAdaptorClone = _classLevelAdaptorImplementation == address(0)
             ? createClassLevelAdaptor()
             : createClassLevelAdaptor(_classLevelAdaptorImplementation);
 
-        ClassesImplementation(classesClone).initialize(_encodeClassesData(clonesAddressStorage, data));
-
-        ClassLevelAdaptor(classLevelAdaptorClone).initialize(clonesAddressStorage);
-
         return (classesClone, experienceClone, classLevelAdaptorClone);
     }
 
-    function _encodeCharacterInitData(bytes memory encodedInitData, bytes memory data)
-        private
-        view
-        returns (bytes memory)
-    {
+    function _encodeCharacterInitData(address clonesStorage, bytes memory data) private view returns (bytes memory) {
         (string memory characterSheetsMetadataUri, string memory characterSheetsBaseUri,,) = _decodeStrings(data);
 
-        (address clonesStorage, address implementationStorage) = abi.decode(encodedInitData, (address, address));
-
         bytes memory encodedCharacterSheetParameters =
-            abi.encode(clonesStorage, implementationStorage, characterSheetsMetadataUri, characterSheetsBaseUri);
+            abi.encode(clonesStorage, address(implementations), characterSheetsMetadataUri, characterSheetsBaseUri);
 
         return (encodedCharacterSheetParameters);
     }

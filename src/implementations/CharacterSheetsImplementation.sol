@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
-pragma abicoder v2;
+// pragma abicoder v2;
 
 import {
     ERC721URIStorageUpgradeable,
@@ -32,19 +32,12 @@ import {Errors} from "../lib/Errors.sol";
  */
 
 contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgradeable {
-    /// @dev the admin of the contract
-    bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
-    /// @dev the EOA of the dao member who owns a sheet
-    bytes32 public constant PLAYER = keccak256("PLAYER");
-    /// @dev the tokenbound account of the sheet nft
-    bytes32 public constant CHARACTER = keccak256("CHARACTER");
-
-    address public items;
-
     string public baseTokenURI;
     string public metadataURI;
 
-    ImplementationAddressStorage public erc6551Addresses;
+    address public erc6551CharacterAccount;
+    address public erc6551Registry;
+
     IClonesAddressStorage public clones;
 
     // characterId => characterSheet
@@ -61,6 +54,8 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
     event NewCharacterSheetRolled(address player, address account, uint256 characterId);
     event MetadataURIUpdated(string newURI);
     event BaseURIUpdated(string newURI);
+    event Erc6551CharacterAccountUpdated(address newERC6551CharacterAccount);
+    event Erc6551RegistryUpdated(address newERC6551Registry);
     event CharacterRemoved(uint256 characterId);
     event Erc6551AddressesUpdated(address newErc6551Storage);
     event ClonesAddressStorageUpdated(address newClonesStorageAddress);
@@ -138,7 +133,8 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         (clonesStorage, implementationStorage, metadataURI, baseTokenURI) =
             abi.decode(_encodedParameters, (address, address, string, string));
         clones = IClonesAddressStorage(clonesStorage);
-        erc6551Addresses = ImplementationAddressStorage(implementationStorage);
+        erc6551Registry = ImplementationAddressStorage(implementationStorage).erc6551Registry();
+        erc6551CharacterAccount = ImplementationAddressStorage(implementationStorage).erc6551AccountImplementation();
     }
 
     /**
@@ -148,17 +144,14 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
      */
 
     function rollCharacterSheet(string calldata _tokenURI) external returns (uint256) {
-        if (
-            erc6551Addresses.erc6551AccountImplementation() == address(0)
-                || erc6551Addresses.erc6551Registry() == address(0)
-        ) {
+        if (erc6551CharacterAccount == address(0) || erc6551Registry == address(0)) {
             revert Errors.NotInitialized();
         }
 
         // check the eligibility adaptor to see if the player is eligible to roll a character sheet
         if (
-            clones.CharacterEligibilityAdaptorClone() != address(0)
-                && !ICharacterEligibilityAdaptor(clones.CharacterEligibilityAdaptorClone()).isEligible(msg.sender)
+            clones.characterEligibilityAdaptorClone() != address(0)
+                && !ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptorClone()).isEligible(msg.sender)
         ) {
             revert Errors.EligibilityError();
         }
@@ -181,8 +174,8 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         uint256 characterId = totalSheets;
 
         // calculate ERC6551 account address
-        address characterAccount = IERC6551Registry(erc6551Addresses.erc6551Registry()).createAccount(
-            erc6551Addresses.erc6551AccountImplementation(), block.chainid, address(this), characterId, characterId, ""
+        address characterAccount = IERC6551Registry(erc6551Registry).createAccount(
+            erc6551CharacterAccount, block.chainid, address(this), characterId, characterId, ""
         );
         // setting salt as characterId
 
@@ -257,7 +250,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
             revert Errors.OwnershipError();
         }
 
-        if (IERC1155(items).balanceOf(msg.sender, itemId) < 1) {
+        if (IERC1155(clones.itemsClone()).balanceOf(msg.sender, itemId) < 1) {
             revert Errors.InsufficientBalance();
         }
 
@@ -297,16 +290,16 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
             revert Errors.OwnershipError();
         }
         if (
-            clones.CharacterEligibilityAdaptorClone() != address(0)
-                && !ICharacterEligibilityAdaptor(clones.CharacterEligibilityAdaptorClone()).isEligible(msg.sender)
+            clones.characterEligibilityAdaptorClone() != address(0)
+                && !ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptorClone()).isEligible(msg.sender)
         ) {
             revert Errors.EligibilityError();
         }
         if (jailed[msg.sender]) {
             revert Errors.Jailed();
         }
-        address restoredAccount = IERC6551Registry(erc6551Addresses.erc6551Registry()).createAccount(
-            erc6551Addresses.erc6551AccountImplementation(), block.chainid, address(this), characterId, characterId, ""
+        address restoredAccount = IERC6551Registry(erc6551Registry).createAccount(
+            erc6551CharacterAccount, block.chainid, address(this), characterId, characterId, ""
         );
         // setting salt as characterId
 
@@ -336,8 +329,8 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         }
 
         if (
-            clones.CharacterEligibilityAdaptorClone() != address(0)
-                && ICharacterEligibilityAdaptor(clones.CharacterEligibilityAdaptorClone()).isEligible(playerAddress)
+            clones.characterEligibilityAdaptorClone() != address(0)
+                && ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptorClone()).isEligible(playerAddress)
         ) {
             revert Errors.EligibilityError();
         }
@@ -377,17 +370,22 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         emit ClonesAddressStorageUpdated(clonesStorage);
     }
 
-    function updateErc6551Addresses(address newErc6551Storage) public onlyAdmin {
-        erc6551Addresses = ImplementationAddressStorage(newErc6551Storage);
-        emit Erc6551AddressesUpdated(newErc6551Storage);
+    function updateErc6551Registry(address newErc6551Storage) public onlyAdmin {
+        erc6551Registry = newErc6551Storage;
+        emit Erc6551RegistryUpdated(newErc6551Storage);
     }
 
-    function setBaseUri(string memory _uri) public onlyDungeonMaster {
+    function updateErc6551CharacterAccount(address newERC6551CharacterAccount) public onlyAdmin {
+        erc6551CharacterAccount = newERC6551CharacterAccount;
+        emit Erc6551CharacterAccountUpdated(newERC6551CharacterAccount);
+    }
+
+    function updateBaseUri(string memory _uri) public onlyDungeonMaster {
         baseTokenURI = _uri;
         emit BaseURIUpdated(_uri);
     }
 
-    function setMetadataUri(string memory _uri) public onlyDungeonMaster {
+    function updateMetadataUri(string memory _uri) public onlyDungeonMaster {
         metadataURI = _uri;
         emit MetadataURIUpdated(_uri);
     }
@@ -499,7 +497,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         if (sheet.inventory.length == 0) {
             return false;
         }
-        uint256 supply = IItems(items).getItem(itemId).supply;
+        uint256 supply = IItems(clones.itemsClone()).getItem(itemId).supply;
         if (supply == 0) {
             revert Errors.ItemError();
         }

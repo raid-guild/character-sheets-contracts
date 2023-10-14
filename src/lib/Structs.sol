@@ -3,6 +3,17 @@ pragma solidity ^0.8.0;
 
 import {Category} from "./MultiToken.sol";
 
+struct ClonesAddresses {
+    address characterSheetsClone;
+    address itemsClone;
+    address itemsManagerClone;
+    address classesClone;
+    address experienceClone;
+    address characterEligibilityAdaptorClone;
+    address classLevelAdaptorClone;
+    address hatsAdaptorClone;
+}
+
 struct Item {
     /// @dev  claimable: if bytes32(0) then  items are claimable by anyone, otherwise upload a merkle root
     /// of all addresses allowed to claim.  if not claimable at all use any random bytes32(n) besides bytes32(0)
@@ -59,4 +70,27 @@ struct HatsData {
     uint256 playerHatId;
     /// @dev the uint256 hat id of the character hat
     uint256 characterHatId;
+}
+
+struct ImplementationAddresses {
+    // implementation addresses
+    address characterSheetsImplementation;
+    address itemsImplementation;
+    address itemsManagerImplementation;
+    address classesImplementation;
+    address erc6551Registry;
+    address erc6551AccountImplementation;
+    address experienceImplementation;
+    address characterEligibilityAdaptorImplementation;
+    address classLevelAdaptorImplementation;
+    address hatsAdaptorImplementation;
+    address cloneAddressStorage;
+    //hats addresses
+    address hatsContract;
+    address hatsModuleFactory;
+    //eligibility modules
+    address adminHatsEligibilityModule;
+    address dungeonMasterHatsEligibilityModule;
+    address playerHatsEligibilityModule;
+    address characterHatsEligibilityModule;
 }

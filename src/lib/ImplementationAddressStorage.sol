@@ -5,34 +5,14 @@ import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/Owna
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {Errors} from "./Errors.sol";
 
-// import "forge-std/console2.sol";
-struct ImplementationAddresses {
-    // implementation addresses
-    address characterSheetsImplementation;
-    address itemsImplementation;
-    address itemsManagerImplementation;
-    address classesImplementation;
-    address erc6551Registry;
-    address erc6551AccountImplementation;
-    address experienceImplementation;
-    address characterEligibilityAdaptorImplementation;
-    address classLevelAdaptorImplementation;
-    address hatsAdaptorImplementation;
-    address cloneAddressStorage;
-    //hats addresses
-    address hatsContract;
-    address hatsModuleFactory;
-    //eligibility modules
-    address adminHatsEligibilityModule;
-    address dungeonMasterHatsEligibilityModule;
-    address playerHatsEligibilityModule;
-    address characterHatsEligibilityModule;
-}
+import "./Structs.sol";
+
+// // import "forge-std/console2.sol";
 
 contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
     ImplementationAddresses internal _implementationsAddresses;
-    // update events
 
+    // update events
     event CharacterSheetsUpdated(address newCharacterSheets);
     event ExperienceUpdated(address newExperience);
     event ItemsUpdated(address newItems);
@@ -55,49 +35,15 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         _disableInitializers();
     }
 
-    function initialize(bytes calldata encodedImplementationAddresses) external initializer {
+    function initialize(
+        bytes calldata encodedImplementationAddresses,
+        bytes calldata encodedAdaptorsAndMOduleAddresses,
+        bytes calldata encodedExternalAddresses
+    ) external initializer {
         __Ownable_init_unchained(msg.sender);
-
-        (
-            _implementationsAddresses.characterSheetsImplementation,
-            _implementationsAddresses.itemsImplementation,
-            _implementationsAddresses.classesImplementation,
-            _implementationsAddresses.erc6551Registry,
-            _implementationsAddresses.erc6551AccountImplementation,
-            _implementationsAddresses.experienceImplementation,
-            _implementationsAddresses.characterEligibilityAdaptorImplementation,
-            _implementationsAddresses.classLevelAdaptorImplementation,
-            _implementationsAddresses.itemsManagerImplementation,
-            _implementationsAddresses.hatsAdaptorImplementation,
-            _implementationsAddresses.cloneAddressStorage,
-            _implementationsAddresses.hatsContract,
-            _implementationsAddresses.hatsModuleFactory,
-            _implementationsAddresses.adminHatsEligibilityModule,
-            _implementationsAddresses.dungeonMasterHatsEligibilityModule,
-            _implementationsAddresses.playerHatsEligibilityModule,
-            _implementationsAddresses.characterHatsEligibilityModule
-        ) = abi.decode(
-            encodedImplementationAddresses,
-            (
-                address,
-                address,
-                address,
-                address,
-                address,
-                address,
-                address,
-                address,
-                address,
-                address,
-                address,
-                address,
-                address,
-                address,
-                address,
-                address,
-                address
-            )
-        );
+        _initImplementations(encodedImplementationAddresses);
+        _initAdaptorsAndModules(encodedAdaptorsAndMOduleAddresses);
+        _initExternalAddresses(encodedExternalAddresses);
     }
 
     function updateCharacterSheetsImplementation(address newSheetImplementation) external onlyOwner {
@@ -265,5 +211,39 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
 
     function characterHatsEligibilityModule() public view returns (address) {
         return _implementationsAddresses.characterHatsEligibilityModule;
+    }
+
+    function _initImplementations(bytes calldata encodedImplementationAddresses) internal {
+        (
+            _implementationsAddresses.characterSheetsImplementation,
+            _implementationsAddresses.itemsImplementation,
+            _implementationsAddresses.classesImplementation,
+            _implementationsAddresses.experienceImplementation,
+            _implementationsAddresses.cloneAddressStorage,
+            _implementationsAddresses.itemsManagerImplementation,
+            _implementationsAddresses.erc6551AccountImplementation
+        ) = abi.decode(encodedImplementationAddresses, (address, address, address, address, address, address, address));
+    }
+
+    function _initAdaptorsAndModules(bytes calldata encodedAdaptorsAndModuleAddresses) internal {
+        (
+            _implementationsAddresses.adminHatsEligibilityModule,
+            _implementationsAddresses.dungeonMasterHatsEligibilityModule,
+            _implementationsAddresses.playerHatsEligibilityModule,
+            _implementationsAddresses.characterHatsEligibilityModule,
+            _implementationsAddresses.hatsAdaptorImplementation,
+            _implementationsAddresses.characterEligibilityAdaptorImplementation,
+            _implementationsAddresses.classLevelAdaptorImplementation
+        ) = abi.decode(
+            encodedAdaptorsAndModuleAddresses, (address, address, address, address, address, address, address)
+        );
+    }
+
+    function _initExternalAddresses(bytes calldata encodedExternalAddresses) internal {
+        (
+            _implementationsAddresses.erc6551Registry,
+            _implementationsAddresses.hatsContract,
+            _implementationsAddresses.hatsModuleFactory
+        ) = abi.decode(encodedExternalAddresses, (address, address, address));
     }
 }
