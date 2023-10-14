@@ -33,6 +33,8 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
 
     event NewGameStarted(address creator, address clonesAddressStorage);
     event ImplementationAddressStorageUpdated(address newImplementationAddressStorage);
+    event ExperienceCreated(address experienceClone);
+    event CharacterSheetsCreated(address expectedCharacterSheets);
 
     function initialize(address _implementationAddressStorage) external initializer {
         __Context_init_unchained();
@@ -48,12 +50,11 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
     /// create functions must be called first before the initialize call is made
 
     /**
-     * @dev create function for all contracts and adaptors
+     *     @notice creates all contracts and adaptors with default implementations
      *     @param dao the address of a dao to be used with the character sheets elegibility adaptor pass in address(0) to have no elegibilty limitations
-     *     @param _classLevelAdaptorImplementation the class Level adaptor address to be used.  pass in address(0) to use the default adaptor with D&D style leveling requirements
      *     @return (clonesAddressStorage)  this is the data needed to pass into the initialize function to initialize all the contracts.
      */
-    function create(address dao, address _classLevelAdaptorImplementation) external returns (address) {
+    function create(address dao) external returns (address) {
         address clonesAddressStorage = createClonesStorage();
         address itemsManagerClone = createItemsManager();
         address hatsAdaptorClone = createHatsAdaptor();
@@ -63,7 +64,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         (address characterSheetsClone, address itemsClone) = _createSheetsAndItems();
 
         (address classesClone, address experienceClone, address classLevelAdaptorClone) =
-            _createClassesAndExperience(_classLevelAdaptorImplementation);
+            _createClassesAndExperience(address(0));
 
         bytes memory encodedCloneAddresses =
             abi.encode(characterSheetsClone, itemsClone, itemsManagerClone, classesClone, experienceClone);
@@ -85,7 +86,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         }
 
         address experienceClone = address(new ERC1967Proxy(implementations.experienceImplementation(), ""));
-
+        emit ExperienceCreated(experienceClone);
         return experienceClone;
     }
 
@@ -95,6 +96,8 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         }
 
         address characterSheetsClone = address(new ERC1967Proxy(implementations.characterSheetsImplementation(), ""));
+
+        emit CharacterSheetsCreated(characterSheetsClone);
 
         return characterSheetsClone;
     }

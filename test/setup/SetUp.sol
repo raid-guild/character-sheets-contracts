@@ -72,7 +72,14 @@ contract SetUp is Test, Accounts, TestStructs {
         implementationStorage = new ImplementationAddressStorage();
 
         _deployCharacterSheetsFactory();
+        _createContracts();
+
+        _initializeContracts(address(deployments.clones), address(dao));
         vm.stopPrank();
+    }
+
+    function createAddressMemoryArray(uint256 length) public pure returns (address[] memory newArray) {
+        newArray = new address[](length);
     }
 
     function _deployImplementations() internal {
@@ -165,5 +172,43 @@ contract SetUp is Test, Accounts, TestStructs {
             encodedImplementationAddresses, encodedAdaptorsAndModuleAddresses, encodedExternalAddresses
         );
         characterSheetsFactory.initialize(address(implementationStorage));
+    }
+
+    function _createContracts() internal {
+        deployments.clones = ClonesAddressStorage(characterSheetsFactory.create(address(dao)));
+    }
+
+    function _initializeContracts(address clonesStorageAddress, address _dao) internal {
+        address[] memory adminArray = createAddressMemoryArray(1);
+        adminArray[0] = accounts.admin;
+
+        address[] memory dungeonMastersArray = createAddressMemoryArray(1);
+        dungeonMastersArray[0] = accounts.dungeonMaster;
+
+        bytes memory encodedHatsAddresses = abi.encode(adminArray, dungeonMastersArray, address(implementationStorage));
+
+        bytes memory encodedHatsStrings = abi.encode(
+            "test_hats_base_img",
+            "test tophat description",
+            "test_admin_uri",
+            "test_admin_description",
+            "test_dungeon_uri",
+            "test_dungeon_description",
+            "test_player_uri",
+            "test_player_description",
+            "test_character_uri",
+            "test_character_description"
+        );
+
+        bytes memory baseUriData = abi.encode(
+            "test_metadata_uri_character_sheets/",
+            "test_base_uri_character_sheets/",
+            "test_base_uri_items/",
+            "test_base_uri_classes/"
+        );
+
+        characterSheetsFactory.initializeContracts(
+            clonesStorageAddress, _dao, encodedHatsAddresses, encodedHatsStrings, baseUriData
+        );
     }
 }

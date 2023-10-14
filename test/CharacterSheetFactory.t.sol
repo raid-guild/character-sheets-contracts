@@ -9,66 +9,57 @@ import "./setup/SetUp.sol";
 // import "forge-std/console2.sol";
 
 contract CharacterSheetsTest is Test, SetUp {
+    event NewGameStarted(address creator, address clonesAddressStorage);
+    event ImplementationAddressStorageUpdated(address newImplementationAddressStorage);
+    event ExperienceCreated(address experienceClone);
+    event CharacterSheetsCreated(address expectedCharacterSheets);
+    // HAPPY PATH
+
     function testDeployment() public {
         address _implementationStorage = characterSheetsFactory.getImplementationsAddressStorageAddress();
 
         assertEq(_implementationStorage, address(implementationStorage), "wrong implementations");
     }
 
-    function testUpdateCharacterSheetsImplementation() public {
-        vm.prank(admin);
+    function testUpdateImplementationAddressStorage() public {
+        vm.prank(accounts.admin);
         vm.expectEmit(true, false, false, false);
-        emit CharacterSheetsUpdated(address(1));
-        characterSheetsFactory.updateCharacterSheetsImplementation(address(1));
-        assertEq(characterSheetsFactory.characterSheetsImplementation(), address(1));
+        emit ImplementationAddressStorageUpdated(address(1));
+        characterSheetsFactory.updateImplementationAddressStorage(address(1));
+        assertEq(characterSheetsFactory.getImplementationsAddressStorageAddress(), address(1));
     }
 
-    // function testUpdateItemsImplementation() public {
-    //     vm.prank(admin);
-    //     vm.expectEmit(true, false, false, false);
-    //     emit ItemsUpdated(address(1));
-    //     characterSheetsFactory.updateItemsImplementation(address(1));
-    //     assertEq(characterSheetsFactory.itemsImplementation(), address(1));
-    // }
+    // UNHAPPY PATH
+    function testDeploymentRevert() public {
+        //should revert because already initialized
+        vm.expectRevert();
+        characterSheetsFactory.initialize(address(1));
 
-    // function testUpdateERC6551Registry() public {
-    //     vm.prank(admin);
-    //     vm.expectEmit(false, false, false, false);
-    //     emit RegistryUpdated(address(1));
-    //     characterSheetsFactory.updateERC6551Registry(address(1));
-    //     assertEq(characterSheetsFactory.erc6551Registry(), address(1));
-    // }
+        address _implementationStorage = characterSheetsFactory.getImplementationsAddressStorageAddress();
+        assertEq(_implementationStorage, address(implementationStorage), "wrong implementations");
+    }
 
-    // function testUpdaterERC6551AccountImplementation() public {
-    //     vm.prank(admin);
-    //     vm.expectEmit(false, false, false, false);
-    //     emit ERC6551AccountImplementationUpdated(address(1));
-    //     characterSheetsFactory.updateERC6551AccountImplementation(address(1));
-    //     assertEq(characterSheetsFactory.erc6551AccountImplementation(), address(1));
-    // }
+    function testCreateExperience() public {
+        address expectedExperience = 0xD9Ce15d0e3c74B4bc3FC19c15114fc34F95c0Df3;
+        vm.startPrank(accounts.player1);
+        vm.expectEmit(true, false, false, false);
+        emit ExperienceCreated(expectedExperience);
+        address experienceAddress = characterSheetsFactory.createExperience();
+        vm.stopPrank();
 
-    // function testUpdateClassesImplementation() public {
-    //     vm.startPrank(admin);
-    //     vm.expectEmit(false, false, false, false);
-    //     emit ClassesImplementationUpdated(address(1));
-    //     characterSheetsFactory.updateClassesImplementation(address(1));
-    //     vm.stopPrank();
+        assertTrue((experienceAddress == expectedExperience), "invalid Experience");
+    }
 
-    //     assertEq(characterSheetsFactory.classesImplementation(), address(1));
-    // }
+    function testCreateCharacterSheets() public {
+        address expectedCharacterSheets = 0xD9Ce15d0e3c74B4bc3FC19c15114fc34F95c0Df3;
+        vm.startPrank(accounts.player1);
+        vm.expectEmit(true, false, false, false);
+        emit CharacterSheetsCreated(expectedCharacterSheets);
+        address characterSheetsAddress = characterSheetsFactory.createCharacterSheets();
+        vm.stopPrank();
 
-    // function testCreateExperience() public {
-    //     vm.prank(player1);
-    //     address newExperience = characterSheetsFactory.createExperience();
-
-    //     assert(address(experience) != newExperience);
-    // }
-
-    // function testCreateCharacterSheets() public {
-    //     vm.prank(player1);
-    //     address newSheets = characterSheetsFactory.createCharacterSheets();
-    //     assert(newSheets != address(characterSheets));
-    // }
+        assertTrue((characterSheetsAddress == expectedCharacterSheets), "invalid CharacterSheets");
+    }
 
     // function testCreateItems() public {
     //     vm.prank(player1);
