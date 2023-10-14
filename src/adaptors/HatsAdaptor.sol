@@ -83,11 +83,9 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         implementations = ImplementationAddressStorage(_implementations);
         _hats = IHats(implementations.hatsContract());
 
-        __Ownable_init();
+        __Ownable_init(_owner);
 
         _initHatTree(_owner, hatsStrings, hatsAddresses);
-
-        transferOwnership(_owner);
     }
 
     function updateImplementations(address newImplementations) external onlyOwner {
@@ -363,12 +361,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
 
         characterHatId = _hats.getNextId(_hatsData.dungeonMasterHatId);
 
-        characterHatEligibilityModule = _createCharacterHatEligibilityModule(
-            characterHatId,
-            implementations.characterSheetsImplementation(),
-            implementations.erc6551Registry(),
-            implementations.erc6551AccountImplementation()
-        );
+        characterHatEligibilityModule = _createCharacterHatEligibilityModule(characterHatId);
 
         _hatsData.characterHatId = _hats.createHat(
             _hatsData.dungeonMasterHatId,
@@ -385,12 +378,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         return characterHatId;
     }
 
-    function _createCharacterHatEligibilityModule(
-        uint256 characterHatId,
-        address characterSheets,
-        address erc6551Registry,
-        address erc6551AccountImplementation
-    ) private returns (address) {
+    function _createCharacterHatEligibilityModule(uint256 characterHatId) private returns (address) {
         if (
             implementations.hatsModuleFactory() == address(0)
                 || implementations.characterHatsEligibilityModule() == address(0)

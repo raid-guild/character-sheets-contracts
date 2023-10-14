@@ -8,14 +8,10 @@ import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 import "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
 
-import {
-    ERC1155HolderUpgradeable,
-    ERC1155ReceiverUpgradeable
-} from "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
-import {
-    ERC721HolderUpgradeable,
-    IERC721ReceiverUpgradeable
-} from "openzeppelin-contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
+import {ERC1155HolderUpgradeable} from
+    "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import {ERC721HolderUpgradeable} from
+    "openzeppelin-contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 

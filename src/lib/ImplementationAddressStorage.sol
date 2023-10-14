@@ -6,32 +6,33 @@ import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Init
 import {Errors} from "./Errors.sol";
 
 // import "forge-std/console2.sol";
+struct ImplementationAddresses {
+    // implementation addresses
+    address characterSheetsImplementation;
+    address itemsImplementation;
+    address itemsManagerImplementation;
+    address classesImplementation;
+    address erc6551Registry;
+    address erc6551AccountImplementation;
+    address experienceImplementation;
+    address characterEligibilityAdaptorImplementation;
+    address classLevelAdaptorImplementation;
+    address hatsAdaptorImplementation;
+    address cloneAddressStorage;
+    //hats addresses
+    address hatsContract;
+    address hatsModuleFactory;
+    //eligibility modules
+    address adminHatsEligibilityModule;
+    address dungeonMasterHatsEligibilityModule;
+    address playerHatsEligibilityModule;
+    address characterHatsEligibilityModule;
+}
 
 contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
-    // implementation addresses
-    address public characterSheetsImplementation;
-    address public itemsImplementation;
-    address public classesImplementation;
-    address public erc6551Registry;
-    address public erc6551AccountImplementation;
-    address public experienceImplementation;
-    address public CharacterEligibilityAdaptorImplementation;
-    address public classLevelAdaptorImplementation;
-    address public itemsManagerImplementation;
-    address public hatsAdaptorImplementation;
-    address public cloneAddressStorage;
-
-    //hats addresses
-    address public hatsContract;
-    address public hatsModuleFactory;
-
-    //eligibility modules
-    address public adminHatsEligibilityModule;
-    address public dungeonMasterHatsEligibilityModule;
-    address public playerHatsEligibilityModule;
-    address public characterHatsEligibilityModule;
-
+    ImplementationAddresses internal _implementationsAddresses;
     // update events
+
     event CharacterSheetsUpdated(address newCharacterSheets);
     event ExperienceUpdated(address newExperience);
     event ItemsUpdated(address newItems);
@@ -55,26 +56,26 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
     }
 
     function initialize(bytes calldata encodedImplementationAddresses) external initializer {
-        __Ownable_init_unchained();
+        __Ownable_init_unchained(msg.sender);
 
         (
-            characterSheetsImplementation,
-            itemsImplementation,
-            classesImplementation,
-            erc6551Registry,
-            erc6551AccountImplementation,
-            experienceImplementation,
-            CharacterEligibilityAdaptorImplementation,
-            classLevelAdaptorImplementation,
-            itemsManagerImplementation,
-            hatsAdaptorImplementation,
-            cloneAddressStorage,
-            hatsContract,
-            hatsModuleFactory,
-            adminHatsEligibilityModule,
-            dungeonMasterHatsEligibilityModule,
-            playerHatsEligibilityModule,
-            characterHatsEligibilityModule
+            _implementationsAddresses.characterSheetsImplementation,
+            _implementationsAddresses.itemsImplementation,
+            _implementationsAddresses.classesImplementation,
+            _implementationsAddresses.erc6551Registry,
+            _implementationsAddresses.erc6551AccountImplementation,
+            _implementationsAddresses.experienceImplementation,
+            _implementationsAddresses.characterEligibilityAdaptorImplementation,
+            _implementationsAddresses.classLevelAdaptorImplementation,
+            _implementationsAddresses.itemsManagerImplementation,
+            _implementationsAddresses.hatsAdaptorImplementation,
+            _implementationsAddresses.cloneAddressStorage,
+            _implementationsAddresses.hatsContract,
+            _implementationsAddresses.hatsModuleFactory,
+            _implementationsAddresses.adminHatsEligibilityModule,
+            _implementationsAddresses.dungeonMasterHatsEligibilityModule,
+            _implementationsAddresses.playerHatsEligibilityModule,
+            _implementationsAddresses.characterHatsEligibilityModule
         ) = abi.decode(
             encodedImplementationAddresses,
             (
@@ -99,74 +100,74 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         );
     }
 
-    function updateCharacterSheetsImplementation(address _sheetImplementation) external onlyOwner {
-        characterSheetsImplementation = _sheetImplementation;
-        emit CharacterSheetsUpdated(_sheetImplementation);
+    function updateCharacterSheetsImplementation(address newSheetImplementation) external onlyOwner {
+        _implementationsAddresses.characterSheetsImplementation = newSheetImplementation;
+        emit CharacterSheetsUpdated(newSheetImplementation);
     }
 
-    function updateItemsImplementation(address _itemsImplementation) external onlyOwner {
-        itemsImplementation = _itemsImplementation;
-        emit ItemsUpdated(_itemsImplementation);
+    function updateItemsImplementation(address newItemsImplementation) external onlyOwner {
+        _implementationsAddresses.itemsImplementation = newItemsImplementation;
+        emit ItemsUpdated(newItemsImplementation);
     }
 
-    function updateExperienceImplementation(address _experienceImplementation) external onlyOwner {
-        experienceImplementation = _experienceImplementation;
-        emit ExperienceUpdated(_experienceImplementation);
+    function updateExperienceImplementation(address newExperienceImplementation) external onlyOwner {
+        _implementationsAddresses.experienceImplementation = newExperienceImplementation;
+        emit ExperienceUpdated(newExperienceImplementation);
     }
 
-    function updateERC6551Registry(address _newRegistry) external onlyOwner {
-        erc6551Registry = _newRegistry;
-        emit RegistryUpdated(erc6551Registry);
+    function updateERC6551Registry(address newRegistry) external onlyOwner {
+        _implementationsAddresses.erc6551Registry = newRegistry;
+        emit RegistryUpdated(newRegistry);
     }
 
-    function updateERC6551AccountImplementation(address _newImplementation) external onlyOwner {
-        erc6551AccountImplementation = _newImplementation;
-        emit ERC6551AccountImplementationUpdated(_newImplementation);
+    function updateERC6551AccountImplementation(address newErc6551AccountImplementation) external onlyOwner {
+        _implementationsAddresses.erc6551AccountImplementation = newErc6551AccountImplementation;
+        emit ERC6551AccountImplementationUpdated(newErc6551AccountImplementation);
     }
 
-    function updateClassesImplementation(address _newClasses) external onlyOwner {
-        classesImplementation = _newClasses;
-        emit ClassesImplementationUpdated(classesImplementation);
+    function updateClassesImplementation(address newClasses) external onlyOwner {
+        _implementationsAddresses.classesImplementation = newClasses;
+        emit ClassesImplementationUpdated(newClasses);
     }
 
-    function updateCharacterEligibilityAdaptorImplementation(address _newCharacterEligibilityAdaptor)
+    function updateCharacterEligibilityAdaptorImplementation(address newCharacterEligibilityAdaptor)
         external
         onlyOwner
     {
-        CharacterEligibilityAdaptorImplementation = _newCharacterEligibilityAdaptor;
-        emit CharacterEligibilityAdaptorUpdated(_newCharacterEligibilityAdaptor);
+        _implementationsAddresses.characterEligibilityAdaptorImplementation = newCharacterEligibilityAdaptor;
+        emit CharacterEligibilityAdaptorUpdated(newCharacterEligibilityAdaptor);
     }
 
-    function updateClassLevelAdaptorImplementation(address _newClassLevelAdaptor) external onlyOwner {
-        classLevelAdaptorImplementation = _newClassLevelAdaptor;
-        emit ClassLevelAdaptorUpdated(_newClassLevelAdaptor);
+    function updateClassLevelAdaptorImplementation(address newClassLevelAdaptor) external onlyOwner {
+        _implementationsAddresses.classLevelAdaptorImplementation = newClassLevelAdaptor;
+        emit ClassLevelAdaptorUpdated(newClassLevelAdaptor);
     }
 
-    function updateHatsAdaptorImplementation(address _newHatsAdaptor) external onlyOwner {
-        hatsAdaptorImplementation = _newHatsAdaptor;
+    function updateHatsAdaptorImplementation(address newHatsAdaptor) external onlyOwner {
+        _implementationsAddresses.hatsAdaptorImplementation = newHatsAdaptor;
 
-        emit HatsAdaptorUpdated(_newHatsAdaptor);
+        emit HatsAdaptorUpdated(newHatsAdaptor);
     }
 
-    function updateItemsManagerImplementation(address _newItemsManager) external onlyOwner {
-        itemsManagerImplementation = _newItemsManager;
-        emit ItemsManagerUpdated(_newItemsManager);
+    function updateItemsManagerImplementation(address newItemsManager) external onlyOwner {
+        _implementationsAddresses.itemsManagerImplementation = newItemsManager;
+        emit ItemsManagerUpdated(newItemsManager);
     }
 
     function updateHatsContract(address newHatsContract) external onlyOwner {
-        hatsContract = newHatsContract;
+        _implementationsAddresses.hatsContract = newHatsContract;
 
         emit HatsContractUpdated(newHatsContract);
     }
 
     function updateHatsModuleFactory(address newHatsModuleFactory) external onlyOwner {
-        hatsModuleFactory = newHatsModuleFactory;
+        _implementationsAddresses.hatsModuleFactory = newHatsModuleFactory;
 
         emit HatsModuleFactoryUpdated(newHatsModuleFactory);
     }
 
     function updateAdminHatsEligibilityModule(address newAdminHatsEligibilityModule) external onlyOwner {
-        adminHatsEligibilityModule = newAdminHatsEligibilityModule;
+        _implementationsAddresses.adminHatsEligibilityModule = newAdminHatsEligibilityModule;
 
         emit AdminHatsEligibilityModuleUpdated(newAdminHatsEligibilityModule);
     }
@@ -175,26 +176,94 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         external
         onlyOwner
     {
-        dungeonMasterHatsEligibilityModule = newDungeonMasterHatsEligibilityModule;
+        _implementationsAddresses.dungeonMasterHatsEligibilityModule = newDungeonMasterHatsEligibilityModule;
 
         emit DungeonMasterHatsEligibilityModuleUpdated(newDungeonMasterHatsEligibilityModule);
     }
 
     function updatePlayerHatsEligibilityModule(address newPlayerHatsEligibilityModule) external onlyOwner {
-        playerHatsEligibilityModule = newPlayerHatsEligibilityModule;
+        _implementationsAddresses.playerHatsEligibilityModule = newPlayerHatsEligibilityModule;
 
         emit PlayerHatsEligibilityModuleUpdated(newPlayerHatsEligibilityModule);
     }
 
     function updateCharacterHatsEligibilityModule(address newCharacterHatsEligibilityModule) external onlyOwner {
-        characterHatsEligibilityModule = newCharacterHatsEligibilityModule;
+        _implementationsAddresses.characterHatsEligibilityModule = newCharacterHatsEligibilityModule;
 
         emit CharacterHatsEligibilityModuleUpdated(newCharacterHatsEligibilityModule);
     }
 
     function updateCloneAddressStorage(address newCloneAddressStorage) external onlyOwner {
-        cloneAddressStorage = newCloneAddressStorage;
+        _implementationsAddresses.cloneAddressStorage = newCloneAddressStorage;
 
         emit CloneAddressStorageUpdated(newCloneAddressStorage);
+    }
+
+    function characterSheetsImplementation() public view returns (address) {
+        return _implementationsAddresses.characterSheetsImplementation;
+    }
+
+    function itemsImplementation() public view returns (address) {
+        return _implementationsAddresses.itemsImplementation;
+    }
+
+    function classesImplementation() public view returns (address) {
+        return _implementationsAddresses.classesImplementation;
+    }
+
+    function itemsManagerImplementation() public view returns (address) {
+        return _implementationsAddresses.itemsManagerImplementation;
+    }
+
+    function experienceImplementation() public view returns (address) {
+        return _implementationsAddresses.experienceImplementation;
+    }
+
+    function erc6551Registry() public view returns (address) {
+        return _implementationsAddresses.erc6551Registry;
+    }
+
+    function erc6551AccountImplementation() public view returns (address) {
+        return _implementationsAddresses.erc6551AccountImplementation;
+    }
+
+    function characterEligibilityAdaptorImplementation() public view returns (address) {
+        return _implementationsAddresses.characterEligibilityAdaptorImplementation;
+    }
+
+    function classLevelAdaptorImplementation() public view returns (address) {
+        return _implementationsAddresses.classLevelAdaptorImplementation;
+    }
+
+    function hatsAdaptorImplementation() public view returns (address) {
+        return _implementationsAddresses.hatsAdaptorImplementation;
+    }
+
+    function cloneAddressStorage() public view returns (address) {
+        return _implementationsAddresses.cloneAddressStorage;
+    }
+
+    function hatsContract() public view returns (address) {
+        return _implementationsAddresses.hatsContract;
+    }
+
+    function hatsModuleFactory() public view returns (address) {
+        return _implementationsAddresses.hatsModuleFactory;
+    }
+
+    function adminHatsEligibilityModule() public view returns (address) {
+        return _implementationsAddresses.adminHatsEligibilityModule;
+    }
+
+    function dungeonMasterHatsEligibilityModule() public view returns (address) {
+        return _implementationsAddresses.dungeonMasterHatsEligibilityModule;
+    }
+
+    function playerHatsEligibilityModule() public view returns (address) {
+        return _implementationsAddresses.playerHatsEligibilityModule;
+    }
+
+    function characterHatsEligibilityModule() public view returns (address) {
+        return _implementationsAddresses.characterHatsEligibilityModule;
     }
 }

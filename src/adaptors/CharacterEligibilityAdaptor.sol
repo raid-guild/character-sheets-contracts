@@ -37,8 +37,7 @@ contract CharacterEligibilityAdaptor is
 
     function initialize(address _owner, address _dao) external initializer {
         dao = _dao;
-        __Ownable_init();
-        transferOwnership(_owner);
+        __Ownable_init(_owner);
     }
 
     function updateDaoAddress(address newDao) external onlyOwner {

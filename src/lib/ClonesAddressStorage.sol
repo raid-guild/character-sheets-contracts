@@ -8,17 +8,20 @@ import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 import {Errors} from "./Errors.sol";
 
 // import "forge-std/console2.sol";
+struct ClonesAddresses {
+    address characterSheetsClone;
+    address itemsClone;
+    address itemsManagerClone;
+    address classesClone;
+    address experienceClone;
+    address characterEligibilityAdaptorClone;
+    address classLevelAdaptorClone;
+    address hatsAdaptorClone;
+}
 
 contract ClonesAddressStorage is UUPSUpgradeable {
     //cloned contracts
-    address public characterSheetsClone;
-    address public itemsClone;
-    address public itemsManagerClone;
-    address public classesClone;
-    address public experienceClone;
-    address public CharacterEligibilityAdaptorClone;
-    address public classLevelAdaptorClone;
-    address public hatsAdaptorClone;
+    ClonesAddresses internal _clones;
 
     // update events
     event CharacterSheetCloneUpdated(address newCharacterSheetClone);
@@ -36,7 +39,7 @@ contract ClonesAddressStorage is UUPSUpgradeable {
     event CharacterIdUpdated(uint256 _characterId);
 
     modifier onlyAdmin() {
-        if (!IHatsAdaptor(hatsAdaptorClone).isAdmin(msg.sender)) {
+        if (!IHatsAdaptor(_clones.hatsAdaptorClone).isAdmin(msg.sender)) {
             revert Errors.CallerNotApproved();
         }
         _;
@@ -50,56 +53,88 @@ contract ClonesAddressStorage is UUPSUpgradeable {
         __UUPSUpgradeable_init();
 
         (
-            characterSheetsClone,
-            itemsClone,
-            itemsManagerClone,
-            classesClone,
-            experienceClone,
-            CharacterEligibilityAdaptorClone,
-            classLevelAdaptorClone,
-            hatsAdaptorClone
+            _clones.characterSheetsClone,
+            _clones.itemsClone,
+            _clones.itemsManagerClone,
+            _clones.classesClone,
+            _clones.experienceClone,
+            _clones.characterEligibilityAdaptorClone,
+            _clones.classLevelAdaptorClone,
+            _clones.hatsAdaptorClone
         ) = abi.decode(encodedClonesAddresses, (address, address, address, address, address, address, address, address));
     }
 
     function updateCharacterSheetsClone(address newCharacterSheetsClone) external onlyAdmin {
-        characterSheetsClone = newCharacterSheetsClone;
+        _clones.characterSheetsClone = newCharacterSheetsClone;
         emit CharacterSheetCloneUpdated(newCharacterSheetsClone);
     }
 
     function updateItemsClone(address _itemsClone) external onlyAdmin {
-        itemsClone = _itemsClone;
+        _clones.itemsClone = _itemsClone;
         emit ItemsCloneUpdated(_itemsClone);
     }
 
     function updateExperienceClone(address _experienceClone) external onlyAdmin {
-        experienceClone = _experienceClone;
+        _clones.experienceClone = _experienceClone;
         emit ExperienceCloneUpdated(_experienceClone);
     }
 
     function updateClassesClone(address _newClasses) external onlyAdmin {
-        classesClone = _newClasses;
-        emit ClassesCloneUpdated(classesClone);
+        _clones.classesClone = _newClasses;
+        emit ClassesCloneUpdated(_newClasses);
     }
 
     function updateCharacterEligibilityAdaptorClone(address _newCharacterEligibilityAdaptor) external onlyAdmin {
-        CharacterEligibilityAdaptorClone = _newCharacterEligibilityAdaptor;
+        _clones.characterEligibilityAdaptorClone = _newCharacterEligibilityAdaptor;
         emit CharacterEligibilityAdaptorCloneUpdated(_newCharacterEligibilityAdaptor);
     }
 
     function updateClassLevelAdaptorClone(address _newClassLevelAdaptor) external onlyAdmin {
-        classLevelAdaptorClone = _newClassLevelAdaptor;
+        _clones.classLevelAdaptorClone = _newClassLevelAdaptor;
         emit ClassLevelAdaptorCloneUpdated(_newClassLevelAdaptor);
     }
 
     function updateHatsAdaptorClone(address _newHatsAdaptor) external onlyAdmin {
-        hatsAdaptorClone = _newHatsAdaptor;
+        _clones.hatsAdaptorClone = _newHatsAdaptor;
 
         emit HatsAdaptorCloneUpdated(_newHatsAdaptor);
     }
 
     function updateItemsManagerClone(address _newItemsManager) external onlyAdmin {
-        itemsManagerClone = _newItemsManager;
+        _clones.itemsManagerClone = _newItemsManager;
         emit ItemsManagerCloneUpdated(_newItemsManager);
+    }
+
+    function characterSheetsClone() public view returns (address) {
+        return _clones.characterSheetsClone;
+    }
+
+    function itemsClone() public view returns (address) {
+        return _clones.itemsClone;
+    }
+
+    function itemsManagerClone() public view returns (address) {
+        return _clones.itemsManagerClone;
+    }
+
+    function classesClone() public view returns (address) {
+        return _clones.classesClone;
+    }
+
+    function experienceClone() public view returns (address) {
+        return _clones.experienceClone;
+    }
+
+    function characterEligibilityAdaptorClone() public view returns (address) {
+        return _clones.characterEligibilityAdaptorClone;
+    }
+
+    function classLevelAdaptorClone() public view returns (address) {
+        return _clones.classLevelAdaptorClone;
+    }
+
+    function hatsAdaptorClone() public view returns (address) {
+        return _clones.hatsAdaptorClone;
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
