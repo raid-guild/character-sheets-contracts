@@ -155,6 +155,10 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         ) {
             revert Errors.EligibilityError();
         }
+        // a character cannot be a character
+        if (_characterSheets[msg.sender] != 0) {
+            revert Errors.CharacterError();
+        }
 
         if (jailed[msg.sender]) {
             revert Errors.Jailed();

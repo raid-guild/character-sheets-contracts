@@ -123,6 +123,25 @@ contract SetUp is Test, Accounts, TestStructs {
         vm.stopPrank();
     }
 
+    function dropItems(address character, uint256 _itemId, uint256 amount, address itemsContract) public {
+        address[] memory characters = new address[](1);
+        characters[0] = character;
+
+        uint256[][] memory itemIds = new uint256[][](1);
+        itemIds[0] = new uint256[](1);
+        itemIds[0][0] = _itemId;
+
+        uint256[][] memory amounts = new uint256[][](1);
+        amounts[0] = new uint256[](1);
+        amounts[0][0] = amount;
+
+        ItemsImplementation(itemsContract).dropLoot(characters, itemIds, amounts);
+    }
+
+    function dropExp(address character, uint256 amount, address experience) public {
+        ExperienceImplementation(experience).dropExp(character, amount);
+    }
+
     function createNewItem(bool craftable, bool soulbound, bytes32 claimable) public view returns (bytes memory) {
         bytes memory requiredAssets;
 

@@ -44,16 +44,6 @@ contract CharacterSheetsTest is Test, SetUp {
         assertEq(characterSheetsFactory.getImplementationsAddressStorageAddress(), address(1));
     }
 
-    // UNHAPPY PATH
-    function testDeploymentRevert() public {
-        //should revert because already initialized
-        vm.expectRevert();
-        characterSheetsFactory.initialize(address(1));
-
-        address _implementationStorage = characterSheetsFactory.getImplementationsAddressStorageAddress();
-        assertEq(_implementationStorage, address(implementationStorage), "wrong implementations");
-    }
-
     function testCreateExperience() public {
         address expectedExperience = 0xD9Ce15d0e3c74B4bc3FC19c15114fc34F95c0Df3;
         vm.startPrank(accounts.player1);
@@ -209,5 +199,17 @@ contract CharacterSheetsTest is Test, SetUp {
             900 * 10 ** 18,
             "Character level adaptor not initialized"
         );
+    }
+
+    /// UNHAPPY PATH
+    //TODO do unhappy path
+
+    function testDeploymentRevert() public {
+        //should revert because already initialized
+        vm.expectRevert();
+        characterSheetsFactory.initialize(address(1));
+
+        address _implementationStorage = characterSheetsFactory.getImplementationsAddressStorageAddress();
+        assertEq(_implementationStorage, address(implementationStorage), "wrong implementations");
     }
 }
