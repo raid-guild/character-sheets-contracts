@@ -9,10 +9,25 @@ import "./setup/SetUp.sol";
 // import "forge-std/console2.sol";
 
 contract CharacterSheetsTest is Test, SetUp {
+    struct EncodedHatsData {
+        bytes encodedHatsAddresses;
+        bytes encodedHatsStrings;
+    }
+
+    struct EncodedClonesInitData {
+        bytes encodedCloneAddresses;
+        bytes encodedAdaptorAddresses;
+    }
+
     event NewGameStarted(address creator, address clonesAddressStorage);
     event ImplementationAddressStorageUpdated(address newImplementationAddressStorage);
     event ExperienceCreated(address experienceClone);
     event CharacterSheetsCreated(address expectedCharacterSheets);
+    event ItemsCreated(address newItems);
+    event ClassesCreated(address expectedClasses);
+    event CharacterEligibilityAdaptorCreated(address expectedCharacterEligibilityAdaptor);
+    event ClassLevelAdaptorCreated(address expectedClassLevelAdaptor);
+
     // HAPPY PATH
 
     function testDeployment() public {
@@ -61,78 +76,138 @@ contract CharacterSheetsTest is Test, SetUp {
         assertTrue((characterSheetsAddress == expectedCharacterSheets), "invalid CharacterSheets");
     }
 
-    // function testCreateItems() public {
-    //     vm.prank(player1);
-    //     address newItems = characterSheetsFactory.createItems();
-    //     assert(newItems != address(items));
-    // }
+    function testCreateItems() public {
+        address expectedItems = 0xD9Ce15d0e3c74B4bc3FC19c15114fc34F95c0Df3;
+        vm.startPrank(accounts.player1);
+        vm.expectEmit(true, false, false, false);
+        emit ItemsCreated(expectedItems);
+        address newItems = characterSheetsFactory.createItems();
+        assertTrue((newItems != address(deployments.items)), "new items not deployed");
+    }
 
-    // function testCreateClasses() public {
-    //     vm.prank(player1);
-    //     address newClasses = characterSheetsFactory.createClasses();
-    //     assert(newClasses != address(classes));
-    // }
+    function testCreateClasses() public {
+        address expectedClasses = 0xD9Ce15d0e3c74B4bc3FC19c15114fc34F95c0Df3;
+        vm.startPrank(accounts.player1);
+        vm.expectEmit(true, false, false, false);
+        emit ClassesCreated(expectedClasses);
+        address newClasses = characterSheetsFactory.createClasses();
+        assertTrue((newClasses != address(deployments.classes)), "new classes not deployed");
+    }
 
-    // function testCreateCharacterEligibilityAdaptor() public {
-    //     vm.prank(player1);
-    //     address newEligibility = characterSheetsFactory.createCharacterEligibilityAdaptor(address(eligibility));
-    //     assert(newEligibility != address(eligibility));
-    // }
+    function testCreateCharacterEligibilityAdaptor() public {
+        address expectedCharacterEligibilityAdaptor = 0xD9Ce15d0e3c74B4bc3FC19c15114fc34F95c0Df3;
+        vm.startPrank(accounts.player1);
+        vm.expectEmit(true, false, false, false);
+        emit CharacterEligibilityAdaptorCreated(expectedCharacterEligibilityAdaptor);
+        address newCharacterEligibilityAdaptor = characterSheetsFactory.createCharacterEligibilityAdaptor();
+        assertTrue(
+            (newCharacterEligibilityAdaptor != address(deployments.characterEligibility)),
+            "new character eligibility adaptor not deployed"
+        );
+    }
 
-    // function testCreateClassLevelAdaptor() public {
-    //     vm.prank(player1);
-    //     address newClassLevel = characterSheetsFactory.createClassLevelAdaptor(address(classLevels));
-    //     assert(newClassLevel != address(classLevels));
-    // }
+    function testCreateClassLevelAdaptor() public {
+        address expectedClassLevelAdaptor = 0xD9Ce15d0e3c74B4bc3FC19c15114fc34F95c0Df3;
+        vm.startPrank(accounts.player1);
+        vm.expectEmit(true, false, false, false);
+        emit ClassLevelAdaptorCreated(expectedClassLevelAdaptor);
+        address newClassLevelAdaptor = characterSheetsFactory.createClassLevelAdaptor();
+        assertTrue((newClassLevelAdaptor != address(deployments.classLevels)), "new class level adaptor not deployed");
+    }
 
-    // function testInitializeContracts() public {
-    //     vm.startPrank(player1);
+    function testInitializeContracts() public {
+        vm.startPrank(accounts.player1);
 
-    //     address newSheets = characterSheetsFactory.createCharacterSheets();
+        address newSheets = characterSheetsFactory.createCharacterSheets();
 
-    //     address newItems = characterSheetsFactory.createItems();
+        address newItems = characterSheetsFactory.createItems();
 
-    //     address newExperience = characterSheetsFactory.createExperience();
+        address newExperience = characterSheetsFactory.createExperience();
 
-    //     address newClasses = characterSheetsFactory.createClasses();
+        address newClasses = characterSheetsFactory.createClasses();
 
-    //     address newEligibility = characterSheetsFactory.createCharacterEligibilityAdaptor(address(eligibility));
+        address newCloneStorage = characterSheetsFactory.createClonesStorage();
 
-    //     address newClassLevel = characterSheetsFactory.createClassLevelAdaptor(address(classLevels));
+        address newEligibility = characterSheetsFactory.createCharacterEligibilityAdaptor(
+            address(implementations.characterEligibilityAdaptor)
+        );
 
-    //     address newItemsManager = characterSheetsFactory.createItemsManager();
+        address newClassLevel =
+            characterSheetsFactory.createClassLevelAdaptor(address(implementations.classLevelAdaptor));
 
-    //     address newHatsAdaptor = characterSheetsFactory.createHatsAdaptor(address(storedImp.hatsAdaptorImplementation));
-    //     address newClones = characterSheetsFactory.createClonesStorage();
+        address newItemsManager = characterSheetsFactory.createItemsManager();
 
-    //     address[] memory dungeonMasters = new address[](1);
-    //     dungeonMasters[0] = player1;
-    //     bytes memory encodedInitData = abi.encode(
-    //         newEligibility,
-    //         newClassLevel,
-    //         dungeonMasters,
-    //         newSheets,
-    //         newExperience,
-    //         newItems,
-    //         newItemsManager,
-    //         newClasses
-    //     );
+        address newHatsAdaptor = characterSheetsFactory.createHatsAdaptor(address(implementations.hatsAdaptor));
 
-    //     bytes memory stringData = abi.encode(
-    //         "test_metadata_uri_character_sheets/",
-    //         "test_base_uri_character_sheets/",
-    //         "test_base_uri_items/",
-    //         "test_base_uri_classes/"
-    //     );
-    //     characterSheetsFactory.initializeContracts(address(newClones), encodedInitData, stringData);
+        address[] memory adminArray = createAddressMemoryArray(1);
+        adminArray[0] = accounts.admin;
 
-    //     assertEq(ItemsImplementation(newItems).getBaseURI(), "test_base_uri_items/", "incorrect items base uri");
-    //     assertEq(ClassesImplementation(newClasses).getBaseURI(), "test_base_uri_classes/", "incorrect classes baseUri");
-    //     assertEq(
-    //         CharacterSheetsImplementation(newSheets).baseTokenURI(),
-    //         "test_base_uri_character_sheets/",
-    //         "incorrect sheets base uri"
-    //     );
-    //     assertEq(ExperienceImplementation(newExperience).name(), "Experience", "incorrect experience name");
-    // }
+        address[] memory dungeonMastersArray = createAddressMemoryArray(1);
+        dungeonMastersArray[0] = accounts.dungeonMaster;
+
+        //STACC TOOO DAMN DANK!
+        EncodedClonesInitData memory clonesData;
+        EncodedHatsData memory hatsData;
+
+        hatsData.encodedHatsAddresses =
+            abi.encode(adminArray, dungeonMastersArray, address(implementationStorage), newCloneStorage);
+
+        hatsData.encodedHatsStrings = abi.encode(
+            "new_new_test_hats_base_img",
+            "new_test tophat description",
+            "new_test_admin_uri",
+            "new_test_admin_description",
+            "new_test_dungeon_uri",
+            "new_test_dungeon_description",
+            "new_test_player_uri",
+            "new_test_player_description",
+            "new_test_character_uri",
+            "new_test_character_description"
+        );
+
+        bytes memory baseUriData = abi.encode(
+            "new_test_metadata_uri_character_sheets/",
+            "new_test_base_uri_character_sheets/",
+            "new_test_base_uri_items/",
+            "new_test_base_uri_classes/"
+        );
+
+        clonesData.encodedCloneAddresses = abi.encode(newSheets, newItems, newItemsManager, newClasses, newExperience);
+
+        clonesData.encodedAdaptorAddresses = abi.encode(newEligibility, newClassLevel, newHatsAdaptor);
+
+        // initialize clones address storage contract
+        ClonesAddressStorage(newCloneStorage).initialize(
+            clonesData.encodedCloneAddresses, clonesData.encodedAdaptorAddresses
+        );
+
+        characterSheetsFactory.initializeContracts(
+            address(newCloneStorage),
+            address(dao),
+            hatsData.encodedHatsAddresses,
+            hatsData.encodedHatsStrings,
+            baseUriData
+        );
+
+        assertEq(ItemsImplementation(newItems).getBaseURI(), "new_test_base_uri_items/", "new_incorrect items base uri");
+        assertEq(
+            ClassesImplementation(newClasses).getBaseURI(),
+            "new_test_base_uri_classes/",
+            "new_incorrect classes baseUri"
+        );
+        assertEq(
+            CharacterSheetsImplementation(newSheets).baseTokenURI(),
+            "new_test_base_uri_character_sheets/",
+            "new_incorrect sheets base uri"
+        );
+        assertEq(ExperienceImplementation(newExperience).name(), "Experience", "incorrect experience name");
+        assertEq(
+            CharacterEligibilityAdaptor(newEligibility).dao(), address(dao), "Character elgibility not initialized"
+        );
+        assertEq(
+            ClassLevelAdaptor(newClassLevel).getExpForLevel(2),
+            900 * 10 ** 18,
+            "Character level adaptor not initialized"
+        );
+    }
 }

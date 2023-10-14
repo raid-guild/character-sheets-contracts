@@ -34,7 +34,11 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
     event NewGameStarted(address creator, address clonesAddressStorage);
     event ImplementationAddressStorageUpdated(address newImplementationAddressStorage);
     event ExperienceCreated(address experienceClone);
-    event CharacterSheetsCreated(address expectedCharacterSheets);
+    event CharacterSheetsCreated(address characterSheetsClone);
+    event ItemsCreated(address newItems);
+    event ClassesCreated(address classesClone);
+    event CharacterEligibilityAdaptorCreated(address characterEligibilityAdaptorClone);
+    event ClassLevelAdaptorCreated(address classLevelAdaptorClone);
 
     function initialize(address _implementationAddressStorage) external initializer {
         __Context_init_unchained();
@@ -115,6 +119,8 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
             revert Errors.NotInitialized();
         }
         address itemsClone = address(new ERC1967Proxy(implementations.itemsImplementation(), ""));
+
+        emit ItemsCreated(itemsClone);
         return itemsClone;
     }
 
@@ -123,6 +129,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
             revert Errors.NotInitialized();
         }
         address classesClone = address(new ERC1967Proxy(implementations.classesImplementation(), ""));
+        emit ClassesCreated(classesClone);
         return classesClone;
     }
 
@@ -130,7 +137,6 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         if (implementations.characterEligibilityAdaptorImplementation() == address(0)) {
             revert Errors.NotInitialized();
         }
-
         return createCharacterEligibilityAdaptor(implementations.characterEligibilityAdaptorImplementation());
     }
 
@@ -144,6 +150,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
 
         address characterEligibilityAdaptorClone =
             address(new ERC1967Proxy(_characterEligibilityAdaptorImplementation, ""));
+        emit CharacterEligibilityAdaptorCreated(characterEligibilityAdaptorClone);
         return characterEligibilityAdaptorClone;
     }
 
@@ -161,6 +168,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         }
 
         address classLevelAdaptorClone = address(new ERC1967Proxy(_classLevelAdaptorImplementation, ""));
+        emit ClassLevelAdaptorCreated(classLevelAdaptorClone);
         return classLevelAdaptorClone;
     }
 
@@ -194,8 +202,8 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
      * @param encodedHatsAddresses this will be the hats adaptor initialization data
      *          -- address[] admins the list of addresses that will have admin priviledges
      *          -- address[] dungeonMasters the list of addresses that will have dungeonMasterpriviledges
-     *          -- address Implementations the address of the ImplementationAddressStorage contract
-     *          -- address clonesStorage the address of the clones storageContract;
+     *          -- address implementations the address of the ImplementationAddressStorage contract
+     *          -- address clonesStorage the address of the cloned clones storageContract;
      *
      * @param encodedHatsStrings the encoded strings needed for the hats adaptor init.
      *        1.  string _baseImgUri
@@ -209,7 +217,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
      *        9.  string characterUri
      *        10. string characterDescription
      *
-     * @param data encoded string data strings to include must be in this order:
+     * @param sheetsStrings encoded string data strings to include must be in this order:
      * - the base metadata uri for the character sheets clone
      * - the base character token uri for the character sheets clone
      * - the base uri for the ITEMS clone
@@ -220,7 +228,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         address dao,
         bytes calldata encodedHatsAddresses,
         bytes calldata encodedHatsStrings,
-        bytes calldata data
+        bytes calldata sheetsStrings
     ) public {
         IClonesAddressStorage clones = IClonesAddressStorage(clonesStorageAddress);
 
@@ -230,12 +238,12 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         HatsAdaptor(clones.hatsAdaptorClone()).initialize(msg.sender, encodedHatsAddresses, encodedHatsStrings);
 
         CharacterSheetsImplementation(clones.characterSheetsClone()).initialize(
-            _encodeCharacterInitData(clonesStorageAddress, data)
+            _encodeCharacterInitData(clonesStorageAddress, sheetsStrings)
         );
 
-        ItemsImplementation(clones.itemsClone()).initialize(_encodeItemsData(clonesStorageAddress, data));
+        ItemsImplementation(clones.itemsClone()).initialize(_encodeItemsData(clonesStorageAddress, sheetsStrings));
 
-        ClassesImplementation(clones.classesClone()).initialize(_encodeClassesData(clonesStorageAddress, data));
+        ClassesImplementation(clones.classesClone()).initialize(_encodeClassesData(clonesStorageAddress, sheetsStrings));
         ItemsManagerImplementation(clones.itemsManagerClone()).initialize(clonesStorageAddress);
         ExperienceImplementation(clones.experienceClone()).initialize(clonesStorageAddress);
     }
@@ -247,16 +255,6 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
     function _createSheetsAndItems() private returns (address, address) {
         address characterSheetsClone = createCharacterSheets();
         address itemsClone = createItems();
-
-        // bytes memory encodedCharInitAddresses = abi.encode(cloneAddressStorage, address(implementations));
-
-        // CharacterSheetsImplementation(characterSheetsClone).initialize(
-        //     _encodeCharacterInitData(encodedCharInitAddresses, data)
-        // );
-
-        // if (dao != address(0)) {
-        //     CharacterEligibilityAdaptor(characterEligibilityAdaptorClone).initialize(msg.sender, dao);
-        // }
 
         return (characterSheetsClone, itemsClone);
     }
