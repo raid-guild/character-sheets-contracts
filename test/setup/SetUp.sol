@@ -4,6 +4,9 @@ pragma abicoder v2;
 
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";
+import "../../src/lib/Structs.sol";
+import "../../src/lib/Errors.sol";
+
 import {TestStructs} from "./helpers/TestStructs.sol";
 import {Accounts} from "./helpers/Accounts.sol";
 

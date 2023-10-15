@@ -74,7 +74,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
 
     modifier onlyAdmin() {
         if (!IHatsAdaptor(clones.hatsAdaptorClone()).isAdmin(msg.sender)) {
-            revert Errors.CallerNotApproved();
+            revert Errors.AdminOnly();
         }
         _;
     }
@@ -384,12 +384,12 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         emit Erc6551CharacterAccountUpdated(newERC6551CharacterAccount);
     }
 
-    function updateBaseUri(string memory _uri) public onlyDungeonMaster {
+    function updateBaseUri(string memory _uri) public onlyAdmin {
         baseTokenURI = _uri;
         emit BaseURIUpdated(_uri);
     }
 
-    function updateMetadataUri(string memory _uri) public onlyDungeonMaster {
+    function updateMetadataUri(string memory _uri) public onlyAdmin {
         metadataURI = _uri;
         emit MetadataURIUpdated(_uri);
     }

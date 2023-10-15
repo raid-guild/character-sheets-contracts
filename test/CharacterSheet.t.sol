@@ -1,350 +1,368 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 pragma abicoder v2;
-// //solhint-disable
-
-// import "forge-std/Test.sol";
-// import "forge-std/console2.sol";
-
-// import "./helpers/SetUp.sol";
-// import "../src/lib/Errors.sol";
-// import {Contracts} from "./helpers/Contracts.sol";
-
-// contract CharacterSheetsTest is Test, SetUp, Contracts {
-//     event ItemsUpdated(address exp);
-
-//     function testRollCharacterSheet() public {
-//         vm.prank(admin);
-//         uint256 tokenId = characterSheets.rollCharacterSheet("test_token_uri/");
-
-//         assertEq(tokenId, 1, "Incorrect tokenId");
-//         assertEq(characterSheets.tokenURI(1), "test_base_uri_character_sheets/test_token_uri/");
-//     }
-
-//     function testRollCharacterSheetFailNonMember() public {
-//         vm.prank(player2);
-//         vm.expectRevert();
-//         characterSheets.rollCharacterSheet("test_token_uri/");
-//     }
-
-//     function testRollCharacterSheetRevertAlreadyACharacter() public {
-//         vm.prank(player1);
-//         vm.expectRevert();
-//         characterSheets.rollCharacterSheet("test_token_uri/");
-//     }
-
-//     function testChangeBaseUri() public {
-//         string memory newBaseUri = "new_base_uri/";
-//         vm.prank(admin);
-//         characterSheets.setBaseUri(newBaseUri);
-//         assertEq(characterSheets.baseTokenURI(), "new_base_uri/");
-//     }
-
-//     function testChangeBaseUriAccessControlRevert() public {
-//         string memory newBaseUri = "new_base_uri/";
-//         vm.prank(player1);
-//         vm.expectRevert(Errors.DungeonMasterOnly.selector);
-//         characterSheets.setBaseUri(newBaseUri);
-//     }
-
-//     function testEquipItemToCharacter() public {
-//         dropExp(npc1, 1000);
-//         dropItems(npc1, 0, 1);
-
-//         vm.prank(npc1);
-//         characterSheets.equipItemToCharacter(0, 0);
 
-//         CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(0);
-//         assertEq(sheet.inventory.length, 1, "item not assigned");
-//         assertEq(sheet.inventory[0], 0, "item not assigned");
-//     }
+//solhint-disable
+
+import "forge-std/Test.sol";
+import "forge-std/console2.sol";
+
+import "./setup/SetUp.sol";
 
-//     function testUnequipItemFromCharacter() public {
-//         dropExp(npc1, 1000);
-//         dropItems(npc1, 0, 1);
+contract CharacterSheetsTest is SetUp {
+    event ItemsUpdated(address exp);
 
-//         vm.prank(npc1);
-//         characterSheets.equipItemToCharacter(0, 0);
+    function testRollCharacterSheet() public {
+        dao.addMember(accounts.admin);
+        vm.prank(accounts.admin);
+        uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
 
-//         CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(0);
-//         assertEq(sheet.inventory.length, 1, "item not assigned");
-//         assertEq(sheet.inventory[0], 0, "item not assigned");
+        assertEq(tokenId, 2, "Incorrect tokenId");
+        assertEq(deployments.characterSheets.tokenURI(2), "test_base_uri_character_sheets/test_token_uri/");
+    }
 
-//         vm.prank(npc1);
-//         characterSheets.unequipItemFromCharacter(0, 0);
+    function testChangeBaseUri() public {
+        string memory newBaseUri = "new_base_uri/";
+        vm.prank(accounts.admin);
+        deployments.characterSheets.updateBaseUri(newBaseUri);
+        assertEq(deployments.characterSheets.baseTokenURI(), "new_base_uri/");
+    }
 
-//         sheet = characterSheets.getCharacterSheetByCharacterId(0);
-//         assertEq(sheet.inventory.length, 0, "item still assigned");
-//     }
+    function testEquipItemToCharacter() public {
+        vm.startPrank(accounts.dungeonMaster);
+        dropExp(accounts.character1, 1000, address(deployments.experience));
+        dropItems(accounts.character1, itemsData.itemIdFree, 1, address(deployments.items));
+        vm.stopPrank();
+        vm.prank(accounts.character1);
+        deployments.characterSheets.equipItemToCharacter(sheetsData.characterId1, itemsData.itemIdFree);
 
-//     function testTransferFromRevert() public {
-//         vm.prank(player1);
-//         vm.expectRevert();
-//         characterSheets.transferFrom(player1, player2, 1);
+        CharacterSheet memory sheet =
+            deployments.characterSheets.getCharacterSheetByCharacterId(sheetsData.characterId1);
+        assertEq(sheet.inventory.length, 1, "item not assigned");
+        assertEq(sheet.inventory[0], itemsData.itemIdFree, "item not assigned");
+    }
 
-//         vm.prank(admin);
-//         vm.expectRevert();
-//         characterSheets.transferFrom(player1, player2, 1);
-//     }
+    function testUnequipItemFromCharacter() public {
+        vm.startPrank(accounts.dungeonMaster);
+        dropExp(accounts.character1, 1000, address(deployments.experience));
+        dropItems(accounts.character1, itemsData.itemIdFree, 1, address(deployments.items));
+        vm.stopPrank();
 
-//     function testRenounceSheet() public {
-//         vm.prank(player1);
-//         characterSheets.renounceSheet();
+        vm.prank(accounts.character1);
+        deployments.characterSheets.equipItemToCharacter(sheetsData.characterId1, itemsData.itemIdFree);
 
-//         assertEq(characterSheets.balanceOf(player1), 0, "sheet not renounced");
+        CharacterSheet memory sheet =
+            deployments.characterSheets.getCharacterSheetByCharacterId(sheetsData.characterId1);
+        assertEq(sheet.inventory.length, 1, "item not assigned");
+        assertEq(sheet.inventory[0], itemsData.itemIdFree, "item not assigned");
 
-//         vm.prank(player2);
-//         vm.expectRevert();
-//         characterSheets.renounceSheet();
+        vm.prank(accounts.character1);
+        deployments.characterSheets.unequipItemFromCharacter(sheetsData.characterId1, itemsData.itemIdFree);
 
-//         // roll a new sheet reverts after renouncing / can only be restored
-//         vm.prank(player1);
-//         vm.expectRevert();
-//         characterSheets.rollCharacterSheet("test_token_uri/");
+        sheet = deployments.characterSheets.getCharacterSheetByCharacterId(sheetsData.characterId1);
+        assertEq(sheet.inventory.length, 0, "item still assigned");
+    }
 
-//         vm.prank(admin);
-//         uint256 tokenId = characterSheets.rollCharacterSheet("test_token_uri/");
-//         assertEq(tokenId, 1, "characterId not assigned");
-//         assertEq(characterSheets.balanceOf(admin), 1, "sheet not renounced");
+    function testTransferFrom() public {
+        // approve dungeonMaster to spend token
+        vm.prank(accounts.player1);
+        deployments.characterSheets.approve(accounts.dungeonMaster, sheetsData.characterId1);
+        // dungeon master transfers token
+        vm.prank(accounts.dungeonMaster);
+        deployments.characterSheets.transferFrom(accounts.player1, accounts.rando, sheetsData.characterId1);
+        assertEq(deployments.characterSheets.balanceOf(accounts.rando), 1, "token not transfered");
+    }
 
-//         vm.prank(admin);
-//         characterSheets.renounceSheet();
+    function testRenounceSheet() public {
+        vm.prank(accounts.player1);
+        deployments.characterSheets.renounceSheet();
 
-//         assertEq(characterSheets.balanceOf(admin), 0, "sheet not renounced");
+        assertEq(deployments.characterSheets.balanceOf(accounts.player1), 0, "sheet not renounced");
+    }
 
-//         vm.prank(admin);
-//         vm.expectRevert();
-//         characterSheets.rollCharacterSheet("test_token_uri/");
-//     }
+    function testRestoreSheetAfterRenounce() public {
+        vm.prank(accounts.player1);
+        deployments.characterSheets.renounceSheet();
 
-//     function testRollFailsForRenouncedSheet() public {
-//         vm.prank(player1);
-//         characterSheets.renounceSheet();
+        assertEq(deployments.characterSheets.balanceOf(accounts.player1), 0, "sheet not renounced");
 
-//         assertEq(characterSheets.balanceOf(player1), 0, "sheet not renounced");
+        // test that account is correctly restored
+        vm.prank(accounts.player1);
+        address restored = deployments.characterSheets.restoreSheet();
 
-//         vm.prank(player1);
-//         vm.expectRevert();
-//         characterSheets.rollCharacterSheet("test_token_uri/");
-//     }
+        assertEq(accounts.character1, restored, "Incorrect Address restored");
+        assertEq(deployments.characterSheets.balanceOf(accounts.player1), 1, "sheet not restored");
 
-//     function testRestoreSheetAfterRenounce() public {
-//         vm.prank(player1);
-//         characterSheets.renounceSheet();
+        vm.prank(accounts.rando);
+        vm.expectRevert();
+        deployments.characterSheets.restoreSheet();
 
-//         assertEq(characterSheets.balanceOf(player1), 0, "sheet not renounced");
+        dao.addMember(accounts.rando);
 
-//         // test that account is correctly restored
-//         vm.prank(player1);
-//         address restored = characterSheets.restoreSheet();
+        vm.prank(accounts.rando);
+        uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+        assertEq(tokenId, 2, "characterId not assigned");
 
-//         assertEq(npc1, restored, "Incorrect Address restored");
-//         assertEq(characterSheets.balanceOf(player1), 1, "sheet not restored");
+        vm.prank(accounts.rando);
+        deployments.characterSheets.renounceSheet();
 
-//         vm.prank(player2);
-//         vm.expectRevert();
-//         characterSheets.restoreSheet();
+        assertEq(deployments.characterSheets.balanceOf(accounts.rando), 0, "sheet not renounced");
 
-//         vm.prank(admin);
-//         dao.addMember(player2);
+        vm.prank(accounts.rando);
+        restored = deployments.characterSheets.restoreSheet();
 
-//         vm.prank(player2);
-//         uint256 tokenId = characterSheets.rollCharacterSheet("test_token_uri/");
-//         assertEq(tokenId, 1, "characterId not assigned");
+        address npc2 = deployments.characterSheets.getCharacterSheetByCharacterId(2).accountAddress;
 
-//         vm.prank(player2);
-//         characterSheets.renounceSheet();
+        assertEq(npc2, restored, "Second Incorrect Address restored");
+        assertEq(deployments.characterSheets.balanceOf(accounts.rando), 1, "sheet not restored");
+        assertEq(deployments.hatsAdaptor.isPlayer(accounts.rando), true, "player hat not restored");
+        assertEq(deployments.hatsAdaptor.isCharacter(npc2), true, "character hat not restored");
+    }
 
-//         assertEq(characterSheets.balanceOf(player2), 0, "sheet not renounced");
+    function testRemovePlayer() public {
+        vm.prank(accounts.dungeonMaster);
+        vm.expectRevert(); // still eligible by adapter
+        deployments.characterSheets.removeSheet(sheetsData.characterId1);
 
-//         vm.prank(player2);
-//         restored = characterSheets.restoreSheet();
+        dao.jailMember(accounts.player1);
 
-//         address npc2 = characterSheets.getCharacterSheetByCharacterId(1).accountAddress;
+        vm.prank(accounts.dungeonMaster);
+        vm.expectRevert(); // jailed
+        deployments.characterSheets.removeSheet(sheetsData.characterId1);
 
-//         assertEq(npc2, restored, "Incorrect Address restored");
-//         assertEq(characterSheets.balanceOf(player2), 1, "sheet not restored");
-//         assertEq(hatsAdaptor.isPlayer(player2), true, "player hat not restored");
-//         assertEq(hatsAdaptor.isCharacter(npc2), true, "character hat not restored");
-//     }
+        vm.prank(accounts.dungeonMaster);
+        deployments.characterSheets.jailPlayer(accounts.player1, true);
 
-//     function testRemovePlayer() public {
-//         vm.prank(admin);
-//         vm.expectRevert(); // still eligible by adapter
-//         characterSheets.removeSheet(0);
+        vm.prank(accounts.dungeonMaster);
+        deployments.characterSheets.removeSheet(sheetsData.characterId1);
 
-//         vm.prank(admin);
-//         dao.jailMember(player1);
+        assertEq(deployments.characterSheets.balanceOf(accounts.player1), 0, "Player 1 has not been removed");
+        assertEq(deployments.hatsAdaptor.isPlayer(accounts.player1), false, "player hat not removed");
 
-//         vm.prank(admin);
-//         vm.expectRevert(); // jailed
-//         characterSheets.removeSheet(0);
+        vm.prank(accounts.dungeonMaster);
+        vm.expectRevert();
+        deployments.characterSheets.removeSheet(sheetsData.characterId2);
 
-//         vm.prank(admin);
-//         characterSheets.jailPlayer(player1, true);
+        vm.prank(accounts.dungeonMaster);
+        dao.addMember(accounts.rando);
 
-//         vm.prank(admin);
-//         characterSheets.removeSheet(0);
+        vm.prank(accounts.rando);
+        uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+        assertEq(tokenId, 2, "characterId not assigned");
 
-//         assertEq(characterSheets.balanceOf(player1), 0, "Player 1 has not been removed");
-//         assertEq(hatsAdaptor.isPlayer(player1), false, "player hat not removed");
+        vm.prank(accounts.dungeonMaster);
+        dao.jailMember(accounts.rando);
 
-//         vm.prank(admin);
-//         vm.expectRevert();
-//         characterSheets.removeSheet(1);
+        vm.prank(accounts.dungeonMaster);
+        deployments.characterSheets.jailPlayer(accounts.rando, true);
 
-//         vm.prank(admin);
-//         dao.addMember(player2);
+        vm.prank(accounts.dungeonMaster);
+        deployments.characterSheets.removeSheet(tokenId);
 
-//         vm.prank(player2);
-//         uint256 tokenId = characterSheets.rollCharacterSheet("test_token_uri/");
-//         assertEq(tokenId, 1, "characterId not assigned");
+        assertEq(deployments.characterSheets.balanceOf(accounts.rando), 0, "Player 2 has not been removed");
 
-//         vm.prank(admin);
-//         dao.jailMember(player2);
+        vm.prank(accounts.rando);
+        vm.expectRevert();
+        deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+    }
 
-//         vm.prank(admin);
-//         characterSheets.jailPlayer(player2, true);
+    function testRestoreSheetAfterRemove() public {
+        vm.prank(accounts.dungeonMaster);
+        dao.jailMember(accounts.player1);
 
-//         vm.prank(admin);
-//         characterSheets.removeSheet(1);
+        vm.prank(accounts.dungeonMaster);
+        deployments.characterSheets.jailPlayer(accounts.player1, true);
 
-//         assertEq(characterSheets.balanceOf(player2), 0, "Player 2 has not been removed");
+        vm.prank(accounts.dungeonMaster);
+        deployments.characterSheets.removeSheet(0);
 
-//         vm.prank(player2);
-//         vm.expectRevert();
-//         characterSheets.rollCharacterSheet("test_token_uri/");
-//     }
+        assertEq(deployments.characterSheets.balanceOf(accounts.player1), 0, "Player 1 has not been removed");
 
-//     function testRestoreSheetAfterRemove() public {
-//         vm.prank(admin);
-//         dao.jailMember(player1);
+        vm.prank(accounts.player1);
+        vm.expectRevert(); // still jailed & ineligible
+        deployments.characterSheets.restoreSheet();
 
-//         vm.prank(admin);
-//         characterSheets.jailPlayer(player1, true);
+        vm.prank(accounts.dungeonMaster);
+        dao.unjailMember(accounts.player1);
 
-//         vm.prank(admin);
-//         characterSheets.removeSheet(0);
+        vm.prank(accounts.player1);
+        vm.expectRevert(); // still jailed
+        deployments.characterSheets.restoreSheet();
 
-//         assertEq(characterSheets.balanceOf(player1), 0, "Player 1 has not been removed");
+        vm.prank(accounts.dungeonMaster);
+        deployments.characterSheets.jailPlayer(accounts.player1, false);
 
-//         vm.prank(player1);
-//         vm.expectRevert(); // still jailed & ineligible
-//         characterSheets.restoreSheet();
+        vm.prank(accounts.player1);
+        address restored = deployments.characterSheets.restoreSheet();
 
-//         vm.prank(admin);
-//         dao.unjailMember(player1);
+        assertEq(accounts.character1, restored, "Incorrect Address restored");
+        assertEq(deployments.characterSheets.balanceOf(accounts.player1), 1, "sheet not restored");
 
-//         vm.prank(player1);
-//         vm.expectRevert(); // still jailed
-//         characterSheets.restoreSheet();
+        vm.prank(accounts.dungeonMaster);
+        dao.addMember(accounts.rando);
 
-//         vm.prank(admin);
-//         characterSheets.jailPlayer(player1, false);
+        vm.prank(accounts.rando);
+        uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+        assertEq(tokenId, 2, "characterId not assigned");
 
-//         vm.prank(player1);
-//         address restored = characterSheets.restoreSheet();
+        vm.prank(accounts.dungeonMaster);
+        dao.jailMember(accounts.rando);
 
-//         assertEq(npc1, restored, "Incorrect Address restored");
-//         assertEq(characterSheets.balanceOf(player1), 1, "sheet not restored");
+        vm.prank(accounts.dungeonMaster);
+        deployments.characterSheets.jailPlayer(accounts.rando, true);
 
-//         vm.prank(admin);
-//         dao.addMember(player2);
+        vm.prank(accounts.dungeonMaster);
+        deployments.characterSheets.removeSheet(tokenId);
 
-//         vm.prank(player2);
-//         uint256 tokenId = characterSheets.rollCharacterSheet("test_token_uri/");
-//         assertEq(tokenId, 1, "characterId not assigned");
+        assertEq(deployments.characterSheets.balanceOf(accounts.rando), 0, "Player 2 has not been removed");
 
-//         vm.prank(admin);
-//         dao.jailMember(player2);
+        vm.prank(accounts.dungeonMaster);
+        dao.unjailMember(accounts.rando);
 
-//         vm.prank(admin);
-//         characterSheets.jailPlayer(player2, true);
+        vm.prank(accounts.dungeonMaster);
+        deployments.characterSheets.jailPlayer(accounts.rando, false);
 
-//         vm.prank(admin);
-//         characterSheets.removeSheet(1);
+        vm.prank(accounts.rando);
+        restored = deployments.characterSheets.restoreSheet();
 
-//         assertEq(characterSheets.balanceOf(player2), 0, "Player 2 has not been removed");
+        address npc2 = deployments.characterSheets.getCharacterSheetByCharacterId(tokenId).accountAddress;
 
-//         vm.prank(admin);
-//         dao.unjailMember(player2);
+        assertEq(npc2, restored, "Incorrect Address restored");
+        assertEq(deployments.characterSheets.balanceOf(accounts.rando), 1, "sheet not restored");
+    }
 
-//         vm.prank(admin);
-//         characterSheets.jailPlayer(player2, false);
+    function testGetCharacterSheetByCharacterId() public {
+        CharacterSheet memory sheet = deployments.characterSheets.getCharacterSheetByCharacterId(0);
+        assertEq(sheet.accountAddress, accounts.character1);
 
-//         vm.prank(player2);
-//         restored = characterSheets.restoreSheet();
+        vm.expectRevert();
+        deployments.characterSheets.getCharacterSheetByCharacterId(5);
+    }
 
-//         address npc2 = characterSheets.getCharacterSheetByCharacterId(1).accountAddress;
+    function testGetPlayerIdFromAccountAddress() public {
+        CharacterSheet memory sheet = deployments.characterSheets.getCharacterSheetByCharacterId(0);
+        assertEq(accounts.character1, sheet.accountAddress, "Incorrect account address");
 
-//         assertEq(npc2, restored, "Incorrect Address restored");
-//         assertEq(characterSheets.balanceOf(player2), 1, "sheet not restored");
-//     }
+        assertEq(
+            deployments.characterSheets.getCharacterIdByAccountAddress(accounts.character1), 0, "Incorrect playerId"
+        );
+    }
 
-//     // function testUpdateItemsContract() public {
-//     //     vm.expectEmit(false, false, false, true);
-//     //     emit ItemsUpdated(player2);
-//     //     vm.prank(admin);
-//     //     characterSheets.updateItemsContract(player2);
-//     // }
+    function testUpdateCharacterMetadata() public {
+        vm.prank(accounts.player1);
+        deployments.characterSheets.updateCharacterMetadata("new_cid");
 
-//     function testGetCharacterSheetByCharacterId() public {
-//         CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(0);
-//         assertEq(sheet.accountAddress, npc1);
+        string memory uri = deployments.characterSheets.tokenURI(0);
+        assertEq(uri, "test_base_uri_character_sheets/new_cid", "Incorrect token uri");
 
-//         vm.expectRevert();
-//         characterSheets.getCharacterSheetByCharacterId(5);
-//     }
+        vm.prank(accounts.rando);
+        vm.expectRevert(Errors.PlayerOnly.selector);
+        deployments.characterSheets.updateCharacterMetadata("new_cid");
+    }
 
-//     function testGetPlayerIdFromAccountAddress() public {
-//         CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(0);
-//         assertEq(sheet.accountAddress, npc1, "Incorrect account address");
+    function testUpdateContractImplementation() public {
+        address newSheetImp = address(new CharacterSheetsImplementation());
+        HatsData memory hatsData = deployments.hatsAdaptor.getHatsData();
+        //should revert if called by non admin
+        vm.prank(accounts.player1);
+        vm.expectRevert(Errors.AdminOnly.selector);
+        deployments.characterSheets.upgradeToAndCall(newSheetImp, "");
 
-//         assertEq(characterSheets.getCharacterIdByAccountAddress(sheet.accountAddress), 0, "Incorrect playerId");
+        address[] memory newAdmins = new address[](1);
+        newAdmins[0] = accounts.player1;
+        assertTrue(hatsContracts.hats.isWearerOfHat(accounts.admin, hatsData.adminHatId), "admin not admin");
+        address dungHatElig = deployments.hatsAdaptor.dungeonMasterHatEligibilityModule();
 
-//         assertEq(characterSheets.getCharacterIdByAccountAddress(npc1), 0, "Incorrect playerId");
-//     }
+        vm.startPrank(accounts.admin);
+        //admin adds player1 to eligible addresses array in admins module.
+        DungeonMasterHatEligibilityModule(dungHatElig).addEligibleAddresses(newAdmins);
 
-//     function testUpdateCharacterMetadata() public {
-//         vm.prank(player1);
-//         characterSheets.updateCharacterMetadata("new_cid");
+        // admin mints dmHat to player1
+        hatsContracts.hats.mintHat(hatsData.dungeonMasterHatId, accounts.player1);
+        vm.stopPrank();
 
-//         string memory uri = characterSheets.tokenURI(0);
-//         assertEq(uri, "test_base_uri_character_sheets/new_cid", "Incorrect token uri");
+        //should revert if called by dm;
+        vm.expectRevert(Errors.AdminOnly.selector);
+        vm.prank(accounts.player1);
+        deployments.characterSheets.upgradeToAndCall(newSheetImp, "");
 
-//         vm.prank(player2);
-//         vm.expectRevert(Errors.PlayerOnly.selector);
-//         characterSheets.updateCharacterMetadata("new_cid");
-//     }
+        //should succeed if called by admin
+        vm.prank(accounts.admin);
+        deployments.characterSheets.upgradeToAndCall(newSheetImp, "");
+    }
 
-//     function testUpdateContractImplementation() public {
-//         address newSheetImp = address(new CharacterSheetsImplementation());
-//         HatsData memory hatsData = hatsAdaptor.getHatsData();
-//         //should revert if called by non admin
-//         vm.prank(player1);
-//         vm.expectRevert(Errors.CallerNotApproved.selector);
-//         characterSheets.upgradeTo(newSheetImp);
+    //UNHAPPY PATH
+    function testRollCharacterSheetFailNonMember() public {
+        address rando = address(777);
+        vm.prank(rando);
+        vm.expectRevert(Errors.EligibilityError.selector);
+        deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+    }
 
-//         address[] memory newAdmins = new address[](1);
-//         newAdmins[0] = player1;
-//         assertTrue(hats.isWearerOfHat(admin, hatsData.adminHatId), "admin not admin");
-//         address dungHatElig = hatsAdaptor.dungeonMasterHatEligibilityModule();
+    function testRollCharacterSheetRevertAlreadyACharacter() public {
+        vm.prank(accounts.player1);
+        vm.expectRevert(Errors.TokenBalanceError.selector);
+        deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+    }
 
-//         vm.startPrank(admin);
-//         //admin adds player1 to eligible addresses array in admins module.
-//         DungeonMasterHatEligibilityModule(dungHatElig).addEligibleAddresses(newAdmins);
+    function testChangeBaseUriRevertNotAdmin() public {
+        string memory newBaseUri = "new_base_uri/";
+        vm.prank(accounts.player1);
+        vm.expectRevert(Errors.AdminOnly.selector);
+        deployments.characterSheets.updateBaseUri(newBaseUri);
+        assertEq(deployments.characterSheets.baseTokenURI(), "test_base_uri_character_sheets/");
+    }
 
-//         // admin mints dmHat to player1
-//         hats.mintHat(hatsData.dungeonMasterHatId, player1);
-//         vm.stopPrank();
+    function testEquipItemToCharacterReverts() public {
+        vm.prank(accounts.rando);
+        vm.expectRevert(Errors.CharacterOnly.selector);
+        deployments.characterSheets.equipItemToCharacter(0, 0);
 
-//         //should revert if called by dm;
-//         vm.expectRevert(Errors.CallerNotApproved.selector);
-//         vm.prank(player1);
-//         characterSheets.upgradeTo(newSheetImp);
+        CharacterSheet memory sheet = deployments.characterSheets.getCharacterSheetByCharacterId(0);
+        assertEq(sheet.inventory.length, 0, "item should not be assigned");
 
-//         //should succeed if called by admin
-//         vm.prank(admin);
-//         characterSheets.upgradeTo(newSheetImp);
-//     }
-// }
+        vm.prank(accounts.character2);
+        vm.expectRevert(Errors.OwnershipError.selector);
+        deployments.characterSheets.equipItemToCharacter(0, 0);
+
+        sheet = deployments.characterSheets.getCharacterSheetByCharacterId(0);
+        assertEq(sheet.inventory.length, 0, "item should not be assigned");
+
+        vm.prank(accounts.character1);
+        vm.expectRevert(Errors.InsufficientBalance.selector);
+        deployments.characterSheets.equipItemToCharacter(0, 0);
+
+        sheet = deployments.characterSheets.getCharacterSheetByCharacterId(0);
+        assertEq(sheet.inventory.length, 0, "item should not be assigned");
+    }
+
+    function testTransferFromRevert() public {
+        vm.prank(accounts.player1);
+        vm.expectRevert(Errors.DungeonMasterOnly.selector);
+        deployments.characterSheets.transferFrom(accounts.player1, accounts.player2, 1);
+
+        vm.prank(accounts.admin);
+        vm.expectRevert(Errors.DungeonMasterOnly.selector);
+        deployments.characterSheets.transferFrom(accounts.player1, accounts.player2, 1);
+    }
+
+    function testRenounceSheetReverts() public {
+        //revert no sheet
+        vm.prank(accounts.rando);
+        vm.expectRevert(Errors.PlayerOnly.selector);
+        deployments.characterSheets.renounceSheet();
+
+        assertEq(deployments.characterSheets.balanceOf(accounts.player1), 1, "Sheets renounced");
+    }
+
+    function testRollFailsForRenouncedSheet() public {
+        vm.prank(accounts.player1);
+        deployments.characterSheets.renounceSheet();
+
+        assertEq(deployments.characterSheets.balanceOf(accounts.player1), 0, "sheet not renounced");
+
+        vm.prank(accounts.player1);
+        vm.expectRevert();
+        deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+    }
+}

@@ -6,14 +6,11 @@ import "forge-std/Test.sol";
 import "forge-std/console2.sol";
 
 import "./setup/SetUp.sol";
-import "../src/lib/Errors.sol";
-import "../src/lib/Structs.sol";
 
 contract CharacterAccountTest is SetUp {
     function testEquipItemToCharacter() public {
-        address rando = address(777);
-        dao.addMember(rando);
-        vm.prank(rando);
+        dao.addMember(accounts.rando);
+        vm.prank(accounts.rando);
         uint256 tokenId = deployments.characterSheets.rollCharacterSheet("new_test_token_uri/");
         assertEq(tokenId, 2, "characterId not assigned");
 
@@ -31,7 +28,7 @@ contract CharacterAccountTest is SetUp {
         bytes4 selector = bytes4(keccak256("equipItemToCharacter(uint256,uint256)"));
         bytes memory data = abi.encodeWithSelector(selector, tokenId, itemsData.itemIdFree);
 
-        vm.prank(rando);
+        vm.prank(accounts.rando);
         account.execute(address(deployments.characterSheets), 0, data, 0);
 
         sheet = deployments.characterSheets.getCharacterSheetByCharacterId(tokenId);
@@ -40,9 +37,8 @@ contract CharacterAccountTest is SetUp {
     }
 
     function testUnequipItemToCharacter() public {
-        address rando = address(777);
-        dao.addMember(rando);
-        vm.prank(rando);
+        dao.addMember(accounts.rando);
+        vm.prank(accounts.rando);
         uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
         assertEq(tokenId, 2, "characterId not assigned");
 
@@ -60,7 +56,7 @@ contract CharacterAccountTest is SetUp {
         bytes4 selector = bytes4(keccak256("equipItemToCharacter(uint256,uint256)"));
         bytes memory data = abi.encodeWithSelector(selector, tokenId, itemsData.itemIdFree);
 
-        vm.prank(rando);
+        vm.prank(accounts.rando);
         account.execute(address(deployments.characterSheets), 0, data, 0);
 
         sheet = deployments.characterSheets.getCharacterSheetByCharacterId(tokenId);
@@ -70,7 +66,7 @@ contract CharacterAccountTest is SetUp {
         selector = bytes4(keccak256("unequipItemFromCharacter(uint256,uint256)"));
         data = abi.encodeWithSelector(selector, tokenId, itemsData.itemIdFree);
 
-        vm.prank(rando);
+        vm.prank(accounts.rando);
         account.execute(address(deployments.characterSheets), 0, data, 0);
 
         sheet = deployments.characterSheets.getCharacterSheetByCharacterId(1);
@@ -78,10 +74,8 @@ contract CharacterAccountTest is SetUp {
     }
 
     function testEquipViaMultiSendDelegateCall() public {
-        address rando = address(777);
-
-        dao.addMember(rando);
-        vm.prank(rando);
+        dao.addMember(accounts.rando);
+        vm.prank(accounts.rando);
         uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
         assertEq(tokenId, 2, "characterId not assigned");
 
@@ -105,7 +99,7 @@ contract CharacterAccountTest is SetUp {
         selector = bytes4(keccak256("multiSend(bytes)"));
         data = abi.encodeWithSelector(selector, transaction);
 
-        vm.startPrank(rando);
+        vm.startPrank(accounts.rando);
         account.execute(address(multisend), itemsData.itemIdFree, data, 1);
 
         sheet = deployments.characterSheets.getCharacterSheetByCharacterId(tokenId);
@@ -114,10 +108,8 @@ contract CharacterAccountTest is SetUp {
     }
 
     function testEquipAndUnequipViaMultiSendDelegateCall() public {
-        address rando = address(777);
-
-        dao.addMember(rando);
-        vm.prank(rando);
+        dao.addMember(accounts.rando);
+        vm.prank(accounts.rando);
         uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
         assertEq(tokenId, 2, "characterId not assigned");
 
@@ -149,7 +141,7 @@ contract CharacterAccountTest is SetUp {
         selector = bytes4(keccak256("multiSend(bytes)"));
         data = abi.encodeWithSelector(selector, transaction);
 
-        vm.prank(rando);
+        vm.prank(accounts.rando);
         account.execute(address(multisend), 0, data, 1);
 
         sheet = deployments.characterSheets.getCharacterSheetByCharacterId(tokenId);

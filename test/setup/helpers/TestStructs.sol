@@ -82,6 +82,7 @@ interface TestStructs {
         address player2;
         address character1;
         address character2;
+        address rando;
     }
 
     struct HatsContracts {

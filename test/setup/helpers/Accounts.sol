@@ -14,5 +14,6 @@ contract Accounts is Test {
         accounts.dungeonMaster = address(0xc0ffee);
         accounts.player1 = address(0xbeef);
         accounts.player2 = address(0xbabe);
+        accounts.rando = address(777);
     }
 }
