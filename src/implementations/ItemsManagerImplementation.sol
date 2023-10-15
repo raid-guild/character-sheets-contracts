@@ -103,6 +103,8 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
 
         success = true;
         return success;
+
+        //TODO FIGURE OUT A WAY TO BE ABLE TO USE SOUL BOUND TOKENS IN CRAFTING
     }
 
     //TODO gas optimize this function.  3 loops in one function is incredibly inefficient.
@@ -228,6 +230,8 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         return _requirements[itemId];
     }
 
+    function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {}
+
     function _calculateRefund(Receipt memory latestReceipt, uint256 amount)
         private
         pure
@@ -250,6 +254,4 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
 
         return (latestReceipt, refund);
     }
-
-    function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {}
 }
