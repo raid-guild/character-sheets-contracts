@@ -9,7 +9,7 @@ import {ERC1155HolderUpgradeable} from
     "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import {IHatsEligibility} from "hats-protocol/Interfaces/IHatsEligibility.sol";
 import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
-import {ImplementationAddressStorage} from "../lib/ImplementationAddressStorage.sol";
+import {ImplementationAddressStorage} from "../ImplementationAddressStorage.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 
 import {Errors} from "../lib/Errors.sol";

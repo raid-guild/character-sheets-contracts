@@ -16,7 +16,7 @@ import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 import {IItems} from "../interfaces/IItems.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 
-import {ImplementationAddressStorage} from "../lib/ImplementationAddressStorage.sol";
+import {ImplementationAddressStorage} from "../ImplementationAddressStorage.sol";
 
 import {CharacterSheet} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
@@ -429,29 +429,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
 
         return super.transferFrom(from, to, characterId);
     }
-
-    /**
-     * revert(Errors."This token cannot be transfered");
-     * revert(Errors."This token cannot be transfered");
-     * @dev See {IERC721-safeTransferFrom}.
-     * //
-     */
-    // function safeTransferFrom(address from, address to, uint256 characterId)
-    //     public
-    //     virtual
-    //     override(IERC721)
-    //     onlyDungeonMaster
-    // {
-    //     if (_sheets[_playerSheets[to]].playerAddress != address(0)) {
-    //         revert Errors.CharacterError();
-    //     }
-    //     _playerSheets[to] = characterId;
-    //     _sheets[characterId].playerAddress = to;
-
-    //     // TODO: update sheet erc6551 account address
-
-    //     return safeTransferFrom(from, to, characterId);
-    // }
 
     /**
      * @dev See {IERC721-safeTransferFrom}.

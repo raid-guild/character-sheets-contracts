@@ -20,8 +20,8 @@ import {ClassesImplementation} from "../../src/implementations/ClassesImplementa
 import {ExperienceImplementation} from "../../src/implementations/ExperienceImplementation.sol";
 
 //address storage
-import {ImplementationAddressStorage} from "../../src/lib/ImplementationAddressStorage.sol";
-import {ClonesAddressStorage} from "../../src/lib/ClonesAddressStorage.sol";
+import {ImplementationAddressStorage} from "../../src/ImplementationAddressStorage.sol";
+import {ClonesAddressStorage} from "../../src/implementations/ClonesAddressStorage.sol";
 
 //adaptors
 import {CharacterEligibilityAdaptor} from "../../src/adaptors/CharacterEligibilityAdaptor.sol";

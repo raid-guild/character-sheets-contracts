@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {ImplementationAddressStorage} from "./lib/ImplementationAddressStorage.sol";
+import {ImplementationAddressStorage} from "./ImplementationAddressStorage.sol";
 
 import {IClonesAddressStorage} from "./interfaces/IClonesAddressStorage.sol";
 
