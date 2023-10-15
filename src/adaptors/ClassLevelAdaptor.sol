@@ -46,25 +46,25 @@ contract ClassLevelAdaptor is ERC165, Initializable, UUPSUpgradeable {
 
     function initialize(address _clonesAddressStorage) external initializer {
         _experiencePoints[0] = 0;
-        _experiencePoints[1] = 300 * 10 ** 18;
-        _experiencePoints[2] = 900 * 10 ** 18;
-        _experiencePoints[3] = 2700 * 10 ** 18;
-        _experiencePoints[4] = 6500 * 10 ** 18;
-        _experiencePoints[5] = 14000 * 10 ** 18;
-        _experiencePoints[6] = 23000 * 10 ** 18;
-        _experiencePoints[7] = 34000 * 10 ** 18;
-        _experiencePoints[8] = 48000 * 10 ** 18;
-        _experiencePoints[9] = 64000 * 10 ** 18;
-        _experiencePoints[10] = 85000 * 10 ** 18;
-        _experiencePoints[11] = 100000 * 10 ** 18;
-        _experiencePoints[12] = 120000 * 10 ** 18;
-        _experiencePoints[13] = 140000 * 10 ** 18;
-        _experiencePoints[14] = 165000 * 10 ** 18;
-        _experiencePoints[15] = 195000 * 10 ** 18;
-        _experiencePoints[16] = 225000 * 10 ** 18;
-        _experiencePoints[17] = 265000 * 10 ** 18;
-        _experiencePoints[18] = 305000 * 10 ** 18;
-        _experiencePoints[19] = 355000 * 10 ** 18;
+        _experiencePoints[1] = 300;
+        _experiencePoints[2] = 900;
+        _experiencePoints[3] = 2700;
+        _experiencePoints[4] = 6500;
+        _experiencePoints[5] = 14000;
+        _experiencePoints[6] = 23000;
+        _experiencePoints[7] = 34000;
+        _experiencePoints[8] = 48000;
+        _experiencePoints[9] = 64000;
+        _experiencePoints[10] = 85000;
+        _experiencePoints[11] = 100000;
+        _experiencePoints[12] = 120000;
+        _experiencePoints[13] = 140000;
+        _experiencePoints[14] = 165000;
+        _experiencePoints[15] = 195000;
+        _experiencePoints[16] = 225000;
+        _experiencePoints[17] = 265000;
+        _experiencePoints[18] = 305000;
+        _experiencePoints[19] = 355000;
 
         clones = IClonesAddressStorage(_clonesAddressStorage);
     }

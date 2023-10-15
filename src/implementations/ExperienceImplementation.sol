@@ -98,6 +98,10 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
         return true;
     }
 
+    function decimals() public pure override returns (uint8) {
+        return 0;
+    }
+
     //solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {}
 }

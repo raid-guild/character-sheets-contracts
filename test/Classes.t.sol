@@ -113,7 +113,7 @@ contract ClassesTest is SetUp {
         deployments.classes.claimClass(0);
 
         vm.prank(accounts.dungeonMaster);
-        deployments.experience.dropExp(accounts.character1, 300 * 10 ** 18);
+        deployments.experience.dropExp(accounts.character1, 300);
 
         vm.prank(accounts.dungeonMaster);
         deployments.classes.levelClass(accounts.character1, 0);

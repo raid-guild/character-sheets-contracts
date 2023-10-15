@@ -194,11 +194,7 @@ contract CharacterSheetsTest is Test, SetUp {
         assertEq(
             CharacterEligibilityAdaptor(newEligibility).dao(), address(dao), "Character elgibility not initialized"
         );
-        assertEq(
-            ClassLevelAdaptor(newClassLevel).getExpForLevel(2),
-            900 * 10 ** 18,
-            "Character level adaptor not initialized"
-        );
+        assertEq(ClassLevelAdaptor(newClassLevel).getExpForLevel(2), 900, "Character level adaptor not initialized");
     }
 
     /// UNHAPPY PATH
