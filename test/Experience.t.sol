@@ -2,84 +2,79 @@
 pragma solidity ^0.8.19;
 pragma abicoder v2;
 
-// //solhint-disable
+//solhint-disable
 
-// import "forge-std/Test.sol";
+import "forge-std/Test.sol";
 
-// import "../src/implementations/ItemsImplementation.sol";
-// import "../src/lib/Structs.sol";
-// import "../src/lib/Errors.sol";
-// import "./helpers/SetUp.sol";
-// import {Contracts} from "./helpers/Contracts.sol";
+import "../src/implementations/ItemsImplementation.sol";
+import "../src/lib/Structs.sol";
+import "../src/lib/Errors.sol";
+import "./setup/SetUp.sol";
 
-// contract ExperienceTest is Test, SetUp, Contracts {
-//     function testExperienceDeployment() public {
-//         assertEq(address(experience), storedCreated.experience, "Incorrect Experience Address");
-//         // assertEq(experience.characterSheets(), storedCreated.characterSheets, "incorrect character sheets address");
-//         // assertEq(experience.itemsContract(), stored.createdItems, "incorrect items address");
+contract ExperienceTest is SetUp {
+    function testExperienceDeployment() public {
+        vm.prank(accounts.admin);
+        vm.expectRevert();
+        deployments.experience.initialize(address(0));
+    }
 
-//         vm.prank(admin);
-//         vm.expectRevert();
-//         experience.initialize(address(0));
-//     }
+    function testGiveExp() public {
+        //revert if called by anything but items or character sheets contract
+        vm.prank(address(deployments.classes));
+        deployments.experience.giveExp(accounts.character1, 100);
+        assertEq(deployments.experience.balanceOf(accounts.character1), 100, "incorrect balance");
 
-//     function testGiveExp() public {
-//         //revert if called by anything but items or character sheets contract
-//         vm.prank(address(classes));
-//         experience.giveExp(npc1, 100);
-//         assertEq(experience.balanceOf(npc1), 100, "incorrect balance");
+        vm.prank(address(deployments.classes));
+        deployments.experience.giveExp(accounts.character1, 100);
 
-//         vm.prank(address(classes));
-//         experience.giveExp(npc1, 100);
+        assertEq(deployments.experience.balanceOf(accounts.character1), 200, "incorrect balance");
 
-//         assertEq(experience.balanceOf(npc1), 200, "incorrect balance");
+        vm.prank(accounts.player1);
+        vm.expectRevert();
+        deployments.experience.giveExp(accounts.character1, 100);
+    }
 
-//         vm.prank(player1);
-//         vm.expectRevert();
-//         experience.giveExp(npc1, 100);
-//     }
+    function testDropExp() public {
+        //revert if not called by dm
 
-//     function testDropExp() public {
-//         //revert if not called by dm
+        vm.prank(accounts.player1);
+        vm.expectRevert(Errors.DungeonMasterOnly.selector);
+        deployments.experience.dropExp(accounts.character1, 100);
 
-//         vm.prank(player1);
-//         vm.expectRevert();
-//         experience.dropExp(npc1, 100);
+        //suceed if calld by dm
+        vm.prank(accounts.dungeonMaster);
+        deployments.experience.dropExp(accounts.character1, 100);
+        assertEq(deployments.experience.balanceOf(accounts.character1), 100, "incorrect balance");
+    }
 
-//         //suceed if calld by dm
-//         vm.prank(admin);
-//         experience.dropExp(npc1, 100);
-//         assertEq(experience.balanceOf(npc1), 100, "incorrect balance");
-//     }
+    function testRevokeExp() public {
+        //drop exp to npc
+        vm.prank(accounts.dungeonMaster);
+        deployments.experience.dropExp(accounts.character1, 100);
+        assertEq(deployments.experience.balanceOf(accounts.character1), 100, "incorrect balance");
+        //revert if not called by dm
+        vm.prank(accounts.player1);
+        vm.expectRevert();
+        deployments.experience.revokeExp(accounts.character1, 100);
 
-//     function testRevokeExp() public {
-//         //drop exp to npc
-//         vm.prank(admin);
-//         experience.dropExp(npc1, 100);
-//         assertEq(experience.balanceOf(npc1), 100, "incorrect balance");
-//         //revert if not called by dm
-//         vm.prank(player1);
-//         vm.expectRevert();
-//         experience.revokeExp(npc1, 100);
+        //suceed if called by dm
+        vm.prank(accounts.dungeonMaster);
+        deployments.experience.revokeExp(accounts.character1, 100);
+        assertEq(deployments.experience.balanceOf(accounts.character1), 0, "incorrect balance");
+    }
 
-//         //suceed if calld by dm
-//         vm.prank(admin);
-//         experience.revokeExp(npc1, 100);
-//         assertEq(experience.balanceOf(npc1), 0, "incorrect balance");
-//     }
+    function testBurnExp() public {
+        vm.prank(accounts.dungeonMaster);
+        deployments.experience.dropExp(accounts.character1, 100);
+        assertEq(deployments.experience.balanceOf(accounts.character1), 100, "incorrect balance");
+        //revert if not called by another contract
+        vm.prank(accounts.player1);
+        vm.expectRevert();
+        deployments.experience.burnExp(accounts.character1, 100);
 
-//     function testBurnExp() public {
-//         vm.prank(admin);
-//         experience.dropExp(npc1, 100);
-//         assertEq(experience.balanceOf(npc1), 100, "incorrect balance");
-//         //revert if not called by another contract
-//         vm.prank(player1);
-//         vm.expectRevert();
-//         experience.burnExp(npc1, 100);
-
-//         //suceed if calld by another contract
-//         vm.prank(address(classes));
-//         experience.burnExp(npc1, 99);
-//         assertEq(experience.balanceOf(npc1), 1, "incorrect balance");
-//     }
-// }
+        //suceed if calld by another contract
+        vm.prank(address(deployments.classes));
+        deployments.experience.burnExp(accounts.character1, 99);
+        assertEq(deployments.experience.balanceOf(accounts.character1), 1, "incorrect balance");
+    }
+}
