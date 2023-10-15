@@ -165,6 +165,20 @@ contract SetUp is Test, Accounts, TestStructs {
         return abi.encode(craftable, soulbound, claimable, 10 ** 18, abi.encodePacked("test_item_cid/"), requiredAssets);
     }
 
+    function generateMerkleRootAndProof(
+        uint256[] memory itemIds,
+        address[] memory claimers,
+        uint256[] memory amounts,
+        uint256 indexOfProof
+    ) public view returns (bytes32[] memory proof, bytes32 root) {
+        bytes32[] memory leaves = new bytes32[](itemIds.length);
+        for (uint256 i = 0; i < itemIds.length; i++) {
+            leaves[i] = keccak256(bytes.concat(keccak256(abi.encodePacked(itemIds[i], claimers[i], amounts[i]))));
+        }
+        proof = merkle.getProof(leaves, indexOfProof);
+        root = merkle.getRoot(leaves);
+    }
+
     function createNewClass(bool claimable) public pure returns (bytes memory data) {
         return abi.encode(claimable, "test_class_cid/");
     }
