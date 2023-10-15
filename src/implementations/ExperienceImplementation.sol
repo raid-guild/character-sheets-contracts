@@ -8,7 +8,7 @@ import {Errors} from "../lib/Errors.sol";
 import {IExperience} from "../interfaces/IExperience.sol";
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
-import "forge-std/console2.sol";
+// import "forge-std/console2.sol";
 
 /**
  * @title Experience and Items
