@@ -12,8 +12,10 @@ import {HatsErrors} from "hats-protocol/Interfaces/HatsErrors.sol";
 contract HatsAdaptorTest is SetUp {
     function testHatsAdaptorDeployment() public {
         vm.expectRevert();
+        bytes memory customModuleAddresses = abi.encode(address(0), address(0), address(0), address(0));
+
         deployments.hatsAdaptor.initialize(
-            accounts.admin, abi.encode("fake addressdata"), abi.encode("fake string data")
+            accounts.admin, abi.encode("fake addressdata"), abi.encode("fake string data"), customModuleAddresses
         );
 
         HatsData memory _hatsData = deployments.hatsAdaptor.getHatsData();

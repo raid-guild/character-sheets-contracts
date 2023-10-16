@@ -217,6 +217,14 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
      *        9.  string characterUri
      *        10. string characterDescription
      *
+     * @param encodedCustomModuleImplementations, if you want to use custom eligibility modules for
+     *   the hats adaptor add them here (for defaults just pass in address(0)):
+     *
+     *        1. custom admin module address.
+     *        2. custom dungeon master module address.
+     *        3. custom player module address.
+     *        4. custom character module address.
+     *
      * @param sheetsStrings encoded string data strings to include must be in this order:
      * - the base metadata uri for the character sheets clone
      * - the base character token uri for the character sheets clone
@@ -228,6 +236,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         address dao,
         bytes calldata encodedHatsAddresses,
         bytes calldata encodedHatsStrings,
+        bytes calldata encodedCustomModuleImplementations,
         bytes calldata sheetsStrings
     ) public {
         IClonesAddressStorage clones = IClonesAddressStorage(clonesStorageAddress);
@@ -235,7 +244,9 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         //stacc too dank
         CharacterEligibilityAdaptor(clones.characterEligibilityAdaptorClone()).initialize(msg.sender, dao);
         ClassLevelAdaptor(clones.classLevelAdaptorClone()).initialize(clonesStorageAddress);
-        HatsAdaptor(clones.hatsAdaptorClone()).initialize(msg.sender, encodedHatsAddresses, encodedHatsStrings);
+        HatsAdaptor(clones.hatsAdaptorClone()).initialize(
+            msg.sender, encodedHatsAddresses, encodedHatsStrings, encodedCustomModuleImplementations
+        );
 
         CharacterSheetsImplementation(clones.characterSheetsClone()).initialize(
             _encodeCharacterInitData(clonesStorageAddress, sheetsStrings)

@@ -336,8 +336,10 @@ contract SetUp is Test, Accounts, TestStructs {
             "test_base_uri_classes/"
         );
 
+        bytes memory customModuleAddresses = abi.encode(address(0), address(0), address(0), address(0));
+
         characterSheetsFactory.initializeContracts(
-            clonesStorageAddress, _dao, encodedHatsAddresses, encodedHatsStrings, baseUriData
+            clonesStorageAddress, _dao, encodedHatsAddresses, encodedHatsStrings, customModuleAddresses, baseUriData
         );
     }
 }

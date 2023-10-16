@@ -171,11 +171,14 @@ contract CharacterSheetsTest is Test, SetUp {
             clonesData.encodedCloneAddresses, clonesData.encodedAdaptorAddresses
         );
 
+        bytes memory customModuleAddresses = abi.encode(address(0), address(0), address(0), address(0));
+
         characterSheetsFactory.initializeContracts(
             address(newCloneStorage),
             address(dao),
             hatsData.encodedHatsAddresses,
             hatsData.encodedHatsStrings,
+            customModuleAddresses,
             baseUriData
         );
 

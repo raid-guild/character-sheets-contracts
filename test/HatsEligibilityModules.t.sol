@@ -61,8 +61,9 @@ contract HatsEligibilityModulesTest is SetUp {
             "test_character_uri",
             "test_character_description"
         );
+        bytes memory customModuleAddresses = abi.encode(address(0), address(0), address(0), address(0));
 
-        newAdaptor.initialize(topHatWearer, encodedHatsAddresses, encodedHatsStrings);
+        newAdaptor.initialize(topHatWearer, encodedHatsAddresses, encodedHatsStrings, customModuleAddresses);
 
         adminModule = AdminHatEligibilityModule(newAdaptor.adminHatEligibilityModule());
         dmModule = DungeonMasterHatEligibilityModule(newAdaptor.dungeonMasterHatEligibilityModule());

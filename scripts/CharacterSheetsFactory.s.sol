@@ -92,6 +92,7 @@ contract Create is BaseFactoryExecutor {
             json.readString(string(abi.encodePacked(".", targetEnv, ".CharacterSheetsBaseUri")));
         sheetsStrings.itemsBaseUri = json.readString(string(abi.encodePacked(".", targetEnv, ".ItemsBaseUri")));
         sheetsStrings.classesBaseUri = json.readString(string(abi.encodePacked(".", targetEnv, ".ClassesBaseUri")));
+
         // hats strings
         hatsStrings._baseImgUri = json.readString(string(abi.encodePacked(".", targetEnv, ".HatsBaseUri")));
         hatsStrings.topHatDescription = json.readString(string(abi.encodePacked(".", targetEnv, ".TopHatDescription")));
