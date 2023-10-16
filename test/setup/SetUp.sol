@@ -2,8 +2,8 @@
 pragma solidity ^0.8.19;
 pragma abicoder v2;
 
-import "forge-std/Test.sol";
-import "forge-std/console2.sol";
+import {Test} from "forge-std/Test.sol";
+import {console2} from "forge-std/console2.sol";
 import "../../src/lib/Structs.sol";
 import "../../src/lib/Errors.sol";
 
@@ -50,7 +50,7 @@ import {CharacterHatEligibilityModule} from "../../src/adaptors/hats-modules/Cha
 import {IMolochDAO} from "../../src/interfaces/IMolochDAO.sol";
 import {Moloch} from "../../src/mocks/MockMoloch.sol";
 
-import "murky/src/Merkle.sol";
+import {Merkle} from "murky/src/Merkle.sol";
 
 contract SetUp is Test, Accounts, TestStructs {
     DeployedContracts public deployments;

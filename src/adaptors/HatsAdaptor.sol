@@ -19,7 +19,7 @@ import {HatsData} from "../lib/Structs.sol";
  * @title Hats Adaptor
  * @author MrDeadCe11
  * @notice This is an adaptor that will automatically create the appropriate hat tree for the
- * character sheets   It also allows the minting of hats to players and characters
+ * character sheets contacts.  It also allows the minting of hats to players and characters
  * and checks if any address is wearing the player or character hat.
  */
 
@@ -71,13 +71,12 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     }
 
     /**
+     * @notice call this function if you want to initialize with default Hats Eligibility modules.
+     * for custom modules see the other initializer below.
      * HATS ADDRESSES
      *        1.  address[]  admins
      *        2.  address[] dungeon masters
      *        3.  address implementations
-     */
-
-    /**
      * HATS STRINGS
      *        1.  string _baseImgUri
      *        2.  string topHatDescription
@@ -91,42 +90,9 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
      *        10. string characterDescription
      */
 
-    /**
-     * custom module implementations
-     *  1. admin hats eligibility Module enter address of custom implementation, or enter address(0) to use default.
-     *  2. dungeonmaster admin hats eligibility Module
-     *  3. player admin hats eligibility Module
-     *  4. character admin hats eligibility Module
-     */
-
     function initialize(address _owner, bytes calldata hatsAddresses, bytes calldata hatsStrings) external {
         bytes memory customModuleImplementation = abi.encode(address(0), address(0), address(0), address(0));
         return this.initialize(_owner, hatsAddresses, hatsStrings, customModuleImplementation);
-    }
-
-    function initialize(
-        address _owner,
-        bytes calldata hatsAddresses,
-        bytes calldata hatsStrings,
-        bytes calldata customModuleImplementations
-    ) public initializer {
-        (,, address _implementations, address _clonesStorage) =
-            abi.decode(hatsAddresses, (address[], address[], address, address));
-
-        implementations = ImplementationAddressStorage(_implementations);
-        clones = IClonesAddressStorage(_clonesStorage);
-        _hats = IHats(implementations.hatsContract());
-
-        // init struct because STACC TOO DANK!
-        InitStruct memory initStruct;
-        initStruct._owner = _owner;
-        initStruct.hatsAddresses = hatsAddresses;
-        initStruct.hatsStrings = hatsStrings;
-        initStruct.customModuleImplementations = customModuleImplementations;
-
-        __Ownable_init(_owner);
-
-        _initHatTree(initStruct);
     }
 
     function updateImplementations(address newImplementations) external onlyOwner {
@@ -219,6 +185,40 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
 
     function getHatsData() external view returns (HatsData memory) {
         return _hatsData;
+    }
+
+    /**
+     * @notice call this function if you want to initialize with custom eligibility modules.
+     * custom module implementations
+     *  1. admin hats eligibility Module enter address of custom implementation, or enter address(0) to use default.
+     *  2. dungeonmaster admin hats eligibility Module
+     *  3. player admin hats eligibility Module
+     *  4. character admin hats eligibility Module
+     */
+
+    function initialize(
+        address _owner,
+        bytes calldata hatsAddresses,
+        bytes calldata hatsStrings,
+        bytes calldata customModuleImplementations
+    ) public initializer {
+        (,, address _implementations, address _clonesStorage) =
+            abi.decode(hatsAddresses, (address[], address[], address, address));
+
+        implementations = ImplementationAddressStorage(_implementations);
+        clones = IClonesAddressStorage(_clonesStorage);
+        _hats = IHats(implementations.hatsContract());
+
+        // init struct because STACC TOO DANK!
+        InitStruct memory initStruct;
+        initStruct._owner = _owner;
+        initStruct.hatsAddresses = hatsAddresses;
+        initStruct.hatsStrings = hatsStrings;
+        initStruct.customModuleImplementations = customModuleImplementations;
+
+        __Ownable_init(_owner);
+
+        _initHatTree(initStruct);
     }
 
     function checkCharacterHatEligibility(address account) public view returns (bool eligible, bool standing) {

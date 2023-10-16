@@ -46,8 +46,8 @@ if [[ $SAVED_ADDRESS != "" ]]
         read -p "Should we redeploy it? (y/n):" CONFIRMATION
         if [[ $CONFIRMATION != "y" && $CONFIRMATION != "Y" ]]
             then
-            echo "Deployment cancelled. Execution terminated."
-            exit 1
+            echo "Deployment skipped. deploying next contract......"
+            exit 0
         fi
 fi
 

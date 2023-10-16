@@ -14,13 +14,15 @@ struct ImplementationAddresses {
     address itemsImplementation;
     address itemsManagerImplementation;
     address classesImplementation;
-    address erc6551Registry;
     address erc6551AccountImplementation;
     address experienceImplementation;
     address characterEligibilityAdaptorImplementation;
     address classLevelAdaptorImplementation;
     address hatsAdaptorImplementation;
     address cloneAddressStorage;
+}
+
+struct HatsAddresses {
     //hats addresses
     address hatsContract;
     address hatsModuleFactory;
@@ -29,6 +31,7 @@ struct ImplementationAddresses {
     address dungeonMasterHatsEligibilityModule;
     address playerHatsEligibilityModule;
     address characterHatsEligibilityModule;
+    address erc6551Registry;
 }
 
 /**
@@ -43,7 +46,7 @@ struct ImplementationAddresses {
  *             _implementationsAddresses.erc6551AccountImplementation
  *         ) = abi.decode(encodedImplementationAddresses, (address, address, address, address, address, address, address));
  *     }
- * 
+ *
  *     function _initAdaptorsAndModules(bytes calldata encodedAdaptorsAndModuleAddresses) internal {
  *         (
  *             _implementationsAddresses.adminHatsEligibilityModule,
@@ -57,7 +60,7 @@ struct ImplementationAddresses {
  *             encodedAdaptorsAndModuleAddresses, (address, address, address, address, address, address, address)
  *         );
  *     }
- * 
+ *
  *     function _initExternalAddresses(bytes calldata encodedExternalAddresses) internal {
  *         (
  *             _implementationsAddresses.erc6551Registry,
@@ -71,7 +74,29 @@ contract DeployImplementationAddressStorage is BaseDeployer {
 
     ImplementationAddresses public implementationAddresses;
 
-    function loadBaseAddresses(string memory json, string memory targetEnv) internal {
+    ImplementationAddressStorage public implementationAddressStorage;
+
+    HatsAddresses public hatsAddresses;
+
+    function loadBaseAddresses(string memory json, string memory targetEnv) internal override {
+        _loadImplementationaddresses(json, targetEnv);
+        _loadAdaptorsAndModuleAddresses(json, targetEnv);
+        _loadExternalAddresses(json, targetEnv);
+    }
+
+    function deploy() internal override returns (address) {
+        vm.startBroadcast(deployerPrivateKey);
+
+        implementationAddressStorage = new ImplementationAddressStorage();
+        implementationAddressStorage.initialize(
+            _encodeImplementationAddresses(), _encodeAdaptorAndModuleAddresses(), _encodeExternalAddresses()
+        );
+        vm.stopBroadcast();
+
+        return address(implementationAddressStorage);
+    }
+
+    function _loadImplementationaddresses(string memory json, string memory targetEnv) internal {
         implementationAddresses.characterSheetsImplementation =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterSheetsImplementation")));
         implementationAddresses.itemsImplementation =
@@ -82,35 +107,37 @@ contract DeployImplementationAddressStorage is BaseDeployer {
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".ClassesImplementation")));
         implementationAddresses.experienceImplementation =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".ExperienceImplementation")));
-        implementationAddresses.erc6551Registry =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".Erc6551Registry")));
+    }
+
+    function _loadAdaptorsAndModuleAddresses(string memory json, string memory targetEnv) internal {
         implementationAddresses.erc6551AccountImplementation =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".Erc6551AccountImplementation")));
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterAccount")));
         implementationAddresses.characterEligibilityAdaptorImplementation =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterEligibilityAdaptorImplementation")));
+        hatsAddresses.adminHatsEligibilityModule =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".AdminHatsEligibilityModule")));
+        hatsAddresses.dungeonMasterHatsEligibilityModule =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".DungeonMasterHatsEligibilityModule")));
+        hatsAddresses.playerHatsEligibilityModule =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".PlayerHatsEligibilityModule")));
+        hatsAddresses.characterHatsEligibilityModule =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterHatsEligibilityModule")));
+    }
+
+    function _loadExternalAddresses(string memory json, string memory targetEnv) internal {
         implementationAddresses.classLevelAdaptorImplementation =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".ClassLevelAdaptorImplementation")));
         implementationAddresses.hatsAdaptorImplementation =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".HatsAdaptorImplementation")));
         implementationAddresses.cloneAddressStorage =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".CloneAddressStorage")));
-
-        implementationAddresses.hatsContract =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".HatsContract")));
-        implementationAddresses.hatsModuleFactory =
+        hatsAddresses.hatsContract = json.readAddress(string(abi.encodePacked(".", targetEnv, ".HatsContract")));
+        hatsAddresses.hatsModuleFactory =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".HatsModuleFactory")));
-
-        implementationAddresses.adminHatsEligibilityModule =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".AdminHatsEligibilityModule")));
-        implementationAddresses.dungeonMasterHatsEligibilityModule =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".DungeonMasterHatsEligibilityModule")));
-        implementationAddresses.playerHatsEligibilityModule =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".PlayerHatsEligibilityModule")));
-        implementationAddresses.characterHatsEligibilityModule =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterHatsEligibilityModule")));
+        hatsAddresses.erc6551Registry = json.readAddress(string(abi.encodePacked(".", targetEnv, ".Erc6551Registry")));
     }
 
-    function deploy() internal override returns (address) {
+    function _encodeImplementationAddresses() internal view returns (bytes memory) {
         bytes memory encodedImplementationAddresses = abi.encode(
             implementationAddresses.characterSheetsImplementation,
             implementationAddresses.itemsImplementation,
@@ -120,31 +147,27 @@ contract DeployImplementationAddressStorage is BaseDeployer {
             implementationAddresses.itemsManagerImplementation,
             implementationAddresses.erc6551AccountImplementation
         );
+        return encodedImplementationAddresses;
+    }
 
+    function _encodeAdaptorAndModuleAddresses() internal view returns (bytes memory) {
         bytes memory encodedAdaptorsAndModuleAddresses = abi.encode(
-            implementationAddresses.adminHatsEligibilityModule,
-            implementationAddresses.dungeonMasterHatsEligibilityModule,
-            implementationAddresses.playerHatsEligibilityModule,
-            implementationAddresses.characterHatsEligibilityModule,
+            hatsAddresses.adminHatsEligibilityModule,
+            hatsAddresses.dungeonMasterHatsEligibilityModule,
+            hatsAddresses.playerHatsEligibilityModule,
+            hatsAddresses.characterHatsEligibilityModule,
             implementationAddresses.hatsAdaptorImplementation,
             implementationAddresses.characterEligibilityAdaptorImplementation,
             implementationAddresses.classLevelAdaptorImplementation
         );
 
-        bytes memory encodedExternalAddresses = abi.encode(
-            implementationAddresses.erc6551Registry,
-            implementationAddresses.hatsContract,
-            implementationAddresses.hatsModuleFactory
-        );
+        return encodedAdaptorsAndModuleAddresses;
+    }
 
-        vm.startBroadcast(deployerPrivateKey);
+    function _encodeExternalAddresses() internal view returns (bytes memory) {
+        bytes memory encodedExternalAddresses =
+            abi.encode(hatsAddresses.erc6551Registry, hatsAddresses.hatsContract, hatsAddresses.hatsModuleFactory);
 
-        ImplementationAddressStorage newStorage = new ImplementationAddressStorage();
-        newStorage.initialize(
-            encodedImplementationAddresses, encodedAdaptorsAndModuleAddresses, encodedExternalAddresses
-        );
-        vm.stopBroadcast();
-
-        return address(implementationAddressStorage);
+        return encodedExternalAddresses;
     }
 }

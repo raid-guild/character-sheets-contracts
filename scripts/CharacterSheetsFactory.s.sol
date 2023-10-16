@@ -9,6 +9,28 @@ import {CharacterSheetsFactory} from "../src/CharacterSheetsFactory.sol";
 import {BaseDeployer} from "./BaseDeployer.sol";
 import {BaseFactoryExecutor} from "./BaseExecutor.sol";
 
+struct HatsStrings {
+    string _baseImgUri;
+    string topHatDescription;
+    string adminUri;
+    string adminDescription;
+    string dungeonMasterUri;
+    string dungeonMasterDescription;
+    string playerUri;
+    string playerDescription;
+    string characterUri;
+    string characterDescription;
+}
+
+struct SheetsStrings {
+    address characterSheetsFactory;
+    string characterSheetsMetadataUri;
+    string characterSheetsBaseUri;
+    string itemsBaseUri;
+    string classesBaseUri;
+    address characterSheetsAddress;
+}
+
 contract DeployCharacterSheetsFactory is BaseDeployer {
     using stdJson for string;
 
@@ -34,28 +56,6 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
 
         return address(characterSheetsFactory);
     }
-}
-
-struct HatsStrings {
-    string _baseImgUri;
-    string topHatDescription;
-    string adminUri;
-    string adminDescription;
-    string dungeonMasterUri;
-    string dungeonMasterDescription;
-    string playerUri;
-    string playerDescription;
-    string characterUri;
-    string characterDescription;
-}
-
-struct SheetsStrings {
-    address characterSheetsFactory;
-    string characterSheetsMetadataUri;
-    string characterSheetsBaseUri;
-    string itemsBaseUri;
-    string classesBaseUri;
-    address characterSheetsAddress;
 }
 
 contract Create is BaseFactoryExecutor {
