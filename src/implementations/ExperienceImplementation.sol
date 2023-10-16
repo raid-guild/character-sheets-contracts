@@ -16,9 +16,6 @@ import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
  * @notice this is an ERC20 that is designed to intereact with the items, character sheets, and classes contracts to provide a measurable amount of character advancment
  */
 contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradeable {
-    bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
-    bytes32 public constant CHARACTER = keccak256("CHARACTER");
-
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
     IClonesAddressStorage public clones;
 
@@ -97,6 +94,10 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
         super.transfer(to, amount);
         return true;
     }
+
+    /**
+     * @notice 0 decimals.  1 exp = 1 exp
+     */
 
     function decimals() public pure override returns (uint8) {
         return 0;

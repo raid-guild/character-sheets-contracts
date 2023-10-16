@@ -2,7 +2,7 @@
 solc = "0.8.20"
 bytecode_hash = "none"
 optimizer = true
-optimizer_runs = 10_000
+optimizer_runs = 20_000
 fs_permissions = [{ access = "read-write", path = "./addresses.json" }]
 libs = ["lib"]
 remappings = [
