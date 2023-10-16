@@ -108,26 +108,32 @@ contract CharacterSheetsTest is Test, SetUp {
     function testInitializeContracts() public {
         vm.startPrank(accounts.player1);
 
-        address newSheets = characterSheetsFactory.createCharacterSheets();
+        DeployedContracts memory newContracts;
 
-        address newItems = characterSheetsFactory.createItems();
+        newContracts.characterSheets = CharacterSheetsImplementation(characterSheetsFactory.createCharacterSheets());
 
-        address newExperience = characterSheetsFactory.createExperience();
+        newContracts.items = ItemsImplementation(characterSheetsFactory.createItems());
 
-        address newClasses = characterSheetsFactory.createClasses();
+        newContracts.experience = ExperienceImplementation(characterSheetsFactory.createExperience());
 
-        address newCloneStorage = characterSheetsFactory.createClonesStorage();
+        newContracts.classes = ClassesImplementation(characterSheetsFactory.createClasses());
 
-        address newEligibility = characterSheetsFactory.createCharacterEligibilityAdaptor(
-            address(implementations.characterEligibilityAdaptor)
+        newContracts.clones = ClonesAddressStorage(characterSheetsFactory.createClonesStorage());
+
+        newContracts.characterEligibility = CharacterEligibilityAdaptor(
+            characterSheetsFactory.createCharacterEligibilityAdaptor(
+                address(implementations.characterEligibilityAdaptor)
+            )
         );
 
-        address newClassLevel =
-            characterSheetsFactory.createClassLevelAdaptor(address(implementations.classLevelAdaptor));
+        newContracts.classLevels = ClassLevelAdaptor(
+            characterSheetsFactory.createClassLevelAdaptor(address(implementations.classLevelAdaptor))
+        );
 
-        address newItemsManager = characterSheetsFactory.createItemsManager();
+        newContracts.itemsManager = ItemsManagerImplementation(characterSheetsFactory.createItemsManager());
 
-        address newHatsAdaptor = characterSheetsFactory.createHatsAdaptor(address(implementations.hatsAdaptor));
+        newContracts.hatsAdaptor =
+            HatsAdaptor(characterSheetsFactory.createHatsAdaptor(address(implementations.hatsAdaptor)));
 
         address[] memory adminArray = createAddressMemoryArray(1);
         adminArray[0] = accounts.admin;
@@ -140,7 +146,7 @@ contract CharacterSheetsTest is Test, SetUp {
         EncodedHatsData memory hatsData;
 
         hatsData.encodedHatsAddresses =
-            abi.encode(adminArray, dungeonMastersArray, address(implementationStorage), newCloneStorage);
+            abi.encode(adminArray, dungeonMastersArray, address(implementationStorage), address(newContracts.clones));
 
         hatsData.encodedHatsStrings = abi.encode(
             "new_new_test_hats_base_img",
@@ -155,49 +161,56 @@ contract CharacterSheetsTest is Test, SetUp {
             "new_test_character_description"
         );
 
-        bytes memory baseUriData = abi.encode(
+        bytes memory characterSheetsData = abi.encode(
+            address(newContracts.clones),
+            address(implementationStorage),
             "new_test_metadata_uri_character_sheets/",
-            "new_test_base_uri_character_sheets/",
-            "new_test_base_uri_items/",
-            "new_test_base_uri_classes/"
+            "new_test_base_uri_character_sheets/"
         );
 
-        clonesData.encodedCloneAddresses = abi.encode(newSheets, newItems, newItemsManager, newClasses, newExperience);
+        clonesData.encodedCloneAddresses = abi.encode(
+            address(newContracts.characterSheets),
+            address(newContracts.items),
+            address(newContracts.itemsManager),
+            address(newContracts.classes),
+            address(newContracts.experience)
+        );
 
-        clonesData.encodedAdaptorAddresses = abi.encode(newEligibility, newClassLevel, newHatsAdaptor);
+        clonesData.encodedAdaptorAddresses = abi.encode(
+            address(newContracts.characterEligibility),
+            address(newContracts.classLevels),
+            address(newContracts.hatsAdaptor)
+        );
 
         // initialize clones address storage contract
-        ClonesAddressStorage(newCloneStorage).initialize(
-            clonesData.encodedCloneAddresses, clonesData.encodedAdaptorAddresses
-        );
+        newContracts.clones.initialize(clonesData.encodedCloneAddresses, clonesData.encodedAdaptorAddresses);
 
         bytes memory customModuleAddresses = abi.encode(address(0), address(0), address(0), address(0));
 
-        characterSheetsFactory.initializeContracts(
-            address(newCloneStorage),
-            address(dao),
-            hatsData.encodedHatsAddresses,
-            hatsData.encodedHatsStrings,
-            customModuleAddresses,
-            baseUriData
+        newContracts.characterSheets.initialize(characterSheetsData);
+        newContracts.characterEligibility.initialize(accounts.player1, address(dao));
+        newContracts.classLevels.initialize(address(newContracts.clones));
+        newContracts.hatsAdaptor.initialize(
+            accounts.player1, hatsData.encodedHatsAddresses, hatsData.encodedHatsStrings, customModuleAddresses
         );
 
-        assertEq(ItemsImplementation(newItems).getBaseURI(), "new_test_base_uri_items/", "new_incorrect items base uri");
+        bytes memory encodedItemsData = abi.encode(address(newContracts.clones), "new_test_base_uri_items/");
+        newContracts.items.initialize(encodedItemsData);
+        bytes memory encodedClassesData = abi.encode(address(newContracts.clones), "new_test_base_uri_classes/");
+        newContracts.classes.initialize(encodedClassesData);
+        newContracts.itemsManager.initialize(address(newContracts.clones));
+        newContracts.experience.initialize(address(newContracts.clones));
+
+        assertEq(newContracts.items.getBaseURI(), "new_test_base_uri_items/", "new_incorrect items base uri");
+        assertEq(newContracts.classes.getBaseURI(), "new_test_base_uri_classes/", "new_incorrect classes baseUri");
         assertEq(
-            ClassesImplementation(newClasses).getBaseURI(),
-            "new_test_base_uri_classes/",
-            "new_incorrect classes baseUri"
-        );
-        assertEq(
-            CharacterSheetsImplementation(newSheets).baseTokenURI(),
+            newContracts.characterSheets.baseTokenURI(),
             "new_test_base_uri_character_sheets/",
             "new_incorrect sheets base uri"
         );
-        assertEq(ExperienceImplementation(newExperience).name(), "Experience", "incorrect experience name");
-        assertEq(
-            CharacterEligibilityAdaptor(newEligibility).dao(), address(dao), "Character elgibility not initialized"
-        );
-        assertEq(ClassLevelAdaptor(newClassLevel).getExpForLevel(2), 900, "Character level adaptor not initialized");
+        assertEq(newContracts.experience.name(), "Experience", "incorrect experience name");
+        assertEq(newContracts.characterEligibility.dao(), address(dao), "Character elgibility not initialized");
+        assertEq(newContracts.classLevels.getExpForLevel(2), 900, "Character level adaptor not initialized");
     }
 
     /// UNHAPPY PATH

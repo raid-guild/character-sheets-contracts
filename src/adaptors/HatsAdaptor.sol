@@ -48,7 +48,10 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     address public playerHatEligibilityModule;
     address public characterHatEligibilityModule;
 
-    uint32 public constant MAX_SUPPLY = 200;
+    /**
+     * @notice the max hat supply is set to uint32 max for now.  can be changed down the line.
+     */
+    uint32 public constant MAX_SUPPLY = type(uint32).max - 1;
 
     string private _baseHatImgUri;
 
@@ -88,12 +91,25 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
      *        10. string characterDescription
      */
 
+    /**
+     * custom module implementations
+     *  1. admin hats eligibility Module enter address of custom implementation, or enter address(0) to use default.
+     *  2. dungeonmaster admin hats eligibility Module
+     *  3. player admin hats eligibility Module
+     *  4. character admin hats eligibility Module
+     */
+
+    function initialize(address _owner, bytes calldata hatsAddresses, bytes calldata hatsStrings) external {
+        bytes memory customModuleImplementation = abi.encode(address(0), address(0), address(0), address(0));
+        return this.initialize(_owner, hatsAddresses, hatsStrings, customModuleImplementation);
+    }
+
     function initialize(
         address _owner,
         bytes calldata hatsAddresses,
         bytes calldata hatsStrings,
         bytes calldata customModuleImplementations
-    ) external initializer {
+    ) public initializer {
         (,, address _implementations, address _clonesStorage) =
             abi.decode(hatsAddresses, (address[], address[], address, address));
 
@@ -110,7 +126,6 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
 
         __Ownable_init(_owner);
 
-        // _initHatTree(_owner, hatsStrings, hatsAddresses, customModuleImplementations);
         _initHatTree(initStruct);
     }
 
