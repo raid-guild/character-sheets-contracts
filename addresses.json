@@ -30,7 +30,6 @@
     "HatsContract": "0x3bc1A0Ad72417f2d411118085256fC53CBdDd137",
     "HatsModuleFactory": "0xfE661c01891172046feE16D3a57c3Cf456729efA",
     "CharacterAccount": "0xA3176be34F7Ce270AB2823dD769B77bC59CD84fe",
-    "CharacterSheetsImplementation": "0x1B5c1558E68b10E20E19E762faE52B3f51532482",
     "ClassesImplementation": "0x96AD5abC6150686e6BCE581bea7a46993A0bDA74",
     "CharacterSheetsFactory": "0x6a4FBdA320eaF5E319178630384D8d633503267f",
     "CharacterEligibilityAdaptorImplementation": "0xe9aDe41d7820B17E65c0a02f64F48F77646B856D",

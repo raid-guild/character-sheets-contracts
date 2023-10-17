@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.20;
 
 interface ICharacterEligibilityAdaptor {
     /// @notice Returns whether or not an address is eligible to roll a character sheet

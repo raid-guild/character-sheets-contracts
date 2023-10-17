@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.20;
 
 interface IClonesAddressStorage {
     function initialize(bytes calldata encodedAddresses, bytes calldata encodedAdaptorAddresses) external;
