@@ -5,6 +5,7 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UU
 // import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {MultiToken, Asset, Category} from "../lib/MultiToken.sol";
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
+//solhint-disable-next-line
 import "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
 
@@ -230,7 +231,10 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         return _requirements[itemId];
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {}
+    //solhint-disable-next-line
+    function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {
+        //empty block
+    }
 
     function _calculateRefund(Receipt memory latestReceipt, uint256 amount)
         private

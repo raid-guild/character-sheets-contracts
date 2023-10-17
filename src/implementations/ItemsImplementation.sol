@@ -13,11 +13,12 @@ import {Errors} from "../lib/Errors.sol";
 import {MultiToken, Asset, Category} from "../lib/MultiToken.sol";
 import {ItemsManagerImplementation} from "./ItemsManagerImplementation.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
+//solhint-disable-next-line
 import "../lib/Structs.sol";
 
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 
-import "forge-std/console2.sol";
+//import "forge-std/console2.sol";
 /**
  * @title Experience and Items
  * @author MrDeadCe11 && dan13ram
@@ -447,6 +448,8 @@ contract ItemsImplementation is
         return success;
     }
 
-    //solhint-disable-next-line no-empty-blocks
-    function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {}
+    //solhint-disable-next-line
+    function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {
+        //empty block
+    }
 }
