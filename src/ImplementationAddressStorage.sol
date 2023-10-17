@@ -3,8 +3,8 @@ pragma solidity ^0.8.19;
 
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
-import {Errors} from "./lib/Errors.sol";
 
+//solhint-disable-next-line
 import "./lib/Structs.sol";
 
 // import "forge-std/console2.sol";

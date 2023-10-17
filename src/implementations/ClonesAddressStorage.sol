@@ -6,7 +6,7 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UU
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 
 import {Errors} from "../lib/Errors.sol";
-
+//solhint-disable-next-line
 import "../lib/Structs.sol";
 
 // import "forge-std/console2.sol";
@@ -138,5 +138,8 @@ contract ClonesAddressStorage is UUPSUpgradeable {
             abi.decode(encodedAdaptorAddresses, (address, address, address));
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
+    //solhint-disable-next-line
+    function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {
+        //empty block
+    }
 }
