@@ -95,6 +95,41 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         return this.initialize(_owner, hatsAddresses, hatsStrings, customModuleImplementation);
     }
 
+    /**
+     * @notice call this function if you want to initialize with custom eligibility modules.
+     * custom module implementations
+     *  1. admin hats eligibility Module enter address of custom implementation, or enter address(0) to use default.
+     *  2. dungeonmaster admin hats eligibility Module
+     *  3. player admin hats eligibility Module
+     *  4. character admin hats eligibility Module
+     */
+
+    function initialize(
+        address _owner,
+        bytes calldata hatsAddresses,
+        bytes calldata hatsStrings,
+        bytes calldata customModuleImplementations
+    ) public initializer {
+        (,, address _implementations, address _clonesStorage) =
+            abi.decode(hatsAddresses, (address[], address[], address, address));
+
+        implementations = ImplementationAddressStorage(_implementations);
+        clones = IClonesAddressStorage(_clonesStorage);
+        _hats = IHats(implementations.hatsContract());
+
+        // init struct because STACC TOO DANK!
+        InitStruct memory initStruct;
+        initStruct._owner = _owner;
+        initStruct.hatsAddresses = hatsAddresses;
+        initStruct.hatsStrings = hatsStrings;
+        initStruct.customModuleImplementations = customModuleImplementations;
+
+        __Ownable_init(_owner);
+
+        _initHatTree(initStruct);
+    }
+
+    //solhint-disable-next-line
     function updateImplementations(address newImplementations) external onlyOwner {
         implementations = ImplementationAddressStorage(newImplementations);
         emit ImplementationAddressStorageUpdated(newImplementations);
@@ -185,40 +220,6 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
 
     function getHatsData() external view returns (HatsData memory) {
         return _hatsData;
-    }
-
-    /**
-     * @notice call this function if you want to initialize with custom eligibility modules.
-     * custom module implementations
-     *  1. admin hats eligibility Module enter address of custom implementation, or enter address(0) to use default.
-     *  2. dungeonmaster admin hats eligibility Module
-     *  3. player admin hats eligibility Module
-     *  4. character admin hats eligibility Module
-     */
-
-    function initialize(
-        address _owner,
-        bytes calldata hatsAddresses,
-        bytes calldata hatsStrings,
-        bytes calldata customModuleImplementations
-    ) public initializer {
-        (,, address _implementations, address _clonesStorage) =
-            abi.decode(hatsAddresses, (address[], address[], address, address));
-
-        implementations = ImplementationAddressStorage(_implementations);
-        clones = IClonesAddressStorage(_clonesStorage);
-        _hats = IHats(implementations.hatsContract());
-
-        // init struct because STACC TOO DANK!
-        InitStruct memory initStruct;
-        initStruct._owner = _owner;
-        initStruct.hatsAddresses = hatsAddresses;
-        initStruct.hatsStrings = hatsStrings;
-        initStruct.customModuleImplementations = customModuleImplementations;
-
-        __Ownable_init(_owner);
-
-        _initHatTree(initStruct);
     }
 
     function checkCharacterHatEligibility(address account) public view returns (bool eligible, bool standing) {
