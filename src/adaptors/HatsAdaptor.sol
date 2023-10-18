@@ -90,9 +90,12 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
      *        10. string characterDescription
      */
 
-    function initialize(address _owner, bytes calldata hatsAddresses, bytes calldata hatsStrings) external {
+    function initialize(address _owner, bytes calldata hatsAddresses, bytes calldata hatsStrings)
+        external
+        initializer
+    {
         bytes memory customModuleImplementation = abi.encode(address(0), address(0), address(0), address(0));
-        return this.initialize(_owner, hatsAddresses, hatsStrings, customModuleImplementation);
+        return _initialize(_owner, hatsAddresses, hatsStrings, customModuleImplementation);
     }
 
     /**
@@ -109,24 +112,8 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         bytes calldata hatsAddresses,
         bytes calldata hatsStrings,
         bytes calldata customModuleImplementations
-    ) public initializer {
-        (,, address _implementations, address _clonesStorage) =
-            abi.decode(hatsAddresses, (address[], address[], address, address));
-
-        implementations = ImplementationAddressStorage(_implementations);
-        clones = IClonesAddressStorage(_clonesStorage);
-        _hats = IHats(implementations.hatsContract());
-
-        // init struct because STACC TOO DANK!
-        InitStruct memory initStruct;
-        initStruct._owner = _owner;
-        initStruct.hatsAddresses = hatsAddresses;
-        initStruct.hatsStrings = hatsStrings;
-        initStruct.customModuleImplementations = customModuleImplementations;
-
-        __Ownable_init(_owner);
-
-        _initHatTree(initStruct);
+    ) external initializer {
+        return _initialize(_owner, hatsAddresses, hatsStrings, customModuleImplementations);
     }
 
     //solhint-disable-next-line
@@ -258,7 +245,32 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         return _hats.balanceOf(wearer, _hatsData.dungeonMasterHatId) > 0;
     }
 
+    function _initialize(
+        address _owner,
+        bytes calldata hatsAddresses,
+        bytes calldata hatsStrings,
+        bytes memory customModuleImplementations
+    ) internal {
+        (,, address _implementations, address _clonesStorage) =
+            abi.decode(hatsAddresses, (address[], address[], address, address));
+
+        implementations = ImplementationAddressStorage(_implementations);
+        clones = IClonesAddressStorage(_clonesStorage);
+        _hats = IHats(implementations.hatsContract());
+
+        // init struct because STACC TOO DANK!
+        InitStruct memory initStruct;
+        initStruct._owner = _owner;
+        initStruct.hatsAddresses = hatsAddresses;
+        initStruct.hatsStrings = hatsStrings;
+        initStruct.customModuleImplementations = customModuleImplementations;
+
+        __Ownable_init(_owner);
+
+        _initHatTree(initStruct);
+    }
     //solhint-disable-next-line no-empty-blocks
+
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
 
     function _initHatTree(InitStruct memory _initStruct) private returns (bool) {
