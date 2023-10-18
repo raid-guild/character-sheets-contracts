@@ -71,31 +71,6 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     }
 
     /**
-     * @notice call this function if you want to initialize with default Hats Eligibility modules.
-     * for custom modules see the other initializer below.
-     * HATS ADDRESSES
-     *        1.  address[]  admins
-     *        2.  address[] dungeon masters
-     *        3.  address implementations
-     * HATS STRINGS
-     *        1.  string _baseImgUri
-     *        2.  string topHatDescription
-     *        3.  string adminUri
-     *        4.  string adminDescription
-     *        5.  string dungeonMasterUri
-     *        6.  string dungeonMasterDescription
-     *        7.  string playerUri
-     *        8.  string playerDescription
-     *        9.  string characterUri
-     *        10. string characterDescription
-     */
-
-    function initialize(address _owner, bytes calldata hatsAddresses, bytes calldata hatsStrings) external {
-        bytes memory customModuleImplementation = abi.encode(address(0), address(0), address(0), address(0));
-        return this.initialize(_owner, hatsAddresses, hatsStrings, customModuleImplementation);
-    }
-
-    /**
      * @notice call this function if you want to initialize with custom eligibility modules.
      * custom module implementations
      *  1. admin hats eligibility Module enter address of custom implementation, or enter address(0) to use default.
@@ -129,7 +104,32 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         _initHatTree(initStruct);
     }
 
+    /**
+     * @notice call this function if you want to initialize with default Hats Eligibility modules.
+     * for custom modules see the other initializer below.
+     * HATS ADDRESSES
+     *        1.  address[]  admins
+     *        2.  address[] dungeon masters
+     *        3.  address implementations
+     * HATS STRINGS
+     *        1.  string _baseImgUri
+     *        2.  string topHatDescription
+     *        3.  string adminUri
+     *        4.  string adminDescription
+     *        5.  string dungeonMasterUri
+     *        6.  string dungeonMasterDescription
+     *        7.  string playerUri
+     *        8.  string playerDescription
+     *        9.  string characterUri
+     *        10. string characterDescription
+     */
+
     //solhint-disable-next-line
+    function initialize(address _owner, bytes calldata hatsAddresses, bytes calldata hatsStrings) external {
+        bytes memory customModuleImplementation = abi.encode(address(0), address(0), address(0), address(0));
+        return this.initialize(_owner, hatsAddresses, hatsStrings, customModuleImplementation);
+    }
+
     function updateImplementations(address newImplementations) external onlyOwner {
         implementations = ImplementationAddressStorage(newImplementations);
         emit ImplementationAddressStorageUpdated(newImplementations);
