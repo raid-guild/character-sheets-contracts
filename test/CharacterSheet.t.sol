@@ -62,6 +62,8 @@ contract CharacterSheetsTest is SetUp {
     }
 
     function testTransferFrom() public {
+        assertEq(deployments.characterSheets.balanceOf(accounts.rando), 0, "balance should be 0");
+        assertEq(deployments.hatsAdaptor.isPlayer(accounts.rando), false, "rando is already a player");
         // approve dungeonMaster to spend token
         vm.prank(accounts.player1);
         deployments.characterSheets.approve(accounts.dungeonMaster, sheetsData.characterId1);
@@ -69,6 +71,9 @@ contract CharacterSheetsTest is SetUp {
         vm.prank(accounts.dungeonMaster);
         deployments.characterSheets.transferFrom(accounts.player1, accounts.rando, sheetsData.characterId1);
         assertEq(deployments.characterSheets.balanceOf(accounts.rando), 1, "token not transfered");
+        assertEq(deployments.hatsAdaptor.isCharacter(accounts.character1), true, "char 1 not a character");
+        assertEq(deployments.hatsAdaptor.isPlayer(accounts.rando), true, "rando is not a player");
+        assertEq(deployments.hatsAdaptor.isPlayer(accounts.player1), false, "player 1 should no longer be a player");
     }
 
     function testRenounceSheet() public {

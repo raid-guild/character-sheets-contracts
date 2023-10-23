@@ -40,10 +40,12 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     IClonesAddressStorage public clones;
 
     event NewClassCreated(uint256 tokenId);
+    event BaseURIUpdated(string newUri);
     event ClassAssigned(address character, uint256 classId);
     event ClassRevoked(address character, uint256 classId);
     event ClassLeveled(address character, uint256 classId, uint256 newBalance);
     event ClonesAddressStorageUpdated(address newClonesAddressStorage);
+    event ClassDeLeveled(address character, uint256 classId, uint256 numberOfLevels);
 
     modifier onlyAdmin() {
         if (!IHatsAdaptor(clones.hatsAdaptorClone()).isAdmin(msg.sender)) {
@@ -86,7 +88,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
      */
     function setBaseURI(string memory _baseUri) external onlyDungeonMaster {
         _baseURI = _baseUri;
-        // TODO: add event
+        emit BaseURIUpdated(_baseUri);
     }
 
     /**
@@ -211,11 +213,28 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
         return newLevel;
     }
 
-    function deLevelClass(uint256 classId, uint256 numberOfLevels) public onlyCharacter returns (uint256) {
+    function deLevelClass(address characterAccount, uint256 classId, uint256 numberOfLevels) public returns (uint256) {
+        if (
+            !IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(msg.sender)
+                && !IHatsAdaptor(clones.hatsAdaptorClone()).isDungeonMaster(msg.sender)
+        ) {
+            revert Errors.CallerNotApproved();
+        }
+
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(msg.sender) && characterAccount != msg.sender) {
+            revert Errors.CharacterOnly();
+        }
+
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharactercharacter(characterAccount)) {
+            revert Errors.CharacterError();
+        }
+
         if (clones.classLevelAdaptorClone() == address(0)) {
             revert Errors.NotInitialized();
         }
-        uint256 currentLevel = balanceOf(msg.sender, classId) - 1;
+
+        // 1 class token == level 0;
+        uint256 currentLevel = balanceOf(characterAccount, classId) - 1;
 
         if (currentLevel < numberOfLevels) {
             revert Errors.InsufficientBalance();
@@ -225,16 +244,15 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
             - IClassLevelAdaptor(clones.classLevelAdaptorClone()).getExpForLevel(currentLevel - numberOfLevels);
 
         //remove level tokens
-        _burn(msg.sender, classId, numberOfLevels);
+        _burn(characterAccount, classId, numberOfLevels);
 
         //mint replacement exp
 
-        IExperience(clones.experienceClone()).giveExp(msg.sender, expToRedeem);
+        IExperience(clones.experienceClone()).giveExp(characterAccount, expToRedeem);
 
         //return amount of exp minted
 
-        // TODO add event
-        // TODO allow game master to delevel class
+        emit ClassDeLeveled(characterAccount, classId, numberOfLevels);
         return expToRedeem;
     }
 

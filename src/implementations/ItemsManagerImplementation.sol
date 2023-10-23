@@ -50,6 +50,13 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         _;
     }
 
+    modifier onlyAdmin() {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isAdmin(msg.sender)) {
+            revert Errors.AdminOnly();
+        }
+        _;
+    }
+
     constructor() {
         _disableInitializers();
     }
@@ -81,7 +88,7 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         Asset memory newRequirement;
         for (uint256 i; i < itemRequirements.length; i++) {
             newRequirement = itemRequirements[i];
-            //if required item is a class skip token transfer
+            //if required item is a class skip token transfer  TODO add, if this is a soulbound token.
             if (newRequirement.assetAddress != clones.classesClone()) {
                 //issue crafting receipt before amounts change
                 _craftingReceipts[caller][itemId].push(
@@ -104,8 +111,6 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
 
         success = true;
         return success;
-
-        //TODO FIGURE OUT A WAY TO BE ABLE TO USE SOUL BOUND TOKENS IN CRAFTING
     }
 
     //TODO gas optimize this function.  3 loops in one function is incredibly inefficient.
@@ -232,7 +237,7 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
     }
 
     //solhint-disable-next-line
-    function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {
+    function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {
         //empty block
     }
 

@@ -424,10 +424,14 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
             revert Errors.TokenBalanceError();
         }
         _playerSheets[to] = characterId;
+        _sheets[characterId].playerAddress = to;
 
         // TODO: update sheet erc6551 account address
+        super.transferFrom(from, to, characterId);
 
-        return super.transferFrom(from, to, characterId);
+        IHatsAdaptor(clones.hatsAdaptorClone()).mintPlayerHat(to);
+
+        return;
     }
 
     /**
@@ -446,8 +450,11 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         _sheets[characterId].playerAddress = to;
 
         // TODO: update sheet erc6551 account address
+        super.transferFrom(from, to, characterId);
 
-        return super.safeTransferFrom(from, to, characterId, data);
+        IHatsAdaptor(clones.hatsAdaptorClone()).mintPlayerHat(to);
+
+        return;
     }
 
     function getCharacterSheetByCharacterId(uint256 characterId) public view returns (CharacterSheet memory) {
