@@ -442,7 +442,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         (,, address customPlayerModule,) = abi.decode(customModuleImplementations, (address, address, address, address));
 
         playerHatEligibilityModule =
-            _createPlayerHatEligibilityModule(playerHatId, clones.characterSheetsClone(), customPlayerModule);
+            _createPlayerHatEligibilityModule(playerHatId, clones.characterSheets(), customPlayerModule);
 
         _hatsData.playerHatId = _hats.createHat(
             _hatsData.gameMasterHatId,
@@ -497,9 +497,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
             revert Errors.VariableNotSet();
         }
         bytes memory characterModuleData = abi.encodePacked(
-            implementations.erc6551Registry(),
-            implementations.erc6551AccountImplementation(),
-            clones.characterSheetsClone()
+            implementations.erc6551Registry(), implementations.erc6551AccountImplementation(), clones.characterSheets()
         );
         customCharacterModule = customCharacterModule == address(0)
             ? implementations.characterHatsEligibilityModule()

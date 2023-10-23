@@ -232,19 +232,19 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         IClonesAddressStorage clones = IClonesAddressStorage(clonesStorageAddress);
 
         //stacc too dank
-        CharacterEligibilityAdaptor(clones.characterEligibilityAdaptorClone()).initialize(msg.sender, dao);
-        ClassLevelAdaptor(clones.classLevelAdaptorClone()).initialize(clonesStorageAddress);
-        HatsAdaptor(clones.hatsAdaptorClone()).initialize(msg.sender, encodedHatsAddresses, encodedHatsStrings);
+        CharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).initialize(msg.sender, dao);
+        ClassLevelAdaptor(clones.classLevelAdaptor()).initialize(clonesStorageAddress);
+        HatsAdaptor(clones.hatsAdaptor()).initialize(msg.sender, encodedHatsAddresses, encodedHatsStrings);
 
-        CharacterSheetsImplementation(clones.characterSheetsClone()).initialize(
+        CharacterSheetsImplementation(clones.characterSheets()).initialize(
             _encodeCharacterInitData(clonesStorageAddress, sheetsStrings)
         );
 
-        ItemsImplementation(clones.itemsClone()).initialize(_encodeItemsData(clonesStorageAddress, sheetsStrings));
+        ItemsImplementation(clones.items()).initialize(_encodeItemsData(clonesStorageAddress, sheetsStrings));
 
-        ClassesImplementation(clones.classesClone()).initialize(_encodeClassesData(clonesStorageAddress, sheetsStrings));
-        ItemsManagerImplementation(clones.itemsManagerClone()).initialize(clonesStorageAddress);
-        ExperienceImplementation(clones.experienceClone()).initialize(clonesStorageAddress);
+        ClassesImplementation(clones.classes()).initialize(_encodeClassesData(clonesStorageAddress, sheetsStrings));
+        ItemsManagerImplementation(clones.itemsManager()).initialize(clonesStorageAddress);
+        ExperienceImplementation(clones.experience()).initialize(clonesStorageAddress);
     }
 
     function getImplementationsAddressStorageAddress() public view returns (address) {

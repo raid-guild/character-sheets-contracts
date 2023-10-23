@@ -18,49 +18,20 @@ contract ExperienceTest is SetUp {
         deployments.experience.initialize(address(0));
     }
 
-    function testGiveExp() public {
-        //revert if called by anything but items or character sheets contract
-        vm.prank(address(deployments.classes));
-        deployments.experience.giveExp(accounts.character1, 100);
-        assertEq(deployments.experience.balanceOf(accounts.character1), 100, "incorrect balance");
-
-        vm.prank(address(deployments.classes));
-        deployments.experience.giveExp(accounts.character1, 100);
-
-        assertEq(deployments.experience.balanceOf(accounts.character1), 200, "incorrect balance");
-
-        vm.prank(accounts.player1);
-        vm.expectRevert();
-        deployments.experience.giveExp(accounts.character1, 100);
-    }
-
     function testDropExp() public {
-        //revert if not called by dm
-
+        //revert if not called by dm or contract
         vm.prank(accounts.player1);
-        vm.expectRevert(Errors.GameMasterOnly.selector);
+        vm.expectRevert(Errors.CallerNotApproved.selector);
         deployments.experience.dropExp(accounts.character1, 100);
 
         //suceed if calld by dm
         vm.prank(accounts.gameMaster);
         deployments.experience.dropExp(accounts.character1, 100);
         assertEq(deployments.experience.balanceOf(accounts.character1), 100, "incorrect balance");
-    }
-
-    function testRevokeExp() public {
-        //drop exp to npc
-        vm.prank(accounts.gameMaster);
+        //suceed if calld by contract
+        vm.prank(address(deployments.items));
         deployments.experience.dropExp(accounts.character1, 100);
-        assertEq(deployments.experience.balanceOf(accounts.character1), 100, "incorrect balance");
-        //revert if not called by dm
-        vm.prank(accounts.player1);
-        vm.expectRevert();
-        deployments.experience.revokeExp(accounts.character1, 100);
-
-        //suceed if called by dm
-        vm.prank(accounts.gameMaster);
-        deployments.experience.revokeExp(accounts.character1, 100);
-        assertEq(deployments.experience.balanceOf(accounts.character1), 0, "incorrect balance");
+        assertEq(deployments.experience.balanceOf(accounts.character1), 200, "incorrect balance");
     }
 
     function testBurnExp() public {

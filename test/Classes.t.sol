@@ -124,7 +124,7 @@ contract ClassesTest is SetUp {
 
     function testFuzz_DeLevelClass(uint256 numberOfLevels) public {
         vm.assume(numberOfLevels < 20);
-        uint256 baseExpAmount = 400000 * 10 ** 18;
+        uint256 baseExpAmount = 400000;
         //give exp to npc to level
         vm.prank(accounts.gameMaster);
         deployments.experience.dropExp(accounts.character1, baseExpAmount);

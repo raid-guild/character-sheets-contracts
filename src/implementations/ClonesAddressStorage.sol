@@ -16,14 +16,14 @@ contract ClonesAddressStorage is UUPSUpgradeable {
     ClonesAddresses internal _clones;
 
     // update events
-    event CharacterSheetCloneUpdated(address newCharacterSheetClone);
-    event ItemsCloneUpdated(address newItemsClone);
-    event ClassesCloneUpdated(address newClassesClone);
-    event ExperienceCloneUpdated(address newExperienceClone);
-    event CharacterEligibilityAdaptorCloneUpdated(address newCharacterEligibilityAdaptorCloneModule);
-    event ClassLevelAdaptorCloneUpdated(address newClassLevelAdaptorClone);
-    event ItemsManagerCloneUpdated(address newItemsManagerClone);
-    event HatsAdaptorCloneUpdated(address newHatsAdaptorClone);
+    event CharacterSheetUpdated(address newCharacterSheet);
+    event ItemsUpdated(address newItems);
+    event ClassesUpdated(address newClasses);
+    event ExperienceUpdated(address newExperience);
+    event CharacterEligibilityAdaptorUpdated(address newCharacterEligibilityAdaptorModule);
+    event ClassLevelAdaptorUpdated(address newClassLevelAdaptor);
+    event ItemsManagerUpdated(address newItemsManager);
+    event HatsAdaptorUpdated(address newHatsAdaptor);
     event TopHatIdUpdated(uint256 _topHatId);
     event AdminIdUpdated(uint256 _adminId);
     event GameMasterIdUpdated(uint256 _gameMasterId);
@@ -31,7 +31,7 @@ contract ClonesAddressStorage is UUPSUpgradeable {
     event CharacterIdUpdated(uint256 _characterId);
 
     modifier onlyAdmin() {
-        if (!IHatsAdaptor(_clones.hatsAdaptorClone).isAdmin(msg.sender)) {
+        if (!IHatsAdaptor(_clones.hatsAdaptor).isAdmin(msg.sender)) {
             revert Errors.CallerNotApproved();
         }
         _;
@@ -50,91 +50,86 @@ contract ClonesAddressStorage is UUPSUpgradeable {
         _initAdaptors(encodedAdaptorAddresses);
     }
 
-    function updateCharacterSheetsClone(address newCharacterSheetsClone) external onlyAdmin {
-        _clones.characterSheetsClone = newCharacterSheetsClone;
-        emit CharacterSheetCloneUpdated(newCharacterSheetsClone);
+    function updateCharacterSheets(address newCharacterSheets) external onlyAdmin {
+        _clones.characterSheets = newCharacterSheets;
+        emit CharacterSheetUpdated(newCharacterSheets);
     }
 
-    function updateItemsClone(address _itemsClone) external onlyAdmin {
-        _clones.itemsClone = _itemsClone;
-        emit ItemsCloneUpdated(_itemsClone);
+    function updateItems(address _items) external onlyAdmin {
+        _clones.items = _items;
+        emit ItemsUpdated(_items);
     }
 
-    function updateExperienceClone(address _experienceClone) external onlyAdmin {
-        _clones.experienceClone = _experienceClone;
-        emit ExperienceCloneUpdated(_experienceClone);
+    function updateExperience(address _experience) external onlyAdmin {
+        _clones.experience = _experience;
+        emit ExperienceUpdated(_experience);
     }
 
-    function updateClassesClone(address _newClasses) external onlyAdmin {
-        _clones.classesClone = _newClasses;
-        emit ClassesCloneUpdated(_newClasses);
+    function updateClasses(address _newClasses) external onlyAdmin {
+        _clones.classes = _newClasses;
+        emit ClassesUpdated(_newClasses);
     }
 
-    function updateCharacterEligibilityAdaptorClone(address _newCharacterEligibilityAdaptor) external onlyAdmin {
-        _clones.characterEligibilityAdaptorClone = _newCharacterEligibilityAdaptor;
-        emit CharacterEligibilityAdaptorCloneUpdated(_newCharacterEligibilityAdaptor);
+    function updateCharacterEligibilityAdaptor(address _newCharacterEligibilityAdaptor) external onlyAdmin {
+        _clones.characterEligibilityAdaptor = _newCharacterEligibilityAdaptor;
+        emit CharacterEligibilityAdaptorUpdated(_newCharacterEligibilityAdaptor);
     }
 
-    function updateClassLevelAdaptorClone(address _newClassLevelAdaptor) external onlyAdmin {
-        _clones.classLevelAdaptorClone = _newClassLevelAdaptor;
-        emit ClassLevelAdaptorCloneUpdated(_newClassLevelAdaptor);
+    function updateClassLevelAdaptor(address _newClassLevelAdaptor) external onlyAdmin {
+        _clones.classLevelAdaptor = _newClassLevelAdaptor;
+        emit ClassLevelAdaptorUpdated(_newClassLevelAdaptor);
     }
 
-    function updateHatsAdaptorClone(address _newHatsAdaptor) external onlyAdmin {
-        _clones.hatsAdaptorClone = _newHatsAdaptor;
+    function updateHatsAdaptor(address _newHatsAdaptor) external onlyAdmin {
+        _clones.hatsAdaptor = _newHatsAdaptor;
 
-        emit HatsAdaptorCloneUpdated(_newHatsAdaptor);
+        emit HatsAdaptorUpdated(_newHatsAdaptor);
     }
 
-    function updateItemsManagerClone(address _newItemsManager) external onlyAdmin {
-        _clones.itemsManagerClone = _newItemsManager;
-        emit ItemsManagerCloneUpdated(_newItemsManager);
+    function updateItemsManager(address _newItemsManager) external onlyAdmin {
+        _clones.itemsManager = _newItemsManager;
+        emit ItemsManagerUpdated(_newItemsManager);
     }
 
-    function characterSheetsClone() public view returns (address) {
-        return _clones.characterSheetsClone;
+    function characterSheets() public view returns (address) {
+        return _clones.characterSheets;
     }
 
-    function itemsClone() public view returns (address) {
-        return _clones.itemsClone;
+    function items() public view returns (address) {
+        return _clones.items;
     }
 
-    function itemsManagerClone() public view returns (address) {
-        return _clones.itemsManagerClone;
+    function itemsManager() public view returns (address) {
+        return _clones.itemsManager;
     }
 
-    function classesClone() public view returns (address) {
-        return _clones.classesClone;
+    function classes() public view returns (address) {
+        return _clones.classes;
     }
 
-    function experienceClone() public view returns (address) {
-        return _clones.experienceClone;
+    function experience() public view returns (address) {
+        return _clones.experience;
     }
 
-    function characterEligibilityAdaptorClone() public view returns (address) {
-        return _clones.characterEligibilityAdaptorClone;
+    function characterEligibilityAdaptor() public view returns (address) {
+        return _clones.characterEligibilityAdaptor;
     }
 
-    function classLevelAdaptorClone() public view returns (address) {
-        return _clones.classLevelAdaptorClone;
+    function classLevelAdaptor() public view returns (address) {
+        return _clones.classLevelAdaptor;
     }
 
-    function hatsAdaptorClone() public view returns (address) {
-        return _clones.hatsAdaptorClone;
+    function hatsAdaptor() public view returns (address) {
+        return _clones.hatsAdaptor;
     }
 
     function _initClones(bytes calldata encodedClonesAddresses) internal {
-        (
-            _clones.characterSheetsClone,
-            _clones.itemsClone,
-            _clones.itemsManagerClone,
-            _clones.classesClone,
-            _clones.experienceClone
-        ) = abi.decode(encodedClonesAddresses, (address, address, address, address, address));
+        (_clones.characterSheets, _clones.items, _clones.itemsManager, _clones.classes, _clones.experience) =
+            abi.decode(encodedClonesAddresses, (address, address, address, address, address));
     }
 
     function _initAdaptors(bytes calldata encodedAdaptorAddresses) internal {
-        (_clones.characterEligibilityAdaptorClone, _clones.classLevelAdaptorClone, _clones.hatsAdaptorClone) =
+        (_clones.characterEligibilityAdaptor, _clones.classLevelAdaptor, _clones.hatsAdaptor) =
             abi.decode(encodedAdaptorAddresses, (address, address, address));
     }
 

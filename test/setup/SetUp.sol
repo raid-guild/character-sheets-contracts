@@ -190,15 +190,14 @@ contract SetUp is Test, Accounts, TestStructs {
     function _activateContracts(address clonesAddress) internal {
         ClonesAddressStorage internalClones = ClonesAddressStorage(clonesAddress);
 
-        deployments.characterSheets = CharacterSheetsImplementation(internalClones.characterSheetsClone());
-        deployments.experience = ExperienceImplementation(internalClones.experienceClone());
-        deployments.items = ItemsImplementation(internalClones.itemsClone());
-        deployments.itemsManager = ItemsManagerImplementation(internalClones.itemsManagerClone());
-        deployments.classes = ClassesImplementation(internalClones.classesClone());
-        deployments.characterEligibility =
-            CharacterEligibilityAdaptor(internalClones.characterEligibilityAdaptorClone());
-        deployments.classLevels = ClassLevelAdaptor(internalClones.classLevelAdaptorClone());
-        deployments.hatsAdaptor = HatsAdaptor(internalClones.hatsAdaptorClone());
+        deployments.characterSheets = CharacterSheetsImplementation(internalClones.characterSheets());
+        deployments.experience = ExperienceImplementation(internalClones.experience());
+        deployments.items = ItemsImplementation(internalClones.items());
+        deployments.itemsManager = ItemsManagerImplementation(internalClones.itemsManager());
+        deployments.classes = ClassesImplementation(internalClones.classes());
+        deployments.characterEligibility = CharacterEligibilityAdaptor(internalClones.characterEligibilityAdaptor());
+        deployments.classLevels = ClassLevelAdaptor(internalClones.classLevelAdaptor());
+        deployments.hatsAdaptor = HatsAdaptor(internalClones.hatsAdaptor());
 
         vm.label(address(deployments.characterSheets), "Character Sheets Clone");
         vm.label(address(deployments.experience), "Experience Clone");

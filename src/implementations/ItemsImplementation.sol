@@ -55,21 +55,21 @@ contract ItemsImplementation is
     event ItemClaimableUpdated(uint256 itemId, bytes32 merkleRoot);
 
     modifier onlyAdmin() {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isAdmin(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isAdmin(msg.sender)) {
             revert Errors.AdminOnly();
         }
         _;
     }
 
     modifier onlyGameMaster() {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isGameMaster(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isGameMaster(msg.sender)) {
             revert Errors.GameMasterOnly();
         }
         _;
     }
 
     modifier onlyCharacter() {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(msg.sender)) {
             revert Errors.CharacterOnly();
         }
         _;
@@ -86,7 +86,7 @@ contract ItemsImplementation is
         address clonesStorage;
         (clonesStorage, _baseURI) = abi.decode(_encodedData, (address, string));
         clones = IClonesAddressStorage(clonesStorage);
-        itemsManager = ItemsManagerImplementation(clones.itemsManagerClone());
+        itemsManager = ItemsManagerImplementation(clones.itemsManager());
     }
 
     /**
@@ -306,7 +306,7 @@ contract ItemsImplementation is
         uint256[] memory amounts,
         bytes memory data
     ) public override {
-        if (to != address(0) && !IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(msg.sender)) {
+        if (to != address(0) && !IHatsAdaptor(clones.hatsAdaptor()).isCharacter(msg.sender)) {
             revert Errors.CharacterOnly();
         }
 
@@ -425,7 +425,7 @@ contract ItemsImplementation is
      */
 
     function _transferItem(address characterAccount, uint256 itemId, uint256 amount) internal returns (bool success) {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(characterAccount)) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(characterAccount)) {
             revert Errors.CharacterOnly();
         }
 

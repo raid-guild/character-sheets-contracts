@@ -33,7 +33,7 @@ contract ClassLevelAdaptor is ERC165, Initializable, UUPSUpgradeable {
     event ClonesAddressStorageUpdated(address newClonesAddressStorage);
 
     modifier onlyAdmin() {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isAdmin(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isAdmin(msg.sender)) {
             revert Errors.AdminOnly();
         }
         _;
@@ -75,13 +75,13 @@ contract ClassLevelAdaptor is ERC165, Initializable, UUPSUpgradeable {
 
     function levelRequirementsMet(address account, uint256 classId) public view returns (bool) {
         // checks the number of class tokens held by account.  1 token = level 0.
-        uint256 currentLevel = IERC1155(clones.classesClone()).balanceOf(account, classId);
+        uint256 currentLevel = IERC1155(clones.classes()).balanceOf(account, classId);
         if (currentLevel == 0) {
             revert Errors.InvalidClassLevel();
         }
 
         //current experience not locked in a class
-        uint256 currentExp = IERC20(clones.experienceClone()).balanceOf(account);
+        uint256 currentExp = IERC20(clones.experience()).balanceOf(account);
 
         // check that the account holds the correct amount of exp to claim the next level + the amount already locked.  since 1 token = level 0.
         return getExperienceForNextLevel(currentLevel) <= currentExp;

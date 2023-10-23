@@ -4,14 +4,14 @@ pragma solidity ^0.8.0;
 import {Category} from "./MultiToken.sol";
 
 struct ClonesAddresses {
-    address characterSheetsClone;
-    address itemsClone;
-    address itemsManagerClone;
-    address classesClone;
-    address experienceClone;
-    address characterEligibilityAdaptorClone;
-    address classLevelAdaptorClone;
-    address hatsAdaptorClone;
+    address characterSheets;
+    address items;
+    address itemsManager;
+    address classes;
+    address experience;
+    address characterEligibilityAdaptor;
+    address classLevelAdaptor;
+    address hatsAdaptor;
 }
 
 struct Item {

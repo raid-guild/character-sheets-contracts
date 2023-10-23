@@ -66,35 +66,35 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
     event CharacterRestored(address player, address account, uint256 characterId);
 
     modifier onlyContract() {
-        if (msg.sender != clones.itemsClone()) {
+        if (msg.sender != clones.items()) {
             revert Errors.CallerNotApproved();
         }
         _;
     }
 
     modifier onlyAdmin() {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isAdmin(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isAdmin(msg.sender)) {
             revert Errors.AdminOnly();
         }
         _;
     }
 
     modifier onlyGameMaster() {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isGameMaster(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isGameMaster(msg.sender)) {
             revert Errors.GameMasterOnly();
         }
         _;
     }
 
     modifier onlyPlayer() {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isPlayer(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isPlayer(msg.sender)) {
             revert Errors.PlayerOnly();
         }
         _;
     }
 
     modifier onlyCharacter() {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(msg.sender)) {
             revert Errors.CharacterOnly();
         }
         _;
@@ -150,8 +150,8 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
 
         // check the eligibility adaptor to see if the player is eligible to roll a character sheet
         if (
-            clones.characterEligibilityAdaptorClone() != address(0)
-                && !ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptorClone()).isEligible(msg.sender)
+            clones.characterEligibilityAdaptor() != address(0)
+                && !ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(msg.sender)
         ) {
             revert Errors.EligibilityError();
         }
@@ -191,8 +191,8 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         _playerSheets[msg.sender] = characterId;
         _characterSheets[characterAccount] = characterId;
 
-        IHatsAdaptor(clones.hatsAdaptorClone()).mintPlayerHat(msg.sender);
-        IHatsAdaptor(clones.hatsAdaptorClone()).mintCharacterHat(characterAccount);
+        IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(msg.sender);
+        IHatsAdaptor(clones.hatsAdaptor()).mintCharacterHat(characterAccount);
 
         totalSheets++;
         emit NewCharacterSheetRolled(msg.sender, characterAccount, characterId);
@@ -210,7 +210,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
             revert Errors.OwnershipError();
         }
 
-        if (IERC1155(clones.itemsClone()).balanceOf(msg.sender, itemId) == 0) {
+        if (IERC1155(clones.items()).balanceOf(msg.sender, itemId) == 0) {
             // TODO ensure that when items are transferred from a character sheet that they are unequipped
             revert Errors.InventoryError();
         }
@@ -254,7 +254,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
             revert Errors.OwnershipError();
         }
 
-        if (IERC1155(clones.itemsClone()).balanceOf(msg.sender, itemId) < 1) {
+        if (IERC1155(clones.items()).balanceOf(msg.sender, itemId) < 1) {
             revert Errors.InsufficientBalance();
         }
 
@@ -294,8 +294,8 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
             revert Errors.OwnershipError();
         }
         if (
-            clones.characterEligibilityAdaptorClone() != address(0)
-                && !ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptorClone()).isEligible(msg.sender)
+            clones.characterEligibilityAdaptor() != address(0)
+                && !ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(msg.sender)
         ) {
             revert Errors.EligibilityError();
         }
@@ -333,8 +333,8 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         }
 
         if (
-            clones.characterEligibilityAdaptorClone() != address(0)
-                && ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptorClone()).isEligible(playerAddress)
+            clones.characterEligibilityAdaptor() != address(0)
+                && ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(playerAddress)
         ) {
             revert Errors.EligibilityError();
         }
@@ -429,7 +429,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         // TODO: update sheet erc6551 account address
         super.transferFrom(from, to, characterId);
 
-        IHatsAdaptor(clones.hatsAdaptorClone()).mintPlayerHat(to);
+        IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(to);
 
         return;
     }
@@ -437,7 +437,8 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
     /**
      * @dev See {IERC721-safeTransferFrom}.
      */
-    function safeTransferFrom(address from, address to, uint256 characterId, bytes memory data)
+
+    function safeTransferFrom(address from, address to, uint256 characterId, bytes memory /*data*/ )
         public
         virtual
         override(ERC721Upgradeable, IERC721)
@@ -452,7 +453,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         // TODO: update sheet erc6551 account address
         super.transferFrom(from, to, characterId);
 
-        IHatsAdaptor(clones.hatsAdaptorClone()).mintPlayerHat(to);
+        IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(to);
 
         return;
     }
@@ -485,7 +486,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         if (sheet.inventory.length == 0) {
             return false;
         }
-        uint256 supply = IItems(clones.itemsClone()).getItem(itemId).supply;
+        uint256 supply = IItems(clones.items()).getItem(itemId).supply;
         if (supply == 0) {
             revert Errors.ItemError();
         }

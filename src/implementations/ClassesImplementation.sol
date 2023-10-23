@@ -48,21 +48,21 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     event ClassDeLeveled(address character, uint256 classId, uint256 numberOfLevels);
 
     modifier onlyAdmin() {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isAdmin(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isAdmin(msg.sender)) {
             revert Errors.AdminOnly();
         }
         _;
     }
 
     modifier onlyGameMaster() {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isGameMaster(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isGameMaster(msg.sender)) {
             revert Errors.GameMasterOnly();
         }
         _;
     }
 
     modifier onlyCharacter() {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(msg.sender)) {
             revert Errors.CharacterOnly();
         }
         _;
@@ -186,21 +186,20 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
      */
 
     function levelClass(address character, uint256 classId) public onlyGameMaster returns (uint256) {
-        if (clones.classLevelAdaptorClone() == address(0)) {
+        if (clones.classLevelAdaptor() == address(0)) {
             revert Errors.NotInitialized();
         }
-        if (!IClassLevelAdaptor(clones.classLevelAdaptorClone()).levelRequirementsMet(character, classId)) {
+        if (!IClassLevelAdaptor(clones.classLevelAdaptor()).levelRequirementsMet(character, classId)) {
             revert Errors.ClassError();
         }
 
         uint256 currentLevel = balanceOf(character, classId);
-        uint256 requiredAmount =
-            IClassLevelAdaptor(clones.classLevelAdaptorClone()).getExperienceForNextLevel(currentLevel);
+        uint256 requiredAmount = IClassLevelAdaptor(clones.classLevelAdaptor()).getExperienceForNextLevel(currentLevel);
 
         //stake appropriate exp
         classLevels[character][classId] += requiredAmount;
 
-        IExperience(clones.experienceClone()).burnExp(character, requiredAmount);
+        IExperience(clones.experience()).burnExp(character, requiredAmount);
 
         //mint another class token
 
@@ -215,21 +214,21 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
 
     function deLevelClass(address characterAccount, uint256 classId, uint256 numberOfLevels) public returns (uint256) {
         if (
-            !IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(msg.sender)
-                && !IHatsAdaptor(clones.hatsAdaptorClone()).isGameMaster(msg.sender)
+            !IHatsAdaptor(clones.hatsAdaptor()).isCharacter(msg.sender)
+                && !IHatsAdaptor(clones.hatsAdaptor()).isGameMaster(msg.sender)
         ) {
             revert Errors.CallerNotApproved();
         }
 
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(msg.sender) && characterAccount != msg.sender) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(msg.sender) && characterAccount != msg.sender) {
             revert Errors.CharacterOnly();
         }
 
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(characterAccount)) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(characterAccount)) {
             revert Errors.CharacterError();
         }
 
-        if (clones.classLevelAdaptorClone() == address(0)) {
+        if (clones.classLevelAdaptor() == address(0)) {
             revert Errors.NotInitialized();
         }
 
@@ -240,15 +239,15 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
             revert Errors.InsufficientBalance();
         }
 
-        uint256 expToRedeem = IClassLevelAdaptor(clones.classLevelAdaptorClone()).getExpForLevel(currentLevel)
-            - IClassLevelAdaptor(clones.classLevelAdaptorClone()).getExpForLevel(currentLevel - numberOfLevels);
+        uint256 expToRedeem = IClassLevelAdaptor(clones.classLevelAdaptor()).getExpForLevel(currentLevel)
+            - IClassLevelAdaptor(clones.classLevelAdaptor()).getExpForLevel(currentLevel - numberOfLevels);
 
         //remove level tokens
         _burn(characterAccount, classId, numberOfLevels);
 
         //mint replacement exp
 
-        IExperience(clones.experienceClone()).giveExp(characterAccount, expToRedeem);
+        IExperience(clones.experience()).dropExp(characterAccount, expToRedeem);
 
         //return amount of exp minted
 
@@ -330,7 +329,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
         uint256[] memory amounts,
         bytes memory data
     ) public override onlyGameMaster {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(to)) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(to)) {
             revert Errors.CharacterOnly();
         }
 
@@ -342,7 +341,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
         override
         onlyGameMaster
     {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(to)) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(to)) {
             revert Errors.CharacterOnly();
         }
         super._safeTransferFrom(from, to, id, amount, data);

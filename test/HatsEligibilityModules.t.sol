@@ -71,7 +71,7 @@ contract HatsEligibilityModulesTest is SetUp {
         playerModule = PlayerHatEligibilityModule(newAdaptor.playerHatEligibilityModule());
 
         vm.prank(accounts.admin);
-        deployments.clones.updateHatsAdaptorClone(address(newAdaptor));
+        deployments.clones.updateHatsAdaptor(address(newAdaptor));
 
         dao.addMember(playerHatWearer);
         vm.prank(playerHatWearer);

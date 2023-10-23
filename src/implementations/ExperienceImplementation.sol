@@ -13,33 +13,16 @@ import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 /**
  * @title Experience and Items
  * @author MrDeadCe11 && dan13ram
- * @notice this is an ERC20 that is designed to intereact with the items, character sheets, and classes contracts to provide a measurable amount of character advancment
+ * @notice this is an ERC20 that is designed to intereact with the items, character sheets, and classes contracts to provide a measurable amount of character advancment.
+ * @dev the digits of this contracts are set to 0.  therefore 1exp = 1exp and is not divisibile into smaller units of exp.
  */
 contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradeable {
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
     IClonesAddressStorage public clones;
 
-    modifier onlyGameMaster() {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isGameMaster(msg.sender)) {
-            revert Errors.GameMasterOnly();
-        }
-        _;
-    }
-
-    modifier onlyCharacter() {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(msg.sender)) {
-            revert Errors.CharacterOnly();
-        }
-        _;
-    }
-
-    modifier onlyContract() {
-        if (
-            msg.sender != clones.itemsClone() && msg.sender != clones.characterSheetsClone()
-                && msg.sender != clones.classesClone() && msg.sender != clones.itemsClone()
-                && msg.sender != clones.itemsManagerClone()
-        ) {
-            revert Errors.CallerNotApproved();
+    modifier onlyAdmin() {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isAdmin(msg.sender)) {
+            revert Errors.AdminOnly();
         }
         _;
     }
@@ -55,42 +38,44 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
     }
 
     /**
-     * @notice Called by game master to give experience to a character
+     * @notice Called by game master or an authorized contract to give experience to a character
      * @param to the address of the character that will receive the exp
      */
-    function dropExp(address to, uint256 amount) public onlyGameMaster {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(to)) {
+
+    function dropExp(address to, uint256 amount) public {
+        if (!_isAuthorized(msg.sender)) {
+            revert Errors.CallerNotApproved();
+        }
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(to)) {
             revert Errors.CharacterError();
         }
         _mint(to, amount);
     }
 
-    function giveExp(address to, uint256 amount) public onlyContract {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(to)) {
-            revert Errors.CharacterError();
+    function burnExp(address account, uint256 amount) public {
+        if (!_isAuthorized(msg.sender)) {
+            revert Errors.CallerNotApproved();
         }
-        _mint(to, amount);
-    }
-
-    function revokeExp(address account, uint256 amount) public onlyGameMaster {
-        _burn(account, amount);
-    }
-
-    function burnExp(address account, uint256 amount) public onlyContract {
         _burn(account, amount);
     }
 
     // overrides
-    //Experience is non transferable except by approved contracts
+    // Experience is non transferable except by approved contracts
 
     //solhint-disable-next-line no-unused-vars
-    function transferFrom(address from, address to, uint256 amount) public override onlyContract returns (bool) {
+    function transferFrom(address from, address to, uint256 amount) public override returns (bool) {
+        if (!_isAuthorized(msg.sender)) {
+            revert Errors.CallerNotApproved();
+        }
         super.transferFrom(from, to, amount);
         return true;
     }
 
     //solhint-disable-next-line no-unused-vars
-    function transfer(address to, uint256 amount) public override onlyContract returns (bool) {
+    function transfer(address to, uint256 amount) public override returns (bool) {
+        if (!_isAuthorized(msg.sender)) {
+            revert Errors.CallerNotApproved();
+        }
         super.transfer(to, amount);
         return true;
     }
@@ -104,5 +89,16 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
     }
 
     //solhint-disable-next-line no-empty-blocks
-    function _authorizeUpgrade(address newImplementation) internal override onlyGameMaster {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
+
+    function _isAuthorized(address account) internal view returns (bool) {
+        if (
+            account != clones.items() && account != clones.characterSheets() && account != clones.classes()
+                && account != clones.items() && account != clones.itemsManager()
+                && !IHatsAdaptor(clones.hatsAdaptor()).isGameMaster(account)
+        ) {
+            return false;
+        }
+        return true;
+    }
 }

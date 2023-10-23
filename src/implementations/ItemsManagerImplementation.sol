@@ -37,21 +37,21 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
     event RequirementRemoved(uint256 itemId, address assetAddress, uint256 assetId);
 
     modifier onlyItemsContract() {
-        if (msg.sender != clones.itemsClone()) {
+        if (msg.sender != clones.items()) {
             revert Errors.ItemError();
         }
         _;
     }
 
     modifier onlyGameMaster() {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isGameMaster(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isGameMaster(msg.sender)) {
             revert Errors.GameMasterOnly();
         }
         _;
     }
 
     modifier onlyAdmin() {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isAdmin(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isAdmin(msg.sender)) {
             revert Errors.AdminOnly();
         }
         _;
@@ -89,7 +89,7 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         for (uint256 i; i < itemRequirements.length; i++) {
             newRequirement = itemRequirements[i];
             //if required item is a class skip token transfer  TODO add, if this is a soulbound token.
-            if (newRequirement.assetAddress != clones.classesClone()) {
+            if (newRequirement.assetAddress != clones.classes()) {
                 //issue crafting receipt before amounts change
                 _craftingReceipts[caller][itemId].push(
                     Receipt({
@@ -221,7 +221,7 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
             uint256 balance = MultiToken.balanceOf(newRequirement, characterAccount);
 
             // if the required asset is a class check that the balance is not less than the required level.
-            if (newRequirement.assetAddress == clones.classesClone()) {
+            if (newRequirement.assetAddress == clones.classes()) {
                 if (balance < newRequirement.amount) {
                     return false;
                 }
