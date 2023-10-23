@@ -42,7 +42,7 @@ import {Hats} from "hats-protocol/Hats.sol";
 
 // hats eligibility modules
 import {AdminHatEligibilityModule} from "../../src/adaptors/hats-modules/AdminHatEligibilityModule.sol";
-import {DungeonMasterHatEligibilityModule} from "../../src/adaptors/hats-modules/DungeonMasterHatEligibilityModule.sol";
+import {GameMasterHatEligibilityModule} from "../../src/adaptors/hats-modules/GameMasterHatEligibilityModule.sol";
 import {PlayerHatEligibilityModule} from "../../src/adaptors/hats-modules/PlayerHatEligibilityModule.sol";
 import {CharacterHatEligibilityModule} from "../../src/adaptors/hats-modules/CharacterHatEligibilityModule.sol";
 
@@ -85,7 +85,7 @@ contract SetUp is Test, Accounts, TestStructs {
         _activateContracts(address(deployments.clones));
         vm.stopPrank();
 
-        vm.startPrank(accounts.dungeonMaster);
+        vm.startPrank(accounts.gameMaster);
         //create a claimable class
         classData.classIdClaimable = deployments.classes.createClassType(createNewClass(true));
         // create a non claimable class
@@ -225,7 +225,7 @@ contract SetUp is Test, Accounts, TestStructs {
         implementations.classLevelAdaptor = new ClassLevelAdaptor();
         implementations.hatsAdaptor = new HatsAdaptor();
         implementations.adminModule = new AdminHatEligibilityModule("v 0.1");
-        implementations.dmModule = new DungeonMasterHatEligibilityModule("v 0.1");
+        implementations.dmModule = new GameMasterHatEligibilityModule("v 0.1");
         implementations.playerModule = new PlayerHatEligibilityModule("v 0.1");
         implementations.characterModule = new CharacterHatEligibilityModule("v 0.1");
 
@@ -241,7 +241,7 @@ contract SetUp is Test, Accounts, TestStructs {
         vm.label(address(implementations.classLevelAdaptor), "Class Level adaptor Implementation");
         vm.label(address(implementations.hatsAdaptor), "Hats adaptor Implementation");
         vm.label(address(implementations.adminModule), "Admin Hats Eligibility adaptor Implementation");
-        vm.label(address(implementations.dmModule), "Dungeon Master Hats Eligibility adaptor Implementation");
+        vm.label(address(implementations.dmModule), "Game Master Hats Eligibility adaptor Implementation");
         vm.label(address(implementations.playerModule), "Player Hats Eligibility adaptor Implementation");
         vm.label(address(implementations.characterModule), "Character Hats Eligibility adaptor Implementation");
     }
@@ -310,19 +310,19 @@ contract SetUp is Test, Accounts, TestStructs {
         address[] memory adminArray = createAddressMemoryArray(1);
         adminArray[0] = accounts.admin;
 
-        address[] memory dungeonMastersArray = createAddressMemoryArray(1);
-        dungeonMastersArray[0] = accounts.dungeonMaster;
+        address[] memory gameMastersArray = createAddressMemoryArray(1);
+        gameMastersArray[0] = accounts.gameMaster;
 
         bytes memory encodedHatsAddresses =
-            abi.encode(adminArray, dungeonMastersArray, address(implementationStorage), address(deployments.clones));
+            abi.encode(adminArray, gameMastersArray, address(implementationStorage), address(deployments.clones));
 
         bytes memory encodedHatsStrings = abi.encode(
             "test_hats_base_img",
             "test tophat description",
             "test_admin_uri",
             "test_admin_description",
-            "test_dungeon_uri",
-            "test_dungeon_description",
+            "test_game_uri",
+            "test_game_description",
             "test_player_uri",
             "test_player_description",
             "test_character_uri",

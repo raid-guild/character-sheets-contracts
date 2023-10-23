@@ -27,7 +27,7 @@ import {Errors} from "../lib/Errors.sol";
  * @notice This is a gamified reputation managment system desgigned for raid guild but
  * left composable for use with any dao or organization
  * @dev this is an erc721 contract that calculates the erc6551 address of every token at token creation and then uses that address as the character for
- * a rpg themed reputation system with experience points awarded by a centralized authority the "DUNGEON_MASTER" and items and classes that can be owned and equipped
+ * a rpg themed reputation system with experience points awarded by a centralized authority the "GAME_MASTER" and items and classes that can be owned and equipped
  * by the base character account.
  */
 
@@ -79,9 +79,9 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         _;
     }
 
-    modifier onlyDungeonMaster() {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isDungeonMaster(msg.sender)) {
-            revert Errors.DungeonMasterOnly();
+    modifier onlyGameMaster() {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isGameMaster(msg.sender)) {
+            revert Errors.GameMasterOnly();
         }
         _;
     }
@@ -110,7 +110,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
      * @param _encodedParameters encoded parameters must include:
      * - address daoAddress: the address of the dao who's member list will be allowed to become players and who
      *      will be able to interact with this contract
-     * - address[] dungeonMasters: an array addresses of the person/persons who are authorized to issue player
+     * - address[] gameMasters: an array addresses of the person/persons who are authorized to issue player
      *      cards, classes, and items.
      * - address owner: the account that will have the DEFAULT_ADMIN role
      * - address CharacterAccountImplementation: the erc 4337 implementation of the Character account.
@@ -326,7 +326,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
      * @param characterId the characterId of the player to be removed.
      */
 
-    function removeSheet(uint256 characterId) external onlyDungeonMaster {
+    function removeSheet(uint256 characterId) external onlyGameMaster {
         address playerAddress = _ownerOf(characterId);
         if (playerAddress == address(0)) {
             revert Errors.CharacterError();
@@ -364,7 +364,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         emit CharacterUpdated(characterId);
     }
 
-    function jailPlayer(address playerAddress, bool throwInJail) external onlyDungeonMaster {
+    function jailPlayer(address playerAddress, bool throwInJail) external onlyGameMaster {
         jailed[playerAddress] = throwInJail;
         emit PlayerJailed(playerAddress, throwInJail);
     }
@@ -394,7 +394,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         emit MetadataURIUpdated(_uri);
     }
 
-    // transfer overrides since these tokens should be soulbound or only transferable by the dungeonMaster
+    // transfer overrides since these tokens should be soulbound or only transferable by the gameMaster
 
     /**
      * @dev See {IERC721-approve}.
@@ -418,7 +418,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         public
         virtual
         override(ERC721Upgradeable, IERC721)
-        onlyDungeonMaster
+        onlyGameMaster
     {
         if (_playerSheets[to] != 0) {
             revert Errors.TokenBalanceError();
@@ -441,7 +441,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         public
         virtual
         override(ERC721Upgradeable, IERC721)
-        onlyDungeonMaster
+        onlyGameMaster
     {
         if (_sheets[_playerSheets[to]].playerAddress != address(0)) {
             revert Errors.CharacterError();

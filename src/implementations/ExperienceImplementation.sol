@@ -19,9 +19,9 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
     IClonesAddressStorage public clones;
 
-    modifier onlyDungeonMaster() {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isDungeonMaster(msg.sender)) {
-            revert Errors.DungeonMasterOnly();
+    modifier onlyGameMaster() {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isGameMaster(msg.sender)) {
+            revert Errors.GameMasterOnly();
         }
         _;
     }
@@ -55,10 +55,10 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
     }
 
     /**
-     * @notice Called by dungeon master to give experience to a character
+     * @notice Called by game master to give experience to a character
      * @param to the address of the character that will receive the exp
      */
-    function dropExp(address to, uint256 amount) public onlyDungeonMaster {
+    function dropExp(address to, uint256 amount) public onlyGameMaster {
         if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(to)) {
             revert Errors.CharacterError();
         }
@@ -72,7 +72,7 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
         _mint(to, amount);
     }
 
-    function revokeExp(address account, uint256 amount) public onlyDungeonMaster {
+    function revokeExp(address account, uint256 amount) public onlyGameMaster {
         _burn(account, amount);
     }
 
@@ -104,5 +104,5 @@ contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradea
     }
 
     //solhint-disable-next-line no-empty-blocks
-    function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyGameMaster {}
 }

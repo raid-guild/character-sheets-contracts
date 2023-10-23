@@ -27,7 +27,7 @@ contract CharacterSheetsTest is SetUp {
     }
 
     function testEquipItemToCharacter() public {
-        vm.startPrank(accounts.dungeonMaster);
+        vm.startPrank(accounts.gameMaster);
         dropExp(accounts.character1, 1000, address(deployments.experience));
         dropItems(accounts.character1, itemsData.itemIdFree, 1, address(deployments.items));
         vm.stopPrank();
@@ -41,7 +41,7 @@ contract CharacterSheetsTest is SetUp {
     }
 
     function testUnequipItemFromCharacter() public {
-        vm.startPrank(accounts.dungeonMaster);
+        vm.startPrank(accounts.gameMaster);
         dropExp(accounts.character1, 1000, address(deployments.experience));
         dropItems(accounts.character1, itemsData.itemIdFree, 1, address(deployments.items));
         vm.stopPrank();
@@ -64,11 +64,11 @@ contract CharacterSheetsTest is SetUp {
     function testTransferFrom() public {
         assertEq(deployments.characterSheets.balanceOf(accounts.rando), 0, "balance should be 0");
         assertEq(deployments.hatsAdaptor.isPlayer(accounts.rando), false, "rando is already a player");
-        // approve dungeonMaster to spend token
+        // approve gameMaster to spend token
         vm.prank(accounts.player1);
-        deployments.characterSheets.approve(accounts.dungeonMaster, sheetsData.characterId1);
-        // dungeon master transfers token
-        vm.prank(accounts.dungeonMaster);
+        deployments.characterSheets.approve(accounts.gameMaster, sheetsData.characterId1);
+        // game master transfers token
+        vm.prank(accounts.gameMaster);
         deployments.characterSheets.transferFrom(accounts.player1, accounts.rando, sheetsData.characterId1);
         assertEq(deployments.characterSheets.balanceOf(accounts.rando), 1, "token not transfered");
         assertEq(deployments.hatsAdaptor.isCharacter(accounts.character1), true, "char 1 not a character");
@@ -123,43 +123,43 @@ contract CharacterSheetsTest is SetUp {
     }
 
     function testRemovePlayer() public {
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         vm.expectRevert(); // still eligible by adapter
         deployments.characterSheets.removeSheet(sheetsData.characterId1);
 
         dao.jailMember(accounts.player1);
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         vm.expectRevert(); // jailed
         deployments.characterSheets.removeSheet(sheetsData.characterId1);
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.characterSheets.jailPlayer(accounts.player1, true);
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.characterSheets.removeSheet(sheetsData.characterId1);
 
         assertEq(deployments.characterSheets.balanceOf(accounts.player1), 0, "Player 1 has not been removed");
         assertEq(deployments.hatsAdaptor.isPlayer(accounts.player1), false, "player hat not removed");
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         vm.expectRevert();
         deployments.characterSheets.removeSheet(sheetsData.characterId2);
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         dao.addMember(accounts.rando);
 
         vm.prank(accounts.rando);
         uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
         assertEq(tokenId, 2, "characterId not assigned");
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         dao.jailMember(accounts.rando);
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.characterSheets.jailPlayer(accounts.rando, true);
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.characterSheets.removeSheet(tokenId);
 
         assertEq(deployments.characterSheets.balanceOf(accounts.rando), 0, "Player 2 has not been removed");
@@ -170,13 +170,13 @@ contract CharacterSheetsTest is SetUp {
     }
 
     function testRestoreSheetAfterRemove() public {
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         dao.jailMember(accounts.player1);
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.characterSheets.jailPlayer(accounts.player1, true);
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.characterSheets.removeSheet(0);
 
         assertEq(deployments.characterSheets.balanceOf(accounts.player1), 0, "Player 1 has not been removed");
@@ -185,14 +185,14 @@ contract CharacterSheetsTest is SetUp {
         vm.expectRevert(); // still jailed & ineligible
         deployments.characterSheets.restoreSheet();
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         dao.unjailMember(accounts.player1);
 
         vm.prank(accounts.player1);
         vm.expectRevert(); // still jailed
         deployments.characterSheets.restoreSheet();
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.characterSheets.jailPlayer(accounts.player1, false);
 
         vm.prank(accounts.player1);
@@ -201,28 +201,28 @@ contract CharacterSheetsTest is SetUp {
         assertEq(accounts.character1, restored, "Incorrect Address restored");
         assertEq(deployments.characterSheets.balanceOf(accounts.player1), 1, "sheet not restored");
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         dao.addMember(accounts.rando);
 
         vm.prank(accounts.rando);
         uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
         assertEq(tokenId, 2, "characterId not assigned");
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         dao.jailMember(accounts.rando);
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.characterSheets.jailPlayer(accounts.rando, true);
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.characterSheets.removeSheet(tokenId);
 
         assertEq(deployments.characterSheets.balanceOf(accounts.rando), 0, "Player 2 has not been removed");
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         dao.unjailMember(accounts.rando);
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.characterSheets.jailPlayer(accounts.rando, false);
 
         vm.prank(accounts.rando);
@@ -274,14 +274,14 @@ contract CharacterSheetsTest is SetUp {
         address[] memory newAdmins = new address[](1);
         newAdmins[0] = accounts.player1;
         assertTrue(hatsContracts.hats.isWearerOfHat(accounts.admin, hatsData.adminHatId), "admin not admin");
-        address dungHatElig = deployments.hatsAdaptor.dungeonMasterHatEligibilityModule();
+        address dungHatElig = deployments.hatsAdaptor.gameMasterHatEligibilityModule();
 
         vm.startPrank(accounts.admin);
         //admin adds player1 to eligible addresses array in admins module.
-        DungeonMasterHatEligibilityModule(dungHatElig).addEligibleAddresses(newAdmins);
+        GameMasterHatEligibilityModule(dungHatElig).addEligibleAddresses(newAdmins);
 
         // admin mints dmHat to player1
-        hatsContracts.hats.mintHat(hatsData.dungeonMasterHatId, accounts.player1);
+        hatsContracts.hats.mintHat(hatsData.gameMasterHatId, accounts.player1);
         vm.stopPrank();
 
         //should revert if called by dm;
@@ -341,11 +341,11 @@ contract CharacterSheetsTest is SetUp {
 
     function testTransferFromRevert() public {
         vm.prank(accounts.player1);
-        vm.expectRevert(Errors.DungeonMasterOnly.selector);
+        vm.expectRevert(Errors.GameMasterOnly.selector);
         deployments.characterSheets.transferFrom(accounts.player1, accounts.player2, 1);
 
         vm.prank(accounts.admin);
-        vm.expectRevert(Errors.DungeonMasterOnly.selector);
+        vm.expectRevert(Errors.GameMasterOnly.selector);
         deployments.characterSheets.transferFrom(accounts.player1, accounts.player2, 1);
     }
 

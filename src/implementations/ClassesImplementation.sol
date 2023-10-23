@@ -54,9 +54,9 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
         _;
     }
 
-    modifier onlyDungeonMaster() {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isDungeonMaster(msg.sender)) {
-            revert Errors.DungeonMasterOnly();
+    modifier onlyGameMaster() {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isGameMaster(msg.sender)) {
+            revert Errors.GameMasterOnly();
         }
         _;
     }
@@ -86,7 +86,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     /**
      * @dev Sets `baseURI` as the `_baseURI` for all tokens
      */
-    function setBaseURI(string memory _baseUri) external onlyDungeonMaster {
+    function setBaseURI(string memory _baseUri) external onlyGameMaster {
         _baseURI = _baseUri;
         emit BaseURIUpdated(_baseUri);
     }
@@ -94,7 +94,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     /**
      * @dev Sets `tokenURI` as the tokenURI of `tokenId`.
      */
-    function setURI(uint256 tokenId, string memory tokenURI) external onlyDungeonMaster {
+    function setURI(uint256 tokenId, string memory tokenURI) external onlyGameMaster {
         _classURIs[tokenId] = tokenURI;
         emit URI(uri(tokenId), tokenId);
     }
@@ -128,7 +128,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
      * @return tokenId the ERC1155 token id
      */
 
-    function createClassType(bytes calldata classData) external onlyDungeonMaster returns (uint256 tokenId) {
+    function createClassType(bytes calldata classData) external onlyGameMaster returns (uint256 tokenId) {
         uint256 _tokenId = totalClasses;
 
         _createClass(classData, _tokenId);
@@ -146,7 +146,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
      * @param classId the classId of the class to be assigned
      */
 
-    function assignClass(address character, uint256 classId) public onlyDungeonMaster {
+    function assignClass(address character, uint256 classId) public onlyGameMaster {
         if (character == address(0x0)) {
             revert Errors.CharacterError();
         }
@@ -165,12 +165,12 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     }
 
     /**
-     * removes a class from a character token must be called by the character account or the dungeon master
+     * removes a class from a character token must be called by the character account or the game master
      * @param character the token Id of the player who needs a class removed
      * @param classId the class to be removed
      */
 
-    function revokeClass(address character, uint256 classId) public onlyDungeonMaster returns (bool success) {
+    function revokeClass(address character, uint256 classId) public onlyGameMaster returns (bool success) {
         return _revokeClass(character, classId);
     }
 
@@ -179,13 +179,13 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     }
     /**
      * @notice This will level the class of any character class if they have enough exp
-     * @dev As a source of truth, only the dungeon master can call this function so that the correct _classes are leveld
+     * @dev As a source of truth, only the game master can call this function so that the correct _classes are leveld
      * @param character the address of the character account to have a class leveled
      * @param classId the Id of the class that will be leveled
      * @return uint256 class token balance
      */
 
-    function levelClass(address character, uint256 classId) public onlyDungeonMaster returns (uint256) {
+    function levelClass(address character, uint256 classId) public onlyGameMaster returns (uint256) {
         if (clones.classLevelAdaptorClone() == address(0)) {
             revert Errors.NotInitialized();
         }
@@ -216,7 +216,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     function deLevelClass(address characterAccount, uint256 classId, uint256 numberOfLevels) public returns (uint256) {
         if (
             !IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(msg.sender)
-                && !IHatsAdaptor(clones.hatsAdaptorClone()).isDungeonMaster(msg.sender)
+                && !IHatsAdaptor(clones.hatsAdaptorClone()).isGameMaster(msg.sender)
         ) {
             revert Errors.CallerNotApproved();
         }
@@ -225,7 +225,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
             revert Errors.CharacterOnly();
         }
 
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharactercharacter(characterAccount)) {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(characterAccount)) {
             revert Errors.CharacterError();
         }
 
@@ -320,7 +320,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     // overrides
 
     /**
-     * @notice Only dungeon master can transfer _classes. approval of character is not required
+     * @notice Only game master can transfer _classes. approval of character is not required
      */
     //solhint-disable-next-line
     function safeBatchTransferFrom(
@@ -329,7 +329,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
         uint256[] memory ids,
         uint256[] memory amounts,
         bytes memory data
-    ) public override onlyDungeonMaster {
+    ) public override onlyGameMaster {
         if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(to)) {
             revert Errors.CharacterOnly();
         }
@@ -340,7 +340,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes memory data)
         public
         override
-        onlyDungeonMaster
+        onlyGameMaster
     {
         if (!IHatsAdaptor(clones.hatsAdaptorClone()).isCharacter(to)) {
             revert Errors.CharacterOnly();
@@ -365,5 +365,5 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     }
 
     //solhint-disable-next-line no-empty-blocks
-    function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyGameMaster {}
 }

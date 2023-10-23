@@ -26,7 +26,7 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
     event HatsContractUpdated(address newHatsContract);
     event HatsModuleFactoryUpdated(address newHatsModule);
     event AdminHatsEligibilityModuleUpdated(address newAdminModule);
-    event DungeonMasterHatsEligibilityModuleUpdated(address newDungeonMasterModule);
+    event GameMasterHatsEligibilityModuleUpdated(address newGameMasterModule);
     event PlayerHatsEligibilityModuleUpdated(address newPlayerModule);
     event CharacterHatsEligibilityModuleUpdated(address newCharacterModule);
     event CloneAddressStorageUpdated(address newCloneAddressStorage);
@@ -114,13 +114,13 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         emit AdminHatsEligibilityModuleUpdated(newAdminHatsEligibilityModule);
     }
 
-    function updateDungeonMasterHatsEligibilityModule(address newDungeonMasterHatsEligibilityModule)
+    function updateGameMasterHatsEligibilityModule(address newGameMasterHatsEligibilityModule)
         external
         onlyOwner
     {
-        _implementationsAddresses.dungeonMasterHatsEligibilityModule = newDungeonMasterHatsEligibilityModule;
+        _implementationsAddresses.gameMasterHatsEligibilityModule = newGameMasterHatsEligibilityModule;
 
-        emit DungeonMasterHatsEligibilityModuleUpdated(newDungeonMasterHatsEligibilityModule);
+        emit GameMasterHatsEligibilityModuleUpdated(newGameMasterHatsEligibilityModule);
     }
 
     function updatePlayerHatsEligibilityModule(address newPlayerHatsEligibilityModule) external onlyOwner {
@@ -197,8 +197,8 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         return _implementationsAddresses.adminHatsEligibilityModule;
     }
 
-    function dungeonMasterHatsEligibilityModule() public view returns (address) {
-        return _implementationsAddresses.dungeonMasterHatsEligibilityModule;
+    function gameMasterHatsEligibilityModule() public view returns (address) {
+        return _implementationsAddresses.gameMasterHatsEligibilityModule;
     }
 
     function playerHatsEligibilityModule() public view returns (address) {
@@ -224,7 +224,7 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
     function _initAdaptorsAndModules(bytes calldata encodedAdaptorsAndModuleAddresses) internal {
         (
             _implementationsAddresses.adminHatsEligibilityModule,
-            _implementationsAddresses.dungeonMasterHatsEligibilityModule,
+            _implementationsAddresses.gameMasterHatsEligibilityModule,
             _implementationsAddresses.playerHatsEligibilityModule,
             _implementationsAddresses.characterHatsEligibilityModule,
             _implementationsAddresses.hatsAdaptorImplementation,

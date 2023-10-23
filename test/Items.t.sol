@@ -33,7 +33,7 @@ contract ItemsTest is SetUp {
         vm.prank(accounts.rando);
         uint256 randoId = deployments.characterSheets.rollCharacterSheet("test_token_uri1/");
 
-        vm.startPrank(accounts.dungeonMaster);
+        vm.startPrank(accounts.gameMaster);
 
         address randoNPC = deployments.characterSheets.getCharacterSheetByCharacterId(randoId).accountAddress;
 
@@ -78,7 +78,7 @@ contract ItemsTest is SetUp {
     }
 
     function testClaimItem() public {
-        vm.startPrank(accounts.dungeonMaster);
+        vm.startPrank(accounts.gameMaster);
         uint256 _itemId1 = deployments.items.createItemType(createNewItem(false, true, bytes32(0)));
         uint256 _itemId2 = deployments.items.createItemType(createNewItem(false, true, bytes32(0)));
 
@@ -114,7 +114,7 @@ contract ItemsTest is SetUp {
         vm.expectRevert(Errors.RequirementNotMet.selector);
         deployments.items.claimItems(itemIds2, amounts2, proofs);
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.experience.dropExp(accounts.character1, 1000);
 
         // revert wrong class
@@ -122,7 +122,7 @@ contract ItemsTest is SetUp {
         vm.expectRevert(Errors.RequirementNotMet.selector);
         deployments.items.claimItems(itemIds2, amounts2, proofs);
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.classes.assignClass(accounts.character1, classData.classId);
 
         itemIds2[0] = _itemId1;
@@ -147,10 +147,10 @@ contract ItemsTest is SetUp {
     }
 
     function testAddItemRequirement() public {
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         uint256 tokenId = deployments.items.createItemType(createNewItem(false, true, bytes32(0)));
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.items.addItemRequirement(0, uint8(Category.ERC1155), address(deployments.items), tokenId, 100);
 
         Asset[] memory requiredAssets = deployments.itemsManager.getItemRequirements(0);
@@ -165,10 +165,10 @@ contract ItemsTest is SetUp {
     }
 
     function testRemoveItemRequirement() public {
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         uint256 tokenId = deployments.items.createItemType(createNewItem(false, true, bytes32(0)));
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.items.addItemRequirement(0, uint8(Category.ERC1155), address(deployments.items), tokenId, 1000);
 
         Asset[] memory requiredAssets = deployments.itemsManager.getItemRequirements(0);
@@ -181,7 +181,7 @@ contract ItemsTest is SetUp {
         assertEq(uint256(requiredAsset.category), uint256(Category.ERC1155), "wrong category in itemRequirements array");
         assertEq(requiredAsset.assetAddress, address(deployments.items), "wrong address in itemRequirements array");
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.items.removeItemRequirement(0, address(deployments.items), tokenId);
 
         requiredAssets = deployments.itemsManager.getItemRequirements(0);
@@ -200,7 +200,7 @@ contract ItemsTest is SetUp {
         vm.expectRevert();
         deployments.items.craftItem(0, 1);
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         uint256 craftableItemId = deployments.items.createItemType(createNewItem(true, true, bytes32(0)));
 
         //should revert if requirements not met
@@ -208,7 +208,7 @@ contract ItemsTest is SetUp {
         vm.expectRevert(Errors.RequirementNotMet.selector);
         deployments.items.craftItem(craftableItemId, 1);
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.experience.dropExp(accounts.character1, 100);
 
         // should succeed with requirements met
@@ -224,7 +224,7 @@ contract ItemsTest is SetUp {
     }
 
     function testDismantleItems() public {
-        vm.startPrank(accounts.dungeonMaster);
+        vm.startPrank(accounts.gameMaster);
         uint256 craftableItemId = deployments.items.createItemType(createNewItem(true, false, bytes32(0)));
         deployments.items.addItemRequirement(
             craftableItemId, uint8(Category.ERC1155), address(deployments.classes), 0, 1
@@ -287,13 +287,13 @@ contract ItemsTest is SetUp {
         bytes memory newItem = createNewItem(false, false, bytes32(0));
 
         vm.startPrank(accounts.player2);
-        vm.expectRevert(Errors.DungeonMasterOnly.selector);
+        vm.expectRevert(Errors.GameMasterOnly.selector);
         deployments.items.createItemType(newItem);
         vm.stopPrank();
     }
 
     function testDropLootRevert() public {
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         uint256 _itemId = deployments.items.createItemType(createNewItem(false, false, bytes32(keccak256("null"))));
         assertEq(_itemId, 4);
 
@@ -317,13 +317,13 @@ contract ItemsTest is SetUp {
         amounts[1][1] = 11;
 
         //revert wrong array lengths
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         vm.expectRevert(Errors.LengthMismatch.selector);
         deployments.items.dropLoot(players, itemIds, amounts);
 
         //revert incorrect caller
         vm.prank(address(1));
-        vm.expectRevert(Errors.DungeonMasterOnly.selector);
+        vm.expectRevert(Errors.GameMasterOnly.selector);
         deployments.items.dropLoot(players, itemIds, amounts);
     }
 }

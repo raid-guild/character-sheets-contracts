@@ -34,8 +34,7 @@ import {Hats} from "hats-protocol/Hats.sol";
 
 // hats eligibility modules
 import {AdminHatEligibilityModule} from "../../../src/adaptors/hats-modules/AdminHatEligibilityModule.sol";
-import {DungeonMasterHatEligibilityModule} from
-    "../../../src/adaptors/hats-modules/DungeonMasterHatEligibilityModule.sol";
+import {GameMasterHatEligibilityModule} from "../../../src/adaptors/hats-modules/GameMasterHatEligibilityModule.sol";
 import {PlayerHatEligibilityModule} from "../../../src/adaptors/hats-modules/PlayerHatEligibilityModule.sol";
 import {CharacterHatEligibilityModule} from "../../../src/adaptors/hats-modules/CharacterHatEligibilityModule.sol";
 
@@ -77,7 +76,7 @@ interface TestStructs {
 
     struct Accounts {
         address admin;
-        address dungeonMaster;
+        address gameMaster;
         address player1;
         address player2;
         address character1;
@@ -101,7 +100,7 @@ interface TestStructs {
         ClassLevelAdaptor classLevelAdaptor;
         HatsAdaptor hatsAdaptor;
         AdminHatEligibilityModule adminModule;
-        DungeonMasterHatEligibilityModule dmModule;
+        GameMasterHatEligibilityModule dmModule;
         PlayerHatEligibilityModule playerModule;
         CharacterHatEligibilityModule characterModule;
     }

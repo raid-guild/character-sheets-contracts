@@ -38,18 +38,18 @@ contract ExperienceTest is SetUp {
         //revert if not called by dm
 
         vm.prank(accounts.player1);
-        vm.expectRevert(Errors.DungeonMasterOnly.selector);
+        vm.expectRevert(Errors.GameMasterOnly.selector);
         deployments.experience.dropExp(accounts.character1, 100);
 
         //suceed if calld by dm
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.experience.dropExp(accounts.character1, 100);
         assertEq(deployments.experience.balanceOf(accounts.character1), 100, "incorrect balance");
     }
 
     function testRevokeExp() public {
         //drop exp to npc
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.experience.dropExp(accounts.character1, 100);
         assertEq(deployments.experience.balanceOf(accounts.character1), 100, "incorrect balance");
         //revert if not called by dm
@@ -58,13 +58,13 @@ contract ExperienceTest is SetUp {
         deployments.experience.revokeExp(accounts.character1, 100);
 
         //suceed if called by dm
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.experience.revokeExp(accounts.character1, 100);
         assertEq(deployments.experience.balanceOf(accounts.character1), 0, "incorrect balance");
     }
 
     function testBurnExp() public {
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.experience.dropExp(accounts.character1, 100);
         assertEq(deployments.experience.balanceOf(accounts.character1), 100, "incorrect balance");
         //revert if not called by another contract

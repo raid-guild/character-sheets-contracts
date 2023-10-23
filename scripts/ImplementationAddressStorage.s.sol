@@ -28,7 +28,7 @@ struct HatsAddresses {
     address hatsModuleFactory;
     //eligibility modules
     address adminHatsEligibilityModule;
-    address dungeonMasterHatsEligibilityModule;
+    address gameMasterHatsEligibilityModule;
     address playerHatsEligibilityModule;
     address characterHatsEligibilityModule;
     address erc6551Registry;
@@ -50,7 +50,7 @@ struct HatsAddresses {
  *     function _initAdaptorsAndModules(bytes calldata encodedAdaptorsAndModuleAddresses) internal {
  *         (
  *             _implementationsAddresses.adminHatsEligibilityModule,
- *             _implementationsAddresses.dungeonMasterHatsEligibilityModule,
+ *             _implementationsAddresses.gameMasterHatsEligibilityModule,
  *             _implementationsAddresses.playerHatsEligibilityModule,
  *             _implementationsAddresses.characterHatsEligibilityModule,
  *             _implementationsAddresses.hatsAdaptorImplementation,
@@ -116,8 +116,8 @@ contract DeployImplementationAddressStorage is BaseDeployer {
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterEligibilityAdaptorImplementation")));
         hatsAddresses.adminHatsEligibilityModule =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".AdminHatsEligibilityModule")));
-        hatsAddresses.dungeonMasterHatsEligibilityModule =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".DungeonMasterHatsEligibilityModule")));
+        hatsAddresses.gameMasterHatsEligibilityModule =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".GameMasterHatsEligibilityModule")));
         hatsAddresses.playerHatsEligibilityModule =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".PlayerHatsEligibilityModule")));
         hatsAddresses.characterHatsEligibilityModule =
@@ -153,7 +153,7 @@ contract DeployImplementationAddressStorage is BaseDeployer {
     function _encodeAdaptorAndModuleAddresses() internal view returns (bytes memory) {
         bytes memory encodedAdaptorsAndModuleAddresses = abi.encode(
             hatsAddresses.adminHatsEligibilityModule,
-            hatsAddresses.dungeonMasterHatsEligibilityModule,
+            hatsAddresses.gameMasterHatsEligibilityModule,
             hatsAddresses.playerHatsEligibilityModule,
             hatsAddresses.characterHatsEligibilityModule,
             implementationAddresses.hatsAdaptorImplementation,

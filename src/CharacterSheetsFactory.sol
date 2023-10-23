@@ -200,7 +200,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
      * @param dao the address of the dao who's membership will restrict character sheets eligibility.  address(0) for no dao restriction;
      * @param encodedHatsAddresses this will be the hats adaptor initialization data
      *          -- address[] admins the list of addresses that will have admin priviledges
-     *          -- address[] dungeonMasters the list of addresses that will have dungeonMasterpriviledges
+     *          -- address[] gameMasters the list of addresses that will have gameMasterpriviledges
      *          -- address implementations the address of the ImplementationAddressStorage contract
      *          -- address clonesStorage the address of the cloned clones storageContract;
      *
@@ -209,8 +209,8 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
      *        2.  string topHatDescription
      *        3.  string adminUri
      *        4.  string adminDescription
-     *        5.  string dungeonMasterUri
-     *        6.  string dungeonMasterDescription
+     *        5.  string gameMasterUri
+     *        6.  string gameMasterDescription
      *        7.  string playerUri
      *        8.  string playerDescription
      *        9.  string characterUri

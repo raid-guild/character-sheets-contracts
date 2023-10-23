@@ -13,7 +13,7 @@ abstract contract Errors {
     error ClaimableError();
     error TransferError();
     error DuplicateError();
-    error DungeonMasterOnly();
+    error GameMasterOnly();
     error PlayerOnly();
     error AdminOnly();
     error CharacterOnly();

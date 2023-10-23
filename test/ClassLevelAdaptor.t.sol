@@ -25,7 +25,7 @@ contract ClassLevelAdaptorTest is SetUp {
         assertFalse(deployments.classLevels.levelRequirementsMet(accounts.character1, 0), "should not be met");
         vm.stopPrank();
         uint256 expAmount = 301 * 10 ** 18;
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.experience.dropExp(accounts.character1, expAmount);
 
         assertEq(deployments.experience.balanceOf(accounts.character1), expAmount, "incorrect exp amount");

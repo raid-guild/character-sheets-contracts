@@ -138,23 +138,23 @@ contract CharacterSheetsTest is Test, SetUp {
         address[] memory adminArray = createAddressMemoryArray(1);
         adminArray[0] = accounts.admin;
 
-        address[] memory dungeonMastersArray = createAddressMemoryArray(1);
-        dungeonMastersArray[0] = accounts.dungeonMaster;
+        address[] memory gameMastersArray = createAddressMemoryArray(1);
+        gameMastersArray[0] = accounts.gameMaster;
 
         //STACC TOOO DAMN DANK!
         EncodedClonesInitData memory clonesData;
         EncodedHatsData memory hatsData;
 
         hatsData.encodedHatsAddresses =
-            abi.encode(adminArray, dungeonMastersArray, address(implementationStorage), address(newContracts.clones));
+            abi.encode(adminArray, gameMastersArray, address(implementationStorage), address(newContracts.clones));
 
         hatsData.encodedHatsStrings = abi.encode(
             "new_new_test_hats_base_img",
             "new_test tophat description",
             "new_test_admin_uri",
             "new_test_admin_description",
-            "new_test_dungeon_uri",
-            "new_test_dungeon_description",
+            "new_test_game_uri",
+            "new_test_game_description",
             "new_test_player_uri",
             "new_test_player_description",
             "new_test_character_uri",

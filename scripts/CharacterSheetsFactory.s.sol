@@ -14,8 +14,8 @@ struct HatsStrings {
     string topHatDescription;
     string adminUri;
     string adminDescription;
-    string dungeonMasterUri;
-    string dungeonMasterDescription;
+    string gameMasterUri;
+    string gameMasterDescription;
     string playerUri;
     string playerDescription;
     string characterUri;
@@ -61,7 +61,7 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
 contract Create is BaseFactoryExecutor {
     using stdJson for string;
 
-    address[] public dungeonMasters;
+    address[] public gameMasters;
     address[] public admins;
     address public dao;
 
@@ -81,7 +81,7 @@ contract Create is BaseFactoryExecutor {
         // addresses
         dao = json.readAddress(string(abi.encodePacked(".", targetEnv, ".Dao")));
         characterSheetsFactory = json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterSheetsFactory")));
-        dungeonMasters = json.readAddressArray(string(abi.encodePacked(".", targetEnv, ".DungeonMasters")));
+        gameMasters = json.readAddressArray(string(abi.encodePacked(".", targetEnv, ".GameMasters")));
         implementationStorageAddress =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".ImplementationAddressStorage")));
 
@@ -98,9 +98,9 @@ contract Create is BaseFactoryExecutor {
         hatsStrings.topHatDescription = json.readString(string(abi.encodePacked(".", targetEnv, ".TopHatDescription")));
         hatsStrings.adminUri = json.readString(string(abi.encodePacked(".", targetEnv, ".AdminImgUri")));
         hatsStrings.adminDescription = json.readString(string(abi.encodePacked(".", targetEnv, ".AdminDescription")));
-        hatsStrings.dungeonMasterUri = json.readString(string(abi.encodePacked(".", targetEnv, ".DungeonMasterImgUri")));
-        hatsStrings.dungeonMasterDescription =
-            json.readString(string(abi.encodePacked(".", targetEnv, ".DungeonMasterDescription")));
+        hatsStrings.gameMasterUri = json.readString(string(abi.encodePacked(".", targetEnv, ".GameMasterImgUri")));
+        hatsStrings.gameMasterDescription =
+            json.readString(string(abi.encodePacked(".", targetEnv, ".GameMasterDescription")));
         hatsStrings.playerUri = json.readString(string(abi.encodePacked(".", targetEnv, ".PlayerUri")));
         hatsStrings.playerDescription = json.readString(string(abi.encodePacked(".", targetEnv, ".PlayerDescription")));
         hatsStrings.characterUri = json.readString(string(abi.encodePacked(".", targetEnv, ".CharacterUri")));

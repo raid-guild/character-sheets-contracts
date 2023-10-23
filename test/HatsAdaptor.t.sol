@@ -24,9 +24,9 @@ contract HatsAdaptorTest is SetUp {
             hatsContracts.hats.isAdminOfHat(accounts.admin, _hatsData.adminHatId), true, "incorrect admin hat admin"
         );
         assertEq(
-            hatsContracts.hats.isAdminOfHat(address(deployments.hatsAdaptor), _hatsData.dungeonMasterHatId),
+            hatsContracts.hats.isAdminOfHat(address(deployments.hatsAdaptor), _hatsData.gameMasterHatId),
             true,
-            "incorrect dungeon master admin"
+            "incorrect game master admin"
         );
         assertEq(
             hatsContracts.hats.isAdminOfHat(address(deployments.hatsAdaptor), _hatsData.playerHatId),
@@ -97,11 +97,11 @@ contract HatsAdaptorTest is SetUp {
         assertFalse(deployments.hatsAdaptor.isCharacter(accounts.admin), "admin should not be a character.");
     }
 
-    function testIsDungeonMaster() public {
-        assertTrue(deployments.hatsAdaptor.isDungeonMaster(accounts.dungeonMaster), "admin should be a DungeonMaster");
+    function testIsGameMaster() public {
+        assertTrue(deployments.hatsAdaptor.isGameMaster(accounts.gameMaster), "admin should be a GameMaster");
         assertFalse(
-            deployments.hatsAdaptor.isDungeonMaster(accounts.player1), "player one should not be a DungeonMaster."
+            deployments.hatsAdaptor.isGameMaster(accounts.player1), "player one should not be a GameMaster."
         );
-        assertFalse(deployments.hatsAdaptor.isDungeonMaster(accounts.character1), "npc1 should not be a DungeonMaster.");
+        assertFalse(deployments.hatsAdaptor.isGameMaster(accounts.character1), "npc1 should not be a GameMaster.");
     }
 }

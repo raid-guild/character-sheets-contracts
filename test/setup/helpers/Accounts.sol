@@ -11,7 +11,7 @@ contract Accounts is Test {
 
     constructor() {
         accounts.admin = address(0xdeadce11);
-        accounts.dungeonMaster = address(0xc0ffee);
+        accounts.gameMaster = address(0xc0ffee);
         accounts.player1 = address(0xbeef);
         accounts.player2 = address(0xbabe);
         accounts.rando = address(777);

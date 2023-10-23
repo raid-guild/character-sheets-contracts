@@ -20,7 +20,7 @@ contract CharacterAccountTest is SetUp {
 
         CharacterAccount account = CharacterAccount(payable(sheet.accountAddress));
 
-        vm.startPrank(accounts.dungeonMaster);
+        vm.startPrank(accounts.gameMaster);
         dropExp(address(account), 1000, address(deployments.experience));
         dropItems(address(account), itemsData.itemIdFree, 1, address(deployments.items));
         vm.stopPrank();
@@ -48,7 +48,7 @@ contract CharacterAccountTest is SetUp {
 
         CharacterAccount account = CharacterAccount(payable(sheet.accountAddress));
 
-        vm.startPrank(accounts.dungeonMaster);
+        vm.startPrank(accounts.gameMaster);
         dropExp(address(account), 1000, address(deployments.experience));
         dropItems(address(account), itemsData.itemIdFree, 1, address(deployments.items));
         vm.stopPrank();
@@ -85,7 +85,7 @@ contract CharacterAccountTest is SetUp {
 
         CharacterAccount account = CharacterAccount(payable(sheet.accountAddress));
 
-        vm.startPrank(accounts.dungeonMaster);
+        vm.startPrank(accounts.gameMaster);
         dropExp(address(account), 1000, address(deployments.experience));
         dropItems(address(account), itemsData.itemIdFree, 1, address(deployments.items));
         vm.stopPrank();
@@ -119,7 +119,7 @@ contract CharacterAccountTest is SetUp {
 
         CharacterAccount account = CharacterAccount(payable(sheet.accountAddress));
 
-        vm.startPrank(accounts.dungeonMaster);
+        vm.startPrank(accounts.gameMaster);
         dropExp(address(account), 1000, address(deployments.experience));
         dropItems(address(account), itemsData.itemIdFree, 1, address(deployments.items));
         vm.stopPrank();

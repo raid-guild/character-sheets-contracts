@@ -18,11 +18,11 @@ function makeNewDMList(){
 network=$1
 while true; do
     echo "==============================================================="
-        read -p "Please enter a DUNGEON MASTER address: " INPUT
+        read -p "Please enter a GAME MASTER address: " INPUT
     echo "==============================================================="
         read -p "Would you like to enter another address? (y/n) " CONFIRMATION
 
-    DUNGEON_MASTERS+=($INPUT)
+    GAME_MASTERS+=($INPUT)
 
     if [[ $CONFIRMATION == "n" || $CONFIRMATION == "N" ]]
         then 
@@ -30,8 +30,8 @@ while true; do
     fi
 done
 
-for item in "${DUNGEON_MASTERS[@]}"; do
-node scripts/helpers/saveCreationData.js $network DungeonMasters $item
+for item in "${GAME_MASTERS[@]}"; do
+node scripts/helpers/saveCreationData.js $network GameMasters $item
 done
 }
 
@@ -39,9 +39,9 @@ done
 if [[ $1 == "" ]]
     then
         echo "Usage:"
-        echo "  createSheets.sh [target environment] [[dungeon masters]] [characterSheets base uri] [experience base uri] [classes base uri]"
+        echo "  createSheets.sh [target environment] [[game masters]] [characterSheets base uri] [experience base uri] [classes base uri]"
         echo "    where target environment (required): gnosis / sepolia"
-        echo "    an array of addresses that will have the dungeon master permission, min 1"
+        echo "    an array of addresses that will have the game master permission, min 1"
         echo "    the base uri for the character sheets contract"
         echo "    the base uri for the experience and items contract"
         echo "    the base uri for the classes contract"
@@ -67,20 +67,20 @@ if [[ $PRIVATE_KEY == "" && $1 == "anvil" ]]
 fi
 
 
-DUNGEON_MASTERS=$(node scripts/helpers/readAddress.js $1 DungeonMasters)
+GAME_MASTERS=$(node scripts/helpers/readAddress.js $1 GameMasters)
 
-DMLENGTH=$(echo -n "$DUNGEON_MASTERS"| sed 's/[][]//g; s/,/ /g' | wc -w)
+DMLENGTH=$(echo -n "$GAME_MASTERS"| sed 's/[][]//g; s/,/ /g' | wc -w)
 
 
 if [[ $DMLENGTH != 0 ]]
     then
         echo "==============================================================="
-        echo "Stored DUNGEON MASTERS have been found."
+        echo "Stored GAME MASTERS have been found."
         echo "---------------------------------------------------------------"
-            read -p "Would you like to create a new DUNGEON MASTERS List? (y/n) "  MAKENEWLIST
+            read -p "Would you like to create a new GAME MASTERS List? (y/n) "  MAKENEWLIST
         if [[ $MAKENEWLIST == "y" || $MAKENEWLIST == "Y" ]]
             then
-                node scripts/helpers/saveCreationData.js $1 DungeonMasters delete
+                node scripts/helpers/saveCreationData.js $1 GameMasters delete
                 makeNewDMList $1
         fi
     else

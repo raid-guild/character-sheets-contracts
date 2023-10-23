@@ -14,14 +14,14 @@ import {HatsAdaptor} from "../src/adaptors/HatsAdaptor.sol";
 import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
 import {Hats} from "hats-protocol/Hats.sol";
 import {AdminHatEligibilityModule} from "../src/adaptors/hats-modules/AdminHatEligibilityModule.sol";
-import {DungeonMasterHatEligibilityModule} from "../src/adaptors/hats-modules/DungeonMasterHatEligibilityModule.sol";
+import {GameMasterHatEligibilityModule} from "../src/adaptors/hats-modules/GameMasterHatEligibilityModule.sol";
 import {PlayerHatEligibilityModule} from "../src/adaptors/hats-modules/PlayerHatEligibilityModule.sol";
 import {CharacterHatEligibilityModule} from "../src/adaptors/hats-modules/CharacterHatEligibilityModule.sol";
 
 contract HatsEligibilityModulesTest is SetUp {
     HatsAdaptor public newAdaptor;
     AdminHatEligibilityModule public adminModule;
-    DungeonMasterHatEligibilityModule public dmModule;
+    GameMasterHatEligibilityModule public dmModule;
     PlayerHatEligibilityModule public playerModule;
     CharacterHatEligibilityModule public characterModule;
 
@@ -33,7 +33,7 @@ contract HatsEligibilityModulesTest is SetUp {
 
     uint256 public newTopHatId;
     uint256 public newAdminHatId;
-    uint256 public newDungeonMasterHatId;
+    uint256 public newGameMasterHatId;
     uint256 public newPlayerHatId;
     uint256 public newCharacterHatId;
 
@@ -43,19 +43,19 @@ contract HatsEligibilityModulesTest is SetUp {
         address[] memory _adminArray = new address[](1);
         _adminArray[0] = adminHatWearer;
 
-        address[] memory _dungeonMasterArray = new address[](1);
-        _dungeonMasterArray[0] = dmHatWearer;
+        address[] memory _gameMasterArray = new address[](1);
+        _gameMasterArray[0] = dmHatWearer;
 
         bytes memory encodedHatsAddresses =
-            abi.encode(_adminArray, _dungeonMasterArray, address(implementationStorage), address(deployments.clones));
+            abi.encode(_adminArray, _gameMasterArray, address(implementationStorage), address(deployments.clones));
 
         bytes memory encodedHatsStrings = abi.encode(
             "test_hats_base_img",
             "test tophat description",
             "test_admin_uri",
             "test_admin_description",
-            "test_dungeon_uri",
-            "test_dungeon_description",
+            "test_game_uri",
+            "test_game_description",
             "test_player_uri",
             "test_player_description",
             "test_character_uri",
@@ -66,7 +66,7 @@ contract HatsEligibilityModulesTest is SetUp {
         newAdaptor.initialize(topHatWearer, encodedHatsAddresses, encodedHatsStrings, customModuleAddresses);
 
         adminModule = AdminHatEligibilityModule(newAdaptor.adminHatEligibilityModule());
-        dmModule = DungeonMasterHatEligibilityModule(newAdaptor.dungeonMasterHatEligibilityModule());
+        dmModule = GameMasterHatEligibilityModule(newAdaptor.gameMasterHatEligibilityModule());
         characterModule = CharacterHatEligibilityModule(newAdaptor.characterHatEligibilityModule());
         playerModule = PlayerHatEligibilityModule(newAdaptor.playerHatEligibilityModule());
 
@@ -82,7 +82,7 @@ contract HatsEligibilityModulesTest is SetUp {
         HatsData memory newData = newAdaptor.getHatsData();
         newTopHatId = newData.topHatId;
         newAdminHatId = newData.adminHatId;
-        newDungeonMasterHatId = newData.dungeonMasterHatId;
+        newGameMasterHatId = newData.gameMasterHatId;
         newPlayerHatId = newData.playerHatId;
         newCharacterHatId = newData.characterHatId;
     }
@@ -90,7 +90,7 @@ contract HatsEligibilityModulesTest is SetUp {
     function testNewModuleSetup() public {
         createNewHatsAdaptorSetup();
         assertEq(newAdaptor.isAdmin(adminHatWearer), true, "admin is not admin");
-        assertEq(newAdaptor.isDungeonMaster(dmHatWearer), true, "dm is not dm");
+        assertEq(newAdaptor.isGameMaster(dmHatWearer), true, "dm is not dm");
         assertEq(newAdaptor.isPlayer(playerHatWearer), true, "player is not player");
         assertEq(newAdaptor.isCharacter(characterHatWearer), true, "character is not character");
     }
@@ -137,7 +137,7 @@ contract HatsEligibilityModulesTest is SetUp {
         assertEq(newAdaptor.isAdmin(dmHatWearer), false, "admin hat not removed");
     }
 
-    function testAddNewDungeonMaster() public {
+    function testAddNewGameMaster() public {
         createNewHatsAdaptorSetup();
         address[] memory testAdmins = new address[](1);
         testAdmins[0] = adminHatWearer;
@@ -150,13 +150,13 @@ contract HatsEligibilityModulesTest is SetUp {
         //should succeed if called by topHatWearer;
         vm.startPrank(topHatWearer);
         dmModule.addEligibleAddresses(testAdmins);
-        hatsContracts.hats.mintHat(newDungeonMasterHatId, adminHatWearer);
+        hatsContracts.hats.mintHat(newGameMasterHatId, adminHatWearer);
         vm.stopPrank();
 
         assertEq(newAdaptor.isAdmin(adminHatWearer), true, "new admin not assigned");
     }
 
-    function testRemoveDungeonMaster() public {
+    function testRemoveGameMaster() public {
         createNewHatsAdaptorSetup();
         address[] memory testAdmins = new address[](1);
         testAdmins[0] = adminHatWearer;
@@ -164,7 +164,7 @@ contract HatsEligibilityModulesTest is SetUp {
         //add new admin
         vm.startPrank(topHatWearer);
         dmModule.addEligibleAddresses(testAdmins);
-        hatsContracts.hats.mintHat(newDungeonMasterHatId, adminHatWearer);
+        hatsContracts.hats.mintHat(newGameMasterHatId, adminHatWearer);
         vm.stopPrank();
 
         //should revert if called by wrong EOA
@@ -176,6 +176,6 @@ contract HatsEligibilityModulesTest is SetUp {
         vm.prank(adminHatWearer);
         dmModule.removeEligibleAddresses(testAdmins);
 
-        assertEq(newAdaptor.isDungeonMaster(adminHatWearer), false, "admin hat not removed");
+        assertEq(newAdaptor.isGameMaster(adminHatWearer), false, "admin hat not removed");
     }
 }

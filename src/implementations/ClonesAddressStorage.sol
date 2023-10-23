@@ -26,7 +26,7 @@ contract ClonesAddressStorage is UUPSUpgradeable {
     event HatsAdaptorCloneUpdated(address newHatsAdaptorClone);
     event TopHatIdUpdated(uint256 _topHatId);
     event AdminIdUpdated(uint256 _adminId);
-    event DungeonMasterIdUpdated(uint256 _dungeonMasterId);
+    event GameMasterIdUpdated(uint256 _gameMasterId);
     event PlayertIdUpdated(uint256 _playertId);
     event CharacterIdUpdated(uint256 _characterId);
 

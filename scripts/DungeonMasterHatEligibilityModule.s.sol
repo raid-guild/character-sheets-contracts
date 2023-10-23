@@ -1,25 +1,25 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {DungeonMasterHatEligibilityModule} from "../src/adaptors/hats-modules/DungeonMasterHatEligibilityModule.sol";
+import {GameMasterHatEligibilityModule} from "../src/adaptors/hats-modules/GameMasterHatEligibilityModule.sol";
 
 import {BaseDeployer} from "./BaseDeployer.sol";
 import {BaseFactoryExecutor} from "./BaseExecutor.sol";
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
 
-contract DeployDungeonMasterHatEligibilityModule is BaseDeployer {
+contract DeployGameMasterHatEligibilityModule is BaseDeployer {
     using stdJson for string;
 
-    DungeonMasterHatEligibilityModule public dungeonMasterHatEligibilityModule;
+    GameMasterHatEligibilityModule public gameMasterHatEligibilityModule;
 
     function deploy() internal override returns (address) {
         vm.startBroadcast(deployerPrivateKey);
 
-        dungeonMasterHatEligibilityModule = new DungeonMasterHatEligibilityModule(_version);
+        gameMasterHatEligibilityModule = new GameMasterHatEligibilityModule(_version);
 
         vm.stopBroadcast();
 
-        return address(dungeonMasterHatEligibilityModule);
+        return address(gameMasterHatEligibilityModule);
     }
 }

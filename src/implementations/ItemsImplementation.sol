@@ -61,9 +61,9 @@ contract ItemsImplementation is
         _;
     }
 
-    modifier onlyDungeonMaster() {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isDungeonMaster(msg.sender)) {
-            revert Errors.DungeonMasterOnly();
+    modifier onlyGameMaster() {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isGameMaster(msg.sender)) {
+            revert Errors.GameMasterOnly();
         }
         _;
     }
@@ -98,7 +98,7 @@ contract ItemsImplementation is
 
     function dropLoot(address[] calldata characterAccounts, uint256[][] calldata itemIds, uint256[][] calldata amounts)
         external
-        onlyDungeonMaster
+        onlyGameMaster
         returns (bool success)
     {
         if (characterAccounts.length != itemIds.length || itemIds.length != amounts.length) {
@@ -205,7 +205,7 @@ contract ItemsImplementation is
      * @return _itemId the ERC1155 tokenId
      */
 
-    function createItemType(bytes calldata _itemData) external onlyDungeonMaster returns (uint256 _itemId) {
+    function createItemType(bytes calldata _itemData) external onlyGameMaster returns (uint256 _itemId) {
         _itemId = totalItemTypes;
 
         _createItem(_itemData, _itemId);
@@ -228,7 +228,7 @@ contract ItemsImplementation is
 
     function addItemRequirement(uint256 itemId, uint8 category, address assetAddress, uint256 assetId, uint256 amount)
         external
-        onlyDungeonMaster
+        onlyGameMaster
         returns (bool success)
     {
         if (assetAddress == address(this) && (itemId == assetId || (_items[assetId].supply == 0))) {
@@ -248,7 +248,7 @@ contract ItemsImplementation is
      */
     function removeItemRequirement(uint256 itemId, address assetAddress, uint256 assetId)
         external
-        onlyDungeonMaster
+        onlyGameMaster
         returns (bool)
     {
         return itemsManager.removeItemRequirement(itemId, assetAddress, assetId);
@@ -260,7 +260,7 @@ contract ItemsImplementation is
      * @param merkleRoot the merkle root of the addresses and amounts that can be claimed of this item
      */
 
-    function updateItemClaimable(uint256 itemId, bytes32 merkleRoot) external onlyDungeonMaster {
+    function updateItemClaimable(uint256 itemId, bytes32 merkleRoot) external onlyGameMaster {
         if (_items[itemId].supply == 0) {
             revert Errors.ItemError();
         }
@@ -272,7 +272,7 @@ contract ItemsImplementation is
     /**
      * @dev Sets `baseURI` as the `_baseURI` for all tokens
      */
-    function setBaseURI(string memory _baseUri) external onlyDungeonMaster {
+    function setBaseURI(string memory _baseUri) external onlyGameMaster {
         _baseURI = _baseUri;
         // TODO: add event
     }
@@ -281,7 +281,7 @@ contract ItemsImplementation is
      * @dev Sets `tokenURI` as the tokenURI of `tokenId`.
      */
 
-    function setURI(uint256 tokenId, string memory tokenURI) external onlyDungeonMaster {
+    function setURI(uint256 tokenId, string memory tokenURI) external onlyGameMaster {
         _itemURIs[tokenId] = tokenURI;
         emit URI(uri(tokenId), tokenId);
     }
@@ -318,7 +318,7 @@ contract ItemsImplementation is
         super.safeBatchTransferFrom(from, to, ids, amounts, data);
     }
 
-    function withdrawAsset(Asset calldata asset, address to) public onlyDungeonMaster {
+    function withdrawAsset(Asset calldata asset, address to) public onlyGameMaster {
         MultiToken.safeTransferAssetFrom(asset, address(this), to);
     }
 
@@ -449,7 +449,7 @@ contract ItemsImplementation is
     }
 
     //solhint-disable-next-line
-    function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {
+    function _authorizeUpgrade(address newImplementation) internal override onlyGameMaster {
         //empty block
     }
 }

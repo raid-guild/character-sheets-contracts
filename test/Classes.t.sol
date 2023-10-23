@@ -11,7 +11,7 @@ import "../src/lib/Structs.sol";
 
 contract ClassesTest is SetUp {
     function testCreateClass() public {
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         uint256 _classId = deployments.classes.createClassType(createNewClass(true));
         Class memory _class = deployments.classes.getClass(_classId);
 
@@ -23,7 +23,7 @@ contract ClassesTest is SetUp {
     }
 
     function testAssignClass() public {
-        vm.startPrank(accounts.dungeonMaster);
+        vm.startPrank(accounts.gameMaster);
 
         uint256 newClassId = deployments.classes.createClassType(createNewClass(true));
         assertEq(newClassId, 2, "incorrect class id");
@@ -34,14 +34,14 @@ contract ClassesTest is SetUp {
         assertEq(deployments.classes.balanceOf(accounts.character1, newClassId), 1, "new class not assigned");
 
         //add second class
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.classes.assignClass(accounts.character1, 0);
 
         assertEq(deployments.classes.balanceOf(accounts.character1, 0), 1, "does not own second class");
     }
 
     function testRenounceClass() public {
-        vm.startPrank(accounts.dungeonMaster);
+        vm.startPrank(accounts.gameMaster);
         uint256 newClassId = deployments.classes.createClassType(createNewClass(true));
         deployments.classes.assignClass(accounts.character1, newClassId);
         vm.stopPrank();
@@ -55,7 +55,7 @@ contract ClassesTest is SetUp {
     }
 
     function testRevokeClass() public {
-        vm.startPrank(accounts.dungeonMaster);
+        vm.startPrank(accounts.gameMaster);
         uint256 newClassId = deployments.classes.createClassType(createNewClass(true));
 
         deployments.classes.assignClass(accounts.character1, newClassId);
@@ -63,14 +63,14 @@ contract ClassesTest is SetUp {
 
         assertEq(deployments.classes.balanceOf(accounts.character1, newClassId), 1, "does not own class");
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.classes.revokeClass(accounts.character1, newClassId);
 
         assertEq(deployments.classes.balanceOf(accounts.character1, newClassId), 0, "Incorrect class balance");
     }
 
     function testTransferClass() public {
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.classes.assignClass(accounts.character1, 0);
 
         assertEq(deployments.classes.balanceOf(accounts.character1, 0), 1, "incorrect class assignment");
@@ -79,7 +79,7 @@ contract ClassesTest is SetUp {
         vm.expectRevert();
         deployments.classes.safeTransferFrom(accounts.character1, accounts.character2, 0, 1, "");
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         dao.addMember(accounts.rando);
 
         vm.prank(accounts.rando);
@@ -92,7 +92,7 @@ contract ClassesTest is SetUp {
         vm.expectRevert();
         deployments.classes.safeTransferFrom(accounts.character1, character3, 0, 1, "");
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.classes.safeTransferFrom(accounts.character1, character3, 0, 1, "");
 
         assertEq(deployments.classes.balanceOf(character3, 0), 1, "incorrect class assignment");
@@ -112,10 +112,10 @@ contract ClassesTest is SetUp {
         vm.prank(accounts.character1);
         deployments.classes.claimClass(0);
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.experience.dropExp(accounts.character1, 300);
 
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.classes.levelClass(accounts.character1, 0);
 
         assertEq(deployments.experience.balanceOf(accounts.character1), 0, "incorrect exp balance");
@@ -126,14 +126,14 @@ contract ClassesTest is SetUp {
         vm.assume(numberOfLevels < 20);
         uint256 baseExpAmount = 400000 * 10 ** 18;
         //give exp to npc to level
-        vm.prank(accounts.dungeonMaster);
+        vm.prank(accounts.gameMaster);
         deployments.experience.dropExp(accounts.character1, baseExpAmount);
 
         assertEq(deployments.experience.balanceOf(accounts.character1), baseExpAmount);
 
         // give class to accounts.character1
 
-        vm.startPrank(accounts.dungeonMaster);
+        vm.startPrank(accounts.gameMaster);
         deployments.classes.assignClass(accounts.character1, 0);
 
         assertEq(deployments.classes.balanceOf(accounts.character1, 0), 1);
@@ -156,7 +156,7 @@ contract ClassesTest is SetUp {
         // delevel class to reclaim exp
 
         vm.prank(accounts.character1);
-        deployments.classes.deLevelClass(0, numberOfLevels);
+        deployments.classes.deLevelClass(accounts.character1, 0, numberOfLevels);
 
         //check balances
         assertEq(deployments.classes.balanceOf(accounts.character1, 0), 1, "incorrect final balance");

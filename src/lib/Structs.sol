@@ -64,8 +64,8 @@ struct HatsData {
     uint256 topHatId;
     /// @dev the uint256 hat id of the admin hat
     uint256 adminHatId;
-    /// @dev the uint256 id of the dungeonMaster hat
-    uint256 dungeonMasterHatId;
+    /// @dev the uint256 id of the gameMaster hat
+    uint256 gameMasterHatId;
     /// @dev the uint256 hat id of the player hat
     uint256 playerHatId;
     /// @dev the uint256 hat id of the character hat
@@ -90,7 +90,7 @@ struct ImplementationAddresses {
     address hatsModuleFactory;
     //eligibility modules
     address adminHatsEligibilityModule;
-    address dungeonMasterHatsEligibilityModule;
+    address gameMasterHatsEligibilityModule;
     address playerHatsEligibilityModule;
     address characterHatsEligibilityModule;
 }

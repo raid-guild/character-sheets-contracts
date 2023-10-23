@@ -43,9 +43,9 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         _;
     }
 
-    modifier onlyDungeonMaster() {
-        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isDungeonMaster(msg.sender)) {
-            revert Errors.DungeonMasterOnly();
+    modifier onlyGameMaster() {
+        if (!IHatsAdaptor(clones.hatsAdaptorClone()).isGameMaster(msg.sender)) {
+            revert Errors.GameMasterOnly();
         }
         _;
     }
