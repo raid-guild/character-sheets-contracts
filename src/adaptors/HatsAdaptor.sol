@@ -71,12 +71,23 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     }
 
     /**
-     * @notice call this function if you want to initialize with custom eligibility modules.
-     * custom module implementations
-     *  1. admin hats eligibility Module enter address of custom implementation, or enter address(0) to use default.
-     *  2. gamemaster admin hats eligibility Module
-     *  3. player admin hats eligibility Module
-     *  4. character admin hats eligibility Module
+     * @notice call this function if you want to initialize with default Hats Eligibility modules.
+     * for custom modules see the other initializer below.
+     * HATS ADDRESSES
+     *        1.  address[]  admins
+     *        2.  address[] dungeon masters
+     *        3.  address implementations
+     * HATS STRINGS
+     *        1.  string _baseImgUri
+     *        2.  string topHatDescription
+     *        3.  string adminUri
+     *        4.  string adminDescription
+     *        5.  string dungeonMasterUri
+     *        6.  string dungeonMasterDescription
+     *        7.  string playerUri
+     *        8.  string playerDescription
+     *        9.  string characterUri
+     *        10. string characterDescription
      */
 
     function initialize(
@@ -84,44 +95,17 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         bytes calldata hatsAddresses,
         bytes calldata hatsStrings,
         bytes calldata customModuleImplementations
-    ) public initializer {
-        (,, address _implementations, address _clonesStorage) =
-            abi.decode(hatsAddresses, (address[], address[], address, address));
-
-        implementations = ImplementationAddressStorage(_implementations);
-        clones = IClonesAddressStorage(_clonesStorage);
-        _hats = IHats(implementations.hatsContract());
-
-        // init struct because STACC TOO DANK!
-        InitStruct memory initStruct;
-        initStruct._owner = _owner;
-        initStruct.hatsAddresses = hatsAddresses;
-        initStruct.hatsStrings = hatsStrings;
-        initStruct.customModuleImplementations = customModuleImplementations;
-
-        __Ownable_init(_owner);
-
-        _initHatTree(initStruct);
+    ) external initializer {
+        return _initialize(_owner, hatsAddresses, hatsStrings, customModuleImplementations);
     }
 
     /**
-     * @notice call this function if you want to initialize with default Hats Eligibility modules.
-     * for custom modules see the other initializer below.
-     * HATS ADDRESSES
-     *        1.  address[]  admins
-     *        2.  address[] game masters
-     *        3.  address implementations
-     * HATS STRINGS
-     *        1.  string _baseImgUri
-     *        2.  string topHatDescription
-     *        3.  string adminUri
-     *        4.  string adminDescription
-     *        5.  string gameMasterUri
-     *        6.  string gameMasterDescription
-     *        7.  string playerUri
-     *        8.  string playerDescription
-     *        9.  string characterUri
-     *        10. string characterDescription
+     * @notice call this function if you want to initialize with custom eligibility modules.
+     * custom module implementations
+     *  1. admin hats eligibility Module enter address of custom implementation, or enter address(0) to use default.
+     *  2. gamemaster admin hats eligibility Module
+     *  3. player admin hats eligibility Module
+     *  4. character admin hats eligibility Module
      */
 
     //solhint-disable-next-line
@@ -258,7 +242,33 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         return _hats.balanceOf(wearer, _hatsData.gameMasterHatId) > 0;
     }
 
+    function _initialize(
+        address _owner,
+        bytes calldata hatsAddresses,
+        bytes calldata hatsStrings,
+        bytes memory customModuleImplementations
+    ) internal {
+        (,, address _implementations, address _clonesStorage) =
+            abi.decode(hatsAddresses, (address[], address[], address, address));
+
+        implementations = ImplementationAddressStorage(_implementations);
+        clones = IClonesAddressStorage(_clonesStorage);
+        _hats = IHats(implementations.hatsContract());
+
+        // init struct because STACC TOO DANK!
+        InitStruct memory initStruct;
+        initStruct._owner = _owner;
+        initStruct.hatsAddresses = hatsAddresses;
+        initStruct.hatsStrings = hatsStrings;
+        initStruct.customModuleImplementations = customModuleImplementations;
+
+        __Ownable_init(_owner);
+
+        _initHatTree(initStruct);
+    }
+
     //solhint-disable-next-line no-empty-blocks
+
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
 
     function _initHatTree(InitStruct memory _initStruct) private returns (bool) {
