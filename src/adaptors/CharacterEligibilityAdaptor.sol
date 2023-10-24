@@ -24,9 +24,6 @@ contract CharacterEligibilityAdaptor is
     //(this.isEligible.selector ^ this.supportsInterface.selector);
     bytes4 public constant INTERFACE_ID = 0x671ccc5a;
 
-    /// @dev the admin of the contract
-    bytes32 public constant Game_MASTER = keccak256("Game_MASTER");
-
     address public dao;
 
     event DaoUpdated(address newDaoAddress);

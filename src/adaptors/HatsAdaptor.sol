@@ -90,13 +90,9 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
      *        10. string characterDescription
      */
 
-    function initialize(
-        address _owner,
-        bytes calldata hatsAddresses,
-        bytes calldata hatsStrings,
-        bytes calldata customModuleImplementations
-    ) external initializer {
-        return _initialize(_owner, hatsAddresses, hatsStrings, customModuleImplementations);
+    function initialize(address _owner, bytes calldata hatsAddresses, bytes calldata hatsStrings) external {
+        bytes memory customModuleImplementation = abi.encode(address(0), address(0), address(0), address(0));
+        return this.initialize(_owner, hatsAddresses, hatsStrings, customModuleImplementation);
     }
 
     /**
@@ -108,10 +104,13 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
      *  4. character admin hats eligibility Module
      */
 
-    //solhint-disable-next-line
-    function initialize(address _owner, bytes calldata hatsAddresses, bytes calldata hatsStrings) external {
-        bytes memory customModuleImplementation = abi.encode(address(0), address(0), address(0), address(0));
-        return this.initialize(_owner, hatsAddresses, hatsStrings, customModuleImplementation);
+    function initialize(
+        address _owner,
+        bytes calldata hatsAddresses,
+        bytes calldata hatsStrings,
+        bytes calldata customModuleImplementations
+    ) external initializer {
+        return _initialize(_owner, hatsAddresses, hatsStrings, customModuleImplementations);
     }
 
     function updateImplementations(address newImplementations) external onlyOwner {
@@ -242,12 +241,15 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         return _hats.balanceOf(wearer, _hatsData.gameMasterHatId) > 0;
     }
 
+    //solhint-disable-next-line no-empty-blocks
+    function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
+
     function _initialize(
         address _owner,
         bytes calldata hatsAddresses,
         bytes calldata hatsStrings,
         bytes memory customModuleImplementations
-    ) internal {
+    ) private {
         (,, address _implementations, address _clonesStorage) =
             abi.decode(hatsAddresses, (address[], address[], address, address));
 
@@ -266,10 +268,6 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
 
         _initHatTree(initStruct);
     }
-
-    //solhint-disable-next-line no-empty-blocks
-
-    function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
 
     function _initHatTree(InitStruct memory _initStruct) private returns (bool) {
         if (address(_hats) == address(0) || address(implementations) == address(0)) {
