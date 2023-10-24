@@ -40,4 +40,6 @@ abstract contract Errors {
 
     // Factory
     error UnsupportedInterface();
+
+    error MustRefundFullReceiptAmount(uint256 amountRequired);
 }

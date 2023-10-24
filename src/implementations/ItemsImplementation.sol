@@ -164,8 +164,8 @@ contract ItemsImplementation is
             revert Errors.RequirementNotMet();
         }
         Item memory item = _items[itemId];
-        Asset[] memory requirements = itemsManager.getItemRequirements(itemId);
-        if (itemsManager.craftItem(item, itemId, requirements, amount, msg.sender)) {
+
+        if (itemsManager.craftItem(item, itemId, amount, msg.sender)) {
             //transfer item after succesful crafting
             super._safeTransferFrom(address(this), msg.sender, itemId, amount, "");
             success = true;
@@ -174,12 +174,12 @@ contract ItemsImplementation is
         }
     }
 
-    function dismantleItems(uint256 itemId, uint256 amount) external onlyCharacter returns (bool success) {
+    function dismantleItem(uint256 itemId, uint256 amount) external onlyCharacter returns (bool success) {
         if (balanceOf(msg.sender, itemId) < amount) {
             revert Errors.InsufficientBalance();
         }
 
-        if (itemsManager.dismantleItems(itemId, amount, msg.sender)) {
+        if (itemsManager.dismantleItem(itemId, amount, msg.sender)) {
             //burn items
             _burn(msg.sender, itemId, amount);
 
@@ -290,9 +290,12 @@ contract ItemsImplementation is
         public
         override
     {
-        // if (to != address(0) && !IHatsAdaptor(hatsAdaptor).isCharacter(msg.sender)) {
-        //     revert Errors.CharacterOnly();
-        // }
+        if (
+            to != address(0) && !IHatsAdaptor(clones.hatsAdaptor()).isCharacter(to)
+                && to != address(clones.itemsManager())
+        ) {
+            revert Errors.CharacterOnly();
+        }
         if (_items[id].soulbound) {
             revert Errors.SoulboundToken();
         }

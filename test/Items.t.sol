@@ -223,7 +223,7 @@ contract ItemsTest is SetUp {
         assertEq(deployments.experience.balanceOf(accounts.character1), 0, "exp not consumed");
     }
 
-    function testDismantleItems() public {
+    function testdismantleItem() public {
         vm.startPrank(accounts.gameMaster);
         uint256 craftableItemId = deployments.items.createItemType(createNewItem(true, false, bytes32(0)));
         deployments.items.addItemRequirement(
@@ -254,15 +254,15 @@ contract ItemsTest is SetUp {
 
         // should revert if trying to dismantle un-crafted item
         vm.expectRevert(Errors.ItemError.selector);
-        deployments.items.dismantleItems(0, 1);
+        deployments.items.dismantleItem(0, 1);
 
         //should revert if trying to dismantle more than have been crafted
 
         vm.expectRevert(Errors.InsufficientBalance.selector);
-        deployments.items.dismantleItems(craftableItemId, 4);
+        deployments.items.dismantleItem(craftableItemId, 4);
 
         //should succeed
-        deployments.items.dismantleItems(craftableItemId, 2);
+        deployments.items.dismantleItem(craftableItemId, 2);
 
         assertEq(deployments.items.balanceOf(accounts.character1, craftableItemId), 1, "item not burnt");
         assertEq(deployments.items.balanceOf(accounts.character1, newItem), 2, "new Item not returned");
@@ -271,10 +271,10 @@ contract ItemsTest is SetUp {
         // should revert if called with balance larger than available
 
         vm.expectRevert(Errors.InsufficientBalance.selector);
-        deployments.items.dismantleItems(craftableItemId, 3);
+        deployments.items.dismantleItem(craftableItemId, 3);
 
         //should dismantle remaining items
-        deployments.items.dismantleItems(craftableItemId, 1);
+        deployments.items.dismantleItem(craftableItemId, 1);
 
         assertEq(deployments.items.balanceOf(accounts.character1, craftableItemId), 0, "item 2 not burnt");
         assertEq(deployments.items.balanceOf(accounts.character1, newItem), 3, "new Item not returned");

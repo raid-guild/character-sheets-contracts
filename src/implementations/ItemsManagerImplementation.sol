@@ -75,19 +75,18 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
      * @return success bool if crafting is a success return true, else return false
      */
 
-    function craftItem(
-        Item memory item,
-        uint256 itemId,
-        Asset[] memory itemRequirements,
-        uint256 amount,
-        address caller
-    ) public onlyItemsContract returns (bool success) {
+    function craftItem(Item memory item, uint256 itemId, uint256 amount, address caller)
+        public
+        onlyItemsContract
+        returns (bool success)
+    {
         if (!item.craftable) {
             revert Errors.ItemError();
         }
+
         Asset memory newRequirement;
-        for (uint256 i; i < itemRequirements.length; i++) {
-            newRequirement = itemRequirements[i];
+        for (uint256 i; i < _requirements[itemId].length; i++) {
+            newRequirement = _requirements[itemId][i];
             //if required item is a class skip token transfer  TODO add, if this is a soulbound token.
             if (newRequirement.assetAddress != clones.classes()) {
                 //issue crafting receipt before amounts change
@@ -114,7 +113,7 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
     }
 
     //TODO gas optimize this function.  3 loops in one function is incredibly inefficient.
-    function dismantleItems(uint256 itemId, uint256 amount, address caller) public onlyItemsContract returns (bool) {
+    function dismantleItem(uint256 itemId, uint256 amount, address caller) public onlyItemsContract returns (bool) {
         Receipt[] storage receipts = _craftingReceipts[caller][itemId];
         //check crafted items array if any assets exist
         if (receipts.length == 0) {
@@ -125,9 +124,11 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
             (receipts[i], refund) = _calculateRefund(receipts[i], amount);
 
             // add refund to refunds array
-            _currentRefunds.push(refund);
+            MultiToken.safeTransferAssetFrom(refund, address(this), caller);
         }
+
         Receipt memory currentReceipt;
+
         for (uint256 i; i < receipts.length; i++) {
             // clean up array
             if (receipts[i].amountCrafted == 0) {
@@ -140,12 +141,6 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
                 receipts.pop();
             }
         }
-        /// refund assets
-        for (uint256 i; i < _currentRefunds.length; i++) {
-            MultiToken.safeTransferAssetFrom(_currentRefunds[i], address(this), caller);
-        }
-
-        delete _currentRefunds;
 
         return true;
     }
@@ -258,7 +253,7 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
             });
             latestReceipt.amountCrafted -= amount;
         } else {
-            revert Errors.InsufficientBalance();
+            revert Errors.MustRefundFullReceiptAmount(latestReceipt.amountCrafted);
         }
 
         return (latestReceipt, refund);
