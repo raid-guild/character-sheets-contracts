@@ -7,6 +7,8 @@ import "forge-std/Test.sol";
 
 import "./setup/SetUp.sol";
 
+import {IERC721Errors} from "openzeppelin-contracts/interfaces/draft-IERC6093.sol";
+
 contract CharacterSheetsTest is SetUp {
     event ItemsUpdated(address exp);
 
@@ -59,21 +61,6 @@ contract CharacterSheetsTest is SetUp {
 
         sheet = deployments.characterSheets.getCharacterSheetByCharacterId(sheetsData.characterId1);
         assertEq(sheet.inventory.length, 0, "item still assigned");
-    }
-
-    function testTransferFrom() public {
-        assertEq(deployments.characterSheets.balanceOf(accounts.rando), 0, "balance should be 0");
-        assertEq(deployments.hatsAdaptor.isPlayer(accounts.rando), false, "rando is already a player");
-        // approve gameMaster to spend token
-        vm.prank(accounts.player1);
-        deployments.characterSheets.approve(accounts.gameMaster, sheetsData.characterId1);
-        // game master transfers token
-        vm.prank(accounts.gameMaster);
-        deployments.characterSheets.transferFrom(accounts.player1, accounts.rando, sheetsData.characterId1);
-        assertEq(deployments.characterSheets.balanceOf(accounts.rando), 1, "token not transfered");
-        assertEq(deployments.hatsAdaptor.isCharacter(accounts.character1), true, "char 1 not a character");
-        assertEq(deployments.hatsAdaptor.isPlayer(accounts.rando), true, "rando is not a player");
-        assertEq(deployments.hatsAdaptor.isPlayer(accounts.player1), false, "player 1 should no longer be a player");
     }
 
     function testRenounceSheet() public {
@@ -339,16 +326,6 @@ contract CharacterSheetsTest is SetUp {
         assertEq(sheet.inventory.length, 0, "item should not be assigned");
     }
 
-    function testTransferFromRevert() public {
-        vm.prank(accounts.player1);
-        vm.expectRevert(Errors.GameMasterOnly.selector);
-        deployments.characterSheets.transferFrom(accounts.player1, accounts.player2, 1);
-
-        vm.prank(accounts.admin);
-        vm.expectRevert(Errors.GameMasterOnly.selector);
-        deployments.characterSheets.transferFrom(accounts.player1, accounts.player2, 1);
-    }
-
     function testRenounceSheetReverts() public {
         //revert no sheet
         vm.prank(accounts.rando);
@@ -367,5 +344,84 @@ contract CharacterSheetsTest is SetUp {
         vm.prank(accounts.player1);
         vm.expectRevert();
         deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+    }
+
+    function testTransferFrom() public {
+        assertEq(deployments.characterSheets.balanceOf(accounts.player1), 1, "Incorrect balance for player 1");
+        assertEq(deployments.hatsAdaptor.isPlayer(accounts.player1), true, "player 1 is not a player");
+        assertEq(deployments.hatsAdaptor.isCharacter(accounts.character1), true, "char 1 not a character");
+
+        assertEq(deployments.characterSheets.balanceOf(accounts.player2), 1, "Incorrect balance for player 2");
+        assertEq(deployments.hatsAdaptor.isPlayer(accounts.player2), true, "player 2 is not a player");
+
+        assertEq(deployments.characterSheets.balanceOf(accounts.rando), 0, "Incorrect balance for rando");
+        assertEq(deployments.hatsAdaptor.isPlayer(accounts.rando), false, "rando is a player");
+
+        assertEq(
+            deployments.characterSheets.getCharacterIdByPlayerAddress(accounts.player1), 0, "Incorrect characterId"
+        );
+        assertEq(
+            deployments.characterSheets.getCharacterSheetByCharacterId(0).accountAddress,
+            accounts.character1,
+            "Incorrect account1 address"
+        );
+        assertEq(
+            deployments.characterSheets.getCharacterSheetByCharacterId(0).playerAddress,
+            accounts.player1,
+            "Incorrect player1 address"
+        );
+
+        assertEq(
+            deployments.characterSheets.getCharacterIdByPlayerAddress(accounts.player2), 1, "Incorrect characterId"
+        );
+        assertEq(
+            deployments.characterSheets.getCharacterSheetByCharacterId(1).accountAddress,
+            accounts.character2,
+            "Incorrect account2 address"
+        );
+        assertEq(
+            deployments.characterSheets.getCharacterSheetByCharacterId(1).playerAddress,
+            accounts.player2,
+            "Incorrect player2 address"
+        );
+
+        vm.prank(accounts.player1);
+        vm.expectRevert(Errors.GameMasterOnly.selector);
+        deployments.characterSheets.transferFrom(accounts.player1, accounts.player2, 0);
+
+        vm.prank(accounts.gameMaster);
+        vm.expectRevert(Errors.TokenBalanceError.selector);
+        deployments.characterSheets.transferFrom(accounts.player1, accounts.player2, 0);
+
+        vm.prank(accounts.gameMaster);
+        vm.expectRevert(
+            abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, accounts.gameMaster, 0)
+        );
+        deployments.characterSheets.transferFrom(accounts.player1, accounts.rando, 0);
+
+        vm.prank(accounts.player1);
+        deployments.characterSheets.approve(accounts.gameMaster, 0);
+
+        vm.prank(accounts.gameMaster);
+        deployments.characterSheets.transferFrom(accounts.player1, accounts.rando, 0);
+
+        assertEq(deployments.characterSheets.balanceOf(accounts.player1), 0, "Incorrect balance");
+        assertEq(deployments.hatsAdaptor.isPlayer(accounts.player1), false, "player 1 is a player");
+        assertEq(deployments.hatsAdaptor.isCharacter(accounts.character1), true, "char 1 is not a character");
+
+        assertEq(deployments.characterSheets.balanceOf(accounts.rando), 1, "Incorrect balance");
+        assertEq(deployments.hatsAdaptor.isPlayer(accounts.rando), true, "rando is not a player");
+
+        assertEq(deployments.characterSheets.getCharacterIdByPlayerAddress(accounts.rando), 0, "Incorrect characterId");
+        assertEq(
+            deployments.characterSheets.getCharacterSheetByCharacterId(0).accountAddress,
+            accounts.character1,
+            "Incorrect account address"
+        );
+        assertEq(
+            deployments.characterSheets.getCharacterSheetByCharacterId(0).playerAddress,
+            accounts.rando,
+            "Incorrect player address"
+        );
     }
 }

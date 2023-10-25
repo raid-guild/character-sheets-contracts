@@ -100,6 +100,20 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         _;
     }
 
+    modifier validTransfer(address from, address to, uint256 characterId) {
+        if (balanceOf(to) != 0) {
+            revert Errors.TokenBalanceError();
+        }
+
+        _;
+
+        _playerSheets[from] = 0;
+        _playerSheets[to] = characterId;
+        _sheets[characterId].playerAddress = to;
+
+        IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(to);
+    }
+
     //solhint-disable-next-line
     constructor() {
         _disableInitializers();
@@ -419,43 +433,23 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         virtual
         override(ERC721Upgradeable, IERC721)
         onlyGameMaster
+        validTransfer(from, to, characterId)
     {
-        if (_playerSheets[to] != 0) {
-            revert Errors.TokenBalanceError();
-        }
-        _playerSheets[to] = characterId;
-        _sheets[characterId].playerAddress = to;
-
-        // TODO: update sheet erc6551 account address
         super.transferFrom(from, to, characterId);
-
-        IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(to);
-
-        return;
     }
 
     /**
      * @dev See {IERC721-safeTransferFrom}.
      */
 
-    function safeTransferFrom(address from, address to, uint256 characterId, bytes memory /*data*/ )
+    function safeTransferFrom(address from, address to, uint256 characterId, bytes memory)
         public
         virtual
         override(ERC721Upgradeable, IERC721)
         onlyGameMaster
+        validTransfer(from, to, characterId)
     {
-        if (_sheets[_playerSheets[to]].playerAddress != address(0)) {
-            revert Errors.CharacterError();
-        }
-        _playerSheets[to] = characterId;
-        _sheets[characterId].playerAddress = to;
-
-        // TODO: update sheet erc6551 account address
         super.transferFrom(from, to, characterId);
-
-        IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(to);
-
-        return;
     }
 
     function getCharacterSheetByCharacterId(uint256 characterId) public view returns (CharacterSheet memory) {

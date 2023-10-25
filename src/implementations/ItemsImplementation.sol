@@ -140,7 +140,7 @@ contract ItemsImplementation is
             if (claimableItem.claimable == bytes32(0)) {
                 _transferItem(msg.sender, itemIds[i], amounts[i]);
             } else {
-                bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encodePacked(itemIds[i], msg.sender, amounts[i]))));
+                bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(itemIds[i], msg.sender, amounts[i]))));
 
                 if (!MerkleProof.verify(proofs[i], claimableItem.claimable, leaf)) {
                     revert Errors.InvalidProof();
