@@ -114,10 +114,7 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         emit AdminHatsEligibilityModuleUpdated(newAdminHatsEligibilityModule);
     }
 
-    function updateGameMasterHatsEligibilityModule(address newGameMasterHatsEligibilityModule)
-        external
-        onlyOwner
-    {
+    function updateGameMasterHatsEligibilityModule(address newGameMasterHatsEligibilityModule) external onlyOwner {
         _implementationsAddresses.gameMasterHatsEligibilityModule = newGameMasterHatsEligibilityModule;
 
         emit GameMasterHatsEligibilityModuleUpdated(newGameMasterHatsEligibilityModule);

@@ -90,9 +90,12 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
      *        10. string characterDescription
      */
 
-    function initialize(address _owner, bytes calldata hatsAddresses, bytes calldata hatsStrings) external {
+    function initialize(address _owner, bytes calldata hatsAddresses, bytes calldata hatsStrings)
+        external
+        initializer
+    {
         bytes memory customModuleImplementation = abi.encode(address(0), address(0), address(0), address(0));
-        return this.initialize(_owner, hatsAddresses, hatsStrings, customModuleImplementation);
+        return _initialize(_owner, hatsAddresses, hatsStrings, customModuleImplementation);
     }
 
     /**

@@ -99,9 +99,7 @@ contract HatsAdaptorTest is SetUp {
 
     function testIsGameMaster() public {
         assertTrue(deployments.hatsAdaptor.isGameMaster(accounts.gameMaster), "admin should be a GameMaster");
-        assertFalse(
-            deployments.hatsAdaptor.isGameMaster(accounts.player1), "player one should not be a GameMaster."
-        );
+        assertFalse(deployments.hatsAdaptor.isGameMaster(accounts.player1), "player one should not be a GameMaster.");
         assertFalse(deployments.hatsAdaptor.isGameMaster(accounts.character1), "npc1 should not be a GameMaster.");
     }
 }
