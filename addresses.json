@@ -15,7 +15,7 @@
     "network": "goerli",
     "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
     "CharacterAccount": "0x90CE0EAB508AF2d316621bD3a2f19f4cD622c446",
-    "CharacterSheetsImplementation": "0xF40a06AaF8dD0F8a6C631B81404284f496cBe577",
+    "CharacterSheetsImplementation": "0x45f7DB64356Dd0eaBaaCf4B7BC86802726835474",
     "ClassesImplementation": "0x4833c41BEdfA12F919eeb83fb80aF9fD01Af8967",
     "CharacterSheetsFactory": "0x7ded952DE30bf80c43744F96Fb72397e715aE49E",
     "ItemsImplementation": "0xA57D752954562053288e7242b9d74aD0c64E13ba",

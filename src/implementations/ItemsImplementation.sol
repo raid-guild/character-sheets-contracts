@@ -456,11 +456,7 @@ contract ItemsImplementation is IItems, ERC1155HolderUpgradeable, ERC1155Upgrade
     //solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address newImplementation) internal override onlyDungeonMaster {}
 
-    function _checkRequirements(address characterAccount, uint256 itemId, uint256)
-        internal
-        view
-        returns (bool)
-    {
+    function _checkRequirements(address characterAccount, uint256 itemId, uint256) internal view returns (bool) {
         Asset[] storage itemRequirements = _requirements[itemId];
         if (itemRequirements.length == 0) {
             return true;

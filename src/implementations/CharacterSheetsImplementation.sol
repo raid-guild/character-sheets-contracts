@@ -409,13 +409,7 @@ contract CharacterSheetsImplementation is
         override(ERC721Upgradeable, IERC721Upgradeable)
         onlyRole(DUNGEON_MASTER)
     {
-        if (_playerSheets[to] != 0) {
-            revert Errors.TokenBalanceError();
-        }
-        _playerSheets[to] = characterId;
-
-        // TODO: update sheet erc6551 account address
-
+        _validateTransfer(from, to, characterId);
         return super.transferFrom(from, to, characterId);
     }
 
@@ -430,14 +424,7 @@ contract CharacterSheetsImplementation is
         override(ERC721Upgradeable, IERC721Upgradeable)
         onlyRole(DUNGEON_MASTER)
     {
-        if (_sheets[_playerSheets[to]].playerAddress != address(0)) {
-            revert Errors.CharacterError();
-        }
-        _playerSheets[to] = characterId;
-        _sheets[characterId].playerAddress = to;
-
-        // TODO: update sheet erc6551 account address
-
+        _validateTransfer(from, to, characterId);
         return super.safeTransferFrom(from, to, characterId);
     }
 
@@ -450,14 +437,7 @@ contract CharacterSheetsImplementation is
         override(ERC721Upgradeable, IERC721Upgradeable)
         onlyRole(DUNGEON_MASTER)
     {
-        if (_sheets[_playerSheets[to]].playerAddress != address(0)) {
-            revert Errors.CharacterError();
-        }
-        _playerSheets[to] = characterId;
-        _sheets[characterId].playerAddress = to;
-
-        // TODO: update sheet erc6551 account address
-
+        _validateTransfer(from, to, characterId);
         return super.safeTransferFrom(from, to, characterId, data);
     }
 
@@ -525,5 +505,17 @@ contract CharacterSheetsImplementation is
 
     function _baseURI() internal view virtual override returns (string memory) {
         return baseTokenURI;
+    }
+
+    function _validateTransfer(address from, address to, uint256 characterId) internal {
+        if (balanceOf(to) != 0) {
+            revert Errors.TokenBalanceError();
+        }
+        _playerSheets[from] = 0;
+        _playerSheets[to] = characterId;
+        _sheets[characterId].playerAddress = to;
+
+        _revokeRole(PLAYER, from);
+        _grantRole(PLAYER, to);
     }
 }

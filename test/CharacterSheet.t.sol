@@ -78,16 +78,6 @@ contract CharacterSheetsTest is Test, SetUp {
         assertEq(sheet.inventory.length, 0, "item still assigned");
     }
 
-    function testTransferFromRevert() public {
-        vm.prank(player1);
-        vm.expectRevert();
-        characterSheets.transferFrom(player1, player2, 1);
-
-        vm.prank(admin);
-        vm.expectRevert();
-        characterSheets.transferFrom(player1, player2, 1);
-    }
-
     function testRenounceSheet() public {
         vm.prank(player1);
         characterSheets.renounceSheet();
@@ -318,5 +308,89 @@ contract CharacterSheetsTest is Test, SetUp {
             "AccessControl: account 0x000000000000000000000000000000000000babe is missing role 0x0f98b3a5774fbfdf19646dba94a6c08f13f4c341502334a57724de46497192c3"
         );
         characterSheets.updateCharacterMetadata("new_cid");
+    }
+
+    function testTransferFrom() public {
+        assertEq(characterSheets.balanceOf(player1), 1, "Incorrect balance");
+        assertEq(characterSheets.balanceOf(player2), 0, "Incorrect balance");
+        assertEq(characterSheets.getCharacterIdByPlayerAddress(player1), 0, "Incorrect characterId");
+        assertEq(characterSheets.getCharacterSheetByCharacterId(0).accountAddress, npc1, "Incorrect account address");
+        assertEq(characterSheets.getCharacterSheetByCharacterId(0).playerAddress, player1, "Incorrect player address");
+
+        vm.prank(player1);
+        vm.expectRevert(); // not dungeon master
+        characterSheets.transferFrom(player1, player2, 0);
+
+        vm.prank(admin);
+        vm.expectRevert(); // not approved
+        characterSheets.transferFrom(player1, player2, 0);
+
+        vm.prank(player1);
+        characterSheets.approve(admin, 0);
+
+        vm.prank(admin);
+        characterSheets.transferFrom(player1, player2, 0);
+
+        assertEq(characterSheets.balanceOf(player1), 0, "Incorrect balance");
+        assertEq(characterSheets.balanceOf(player2), 1, "Incorrect balance");
+        assertEq(characterSheets.getCharacterIdByPlayerAddress(player2), 0, "Incorrect characterId");
+        assertEq(characterSheets.getCharacterSheetByCharacterId(0).accountAddress, npc1, "Incorrect account address");
+        assertEq(characterSheets.getCharacterSheetByCharacterId(0).playerAddress, player2, "Incorrect player address");
+    }
+
+    function testSafeTransferFrom() public {
+        assertEq(characterSheets.balanceOf(player1), 1, "Incorrect balance");
+        assertEq(characterSheets.balanceOf(player2), 0, "Incorrect balance");
+        assertEq(characterSheets.getCharacterIdByPlayerAddress(player1), 0, "Incorrect characterId");
+        assertEq(characterSheets.getCharacterSheetByCharacterId(0).accountAddress, npc1, "Incorrect account address");
+        assertEq(characterSheets.getCharacterSheetByCharacterId(0).playerAddress, player1, "Incorrect player address");
+
+        vm.prank(player1);
+        vm.expectRevert(); // not dungeon master
+        characterSheets.safeTransferFrom(player1, player2, 0);
+
+        vm.prank(admin);
+        vm.expectRevert(); // not approved
+        characterSheets.safeTransferFrom(player1, player2, 0);
+
+        vm.prank(player1);
+        characterSheets.approve(admin, 0);
+
+        vm.prank(admin);
+        characterSheets.safeTransferFrom(player1, player2, 0);
+
+        assertEq(characterSheets.balanceOf(player1), 0, "Incorrect balance");
+        assertEq(characterSheets.balanceOf(player2), 1, "Incorrect balance");
+        assertEq(characterSheets.getCharacterIdByPlayerAddress(player2), 0, "Incorrect characterId");
+        assertEq(characterSheets.getCharacterSheetByCharacterId(0).accountAddress, npc1, "Incorrect account address");
+        assertEq(characterSheets.getCharacterSheetByCharacterId(0).playerAddress, player2, "Incorrect player address");
+    }
+
+    function testSafeTransferFromWithData() public {
+        assertEq(characterSheets.balanceOf(player1), 1, "Incorrect balance");
+        assertEq(characterSheets.balanceOf(player2), 0, "Incorrect balance");
+        assertEq(characterSheets.getCharacterIdByPlayerAddress(player1), 0, "Incorrect characterId");
+        assertEq(characterSheets.getCharacterSheetByCharacterId(0).accountAddress, npc1, "Incorrect account address");
+        assertEq(characterSheets.getCharacterSheetByCharacterId(0).playerAddress, player1, "Incorrect player address");
+
+        vm.prank(player1);
+        vm.expectRevert(); // not dungeon master
+        characterSheets.safeTransferFrom(player1, player2, 0, "");
+
+        vm.prank(admin);
+        vm.expectRevert(); // not approved
+        characterSheets.safeTransferFrom(player1, player2, 0, "");
+
+        vm.prank(player1);
+        characterSheets.approve(admin, 0);
+
+        vm.prank(admin);
+        characterSheets.safeTransferFrom(player1, player2, 0, "");
+
+        assertEq(characterSheets.balanceOf(player1), 0, "Incorrect balance");
+        assertEq(characterSheets.balanceOf(player2), 1, "Incorrect balance");
+        assertEq(characterSheets.getCharacterIdByPlayerAddress(player2), 0, "Incorrect characterId");
+        assertEq(characterSheets.getCharacterSheetByCharacterId(0).accountAddress, npc1, "Incorrect account address");
+        assertEq(characterSheets.getCharacterSheetByCharacterId(0).playerAddress, player2, "Incorrect player address");
     }
 }
