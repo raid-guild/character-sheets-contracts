@@ -51,8 +51,6 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         emit ImplementationAddressStorageUpdated(_implementationAddressStorage);
     }
 
-    /// create functions must be called first before the initialize call is made
-
     /**
      *     @notice creates all contracts and adaptors with default implementations
      *     @param dao the address of a dao to be used with the character sheets elegibility adaptor pass in address(0) to have no elegibilty limitations
@@ -83,6 +81,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
 
         return (clonesAddressStorage);
     }
+
     /**
      *    @notice this function will call both the create and initializeContracts functions
      *    @dev check notes on the initializeContracts function to see what needs to be
@@ -100,6 +99,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         bytes memory encodedHatsAddresses =
             abi.encode(admins, dungeonMasters, getImplementationsAddressStorageAddress(), clonesStorage);
         this.initializeContracts(clonesStorage, dao, encodedHatsAddresses, encodedHatsStrings, sheetsStrings);
+        emit NewGameStarted(msg.sender, clonesAddressStorage);
         return clonesStorage;
     }
 
@@ -214,10 +214,10 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
      * @dev If custom settings are required for contracts (custom eligibility adaptors, level adaptors etc.  please initialize the contracts seperatly)
      * @param dao the address of the dao who's membership will restrict character sheets eligibility.  address(0) for no dao restriction;
      * @param encodedHatsAddresses this will be the hats adaptor initialization data
-     *          -- address[] admins the list of addresses that will have admin priviledges
-     *          -- address[] gameMasters the list of addresses that will have gameMasterpriviledges
-     *          -- address implementations the address of the ImplementationAddressStorage contract
-     *          -- address clonesStorage the address of the cloned clones storageContract;
+     *        1. address[] admins the list of addresses that will have admin priviledges
+     *        2. address[] gameMasters the list of addresses that will have gameMasterpriviledges
+     *        3. address implementations the address of the ImplementationAddressStorage contract
+     *        4. address clonesStorage the address of the cloned clones storageContract;
      *
      * @param encodedHatsStrings the encoded strings needed for the hats adaptor init.
      *        1.  string _baseImgUri
@@ -232,10 +232,10 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
      *        10. string characterDescription
      *
      * @param sheetsStrings encoded string data strings to include must be in this order:
-     * - the base metadata uri for the character sheets clone
-     * - the base character token uri for the character sheets clone
-     * - the base uri for the ITEMS contract
-     * - the base uri for the CLASSES contract
+     *        1. the base metadata uri for the character sheets clone
+     *        2. the base character token uri for the character sheets clone
+     *        3. the base uri for the ITEMS contract
+     *        4. the base uri for the CLASSES contract
      */
     function initializeContracts(
         address clonesStorageAddress,
