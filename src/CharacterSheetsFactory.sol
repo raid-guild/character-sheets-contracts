@@ -58,7 +58,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
      *     @param dao the address of a dao to be used with the character sheets elegibility adaptor pass in address(0) to have no elegibilty limitations
      *     @return (clonesAddressStorage)  this is the data needed to pass into the initialize function to initialize all the contracts.
      */
-    function create(address dao) external returns (address) {
+    function create(address dao) public returns (address) {
         address clonesAddressStorage = createClonesStorage();
         address itemsManagerClone = createItemsManager();
         address hatsAdaptorClone = createHatsAdaptor();
@@ -82,6 +82,25 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         emit NewGameStarted(msg.sender, clonesAddressStorage);
 
         return (clonesAddressStorage);
+    }
+    /**
+     *    @notice this function will call both the create and initializeContracts functions
+     *    @dev check notes on the initializeContracts function to see what needs to be
+     *     in the encoded hatsStrings and the encoded sheets strings
+     */
+
+    function createAndInitialize(
+        address dao,
+        address[] calldata admins,
+        address[] calldata dungeonMasters,
+        bytes calldata encodedHatsStrings,
+        bytes calldata sheetsStrings
+    ) public returns (address) {
+        address clonesStorage = create(dao);
+        bytes memory encodedHatsAddresses =
+            abi.encode(admins, dungeonMasters, getImplementationsAddressStorageAddress(), clonesStorage);
+        this.initializeContracts(clonesStorage, dao, encodedHatsAddresses, encodedHatsStrings, sheetsStrings);
+        return clonesStorage;
     }
 
     function createExperience() public returns (address) {
@@ -219,8 +238,8 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
      * @param sheetsStrings encoded string data strings to include must be in this order:
      * - the base metadata uri for the character sheets clone
      * - the base character token uri for the character sheets clone
-     * - the base uri for the ITEMS clone
-     * - the base uri for the CLASSES clone
+     * - the base uri for the ITEMS contract
+     * - the base uri for the CLASSES contract
      */
     function initializeContracts(
         address clonesStorageAddress,
