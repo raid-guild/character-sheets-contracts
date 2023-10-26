@@ -210,10 +210,6 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
     }
 
     /**
-     * @notice adaptors must be initialized seperately  ***************
-     */
-
-    /**
      * @notice This will initialize all the contracts with default values.
      * @dev If custom settings are required for contracts (custom eligibility adaptors, level adaptors etc.  please initialize the contracts seperatly)
      * @param dao the address of the dao who's membership will restrict character sheets eligibility.  address(0) for no dao restriction;
