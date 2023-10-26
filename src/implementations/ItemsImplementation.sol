@@ -42,6 +42,8 @@ contract ItemsImplementation is
     mapping(uint256 => string) private _itemURIs;
     /// @dev mapping itemId => item struct for item types
     mapping(uint256 => Item) private _items;
+    /// @dev merkle root => character address => times claimed : mapping to keep track of the claims made by an address per merkle root
+    mapping(bytes32 => mapping(address => uint256)) internal _distributed;
 
     /// @dev the total number of item types that have been created
     uint256 public totalItemTypes;
@@ -52,7 +54,7 @@ contract ItemsImplementation is
 
     event NewItemTypeCreated(uint256 itemId);
     event ItemTransfered(address character, uint256 itemId, uint256 amount);
-    event ItemClaimableUpdated(uint256 itemId, bytes32 merkleRoot);
+    event ItemClaimableUpdated(uint256 itemId, bytes32 merkleRoot, uint256 newDistribution);
 
     modifier onlyAdmin() {
         if (!IHatsAdaptor(clones.hatsAdaptor()).isAdmin(msg.sender)) {
@@ -121,6 +123,7 @@ contract ItemsImplementation is
      * @param amounts an array of amounts to claim, must match the order of item ids
      * @param proofs an array of proofs allowing this address to claim the item,
      * must be in same order as item ids and amounts
+     * if claimable of the item is bytes32(0) the proof can be just an empty array.
      */
 
     function claimItems(uint256[] calldata itemIds, uint256[] calldata amounts, bytes32[][] calldata proofs)
@@ -137,14 +140,21 @@ contract ItemsImplementation is
             if (claimableItem.craftable) {
                 revert Errors.ClaimableError();
             }
+
             if (claimableItem.claimable == bytes32(0)) {
+                // can only posses a max balance of Item.distribution
+                if (balanceOf(msg.sender, itemIds[i]) + amounts[i] > claimableItem.distribution) {
+                    revert Errors.CannotClaim(claimableItem.distribution);
+                }
                 _transferItem(msg.sender, itemIds[i], amounts[i]);
             } else {
-                bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(itemIds[i], msg.sender, amounts[i]))));
-
-                if (!MerkleProof.verify(proofs[i], claimableItem.claimable, leaf)) {
+                if (_distributed[claimableItem.claimable][msg.sender] >= claimableItem.distribution) {
+                    revert Errors.CannotClaim(claimableItem.distribution);
+                }
+                if (!_verifyMerkle(proofs[i], claimableItem.claimable, itemIds[i], amounts[i])) {
                     revert Errors.InvalidProof();
                 }
+                _distributed[claimableItem.claimable][msg.sender]++;
                 _transferItem(msg.sender, itemIds[i], amounts[i]);
             }
         }
@@ -260,13 +270,14 @@ contract ItemsImplementation is
      * @param merkleRoot the merkle root of the addresses and amounts that can be claimed of this item
      */
 
-    function updateItemClaimable(uint256 itemId, bytes32 merkleRoot) external onlyGameMaster {
+    function updateItemClaimable(uint256 itemId, bytes32 merkleRoot, uint256 newDistribution) external onlyGameMaster {
         if (_items[itemId].supply == 0) {
             revert Errors.ItemError();
         }
         _items[itemId].claimable = merkleRoot;
+        _items[itemId].distribution = newDistribution;
 
-        emit ItemClaimableUpdated(itemId, merkleRoot);
+        emit ItemClaimableUpdated(itemId, merkleRoot, newDistribution);
     }
 
     /**
@@ -376,12 +387,13 @@ contract ItemsImplementation is
         bool craftable;
         bool soulbound;
         bytes32 claimable;
+        uint256 distribution;
         uint256 supply;
         bytes memory requiredAssets;
         string memory cid;
         {
-            (craftable, soulbound, claimable, supply, cid, requiredAssets) =
-                abi.decode(_data, (bool, bool, bytes32, uint256, string, bytes));
+            (craftable, soulbound, claimable, distribution, supply, cid, requiredAssets) =
+                abi.decode(_data, (bool, bool, bytes32, uint256, uint256, string, bytes));
 
             {
                 uint8[] memory requiredAssetCategories;
@@ -413,8 +425,14 @@ contract ItemsImplementation is
                 }
             }
 
-            _items[_itemId] =
-                Item({craftable: craftable, claimable: claimable, supply: supply, soulbound: soulbound, supplied: 0});
+            _items[_itemId] = Item({
+                craftable: craftable,
+                claimable: claimable,
+                distribution: distribution,
+                supply: supply,
+                soulbound: soulbound,
+                supplied: 0
+            });
             _mint(address(this), _itemId, supply, "");
             _itemURIs[_itemId] = cid;
         }
@@ -454,5 +472,15 @@ contract ItemsImplementation is
     //solhint-disable-next-line
     function _authorizeUpgrade(address newImplementation) internal override onlyGameMaster {
         //empty block
+    }
+
+    function _verifyMerkle(bytes32[] memory proof, bytes32 root, uint256 itemId, uint256 amount)
+        internal
+        view
+        returns (bool)
+    {
+        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(itemId, msg.sender, amount))));
+
+        return MerkleProof.verify(proof, root, leaf);
     }
 }

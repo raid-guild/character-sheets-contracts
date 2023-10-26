@@ -19,6 +19,9 @@ struct Item {
     /// of all addresses allowed to claim.  if not claimable at all use any random bytes32(n) besides bytes32(0)
     /// so all merkle proofs will fail.
     bytes32 claimable;
+    /// @dev if this item is claimable the distribution is the number of times this item can be claimed using the same merkle root.
+    // or if clamable is set to bytes32(0) then distribution will be the number of items that can be claimed.
+    uint256 distribution;
     /// @dev whether or not this item is craftable
     bool craftable;
     /// @dev is this item soulbound or not

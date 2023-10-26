@@ -99,7 +99,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         bytes memory encodedHatsAddresses =
             abi.encode(admins, dungeonMasters, getImplementationsAddressStorageAddress(), clonesStorage);
         this.initializeContracts(clonesStorage, dao, encodedHatsAddresses, encodedHatsStrings, sheetsStrings);
-        emit NewGameStarted(msg.sender, clonesAddressStorage);
+        emit NewGameStarted(msg.sender, clonesStorage);
         return clonesStorage;
     }
 

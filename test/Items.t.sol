@@ -37,10 +37,10 @@ contract ItemsTest is SetUp {
 
         address randoNPC = deployments.characterSheets.getCharacterSheetByCharacterId(randoId).accountAddress;
 
-        uint256 _itemId = deployments.items.createItemType(createNewItem(true, false, bytes32(0)));
+        uint256 _itemId = deployments.items.createItemType(createNewItem(true, false, bytes32(0), 1));
         assertEq(_itemId, 4, "incorrect itemId1");
 
-        uint256 _itemId2 = deployments.items.createItemType(createNewItem(true, false, bytes32(0)));
+        uint256 _itemId2 = deployments.items.createItemType(createNewItem(true, false, bytes32(0), 1));
         assertEq(_itemId2, 5, "incorrect itemId2");
 
         address[] memory players = new address[](2);
@@ -79,8 +79,8 @@ contract ItemsTest is SetUp {
 
     function testClaimItem() public {
         vm.startPrank(accounts.gameMaster);
-        uint256 _itemId1 = deployments.items.createItemType(createNewItem(false, true, bytes32(0)));
-        uint256 _itemId2 = deployments.items.createItemType(createNewItem(false, true, bytes32(0)));
+        uint256 _itemId1 = deployments.items.createItemType(createNewItem(false, true, bytes32(0), 1));
+        uint256 _itemId2 = deployments.items.createItemType(createNewItem(false, true, bytes32(0), 1));
 
         deployments.items.addItemRequirement(
             _itemId2, uint8(Category.ERC1155), address(deployments.classes), classData.classId, 1
@@ -99,7 +99,53 @@ contract ItemsTest is SetUp {
 
         (bytes32[] memory proof, bytes32 root) = generateMerkleRootAndProof(itemIds, claimers, amounts, 0);
 
-        deployments.items.updateItemClaimable(_itemId1, root);
+        deployments.items.updateItemClaimable(_itemId1, root, 1);
+
+        uint256[] memory itemIds2 = new uint256[](1);
+        bytes32[][] memory proofs = new bytes32[][](1);
+        uint256[] memory amounts2 = new uint256[](1);
+        itemIds2[0] = _itemId1;
+        amounts2[0] = 1;
+        proofs[0] = proof;
+        vm.stopPrank();
+
+        vm.prank(accounts.gameMaster);
+        deployments.experience.dropExp(accounts.character1, 1000);
+
+        vm.prank(accounts.gameMaster);
+        deployments.classes.assignClass(accounts.character1, classData.classId);
+
+        vm.prank(accounts.character1);
+        deployments.items.claimItems(itemIds2, amounts2, proofs);
+
+        assertEq(deployments.items.balanceOf(accounts.character1, _itemId1), 1, "Balance not equal");
+
+        assertEq(deployments.experience.balanceOf(accounts.character1), 1000);
+    }
+
+    function testClaimItemRevert() public {
+        vm.startPrank(accounts.gameMaster);
+        uint256 _itemId1 = deployments.items.createItemType(createNewItem(false, true, bytes32(0), 1));
+        uint256 _itemId2 = deployments.items.createItemType(createNewItem(false, true, bytes32(0), 1));
+        uint256 _itemId3 = deployments.items.createItemType(createNewItem(false, true, bytes32(0), 1));
+        deployments.items.addItemRequirement(
+            _itemId2, uint8(Category.ERC1155), address(deployments.classes), classData.classId, 1
+        );
+
+        // need at least two leafs to create merkle tree
+        uint256[] memory itemIds = new uint256[](2);
+        itemIds[0] = _itemId1;
+        itemIds[1] = _itemId2;
+        address[] memory claimers = new address[](2);
+        claimers[0] = accounts.character1;
+        claimers[1] = accounts.player1;
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = 1;
+        amounts[1] = 2;
+
+        (bytes32[] memory proof, bytes32 root) = generateMerkleRootAndProof(itemIds, claimers, amounts, 0);
+
+        deployments.items.updateItemClaimable(_itemId1, root, 1);
 
         uint256[] memory itemIds2 = new uint256[](1);
         bytes32[][] memory proofs = new bytes32[][](1);
@@ -136,9 +182,17 @@ contract ItemsTest is SetUp {
         vm.prank(accounts.character1);
         deployments.items.claimItems(itemIds2, amounts2, proofs);
 
-        assertEq(deployments.items.balanceOf(accounts.character1, _itemId1), 1, "Balance not equal");
+        //revert on second attempt to claim
+        vm.prank(accounts.character1);
+        vm.expectRevert(abi.encodeWithSelector(Errors.CannotClaim.selector, 1));
+        deployments.items.claimItems(itemIds2, amounts2, proofs);
 
-        assertEq(deployments.experience.balanceOf(accounts.character1), 1000);
+        itemIds2[0] = _itemId3;
+        amounts2[0] = 5;
+        //revert if trying to claim more than allowed amount
+        vm.prank(accounts.character1);
+        vm.expectRevert(abi.encodeWithSelector(Errors.CannotClaim.selector, 1));
+        deployments.items.claimItems(itemIds2, amounts2, proofs);
     }
 
     function testURI() public {
@@ -148,7 +202,7 @@ contract ItemsTest is SetUp {
 
     function testAddItemRequirement() public {
         vm.prank(accounts.gameMaster);
-        uint256 tokenId = deployments.items.createItemType(createNewItem(false, true, bytes32(0)));
+        uint256 tokenId = deployments.items.createItemType(createNewItem(false, true, bytes32(0), 1));
 
         vm.prank(accounts.gameMaster);
         deployments.items.addItemRequirement(0, uint8(Category.ERC1155), address(deployments.items), tokenId, 100);
@@ -166,7 +220,7 @@ contract ItemsTest is SetUp {
 
     function testRemoveItemRequirement() public {
         vm.prank(accounts.gameMaster);
-        uint256 tokenId = deployments.items.createItemType(createNewItem(false, true, bytes32(0)));
+        uint256 tokenId = deployments.items.createItemType(createNewItem(false, true, bytes32(0), 1));
 
         vm.prank(accounts.gameMaster);
         deployments.items.addItemRequirement(0, uint8(Category.ERC1155), address(deployments.items), tokenId, 1000);
@@ -201,7 +255,7 @@ contract ItemsTest is SetUp {
         deployments.items.craftItem(0, 1);
 
         vm.prank(accounts.gameMaster);
-        uint256 craftableItemId = deployments.items.createItemType(createNewItem(true, true, bytes32(0)));
+        uint256 craftableItemId = deployments.items.createItemType(createNewItem(true, true, bytes32(0), 1));
 
         //should revert if requirements not met
         vm.prank(accounts.character1);
@@ -225,12 +279,12 @@ contract ItemsTest is SetUp {
 
     function testdismantleItem() public {
         vm.startPrank(accounts.gameMaster);
-        uint256 craftableItemId = deployments.items.createItemType(createNewItem(true, false, bytes32(0)));
+        uint256 craftableItemId = deployments.items.createItemType(createNewItem(true, false, bytes32(0), 1));
         deployments.items.addItemRequirement(
             craftableItemId, uint8(Category.ERC1155), address(deployments.classes), 0, 1
         );
 
-        uint256 newItem = deployments.items.createItemType(createNewItem(true, false, bytes32(0)));
+        uint256 newItem = deployments.items.createItemType(createNewItem(true, false, bytes32(0), 1));
 
         deployments.items.addItemRequirement(
             craftableItemId, uint8(Category.ERC1155), address(deployments.items), newItem, 1
@@ -284,7 +338,7 @@ contract ItemsTest is SetUp {
 
     // UNHAPPY PATH
     function testCreateItemTypeRevert() public {
-        bytes memory newItem = createNewItem(false, false, bytes32(0));
+        bytes memory newItem = createNewItem(false, false, bytes32(0), 1);
 
         vm.startPrank(accounts.player2);
         vm.expectRevert(Errors.GameMasterOnly.selector);
@@ -294,7 +348,7 @@ contract ItemsTest is SetUp {
 
     function testDropLootRevert() public {
         vm.prank(accounts.gameMaster);
-        uint256 _itemId = deployments.items.createItemType(createNewItem(false, false, bytes32(keccak256("null"))));
+        uint256 _itemId = deployments.items.createItemType(createNewItem(false, false, bytes32(keccak256("null")), 0));
         assertEq(_itemId, 4);
 
         address[] memory players = new address[](1);

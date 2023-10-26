@@ -21,13 +21,16 @@ abstract contract Errors {
     error RequirementError();
     error ItemError();
     error LengthMismatch();
-    error InvalidProof();
+
     error Jailed();
     error InsufficientBalance();
     error CallerNotApproved();
     error SoulboundToken();
     error RequirementNotMet();
 
+    //merkle proof erros
+    error CannotClaim(uint256);
+    error InvalidProof();
     // CharacterAccount.sol
     error InvalidSigner();
     error InvalidOperation();

@@ -93,14 +93,14 @@ contract SetUp is Test, Accounts, TestStructs {
 
         //create a soulbound item
         itemsData.itemIdSoulbound =
-            deployments.items.createItemType(createNewItem(false, true, bytes32(keccak256("null"))));
+            deployments.items.createItemType(createNewItem(false, true, bytes32(keccak256("null")), 0));
         //create claimable Item
-        itemsData.itemIdClaimable = deployments.items.createItemType(createNewItem(false, true, bytes32(0)));
+        itemsData.itemIdClaimable = deployments.items.createItemType(createNewItem(false, true, bytes32(0), 1));
         // create craftable item
         itemsData.itemIdCraftable =
-            deployments.items.createItemType(createNewItem(true, false, bytes32(keccak256("null"))));
+            deployments.items.createItemType(createNewItem(true, false, bytes32(keccak256("null")), 1));
         //create free item
-        itemsData.itemIdFree = deployments.items.createItemType(createNewItem(true, false, bytes32(0)));
+        itemsData.itemIdFree = deployments.items.createItemType(createNewItem(true, false, bytes32(0), 1));
         vm.stopPrank();
 
         vm.startPrank(accounts.player1);
@@ -145,7 +145,11 @@ contract SetUp is Test, Accounts, TestStructs {
         ExperienceImplementation(experience).dropExp(character, amount);
     }
 
-    function createNewItem(bool craftable, bool soulbound, bytes32 claimable) public view returns (bytes memory) {
+    function createNewItem(bool craftable, bool soulbound, bytes32 claimable, uint256 distribution)
+        public
+        view
+        returns (bytes memory)
+    {
         bytes memory requiredAssets;
 
         {
@@ -162,7 +166,9 @@ contract SetUp is Test, Accounts, TestStructs {
                 abi.encode(requiredAssetCategories, requiredAssetAddresses, requiredAssetIds, requiredAssetAmounts);
         }
 
-        return abi.encode(craftable, soulbound, claimable, 10 ** 18, abi.encodePacked("test_item_cid/"), requiredAssets);
+        return abi.encode(
+            craftable, soulbound, claimable, distribution, 10 ** 18, abi.encodePacked("test_item_cid/"), requiredAssets
+        );
     }
 
     function generateMerkleRootAndProof(
