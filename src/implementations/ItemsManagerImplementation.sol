@@ -23,9 +23,6 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
     /// character => itemId => receipts Assets used in crafting
     mapping(address => mapping(uint256 => Receipt[])) internal _craftingReceipts;
 
-    //temporary array for refund calulations
-    Asset[] internal _currentRefunds;
-
     /// @dev clones address storage contract
     IClonesAddressStorage public clones;
 
