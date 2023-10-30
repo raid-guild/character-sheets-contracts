@@ -30,6 +30,8 @@ struct Item {
     uint256 supplied;
     /// @dev the number of this item to be created.
     uint256 supply;
+    ///@dev true by default.  set to false if this item is to be disabled in the UI
+    bool enabled;
 }
 
 struct Receipt {

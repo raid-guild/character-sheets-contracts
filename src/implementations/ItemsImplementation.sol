@@ -55,6 +55,7 @@ contract ItemsImplementation is
     event NewItemTypeCreated(uint256 itemId);
     event ItemTransfered(address character, uint256 itemId, uint256 amount);
     event ItemClaimableUpdated(uint256 itemId, bytes32 merkleRoot, uint256 newDistribution);
+    event ItemDeleted(uint256 itemId);
 
     modifier onlyAdmin() {
         if (!IHatsAdaptor(clones.hatsAdaptor()).isAdmin(msg.sender)) {
@@ -223,43 +224,6 @@ contract ItemsImplementation is
 
         totalItemTypes++;
         return _itemId;
-    }
-
-    /**
-     * adds a new required item to the array of requirments in the item type
-     * @param itemId the itemId of the item type to be modified
-     * @param category the category of the required item
-     * @param assetAddress the address of the required item
-     * @param assetId the id of the required item
-     * @param amount the amount of the required item to be required
-     */
-
-    function addItemRequirement(uint256 itemId, uint8 category, address assetAddress, uint256 assetId, uint256 amount)
-        external
-        onlyGameMaster
-        returns (bool success)
-    {
-        if (assetAddress == address(this) && (itemId == assetId || (_items[assetId].supply == 0))) {
-            revert Errors.ItemError();
-        }
-
-        return itemsManager.addItemRequirement(itemId, category, assetAddress, assetId, amount);
-    }
-
-    /**
-     *
-     * @param itemId the itemId of the item type to be modified
-     * @param assetAddress the address of the required item
-     * @param assetId the id of the required item
-     * so if the item requires 2 of itemId 1 to be burnt in order to claim the item then you put in 1
-     *  and it will remove the requirment with itemId 1
-     */
-    function removeItemRequirement(uint256 itemId, address assetAddress, uint256 assetId)
-        external
-        onlyGameMaster
-        returns (bool)
-    {
-        return itemsManager.removeItemRequirement(itemId, assetAddress, assetId);
     }
 
     /**
@@ -433,11 +397,31 @@ contract ItemsImplementation is
                 distribution: distribution,
                 supply: supply,
                 soulbound: soulbound,
-                supplied: 0
+                supplied: 0,
+                enabled: true
             });
             _mint(address(this), _itemId, supply, "");
             _itemURIs[_itemId] = cid;
         }
+    }
+
+    /**
+     * @notice this item will delete the Item Struct from the items mapping and burn the remaining supply it will also set the enabled bool to false;
+     */
+
+    function deleteItem(uint256 itemId) external onlyGameMaster {
+        // cannot delete an Item that has been supplied to anyone.
+        if (_items[itemId].supplied != 0) {
+            revert Errors.ItemError();
+        }
+
+        //burn supply
+        _burn(address(this), itemId, _items[itemId].supply);
+
+        // delete stuct from mapping this will set enabled to false.
+        delete _items[itemId];
+
+        emit ItemDeleted(itemId);
     }
 
     /**

@@ -90,17 +90,19 @@ contract SetUp is Test, Accounts, TestStructs {
         classData.classIdClaimable = deployments.classes.createClassType(createNewClass(true));
         // create a non claimable class
         classData.classId = deployments.classes.createClassType(createNewClass(false));
-
+        bytes memory expRequirement = createRequiredAsset(Category.ERC20, address(deployments.experience), 0, 100);
         //create a soulbound item
         itemsData.itemIdSoulbound =
-            deployments.items.createItemType(createNewItem(false, true, bytes32(keccak256("null")), 0));
+            deployments.items.createItemType(createNewItem(false, true, bytes32(keccak256("null")), 0, expRequirement));
         //create claimable Item
-        itemsData.itemIdClaimable = deployments.items.createItemType(createNewItem(false, true, bytes32(0), 1));
+        itemsData.itemIdClaimable =
+            deployments.items.createItemType(createNewItem(false, true, bytes32(0), 1, expRequirement));
         // create craftable item
         itemsData.itemIdCraftable =
-            deployments.items.createItemType(createNewItem(true, false, bytes32(keccak256("null")), 1));
+            deployments.items.createItemType(createNewItem(true, false, bytes32(keccak256("null")), 1, expRequirement));
         //create free item
-        itemsData.itemIdFree = deployments.items.createItemType(createNewItem(true, false, bytes32(0), 1));
+        itemsData.itemIdFree =
+            deployments.items.createItemType(createNewItem(true, false, bytes32(0), 1, createEmptyRequiredAssets()));
         vm.stopPrank();
 
         vm.startPrank(accounts.player1);
@@ -145,32 +147,6 @@ contract SetUp is Test, Accounts, TestStructs {
         ExperienceImplementation(experience).dropExp(character, amount);
     }
 
-    function createNewItem(bool craftable, bool soulbound, bytes32 claimable, uint256 distribution)
-        public
-        view
-        returns (bytes memory)
-    {
-        bytes memory requiredAssets;
-
-        {
-            uint8[] memory requiredAssetCategories = new uint8[](1);
-            requiredAssetCategories[0] = uint8(Category.ERC20);
-            address[] memory requiredAssetAddresses = new address[](1);
-            requiredAssetAddresses[0] = address(deployments.experience);
-            uint256[] memory requiredAssetIds = new uint256[](1);
-            requiredAssetIds[0] = 0;
-            uint256[] memory requiredAssetAmounts = new uint256[](1);
-            requiredAssetAmounts[0] = 100;
-
-            requiredAssets =
-                abi.encode(requiredAssetCategories, requiredAssetAddresses, requiredAssetIds, requiredAssetAmounts);
-        }
-
-        return abi.encode(
-            craftable, soulbound, claimable, distribution, 10 ** 18, abi.encodePacked("test_item_cid/"), requiredAssets
-        );
-    }
-
     function generateMerkleRootAndProof(
         uint256[] memory itemIds,
         address[] memory claimers,
@@ -186,12 +162,67 @@ contract SetUp is Test, Accounts, TestStructs {
         root = merkle.getRoot(leaves);
     }
 
+    function createNewItem(
+        bool craftable,
+        bool soulbound,
+        bytes32 claimable,
+        uint256 distribution,
+        bytes memory requiredAssets
+    ) public pure returns (bytes memory) {
+        return abi.encode(
+            craftable, soulbound, claimable, distribution, 10 ** 18, abi.encodePacked("test_item_cid/"), requiredAssets
+        );
+    }
+
     function createNewClass(bool claimable) public pure returns (bytes memory data) {
         return abi.encode(claimable, "test_class_cid/");
     }
 
     function createAddressMemoryArray(uint256 length) public pure returns (address[] memory newArray) {
         newArray = new address[](length);
+    }
+
+    function createRequiredAsset(Category category, address assetAddress, uint256 assetId, uint256 amount)
+        public
+        pure
+        returns (bytes memory)
+    {
+        bytes memory requiredAssets;
+
+        {
+            uint8[] memory requiredAssetCategories = new uint8[](1);
+            requiredAssetCategories[0] = uint8(category);
+            address[] memory requiredAssetAddresses = new address[](1);
+            requiredAssetAddresses[0] = address(assetAddress);
+            uint256[] memory requiredAssetIds = new uint256[](1);
+            requiredAssetIds[0] = assetId;
+            uint256[] memory requiredAssetAmounts = new uint256[](1);
+            requiredAssetAmounts[0] = amount;
+
+            requiredAssets =
+                abi.encode(requiredAssetCategories, requiredAssetAddresses, requiredAssetIds, requiredAssetAmounts);
+        }
+
+        return requiredAssets;
+    }
+
+    function createEmptyRequiredAssets() public pure returns (bytes memory) {
+        bytes memory requiredAssets;
+
+        {
+            uint8[] memory requiredAssetCategories = new uint8[](1);
+
+            address[] memory requiredAssetAddresses = new address[](1);
+
+            uint256[] memory requiredAssetIds = new uint256[](1);
+
+            uint256[] memory requiredAssetAmounts = new uint256[](1);
+
+            requiredAssets =
+                abi.encode(requiredAssetCategories, requiredAssetAddresses, requiredAssetIds, requiredAssetAmounts);
+        }
+
+        return requiredAssets;
     }
 
     function _activateContracts(address clonesAddress) internal {
