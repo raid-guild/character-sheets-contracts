@@ -213,19 +213,12 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     }
 
     function deLevelClass(address characterAccount, uint256 classId, uint256 numberOfLevels) public returns (uint256) {
-        if (
-            !IHatsAdaptor(clones.hatsAdaptor()).isCharacter(msg.sender)
-                && !IHatsAdaptor(clones.hatsAdaptor()).isGameMaster(msg.sender)
-        ) {
-            revert Errors.CallerNotApproved();
-        }
-
-        if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(msg.sender) && characterAccount != msg.sender) {
-            revert Errors.CharacterOnly();
-        }
-
         if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(characterAccount)) {
             revert Errors.CharacterError();
+        }
+
+        if (characterAccount != msg.sender && !IHatsAdaptor(clones.hatsAdaptor()).isGameMaster(msg.sender)) {
+            revert Errors.CallerNotApproved();
         }
 
         if (clones.classLevelAdaptor() == address(0)) {
