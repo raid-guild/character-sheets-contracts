@@ -179,7 +179,8 @@ contract SetUp is Test, Accounts, TestStructs {
     ) public view returns (bytes32[] memory proof, bytes32 root) {
         bytes32[] memory leaves = new bytes32[](itemIds.length);
         for (uint256 i = 0; i < itemIds.length; i++) {
-            leaves[i] = keccak256(bytes.concat(keccak256(abi.encode(itemIds[i], claimers[i], amounts[i]))));
+            uint256 nonce = deployments.items.getClaimNonce(itemIds[i], claimers[i]);
+            leaves[i] = keccak256(bytes.concat(keccak256(abi.encode(itemIds[i], claimers[i], nonce, amounts[i]))));
         }
         proof = merkle.getProof(leaves, indexOfProof);
         root = merkle.getRoot(leaves);
