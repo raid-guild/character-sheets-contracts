@@ -42,8 +42,8 @@ contract ItemsImplementation is
     mapping(uint256 => string) private _itemURIs;
     /// @dev mapping itemId => item struct for item types
     mapping(uint256 => Item) private _items;
-    /// @dev merkle root => character address => times claimed : mapping to keep track of the claims made by an address per merkle root
-    mapping(bytes32 => mapping(address => uint256)) internal _distributed;
+    /// @dev itemId => character address => nonce : mapping to keep track of the nonce for claims made by an address
+    mapping(uint256 => mapping(address => uint256)) internal _claimNonce;
 
     /// @dev the total number of item types that have been created
     uint256 public totalItemTypes;
@@ -141,20 +141,18 @@ contract ItemsImplementation is
                 revert Errors.ClaimableError();
             }
 
+            if (balanceOf(msg.sender, itemIds[i]) + amounts[i] > claimableItem.distribution) {
+                revert Errors.CannotClaim(claimableItem.distribution);
+            }
+
             if (claimableItem.claimable == bytes32(0)) {
                 // can only posses a max balance of Item.distribution
-                if (balanceOf(msg.sender, itemIds[i]) + amounts[i] > claimableItem.distribution) {
-                    revert Errors.CannotClaim(claimableItem.distribution);
-                }
                 _transferItem(msg.sender, itemIds[i], amounts[i]);
             } else {
-                if (_distributed[claimableItem.claimable][msg.sender] >= claimableItem.distribution) {
-                    revert Errors.CannotClaim(claimableItem.distribution);
-                }
-                if (!_verifyMerkle(proofs[i], claimableItem.claimable, itemIds[i], amounts[i])) {
+                if (!_verifyMerkle(proofs[i], claimableItem.claimable, itemIds[i], amounts[i], msg.sender)) {
                     revert Errors.InvalidProof();
                 }
-                _distributed[claimableItem.claimable][msg.sender]++;
+                _claimNonce[itemIds[i]][msg.sender]++;
                 _transferItem(msg.sender, itemIds[i], amounts[i]);
             }
         }
@@ -367,6 +365,10 @@ contract ItemsImplementation is
         return _baseURI;
     }
 
+    function getClaimNonce(uint256 itemId, address character) public view returns (uint256) {
+        return _claimNonce[itemId][character];
+    }
+
     // The following functions are overrides required by Solidity.
 
     function supportsInterface(bytes4 interfaceId)
@@ -474,12 +476,13 @@ contract ItemsImplementation is
         //empty block
     }
 
-    function _verifyMerkle(bytes32[] memory proof, bytes32 root, uint256 itemId, uint256 amount)
+    function _verifyMerkle(bytes32[] memory proof, bytes32 root, uint256 itemId, uint256 amount, address character)
         internal
         view
         returns (bool)
     {
-        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(itemId, msg.sender, amount))));
+        uint256 nonce = _claimNonce[itemId][character];
+        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(itemId, msg.sender, nonce, amount))));
 
         return MerkleProof.verify(proof, root, leaf);
     }
