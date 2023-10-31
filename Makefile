@@ -56,7 +56,7 @@ deploy-contracts :; make deploy-${network} contract=CharacterAccount && \
 	make deploy-${network} contract=GameMasterHatEligibilityModule && \
 	make deploy-${network} contract=PlayerHatEligibilityModule && \
 	make deploy-${network} contract=CharacterHatEligibilityModule && \
-	make deploy-${network} contract=ClonesAddressStorage && \
+	make deploy-${network} contract=ClonesAddressStorageImplementation && \
 	make deploy-${network} contract=ImplementationAddressStorage && \
 	make deploy-${network} contract=CharacterSheetsFactory;
 
@@ -73,7 +73,7 @@ verify-contracts :; make verify-${network} contract=CharacterAccount && \
 	make verify-${network} contract=GameMasterHatEligibilityModule && \
 	make verify-${network} contract=PlayerHatEligibilityModule && \
 	make verify-${network} contract=CharacterHatEligibilityModule && \
-	make deploy-${network} contract=ClonesAddressStorage && \
+	make deploy-${network} contract=ClonesAddressStorageImplementation && \
 	make deploy-${network} contract=ImplementationAddressStorage && \
 	make verify-${network} contract=CharacterSheetsFactory;
 

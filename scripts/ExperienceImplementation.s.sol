@@ -60,8 +60,8 @@ contract ExecuteExperienceImplementation is BaseExecutor {
 
     function execute() internal override {
         bytes32 merkleRoot = _createMerkleRoot();
-        bytes memory encodedData =
-            abi.encode(itemName, supply, itemRequirements, classRequirements, soulbound, merkleRoot, uri);
+        // bytes memory encodedData =
+        //     abi.encode(itemName, supply, itemRequirements, classRequirements, soulbound, merkleRoot, uri);
 
         vm.broadcast(deployerPrivateKey);
         // uint256 newItemId = experience.createItemType(encodedData);

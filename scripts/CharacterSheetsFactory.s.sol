@@ -7,7 +7,7 @@ import "forge-std/StdJson.sol";
 import {CharacterSheetsFactory} from "../src/CharacterSheetsFactory.sol";
 
 import {BaseDeployer} from "./BaseDeployer.sol";
-import {BaseFactoryExecutor} from "./BaseExecutor.sol";
+import {BaseExecutor} from "./BaseExecutor.sol";
 
 struct HatsStrings {
     string _baseImgUri;
@@ -58,7 +58,7 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
     }
 }
 
-contract Create is BaseFactoryExecutor {
+contract Create is BaseExecutor {
     using stdJson for string;
 
     address[] public gameMasters;
@@ -80,7 +80,7 @@ contract Create is BaseFactoryExecutor {
     function loadBaseData(string memory json, string memory targetEnv) internal override {
         // addresses
         dao = json.readAddress(string(abi.encodePacked(".", targetEnv, ".Dao")));
-        characterSheetsFactory = json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterSheetsFactory")));
+        address characterSheetsFactory = json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterSheetsFactory")));
         gameMasters = json.readAddressArray(string(abi.encodePacked(".", targetEnv, ".GameMasters")));
         implementationStorageAddress =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".ImplementationAddressStorage")));
@@ -109,15 +109,15 @@ contract Create is BaseFactoryExecutor {
 
         // init and encode
         factory = CharacterSheetsFactory(characterSheetsFactory);
-        encodedSheetsStrings =
-            abi.encode(characterSheetsMetadataUri, characterSheetsBaseUri, itemsBaseUri, classesBaseUri);
-        encodedHatsAddresses = abi.encode(arg);
+        encodedSheetsStrings = "";
+            // abi.encode(characterSheetsMetadataUri, characterSheetsBaseUri, itemsBaseUri, classesBaseUri);
+        encodedHatsAddresses =  "";
+          // abi.encode(arg);
     }
 
-    function create() internal override returns (address) {
+    function execute() internal override  {
         vm.startBroadcast(deployerPrivateKey);
         clonesAddressStorage = factory.create(dao);
         vm.stopBroadcast();
-        return (clonesAddressStorage);
     }
 }

@@ -21,7 +21,7 @@ import {ExperienceImplementation} from "../../src/implementations/ExperienceImpl
 
 //address storage
 import {ImplementationAddressStorage} from "../../src/ImplementationAddressStorage.sol";
-import {ClonesAddressStorage} from "../../src/implementations/ClonesAddressStorage.sol";
+import {ClonesAddressStorageImplementation} from "../../src/implementations/ClonesAddressStorageImplementation.sol";
 
 //adaptors
 import {CharacterEligibilityAdaptor} from "../../src/adaptors/CharacterEligibilityAdaptor.sol";
@@ -195,7 +195,7 @@ contract SetUp is Test, Accounts, TestStructs {
     }
 
     function _activateContracts(address clonesAddress) internal {
-        ClonesAddressStorage internalClones = ClonesAddressStorage(clonesAddress);
+        ClonesAddressStorageImplementation internalClones = ClonesAddressStorageImplementation(clonesAddress);
 
         deployments.characterSheets = CharacterSheetsImplementation(internalClones.characterSheets());
         deployments.experience = ExperienceImplementation(internalClones.experience());
@@ -225,7 +225,7 @@ contract SetUp is Test, Accounts, TestStructs {
         implementations.itemsManager = new ItemsManagerImplementation();
         implementations.experience = new ExperienceImplementation();
         implementations.classes = new ClassesImplementation();
-        implementations.clonesAddressStorage = new ClonesAddressStorage();
+        implementations.clonesAddressStorage = new ClonesAddressStorageImplementation();
 
         implementations.characterEligibilityAdaptor = new CharacterEligibilityAdaptor();
         implementations.classLevelAdaptor = new ClassLevelAdaptor();
@@ -309,7 +309,7 @@ contract SetUp is Test, Accounts, TestStructs {
     }
 
     function _createContracts() internal {
-        deployments.clones = ClonesAddressStorage(characterSheetsFactory.create(address(dao)));
+        deployments.clones = ClonesAddressStorageImplementation(characterSheetsFactory.create(address(dao)));
     }
 
     function _initializeContracts(address clonesStorageAddress, address _dao) internal {

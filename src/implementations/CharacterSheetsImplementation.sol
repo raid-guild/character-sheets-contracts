@@ -114,7 +114,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(to);
     }
 
-    //solhint-disable-next-line
     constructor() {
         _disableInitializers();
     }

@@ -118,7 +118,7 @@ contract CharacterSheetsTest is Test, SetUp {
 
         newContracts.classes = ClassesImplementation(characterSheetsFactory.createClasses());
 
-        newContracts.clones = ClonesAddressStorage(characterSheetsFactory.createClonesStorage());
+        newContracts.clones = ClonesAddressStorageImplementation(characterSheetsFactory.createClonesStorage());
 
         newContracts.characterEligibility = CharacterEligibilityAdaptor(
             characterSheetsFactory.createCharacterEligibilityAdaptor(
@@ -256,7 +256,7 @@ contract CharacterSheetsTest is Test, SetUp {
         address newClonesStorage = characterSheetsFactory.createAndInitialize(
             address(dao), adminArray, gameMastersArray, encodedHatsStrings, encodedSheetsStrings
         );
-        ClonesAddressStorage newClones = ClonesAddressStorage(newClonesStorage);
+        ClonesAddressStorageImplementation newClones = ClonesAddressStorageImplementation(newClonesStorage);
         CharacterSheetsImplementation newSheets = CharacterSheetsImplementation(newClones.characterSheets());
         HatsAdaptor newHatsAdaptor = HatsAdaptor(newClones.hatsAdaptor());
         assert(newClones.hatsAdaptor() != address(0));

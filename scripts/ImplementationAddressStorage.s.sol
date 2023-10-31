@@ -4,7 +4,6 @@ pragma solidity ^0.8.19;
 import {ImplementationAddressStorage} from "../src/ImplementationAddressStorage.sol";
 
 import {BaseDeployer} from "./BaseDeployer.sol";
-import {BaseFactoryExecutor} from "./BaseExecutor.sol";
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
 

@@ -11,7 +11,7 @@ import "../lib/Structs.sol";
 
 // import "forge-std/console2.sol";
 
-contract ClonesAddressStorage is UUPSUpgradeable {
+contract ClonesAddressStorageImplementation is UUPSUpgradeable {
     //cloned contracts
     ClonesAddresses internal _clones;
 
