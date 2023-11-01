@@ -108,7 +108,7 @@ TX_BLOCK_NUMBER=$(cast receipt $TX_HASH --rpc-url $NETWORK | grep "blockNumber" 
 BLOCK_NUMBER=$(cast block-number --rpc-url $NETWORK)
 CONFIRMATIONS=$(($BLOCK_NUMBER - $TX_BLOCK_NUMBER))
 while [[ $CONFIRMATIONS -lt 1 ]]; do
-    echo "Waiting for transaction to be mined upto 1 confirmation..."
+    echo "Waiting for transaction to be mined up to 1 confirmation..."
     sleep 10
     BLOCK_NUMBER=$(cast block-number --rpc-url $NETWORK)
     CONFIRMATIONS=$(($BLOCK_NUMBER - $TX_BLOCK_NUMBER))
