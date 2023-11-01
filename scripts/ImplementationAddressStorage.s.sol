@@ -4,7 +4,6 @@ pragma solidity ^0.8.19;
 import {ImplementationAddressStorage} from "../src/ImplementationAddressStorage.sol";
 
 import {BaseDeployer} from "./BaseDeployer.sol";
-import {BaseFactoryExecutor} from "./BaseExecutor.sol";
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
 
@@ -113,7 +112,7 @@ contract DeployImplementationAddressStorage is BaseDeployer {
         implementationAddresses.erc6551AccountImplementation =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterAccount")));
         implementationAddresses.characterEligibilityAdaptorImplementation =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterEligibilityAdaptorImplementation")));
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterEligibilityAdaptor")));
         hatsAddresses.adminHatsEligibilityModule =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".AdminHatsEligibilityModule")));
         hatsAddresses.gameMasterHatsEligibilityModule =
@@ -126,9 +125,9 @@ contract DeployImplementationAddressStorage is BaseDeployer {
 
     function _loadExternalAddresses(string memory json, string memory targetEnv) internal {
         implementationAddresses.classLevelAdaptorImplementation =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".ClassLevelAdaptorImplementation")));
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".ClassLevelAdaptor")));
         implementationAddresses.hatsAdaptorImplementation =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".HatsAdaptorImplementation")));
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".HatsAdaptor")));
         implementationAddresses.cloneAddressStorage =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".CloneAddressStorage")));
         hatsAddresses.hatsContract = json.readAddress(string(abi.encodePacked(".", targetEnv, ".HatsContract")));

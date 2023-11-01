@@ -65,6 +65,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     event PlayerHatEligibilityModuleUpdated(address newPlayerHatEligibilityModule);
     event CharacterHatEligibilityModuleUpdated(address newCharacterHatEligibilityModule);
     event AdminEligibilityModuleUpdated(address newAdminEligibilityModule);
+    event HatTreeInitialized(address owner, bytes hatsAddresses, bytes hatsStrings, bytes customModuleImplementations);
 
     constructor() {
         _disableInitializers();
@@ -304,6 +305,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         // init character hats
         _initCharacterHat(_initStruct.hatsStrings, _initStruct._owner, _initStruct.customModuleImplementations);
 
+        emit HatTreeInitialized(_initStruct._owner, _initStruct.hatsAddresses, _initStruct.hatsStrings, _initStruct.customModuleImplementations);
         return true;
     }
 

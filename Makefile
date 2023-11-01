@@ -35,7 +35,7 @@ anvil :; anvil -m 'junk junk junk junk junk junk junk junk junk junk junk junk'
 # deploy commands
 deploy-anvil :; ./scripts/deploy.sh anvil ${contract}
 deploy-sepolia :; ./scripts/deploy.sh sepolia ${contract} --verify
-deploy-goerli :; ./scripts/deploy.sh goerli ${contract} --verify
+deploy-goerli :; ./scripts/deploy.sh goerli ${contract} --verify --force
 deploy-gnosis :; ./scripts/deploy.sh gnosis ${contract} --verify
 
 # verify commands
@@ -56,7 +56,7 @@ deploy-contracts :; make deploy-${network} contract=CharacterAccount && \
 	make deploy-${network} contract=GameMasterHatEligibilityModule && \
 	make deploy-${network} contract=PlayerHatEligibilityModule && \
 	make deploy-${network} contract=CharacterHatEligibilityModule && \
-	make deploy-${network} contract=ClonesAddressStorage && \
+	make deploy-${network} contract=ClonesAddressStorageImplementation && \
 	make deploy-${network} contract=ImplementationAddressStorage && \
 	make deploy-${network} contract=CharacterSheetsFactory;
 
@@ -73,7 +73,7 @@ verify-contracts :; make verify-${network} contract=CharacterAccount && \
 	make verify-${network} contract=GameMasterHatEligibilityModule && \
 	make verify-${network} contract=PlayerHatEligibilityModule && \
 	make verify-${network} contract=CharacterHatEligibilityModule && \
-	make deploy-${network} contract=ClonesAddressStorage && \
+	make deploy-${network} contract=ClonesAddressStorageImplementation && \
 	make deploy-${network} contract=ImplementationAddressStorage && \
 	make verify-${network} contract=CharacterSheetsFactory;
 

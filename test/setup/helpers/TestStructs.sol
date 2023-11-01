@@ -13,7 +13,7 @@ import {ExperienceImplementation} from "../../../src/implementations/ExperienceI
 
 //address storage
 import {ImplementationAddressStorage} from "../../../src/ImplementationAddressStorage.sol";
-import {ClonesAddressStorage} from "../../../src/implementations/ClonesAddressStorage.sol";
+import {ClonesAddressStorageImplementation} from "../../../src/implementations/ClonesAddressStorageImplementation.sol";
 
 //adaptors
 import {CharacterEligibilityAdaptor} from "../../../src/adaptors/CharacterEligibilityAdaptor.sol";
@@ -51,7 +51,7 @@ interface TestStructs {
         ItemsImplementation items;
         ItemsManagerImplementation itemsManager;
         ClassesImplementation classes;
-        ClonesAddressStorage clones;
+        ClonesAddressStorageImplementation clones;
         CharacterEligibilityAdaptor characterEligibility;
         ClassLevelAdaptor classLevels;
         HatsAdaptor hatsAdaptor;
@@ -95,7 +95,7 @@ interface TestStructs {
         ItemsImplementation items;
         ItemsManagerImplementation itemsManager;
         ClassesImplementation classes;
-        ClonesAddressStorage clonesAddressStorage;
+        ClonesAddressStorageImplementation clonesAddressStorage;
         CharacterEligibilityAdaptor characterEligibilityAdaptor;
         ClassLevelAdaptor classLevelAdaptor;
         HatsAdaptor hatsAdaptor;
