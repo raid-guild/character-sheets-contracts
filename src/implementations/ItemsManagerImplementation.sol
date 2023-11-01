@@ -131,39 +131,6 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         return success;
     }
 
-    // function removeItemRequirement(uint256 itemId, address assetAddress, uint256 assetId)
-    //     public
-    //     onlyItemsContract
-    //     returns (bool)
-    // {
-    //     Asset[] storage arr = _requirements[itemId];
-    //     bool success = false;
-    //     for (uint256 i; i < arr.length; i++) {
-    //         Asset storage asset = arr[i];
-    //         if (asset.assetAddress == assetAddress && asset.id == assetId) {
-    //             for (uint256 j = i; j < arr.length; j++) {
-    //                 if (j + 1 < arr.length) {
-    //                     arr[j] = arr[j + 1];
-    //                 } else if (j + 1 >= arr.length) {
-    //                     arr[j] = MultiToken.ERC20(address(0), 0);
-    //                 }
-    //             }
-    //             success = true;
-    //         }
-    //     }
-
-    //     if (success == true) {
-    //         _requirements[itemId] = arr;
-    //         _requirements[itemId].pop();
-    //     } else {
-    //         revert Errors.ItemError();
-    //     }
-
-    //     emit RequirementRemoved(itemId, assetAddress, assetId);
-
-    //     return success;
-    // }
-
     function checkRequirements(address characterAccount, uint256 itemId, uint256 amount)
         public
         view

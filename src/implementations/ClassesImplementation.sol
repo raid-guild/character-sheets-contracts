@@ -86,7 +86,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     /**
      * @dev Sets `baseURI` as the `_baseURI` for all tokens
      */
-    function setBaseURI(string memory _baseUri) external onlyGameMaster {
+    function setBaseURI(string memory _baseUri) external onlyAdmin {
         _baseURI = _baseUri;
         emit BaseURIUpdated(_baseUri);
     }
@@ -94,7 +94,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     /**
      * @dev Sets `tokenURI` as the tokenURI of `tokenId`.
      */
-    function setURI(uint256 tokenId, string memory tokenURI) external onlyGameMaster {
+    function setURI(uint256 tokenId, string memory tokenURI) external onlyAdmin {
         _classURIs[tokenId] = tokenURI;
         emit URI(uri(tokenId), tokenId);
     }
@@ -213,16 +213,16 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     }
 
     function deLevelClass(address characterAccount, uint256 classId, uint256 numberOfLevels) public returns (uint256) {
+        if (clones.classLevelAdaptor() == address(0)) {
+            revert Errors.NotInitialized();
+        }
+
         if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(characterAccount)) {
             revert Errors.CharacterError();
         }
 
         if (characterAccount != msg.sender && !IHatsAdaptor(clones.hatsAdaptor()).isGameMaster(msg.sender)) {
             revert Errors.CallerNotApproved();
-        }
-
-        if (clones.classLevelAdaptor() == address(0)) {
-            revert Errors.NotInitialized();
         }
 
         // 1 class token == level 0;

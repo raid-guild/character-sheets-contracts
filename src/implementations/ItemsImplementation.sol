@@ -11,7 +11,7 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UU
 
 import {Errors} from "../lib/Errors.sol";
 import {MultiToken, Asset, Category} from "../lib/MultiToken.sol";
-import {ItemsManagerImplementation} from "./ItemsManagerImplementation.sol";
+import {IItemsManager} from "../interfaces/IItemsManager.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 //solhint-disable-next-line
 import "../lib/Structs.sol";
@@ -50,7 +50,7 @@ contract ItemsImplementation is
 
     IClonesAddressStorage public clones;
 
-    ItemsManagerImplementation public itemsManager;
+    IItemsManager public itemsManager;
 
     event NewItemTypeCreated(uint256 itemId);
     event ItemTransfered(address character, uint256 itemId, uint256 amount);
@@ -89,7 +89,7 @@ contract ItemsImplementation is
         address clonesStorage;
         (clonesStorage, _baseURI) = abi.decode(_encodedData, (address, string));
         clones = IClonesAddressStorage(clonesStorage);
-        itemsManager = ItemsManagerImplementation(clones.itemsManager());
+        itemsManager = IItemsManager(clones.itemsManager());
     }
 
     /**
@@ -184,6 +184,7 @@ contract ItemsImplementation is
     }
 
     function dismantleItems(uint256 itemId, uint256 amount) external onlyCharacter returns (bool success) {
+        // require a successfull dismantle before items can be burnt.
         if (itemsManager.dismantleItems(itemId, amount, msg.sender)) {
             //burn items
             _burn(msg.sender, itemId, amount);
@@ -247,6 +248,25 @@ contract ItemsImplementation is
     }
 
     /**
+     * @notice this item will delete the Item Struct from the items mapping and burn the remaining supply it will also set the enabled bool to false;
+     */
+
+    function deleteItem(uint256 itemId) external onlyGameMaster {
+        // cannot delete an Item that has been supplied to anyone.
+        if (_items[itemId].supplied != 0) {
+            revert Errors.ItemError();
+        }
+
+        //burn supply
+        _burn(address(this), itemId, _items[itemId].supply);
+
+        // delete stuct from mapping this will set enabled to false.
+        delete _items[itemId];
+
+        emit ItemDeleted(itemId);
+    }
+
+    /**
      * @dev Sets `tokenURI` as the tokenURI of `tokenId`.
      */
 
@@ -290,7 +310,7 @@ contract ItemsImplementation is
         super.safeBatchTransferFrom(from, to, ids, amounts, data);
     }
 
-    function withdrawAsset(Asset calldata asset, address to) public onlyGameMaster {
+    function withdrawAsset(Asset calldata asset, address to) public onlyAdmin {
         MultiToken.safeTransferAssetFrom(asset, address(this), to);
     }
 
@@ -399,25 +419,6 @@ contract ItemsImplementation is
             _mint(address(this), _itemId, supply, "");
             _itemURIs[_itemId] = cid;
         }
-    }
-
-    /**
-     * @notice this item will delete the Item Struct from the items mapping and burn the remaining supply it will also set the enabled bool to false;
-     */
-
-    function deleteItem(uint256 itemId) external onlyGameMaster {
-        // cannot delete an Item that has been supplied to anyone.
-        if (_items[itemId].supplied != 0) {
-            revert Errors.ItemError();
-        }
-
-        //burn supply
-        _burn(address(this), itemId, _items[itemId].supply);
-
-        // delete stuct from mapping this will set enabled to false.
-        delete _items[itemId];
-
-        emit ItemDeleted(itemId);
     }
 
     /**
