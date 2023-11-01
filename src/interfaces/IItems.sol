@@ -23,4 +23,6 @@ interface IItems {
     function removeItemRequirement(uint256 itemId, address assetAddress, uint256 assetId) external returns (bool);
 
     function getItem(uint256 itemId) external view returns (Item memory);
+
+    function balanceOf(address account, uint256 itemId) external view returns (uint256);
 }

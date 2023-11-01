@@ -183,12 +183,8 @@ contract ItemsImplementation is
         }
     }
 
-    function dismantleItem(uint256 itemId, uint256 amount) external onlyCharacter returns (bool success) {
-        if (balanceOf(msg.sender, itemId) < amount) {
-            revert Errors.InsufficientBalance();
-        }
-
-        if (itemsManager.dismantleItem(itemId, amount, msg.sender)) {
+    function dismantleItems(uint256 itemId, uint256 amount) external onlyCharacter returns (bool success) {
+        if (itemsManager.dismantleItems(itemId, amount, msg.sender)) {
             //burn items
             _burn(msg.sender, itemId, amount);
 

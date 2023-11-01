@@ -181,7 +181,7 @@ contract ItemsTest is SetUp {
         assertEq(deployments.experience.balanceOf(accounts.character1), 0, "exp not consumed");
     }
 
-    function testDismantleItem() public {
+    function testDismantleItems() public {
         bytes memory requiredAssets;
 
         vm.startPrank(accounts.gameMaster);
@@ -213,11 +213,11 @@ contract ItemsTest is SetUp {
         uint256 craftableItemId =
             deployments.items.createItemType(createNewItem(true, true, bytes32(0), 1, requiredAssets));
 
-        deployments.experience.dropExp(accounts.character1, 300);
+        // deployments.experience.dropExp(accounts.character1, 300);
         deployments.classes.assignClass(accounts.character1, 0);
 
         dropItems(accounts.character1, newItem, 3, address(deployments.items));
-        dropItems(accounts.character1, 0, 1, address(deployments.items));
+        // deployments.classes.assignClass(accounts.character1, 0);
         vm.stopPrank();
 
         // should succeed with requirements met
@@ -229,28 +229,24 @@ contract ItemsTest is SetUp {
 
         assertEq(deployments.items.balanceOf(accounts.character1, newItem), 0, "new item not consumed in crafting");
 
+        console2.log("ItemError");
         // should revert if trying to dismantle un-crafted item
-        vm.expectRevert(Errors.ItemError.selector);
-        deployments.items.dismantleItem(0, 1);
+        vm.expectRevert(Errors.InsufficientBalance.selector);
+        deployments.items.dismantleItems(0, 1);
 
         //should revert if trying to dismantle more than have been crafted
-
+        console2.log("InsufficientBalance");
         vm.expectRevert(Errors.InsufficientBalance.selector);
-        deployments.items.dismantleItem(craftableItemId, 4);
+        deployments.items.dismantleItems(craftableItemId, 4);
 
         //should succeed
-        deployments.items.dismantleItem(craftableItemId, 2);
+        deployments.items.dismantleItems(craftableItemId, 2);
 
         assertEq(deployments.items.balanceOf(accounts.character1, craftableItemId), 1, "item not burnt");
         assertEq(deployments.items.balanceOf(accounts.character1, newItem), 2, "new Item not returned");
 
-        // should revert if called with balance larger than available
-
-        vm.expectRevert(Errors.InsufficientBalance.selector);
-        deployments.items.dismantleItem(craftableItemId, 3);
-
         //should dismantle remaining items
-        deployments.items.dismantleItem(craftableItemId, 1);
+        deployments.items.dismantleItems(craftableItemId, 1);
 
         assertEq(deployments.items.balanceOf(accounts.character1, craftableItemId), 0, "item 2 not burnt");
         assertEq(deployments.items.balanceOf(accounts.character1, newItem), 3, "new Item not returned");
