@@ -5,7 +5,6 @@ import {ERC20Upgradeable} from "openzeppelin-contracts-upgradeable/token/ERC20/E
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {Errors} from "../lib/Errors.sol";
-import {IExperience} from "../interfaces/IExperience.sol";
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 // import "forge-std/console2.sol";
@@ -16,7 +15,7 @@ import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
  * @notice this is an ERC20 that is designed to intereact with the items, character sheets, and classes contracts to provide a measurable amount of character advancment.
  * @dev the digits of this contracts are set to 0.  therefore 1exp = 1exp and is not divisibile into smaller units of exp.
  */
-contract ExperienceImplementation is IExperience, ERC20Upgradeable, UUPSUpgradeable {
+contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
     /// @dev the interface to the characterSheets erc721 implementation that this is tied to
     IClonesAddressStorage public clones;
 

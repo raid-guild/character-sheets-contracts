@@ -17,6 +17,9 @@ contract CharacterEligibilityAdaptorTest is SetUp {
     }
 
     function testIsEligible() public {
-        //#todo finish testing
+        //player 1 should be eligible
+        assertEq(deployments.characterEligibility.isEligible(accounts.player1), true, "player one not eligible");
+        // rando should be ineligible
+        assertEq(deployments.characterEligibility.isEligible(accounts.rando), false, "rando should be ineligible");
     }
 }
