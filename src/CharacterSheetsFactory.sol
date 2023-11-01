@@ -31,7 +31,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
     bytes4 public constant ELIGIBILITY_INTERFACE_ID = 0x671ccc5a;
     bytes4 public constant CLASS_LEVELS_INTERFACE_ID = 0xfe211eb1;
 
-    event NewGameStarted(address starter, address clonesAddressStorage);
+    event NewGameStarted(address starter, address clonesAddressStorage, bytes encodedHatsAddresses, bytes encodedHatsStrings);
     event NewGameCreated(address creator, address clonesAddressStorage);
     event ImplementationAddressStorageUpdated(address newImplementationAddressStorage);
     event ExperienceCreated(address experienceClone);
@@ -262,7 +262,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         ItemsManagerImplementation(clones.itemsManager()).initialize(clonesStorageAddress);
         ExperienceImplementation(clones.experience()).initialize(clonesStorageAddress);
 
-        emit NewGameStarted(msg.sender, clonesStorageAddress);
+        emit NewGameStarted(msg.sender, clonesStorageAddress, encodedHatsAddresses, encodedHatsStrings);
     }
 
     function getImplementationsAddressStorageAddress() public view returns (address) {
