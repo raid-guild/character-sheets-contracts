@@ -31,7 +31,9 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
     bytes4 public constant ELIGIBILITY_INTERFACE_ID = 0x671ccc5a;
     bytes4 public constant CLASS_LEVELS_INTERFACE_ID = 0xfe211eb1;
 
-    event NewGameStarted(address starter, address clonesAddressStorage, bytes encodedHatsAddresses, bytes encodedHatsStrings);
+    event NewGameStarted(
+        address starter, address clonesAddressStorage, bytes encodedHatsAddresses, bytes encodedHatsStrings
+    );
     event NewGameCreated(address creator, address clonesAddressStorage);
     event ImplementationAddressStorageUpdated(address newImplementationAddressStorage);
     event ExperienceCreated(address experienceClone);
@@ -96,12 +98,12 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         bytes calldata encodedHatsStrings,
         bytes calldata sheetsStrings
     ) public returns (address) {
-        address clonesStorage = create(dao);
-        bytes memory encodedHatsAddresses =
-            abi.encode(admins, dungeonMasters, getImplementationsAddressStorageAddress(), clonesStorage);
-        this.initializeContracts(clonesStorage, dao, encodedHatsAddresses, encodedHatsStrings, sheetsStrings);
+        address clones = create(dao);
+        bytes memory encodedHatsAddresses = abi.encode(admins, dungeonMasters, implementations, clones);
 
-        return clonesStorage;
+        this.initializeContracts(clones, dao, encodedHatsAddresses, encodedHatsStrings, sheetsStrings);
+
+        return clones;
     }
 
     function createExperience() public returns (address) {
@@ -263,10 +265,6 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         ExperienceImplementation(clones.experience()).initialize(clonesStorageAddress);
 
         emit NewGameStarted(msg.sender, clonesStorageAddress, encodedHatsAddresses, encodedHatsStrings);
-    }
-
-    function getImplementationsAddressStorageAddress() public view returns (address) {
-        return address(implementations);
     }
 
     function _createSheetsAndItems() private returns (address, address) {

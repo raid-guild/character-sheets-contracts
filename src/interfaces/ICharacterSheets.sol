@@ -37,7 +37,7 @@ interface ICharacterSheets {
     function transferFrom(address from, address to, uint256 characterId) external;
 
     function safeTransferFrom(address from, address to, uint256 characterId, bytes memory) external;
-    
+
     function isItemEquipped(uint256 characterId, uint256 itemId) external view returns (bool);
 
     function getCharacterSheetByCharacterId(uint256 characterId) external view returns (CharacterSheet memory);
@@ -46,9 +46,7 @@ interface ICharacterSheets {
 
     function getCharacterIdByAccountAddress(address _account) external view returns (uint256);
 
-    function tokenURI(uint256 characterId) external view override returns (string memory);
+    function tokenURI(uint256 characterId) external view returns (string memory);
 
-    function supportsInterface(bytes4 interfaceId) external view override(ERC721URIStorageUpgradeable) returns (bool)
-
-
+    function supportsInterface(bytes4 interfaceId) external view returns (bool);
 }

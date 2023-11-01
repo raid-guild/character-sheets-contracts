@@ -305,7 +305,12 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         // init character hats
         _initCharacterHat(_initStruct.hatsStrings, _initStruct._owner, _initStruct.customModuleImplementations);
 
-        emit HatTreeInitialized(_initStruct._owner, _initStruct.hatsAddresses, _initStruct.hatsStrings, _initStruct.customModuleImplementations);
+        emit HatTreeInitialized(
+            _initStruct._owner,
+            _initStruct.hatsAddresses,
+            _initStruct.hatsStrings,
+            _initStruct.customModuleImplementations
+        );
         return true;
     }
 

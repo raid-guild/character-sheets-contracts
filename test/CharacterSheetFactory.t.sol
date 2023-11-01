@@ -8,7 +8,7 @@ import "./setup/SetUp.sol";
 
 // import "forge-std/console2.sol";
 
-contract CharacterSheetsTest is Test, SetUp {
+contract CharacterSheetsFactoryTest is Test, SetUp {
     struct EncodedHatsData {
         bytes encodedHatsAddresses;
         bytes encodedHatsStrings;
@@ -31,7 +31,7 @@ contract CharacterSheetsTest is Test, SetUp {
     // HAPPY PATH
 
     function testDeployment() public {
-        address _implementationStorage = characterSheetsFactory.getImplementationsAddressStorageAddress();
+        address _implementationStorage = address(characterSheetsFactory.implementations());
 
         assertEq(_implementationStorage, address(implementationStorage), "wrong implementations");
     }
@@ -41,7 +41,7 @@ contract CharacterSheetsTest is Test, SetUp {
         vm.expectEmit(true, false, false, false);
         emit ImplementationAddressStorageUpdated(address(1));
         characterSheetsFactory.updateImplementationAddressStorage(address(1));
-        assertEq(characterSheetsFactory.getImplementationsAddressStorageAddress(), address(1));
+        assertEq(address(characterSheetsFactory.implementations()), address(1));
     }
 
     function testCreateExperience() public {
@@ -221,7 +221,7 @@ contract CharacterSheetsTest is Test, SetUp {
         vm.expectRevert();
         characterSheetsFactory.initialize(address(1));
 
-        address _implementationStorage = characterSheetsFactory.getImplementationsAddressStorageAddress();
+        address _implementationStorage = address(characterSheetsFactory.implementations());
         assertEq(_implementationStorage, address(implementationStorage), "wrong implementations");
     }
 
