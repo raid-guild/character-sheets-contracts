@@ -268,15 +268,6 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         emit NewGameStarted(msg.sender, clonesStorageAddress, encodedHatsAddresses, encodedHatsStrings);
     }
 
-    function _checkDao(address dao) private returns (bool) {
-        if (dao != address(0)) {
-            (bool success,) = address(dao).staticcall(abi.encodeWithSelector(bytes4(keccak256("sharesToken()"))));
-            return success;
-        } else {
-            return false;
-        }
-    }
-
     function _createSheetsAndItems() private returns (address, address) {
         address characterSheetsClone = createCharacterSheets();
         address itemsClone = createItems();
@@ -295,6 +286,15 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
             : createClassLevelAdaptor(_classLevelAdaptorImplementation);
 
         return (classesClone, experienceClone, classLevelAdaptorClone);
+    }
+
+    function _checkDao(address dao) private view returns (bool) {
+        if (dao != address(0)) {
+            (bool success,) = address(dao).staticcall(abi.encodeWithSelector(bytes4(keccak256("sharesToken()"))));
+            return success;
+        } else {
+            return false;
+        }
     }
 
     function _encodeCharacterInitData(address clonesStorage, bytes memory data) private view returns (bytes memory) {

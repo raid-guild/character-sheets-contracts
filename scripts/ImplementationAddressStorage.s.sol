@@ -15,7 +15,8 @@ struct ImplementationAddresses {
     address classesImplementation;
     address erc6551AccountImplementation;
     address experienceImplementation;
-    address characterEligibilityAdaptorImplementation;
+    address characterEligibilityAdaptorV2Implementation;
+    address characterEligibilityAdaptorV3Implementation;
     address classLevelAdaptorImplementation;
     address hatsAdaptorImplementation;
     address cloneAddressStorage;
@@ -88,7 +89,10 @@ contract DeployImplementationAddressStorage is BaseDeployer {
 
         implementationAddressStorage = new ImplementationAddressStorage();
         implementationAddressStorage.initialize(
-            _encodeImplementationAddresses(), _encodeAdaptorAndModuleAddresses(), _encodeExternalAddresses()
+            _encodeImplementationAddresses(),
+            _encodeAdaptorAddresses(),
+            _encodeModuleAddresses(),
+            _encodeExternalAddresses()
         );
         vm.stopBroadcast();
 
@@ -111,8 +115,10 @@ contract DeployImplementationAddressStorage is BaseDeployer {
     function _loadAdaptorsAndModuleAddresses(string memory json, string memory targetEnv) internal {
         implementationAddresses.erc6551AccountImplementation =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterAccount")));
-        implementationAddresses.characterEligibilityAdaptorImplementation =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterEligibilityAdaptor")));
+        implementationAddresses.characterEligibilityAdaptorV2Implementation =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterEligibilityAdaptorV2")));
+        implementationAddresses.characterEligibilityAdaptorV3Implementation =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterEligibilityAdaptorV3")));
         hatsAddresses.adminHatsEligibilityModule =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".AdminHatEligibilityModule")));
         hatsAddresses.gameMasterHatsEligibilityModule =
@@ -149,18 +155,26 @@ contract DeployImplementationAddressStorage is BaseDeployer {
         return encodedImplementationAddresses;
     }
 
-    function _encodeAdaptorAndModuleAddresses() internal view returns (bytes memory) {
-        bytes memory encodedAdaptorsAndModuleAddresses = abi.encode(
-            hatsAddresses.adminHatsEligibilityModule,
-            hatsAddresses.gameMasterHatsEligibilityModule,
-            hatsAddresses.playerHatsEligibilityModule,
-            hatsAddresses.characterHatsEligibilityModule,
+    function _encodeAdaptorAddresses() internal view returns (bytes memory) {
+        bytes memory encodedAdaptorsAddresses = abi.encode(
             implementationAddresses.hatsAdaptorImplementation,
-            implementationAddresses.characterEligibilityAdaptorImplementation,
+            implementationAddresses.characterEligibilityAdaptorV2Implementation,
+            implementationAddresses.characterEligibilityAdaptorV3Implementation,
             implementationAddresses.classLevelAdaptorImplementation
         );
 
-        return encodedAdaptorsAndModuleAddresses;
+        return encodedAdaptorsAddresses;
+    }
+
+    function _encodeModuleAddresses() internal view returns (bytes memory) {
+        bytes memory encodedModuleAddresses = abi.encode(
+            hatsAddresses.adminHatsEligibilityModule,
+            hatsAddresses.gameMasterHatsEligibilityModule,
+            hatsAddresses.playerHatsEligibilityModule,
+            hatsAddresses.characterHatsEligibilityModule
+        );
+
+        return encodedModuleAddresses;
     }
 
     function _encodeExternalAddresses() internal view returns (bytes memory) {

@@ -4,13 +4,14 @@ pragma solidity ^0.8.19;
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
-// solhint-disable-next-line
+//solhint-disable-next-line
 import "./lib/Structs.sol";
 
-import "forge-std/console2.sol";
+// import "forge-std/console2.sol";
 
 contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
     ImplementationAddresses internal _implementationsAddresses;
+    AdaptorImplementations internal _adaptors;
 
     // update events
     event CharacterSheetsUpdated(address newCharacterSheets);
@@ -19,8 +20,7 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
     event RegistryUpdated(address newRegistry);
     event ERC6551AccountImplementationUpdated(address newImplementation);
     event ClassesImplementationUpdated(address newClasses);
-    event CharacterEligibilityAdaptorV2Updated(address newAdaptor);
-    event CharacterEligibilityAdaptorV3Updated(address newAdaptor);
+    event CharacterEligibilityAdaptorUpdated(address newAdaptor);
     event ClassLevelAdaptorUpdated(address newAdaptor);
     event HatsAdaptorUpdated(address newHatsAdaptor);
     event ItemsManagerUpdated(address newItemsManager);
@@ -34,14 +34,14 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
 
     function initialize(
         bytes calldata encodedImplementationAddresses,
-        bytes calldata encodedAdaptorAddresses,
         bytes calldata encodedModuleAddresses,
+        bytes calldata encodedAdaptorAddresses,
         bytes calldata encodedExternalAddresses
     ) external initializer {
         __Ownable_init_unchained(msg.sender);
         _initImplementations(encodedImplementationAddresses);
-        _initAdaptors(encodedAdaptorAddresses);
         _initModules(encodedModuleAddresses);
+        _initAdaptors(encodedAdaptorAddresses);
         _initExternalAddresses(encodedExternalAddresses);
     }
 
@@ -79,25 +79,25 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         external
         onlyOwner
     {
-        _implementationsAddresses.characterEligibilityAdaptorV2Implementation = newCharacterEligibilityAdaptor;
-        emit CharacterEligibilityAdaptorV2Updated(newCharacterEligibilityAdaptor);
+        _adaptors.characterEligibilityAdaptorV2Implementation = newCharacterEligibilityAdaptor;
+        emit CharacterEligibilityAdaptorUpdated(newCharacterEligibilityAdaptor);
     }
 
     function updateCharacterEligibilityAdaptorV3Implementation(address newCharacterEligibilityAdaptor)
         external
         onlyOwner
     {
-        _implementationsAddresses.characterEligibilityAdaptorV3Implementation = newCharacterEligibilityAdaptor;
-        emit CharacterEligibilityAdaptorV3Updated(newCharacterEligibilityAdaptor);
+        _adaptors.characterEligibilityAdaptorV3Implementation = newCharacterEligibilityAdaptor;
+        emit CharacterEligibilityAdaptorUpdated(newCharacterEligibilityAdaptor);
     }
 
     function updateClassLevelAdaptorImplementation(address newClassLevelAdaptor) external onlyOwner {
-        _implementationsAddresses.classLevelAdaptorImplementation = newClassLevelAdaptor;
+        _adaptors.classLevelAdaptorImplementation = newClassLevelAdaptor;
         emit ClassLevelAdaptorUpdated(newClassLevelAdaptor);
     }
 
     function updateHatsAdaptorImplementation(address newHatsAdaptor) external onlyOwner {
-        _implementationsAddresses.hatsAdaptorImplementation = newHatsAdaptor;
+        _adaptors.hatsAdaptorImplementation = newHatsAdaptor;
 
         emit HatsAdaptorUpdated(newHatsAdaptor);
     }
@@ -178,19 +178,19 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
     }
 
     function characterEligibilityAdaptorV2Implementation() public view returns (address) {
-        return _implementationsAddresses.characterEligibilityAdaptorV2Implementation;
+        return _adaptors.characterEligibilityAdaptorV2Implementation;
     }
 
     function characterEligibilityAdaptorV3Implementation() public view returns (address) {
-        return _implementationsAddresses.characterEligibilityAdaptorV3Implementation;
+        return _adaptors.characterEligibilityAdaptorV3Implementation;
     }
 
     function classLevelAdaptorImplementation() public view returns (address) {
-        return _implementationsAddresses.classLevelAdaptorImplementation;
+        return _adaptors.classLevelAdaptorImplementation;
     }
 
     function hatsAdaptorImplementation() public view returns (address) {
-        return _implementationsAddresses.hatsAdaptorImplementation;
+        return _adaptors.hatsAdaptorImplementation;
     }
 
     function cloneAddressStorage() public view returns (address) {
@@ -233,22 +233,22 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         ) = abi.decode(encodedImplementationAddresses, (address, address, address, address, address, address, address));
     }
 
-    function _initModules(bytes calldata encodedAdaptorsAndModuleAddresses) internal {
+    function _initModules(bytes calldata encodedModuleAddresses) internal {
         (
             _implementationsAddresses.adminHatsEligibilityModule,
             _implementationsAddresses.gameMasterHatsEligibilityModule,
             _implementationsAddresses.playerHatsEligibilityModule,
             _implementationsAddresses.characterHatsEligibilityModule
-        ) = abi.decode(encodedAdaptorsAndModuleAddresses, (address, address, address, address));
+        ) = abi.decode(encodedModuleAddresses, (address, address, address, address));
     }
 
-    function _initAdaptors(bytes calldata encodedAdaptorsAndModuleAddresses) internal {
+    function _initAdaptors(bytes calldata encodedAdaptorAddresses) internal {
         (
-            _implementationsAddresses.hatsAdaptorImplementation,
-            _implementationsAddresses.characterEligibilityAdaptorV2Implementation,
-            _implementationsAddresses.characterEligibilityAdaptorV3Implementation,
-            _implementationsAddresses.classLevelAdaptorImplementation
-        ) = abi.decode(encodedAdaptorsAndModuleAddresses, (address, address, address, address));
+            _adaptors.hatsAdaptorImplementation,
+            _adaptors.characterEligibilityAdaptorV2Implementation,
+            _adaptors.characterEligibilityAdaptorV3Implementation,
+            _adaptors.classLevelAdaptorImplementation
+        ) = abi.decode(encodedAdaptorAddresses, (address, address, address, address));
     }
 
     function _initExternalAddresses(bytes calldata encodedExternalAddresses) internal {

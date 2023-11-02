@@ -16,8 +16,6 @@ import {ImplementationAddressStorage} from "../../../src/ImplementationAddressSt
 import {ClonesAddressStorageImplementation} from "../../../src/implementations/ClonesAddressStorageImplementation.sol";
 
 //adaptors
-import {CharacterEligibilityAdaptorV2} from "../../../src/adaptors/CharacterEligibilityAdaptorV2.sol";
-import {CharacterEligibilityAdaptorV3} from "../../../src/adaptors/CharacterEligibilityAdaptorV3.sol";
 import {ICharacterEligibilityAdaptor} from "../../../src/interfaces/ICharacterEligibilityAdaptor.sol";
 import {ClassLevelAdaptor} from "../../../src/adaptors/ClassLevelAdaptor.sol";
 import {HatsAdaptor} from "../../../src/adaptors/HatsAdaptor.sol";
@@ -41,8 +39,6 @@ import {PlayerHatEligibilityModule} from "../../../src/adaptors/hats-modules/Pla
 import {CharacterHatEligibilityModule} from "../../../src/adaptors/hats-modules/CharacterHatEligibilityModule.sol";
 
 //test and mocks
-import {IMolochDAOV2} from "../../../src/interfaces/IMolochDAOV2.sol";
-import {IMolochDAOV3} from "../../../src/interfaces/IMolochDAOV3.sol";
 import {Moloch} from "../../../src/mocks/MockMoloch.sol";
 
 import "murky/src/Merkle.sol";
@@ -99,25 +95,21 @@ interface TestStructs {
         ItemsManagerImplementation itemsManager;
         ClassesImplementation classes;
         ClonesAddressStorageImplementation clonesAddressStorage;
-        CharacterEligibilityAdaptorV2 characterEligibilityAdaptorV2;
-        CharacterEligibilityAdaptorV3 characterEligibilityAdaptorV3;
-        ClassLevelAdaptor classLevelAdaptor;
-        HatsAdaptor hatsAdaptor;
         AdminHatEligibilityModule adminModule;
         GameMasterHatEligibilityModule dmModule;
         PlayerHatEligibilityModule playerModule;
         CharacterHatEligibilityModule characterModule;
     }
 
+    struct Adaptors {
+        ICharacterEligibilityAdaptor characterEligibilityAdaptorV2;
+        ICharacterEligibilityAdaptor characterEligibilityAdaptorV3;
+        ClassLevelAdaptor classLevelAdaptor;
+        HatsAdaptor hatsAdaptor;
+    }
+
     struct ERC6551Contracts {
         ERC6551Registry erc6551Registry;
         CharacterAccount erc6551Implementation;
     }
-
-    // struct EncodedAddresses {
-    //     bytes encodedImplementationAddresses;
-    //     bytes encodedModuleAddresses;
-    //     bytes encodedAdaptorAddresses;
-    //     bytes encodedExternalAddresses;
-    // }
 }

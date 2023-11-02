@@ -86,10 +86,6 @@ struct ImplementationAddresses {
     address erc6551Registry;
     address erc6551AccountImplementation;
     address experienceImplementation;
-    address characterEligibilityAdaptorV2Implementation;
-    address characterEligibilityAdaptorV3Implementation;
-    address classLevelAdaptorImplementation;
-    address hatsAdaptorImplementation;
     address cloneAddressStorage;
     //hats addresses
     address hatsContract;
@@ -99,4 +95,11 @@ struct ImplementationAddresses {
     address gameMasterHatsEligibilityModule;
     address playerHatsEligibilityModule;
     address characterHatsEligibilityModule;
+}
+
+struct AdaptorImplementations {
+    address characterEligibilityAdaptorV2Implementation;
+    address characterEligibilityAdaptorV3Implementation;
+    address classLevelAdaptorImplementation;
+    address hatsAdaptorImplementation;
 }

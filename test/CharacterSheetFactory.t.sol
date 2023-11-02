@@ -45,7 +45,7 @@ contract CharacterSheetsFactoryTest is Test, SetUp {
     }
 
     function testCreateExperience() public {
-        address expectedExperience = 0xD9Ce15d0e3c74B4bc3FC19c15114fc34F95c0Df3;
+        address expectedExperience = 0x45fD5C784fdde25103Cd82cB97065B36Ac227f2a;
         vm.startPrank(accounts.player1);
         vm.expectEmit(true, false, false, false);
         emit ExperienceCreated(expectedExperience);
@@ -56,7 +56,7 @@ contract CharacterSheetsFactoryTest is Test, SetUp {
     }
 
     function testCreateCharacterSheets() public {
-        address expectedCharacterSheets = 0xD9Ce15d0e3c74B4bc3FC19c15114fc34F95c0Df3;
+        address expectedCharacterSheets = 0x45fD5C784fdde25103Cd82cB97065B36Ac227f2a;
         vm.startPrank(accounts.player1);
         vm.expectEmit(true, false, false, false);
         emit CharacterSheetsCreated(expectedCharacterSheets);
@@ -121,19 +121,15 @@ contract CharacterSheetsFactoryTest is Test, SetUp {
         newContracts.clones = ClonesAddressStorageImplementation(characterSheetsFactory.createClonesStorage());
 
         newContracts.characterEligibility = ICharacterEligibilityAdaptor(
-            characterSheetsFactory.createCharacterEligibilityAdaptor(
-                address(implementations.characterEligibilityAdaptorV2)
-            )
+            characterSheetsFactory.createCharacterEligibilityAdaptor(address(adaptors.characterEligibilityAdaptorV2))
         );
 
-        newContracts.classLevels = ClassLevelAdaptor(
-            characterSheetsFactory.createClassLevelAdaptor(address(implementations.classLevelAdaptor))
-        );
+        newContracts.classLevels =
+            ClassLevelAdaptor(characterSheetsFactory.createClassLevelAdaptor(address(adaptors.classLevelAdaptor)));
 
         newContracts.itemsManager = ItemsManagerImplementation(characterSheetsFactory.createItemsManager());
 
-        newContracts.hatsAdaptor =
-            HatsAdaptor(characterSheetsFactory.createHatsAdaptor(address(implementations.hatsAdaptor)));
+        newContracts.hatsAdaptor = HatsAdaptor(characterSheetsFactory.createHatsAdaptor(address(adaptors.hatsAdaptor)));
 
         address[] memory adminArray = createAddressMemoryArray(1);
         adminArray[0] = accounts.admin;
