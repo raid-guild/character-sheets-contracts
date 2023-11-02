@@ -12,7 +12,7 @@ import {CharacterSheetsImplementation} from "./implementations/CharacterSheetsIm
 import {ClassesImplementation} from "./implementations/ClassesImplementation.sol";
 import {ExperienceImplementation} from "./implementations/ExperienceImplementation.sol";
 import {ItemsImplementation} from "./implementations/ItemsImplementation.sol";
-import {CharacterEligibilityAdaptor} from "./adaptors/CharacterEligibilityAdaptor.sol";
+import {ICharacterEligibilityAdaptor} from "./interfaces/ICharacterEligibilityAdaptor.sol";
 import {ClassLevelAdaptor} from "./adaptors/ClassLevelAdaptor.sol";
 import {ItemsManagerImplementation} from "./implementations/ItemsManagerImplementation.sol";
 import {HatsAdaptor} from "./adaptors/HatsAdaptor.sol";
@@ -64,7 +64,9 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         address itemsManagerClone = createItemsManager();
         address hatsAdaptorClone = createHatsAdaptor();
 
-        address characterEligibilityAdaptorClone = dao != address(0) ? createCharacterEligibilityAdaptor() : address(0);
+        address characterEligibilityAdaptorClone = _checkDao(dao)
+            ? createCharacterEligibilityAdaptor(implementations.characterEligibilityAdaptorV3Implementation())
+            : createCharacterEligibilityAdaptor();
 
         (address characterSheetsClone, address itemsClone) = _createSheetsAndItems();
 
@@ -156,10 +158,10 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
     }
 
     function createCharacterEligibilityAdaptor() public returns (address) {
-        if (implementations.characterEligibilityAdaptorImplementation() == address(0)) {
+        if (implementations.characterEligibilityAdaptorV2Implementation() == address(0)) {
             revert Errors.NotInitialized();
         }
-        return createCharacterEligibilityAdaptor(implementations.characterEligibilityAdaptorImplementation());
+        return createCharacterEligibilityAdaptor(implementations.characterEligibilityAdaptorV2Implementation());
     }
 
     function createCharacterEligibilityAdaptor(address _characterEligibilityAdaptorImplementation)
@@ -249,8 +251,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
     ) public {
         IClonesAddressStorage clones = IClonesAddressStorage(clonesStorageAddress);
 
-        //stacc too dank
-        CharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).initialize(msg.sender, dao);
+        ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).initialize(msg.sender, dao);
         ClassLevelAdaptor(clones.classLevelAdaptor()).initialize(clonesStorageAddress);
         HatsAdaptor(clones.hatsAdaptor()).initialize(msg.sender, encodedHatsAddresses, encodedHatsStrings);
 
@@ -265,6 +266,15 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         ExperienceImplementation(clones.experience()).initialize(clonesStorageAddress);
 
         emit NewGameStarted(msg.sender, clonesStorageAddress, encodedHatsAddresses, encodedHatsStrings);
+    }
+
+    function _checkDao(address dao) private returns (bool) {
+        if (dao != address(0)) {
+            (bool success,) = address(dao).staticcall(abi.encodeWithSelector(bytes4(keccak256("sharesToken()"))));
+            return success;
+        } else {
+            return false;
+        }
     }
 
     function _createSheetsAndItems() private returns (address, address) {

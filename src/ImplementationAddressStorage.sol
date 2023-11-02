@@ -4,10 +4,10 @@ pragma solidity ^0.8.19;
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
-//solhint-disable-next-line
+// solhint-disable-next-line
 import "./lib/Structs.sol";
 
-// import "forge-std/console2.sol";
+import "forge-std/console2.sol";
 
 contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
     ImplementationAddresses internal _implementationsAddresses;
@@ -19,7 +19,8 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
     event RegistryUpdated(address newRegistry);
     event ERC6551AccountImplementationUpdated(address newImplementation);
     event ClassesImplementationUpdated(address newClasses);
-    event CharacterEligibilityAdaptorUpdated(address newAdaptor);
+    event CharacterEligibilityAdaptorV2Updated(address newAdaptor);
+    event CharacterEligibilityAdaptorV3Updated(address newAdaptor);
     event ClassLevelAdaptorUpdated(address newAdaptor);
     event HatsAdaptorUpdated(address newHatsAdaptor);
     event ItemsManagerUpdated(address newItemsManager);
@@ -33,12 +34,14 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
 
     function initialize(
         bytes calldata encodedImplementationAddresses,
-        bytes calldata encodedAdaptorsAndMOduleAddresses,
+        bytes calldata encodedAdaptorAddresses,
+        bytes calldata encodedModuleAddresses,
         bytes calldata encodedExternalAddresses
     ) external initializer {
         __Ownable_init_unchained(msg.sender);
         _initImplementations(encodedImplementationAddresses);
-        _initAdaptorsAndModules(encodedAdaptorsAndMOduleAddresses);
+        _initAdaptors(encodedAdaptorAddresses);
+        _initModules(encodedModuleAddresses);
         _initExternalAddresses(encodedExternalAddresses);
     }
 
@@ -72,12 +75,20 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         emit ClassesImplementationUpdated(newClasses);
     }
 
-    function updateCharacterEligibilityAdaptorImplementation(address newCharacterEligibilityAdaptor)
+    function updateCharacterEligibilityAdaptorV2Implementation(address newCharacterEligibilityAdaptor)
         external
         onlyOwner
     {
-        _implementationsAddresses.characterEligibilityAdaptorImplementation = newCharacterEligibilityAdaptor;
-        emit CharacterEligibilityAdaptorUpdated(newCharacterEligibilityAdaptor);
+        _implementationsAddresses.characterEligibilityAdaptorV2Implementation = newCharacterEligibilityAdaptor;
+        emit CharacterEligibilityAdaptorV2Updated(newCharacterEligibilityAdaptor);
+    }
+
+    function updateCharacterEligibilityAdaptorV3Implementation(address newCharacterEligibilityAdaptor)
+        external
+        onlyOwner
+    {
+        _implementationsAddresses.characterEligibilityAdaptorV3Implementation = newCharacterEligibilityAdaptor;
+        emit CharacterEligibilityAdaptorV3Updated(newCharacterEligibilityAdaptor);
     }
 
     function updateClassLevelAdaptorImplementation(address newClassLevelAdaptor) external onlyOwner {
@@ -166,8 +177,12 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         return _implementationsAddresses.erc6551AccountImplementation;
     }
 
-    function characterEligibilityAdaptorImplementation() public view returns (address) {
-        return _implementationsAddresses.characterEligibilityAdaptorImplementation;
+    function characterEligibilityAdaptorV2Implementation() public view returns (address) {
+        return _implementationsAddresses.characterEligibilityAdaptorV2Implementation;
+    }
+
+    function characterEligibilityAdaptorV3Implementation() public view returns (address) {
+        return _implementationsAddresses.characterEligibilityAdaptorV3Implementation;
     }
 
     function classLevelAdaptorImplementation() public view returns (address) {
@@ -218,18 +233,22 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         ) = abi.decode(encodedImplementationAddresses, (address, address, address, address, address, address, address));
     }
 
-    function _initAdaptorsAndModules(bytes calldata encodedAdaptorsAndModuleAddresses) internal {
+    function _initModules(bytes calldata encodedAdaptorsAndModuleAddresses) internal {
         (
             _implementationsAddresses.adminHatsEligibilityModule,
             _implementationsAddresses.gameMasterHatsEligibilityModule,
             _implementationsAddresses.playerHatsEligibilityModule,
-            _implementationsAddresses.characterHatsEligibilityModule,
+            _implementationsAddresses.characterHatsEligibilityModule
+        ) = abi.decode(encodedAdaptorsAndModuleAddresses, (address, address, address, address));
+    }
+
+    function _initAdaptors(bytes calldata encodedAdaptorsAndModuleAddresses) internal {
+        (
             _implementationsAddresses.hatsAdaptorImplementation,
-            _implementationsAddresses.characterEligibilityAdaptorImplementation,
+            _implementationsAddresses.characterEligibilityAdaptorV2Implementation,
+            _implementationsAddresses.characterEligibilityAdaptorV3Implementation,
             _implementationsAddresses.classLevelAdaptorImplementation
-        ) = abi.decode(
-            encodedAdaptorsAndModuleAddresses, (address, address, address, address, address, address, address)
-        );
+        ) = abi.decode(encodedAdaptorsAndModuleAddresses, (address, address, address, address));
     }
 
     function _initExternalAddresses(bytes calldata encodedExternalAddresses) internal {
