@@ -4,12 +4,14 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
-import {ForkManagement} from "./helpers/ForkManagement.sol";
 import "forge-std/console2.sol";
+
+import {ForkManagement} from "./helpers/ForkManagement.sol";
 
 abstract contract BaseDeployer is Script, ForkManagement {
     using stdJson for string;
 
+    string public _version = "version 0.1";
     uint256 deployerPrivateKey;
     address deployer;
 
@@ -27,7 +29,8 @@ abstract contract BaseDeployer is Script, ForkManagement {
             deployer = vm.addr(deployerPrivateKey);
         }
 
-        console2.log("\nDeployer address:", deployer);
+        console2.log("\n");
+        console2.log("Deployer address:", deployer);
         console2.log("Deployer balance:", deployer.balance);
     }
 

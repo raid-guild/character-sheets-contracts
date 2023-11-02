@@ -4,8 +4,9 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
-import {ForkManagement} from "./helpers/ForkManagement.sol";
 import "forge-std/console2.sol";
+
+import {ForkManagement} from "./helpers/ForkManagement.sol";
 
 contract BaseExecutor is Script, ForkManagement {
     using stdJson for string;
@@ -47,6 +48,7 @@ contract BaseExecutor is Script, ForkManagement {
     function execute() internal virtual {}
 }
 
+/*
 abstract contract BaseFactoryExecutor is Script, ForkManagement {
     using stdJson for string;
 
@@ -77,9 +79,16 @@ abstract contract BaseFactoryExecutor is Script, ForkManagement {
         loadBaseData(json, targetEnv);
         loadPrivateKeys();
 
-        (address characterSheetsAddresss, address experienceAddress, address classesAddress) = create();
-        console.log("New contracts created: ", characterSheetsAddresss, experienceAddress, classesAddress);
+        (address characterSheetsAddresss, address classesAddress, address itemsAddress, address experienceAddress) =
+            create();
+        console.log("New Character Sheets Address:", characterSheetsAddresss);
+        console.log("New Classes Address:", classesAddress);
+        console.log("New Items Address:", itemsAddress);
+        console.log("New Experience Address:", experienceAddress);
     }
 
-    function create() internal virtual returns (address, address, address) {}
+    function create() internal virtual returns (address, address, address, address) {}
+
+    function initializeContracts() internal virtual {}
 }
+*/

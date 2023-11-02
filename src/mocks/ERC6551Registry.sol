@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Create2} from "openzeppelin-contracts/contracts/utils/Create2.sol";
+import {Create2} from "openzeppelin-contracts/utils/Create2.sol";
 
 import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
 import {ERC6551BytecodeLib} from "../lib/ERC6551BytecodeLib.sol";

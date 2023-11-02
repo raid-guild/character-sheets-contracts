@@ -1,8 +1,8 @@
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.20;
 
 // SPDX-License-Identifier: MIT
 
-interface IMolochDAO {
+interface IMolochDAOV2 {
     struct Member {
         address delegateKey; // the key responsible for submitting proposals and voting - defaults to member address unless updated
         uint256 shares; // the # of voting shares assigned to this member
@@ -12,5 +12,5 @@ interface IMolochDAO {
         uint256 jailed; // set to proposalIndex of a passing guild kick proposal for this member, prevents voting on and sponsoring proposals
     }
 
-    function members(address memberAddress) external returns (Member memory member);
+    function members(address memberAddress) external view returns (Member memory member);
 }

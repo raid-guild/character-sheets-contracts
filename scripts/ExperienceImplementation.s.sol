@@ -1,33 +1,34 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {ExperienceAndItemsImplementation} from "../src/implementations/ExperienceAndItemsImplementation.sol";
-import {BaseExecutor} from "./BaseExecutor.sol";
-import {BaseDeployer} from "./BaseDeployer.sol";
-import "../src/lib/Structs.sol";
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
 
-contract DeployExperienceAndItemsImplementation is BaseDeployer {
+import {ExperienceImplementation} from "../src/implementations/ExperienceImplementation.sol";
+import {BaseExecutor} from "./BaseExecutor.sol";
+import {BaseDeployer} from "./BaseDeployer.sol";
+import "../src/lib/Structs.sol";
+
+contract DeployExperienceImplementation is BaseDeployer {
     using stdJson for string;
 
-    ExperienceAndItemsImplementation public experienceAndItemsImplementation;
+    ExperienceImplementation public experienceImplementation;
 
     function deploy() internal override returns (address) {
         vm.startBroadcast(deployerPrivateKey);
 
-        experienceAndItemsImplementation = new ExperienceAndItemsImplementation();
+        experienceImplementation = new ExperienceImplementation();
 
         vm.stopBroadcast();
 
-        return address(experienceAndItemsImplementation);
+        return address(experienceImplementation);
     }
 }
 
-contract ExecuteExperienceAndItemsImplementation is BaseExecutor {
+contract ExecuteExperienceImplementation is BaseExecutor {
     using stdJson for string;
 
-    ExperienceAndItemsImplementation public experience;
+    ExperienceImplementation public experience;
     address public experienceAddress;
     string public itemName;
     uint256 public supply;
@@ -39,7 +40,7 @@ contract ExecuteExperienceAndItemsImplementation is BaseExecutor {
 
     function loadBaseData(string memory json, string memory targetEnv) internal override {
         experienceAddress = json.readAddress(string(abi.encodePacked(".", targetEnv, ".CreatedExperienceAndItems")));
-        experience = ExperienceAndItemsImplementation(experienceAddress);
+        experience = ExperienceImplementation(experienceAddress);
         uri = json.readString(string(abi.encodePacked(".", targetEnv, ".Items[", arrIndex, "].cid")));
         soulbound = json.readBool(string(abi.encodePacked(".", targetEnv, ".Items[", arrIndex, "].soulbound")));
         supply = json.readUint(string(abi.encodePacked(".", targetEnv, ".Items[", arrIndex, "].supply")));
@@ -58,13 +59,13 @@ contract ExecuteExperienceAndItemsImplementation is BaseExecutor {
     }
 
     function execute() internal override {
-        bytes32 merkleRoot = _createMerkleRoot();
-        bytes memory encodedData =
-            abi.encode(itemName, supply, itemRequirements, classRequirements, soulbound, merkleRoot, uri);
+        // bytes32 merkleRoot = _createMerkleRoot();
+        // bytes memory encodedData =
+        //     abi.encode(itemName, supply, itemRequirements, classRequirements, soulbound, merkleRoot, uri);
 
-        vm.broadcast(deployerPrivateKey);
-        uint256 newItemId = experience.createItemType(encodedData);
-        console.log("New Item Id: ", newItemId);
+        // vm.broadcast(deployerPrivateKey);
+        // uint256 newItemId = experience.createItemType(encodedData);
+        // console.log("New Item Id: ", newItemId);
     }
 
     function _createMerkleRoot() internal pure returns (bytes32) {

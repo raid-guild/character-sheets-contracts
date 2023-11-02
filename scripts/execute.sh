@@ -142,8 +142,9 @@ CREATEDCLASSES=$(node scripts/helpers/readAddress.js $1 CreatedClasses)
             if [[ $NEWCLASSCONF == "y" || $NEWCLASSCONF == "Y" ]]
                 then
                     read -p "Please enter the name for your new class: " NEWCLASSNAME
+                    read -P "Would you like Characters to be able to claim this class? (y/n) " NEWCLAIM
                     read -p "Please enter a URI for your new class (leave blank for default): " NEWURI
-                    JSINPUT="$NEWCLASSNAME;$NEWURI"
+                    JSINPUT="$NEWCLASSNAME;NEWCLAIM;$NEWURI"
             SAVE_DATA=$(node scripts/helpers/saveExecutionData.js $1 Classes $JSINPUT)
             echo "$SAVE_DATA"
             INDEXOFNEWITEM=$(echo "$SAVE_DATA" | grep -oE '[[:digit:]]' | tr -d '\n' )
@@ -176,7 +177,7 @@ cat << "EOF"
  *******************************************************************************************
 EOF
 
-    CONTRACT="ExperienceAndItemsImplementation"
+    CONTRACT="ItemsImplementation"
     CREATEDEXPERIENCEANDITEMS=$(node scripts/helpers/readAddress.js $1 CreatedExperienceAndItems)
     if [[ $CREATEDEXPERIENCEANDITEMS != "" ]]
         then

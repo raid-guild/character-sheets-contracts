@@ -1,13 +1,42 @@
 [profile.default]
-solc = "0.8.20"
-bytecode_hash = "none"
-optimizer_runs = 10000
-fs_permissions = [{ access = "read-write", path = "./addresses.json" }]
-libs = ["lib"]
+  solc = "0.8.20"
+  bytecode_hash = "none"
+  optimizer = true
+  optimizer_runs = 20_000
+  fs_permissions = [{ access = "read-write", path = "./addresses.json" }]
+  libs = ["lib"]
+  remappings = [
+      "@openzeppelin-contracts/=lib/hats-module/lib/openzeppelin-contracts/",
+      "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+      "ERC1155/=lib/hats-protocol/lib/ERC1155/",
+      "ds-test/=lib/forge-std/lib/ds-test/src/",
+      "erc4626-tests/=lib/openzeppelin-contracts-upgradeable/lib/erc4626-tests/",
+      "forge-std/=lib/forge-std/src/",
+      "hats-module/=lib/hats-module/src/",
+      "hats-protocol/=lib/hats-protocol/src/",
+      "murky/=lib/murky/",
+      "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      "openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/",
+      "openzeppelin/=lib/hats-module/lib/openzeppelin-contracts/contracts/",
+      "solady/=lib/hats-protocol/lib/solady/src/",
+      "solbase/=lib/hats-protocol/lib/solbase/src/",
+      "utils/=lib/hats-protocol/lib/utils/",
+  ]
+
 [profile.intense.fuzz]
-runs = 10000
+  runs = 10000
 
 [rpc_endpoints]
-gnosis = "${GNOSIS_RPC_URL}"
-sepolia = "${SEPOLIA_RPC_URL}"
-goerli = "${GOERLI_RPC_URL}"
+  gnosis = "${GNOSIS_RPC_URL}"
+  sepolia = "${SEPOLIA_RPC_URL}"
+  goerli = "${GOERLI_RPC_URL}"
+
+[etherscan]
+  arbitrum = { key = "${ARBISCAN_API_KEY}" }
+  goerli = { key = "${ETHERSCAN_API_KEY}" }
+  mainnet = { key = "${ETHERSCAN_API_KEY}" }
+  optimism = { key = "${OPTIMISTIC_ETHERSCAN_API_KEY}" }
+  polygon = { key = "${POLYGONSCAN_API_KEY}" }
+  sepolia = { key = "${ETHERSCAN_API_KEY}" }
+  gnosis = { key = "${GNOSISSCAN_API_KEY}", url = "https://api.gnosisscan.io/api/" }

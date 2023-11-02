@@ -5,14 +5,14 @@ const addressesPath = '../../addresses.json';
 
 let addresses = require(path.join(__dirname, addressesPath));
 const [targetEnv, subPath, input] = process.argv.slice(2);
-let dungeonMasters = [];
-if (subPath == 'DungeonMasters' && input == 'delete') {
+let gameMasters = [];
+if (subPath == 'GameMasters' && input == 'delete') {
   addresses[targetEnv][subPath] = [];
-} else if (subPath == 'DungeonMasters') {
+} else if (subPath == 'GameMasters') {
   let cleanInput = input.replace(/[^0-9a-zA-Z]/g, '');
   if (cleanInput !== '') {
-    dungeonMasters = [...addresses[targetEnv][subPath], cleanInput];
-    addresses[targetEnv][subPath] = dungeonMasters;
+    gameMasters = [...addresses[targetEnv][subPath], cleanInput];
+    addresses[targetEnv][subPath] = gameMasters;
   }
 } else {
   addresses[targetEnv][subPath] = input;

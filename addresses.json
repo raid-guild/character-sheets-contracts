@@ -3,89 +3,80 @@
     "chainId": "100",
     "network": "gnosis",
     "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
-    "Dao": "0xfe1084bC16427e5EB7f13Fc19bCD4E641F7d571f",
-    "CharacterSheetsFactory": "",
-    "CharacterSheetsImplementation": "",
-    "ExperienceAndItemsImplementation": "",
-    "Erc6551AccountImplementation": "",
-    "ClassesImplementation": ""
-  },
-  "sepolia": {
-    "chainId": "11155111",
-    "network": "sepolia",
-    "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
-    "Dao": "0x1E72EE79B681e69f807Fcc9BD14Ab806BfD62553",
-    "MockDao": "0x34998d45554480fab16360a367fe44b480987ee6",
-    "CharacterSheetsFactory": "0x28C02872016F61A0B3D67D4109dD6772aa375867",
-    "CharacterSheetsImplementation": "0xF115d872DCfe5d6a16ADFC97cEaD3c87fEd322DB",
-    "CharacterAccount": "0xA84a6E411bFF2aDAba677a92c1E0988D49bfe8B5",
-    "ExperienceAndItemsImplementation": "0xB14e29D750dc88A32EA194aaf185B1D176391414",
-    "ClassesImplementation": "0xcc74e49A67a73f90585819dA87ab79D9a6c14fC5",
-    "DungeonMasters": [
-      "0x941E92c9Eff78a2b7217057752cf938040a59aE9"
-    ],
-    "CharacterSheetsMetadataUri": "sheet-metadata",
-    "CharacterSheetsBaseUri": "sheet",
-    "ExperienceBaseUri": "exp",
-    "ClassesBaseUri": "class",
-    "CreatedCharacterSheet": "0x1920a6b180C4D7d5acB6F3da29207C62F3408BEd",
-    "CreatedExperienceAndItems": "0xaDAf1d4B17D28Fdd57C636B3B8Bf6a62887FeEfF",
-    "CreatedClasses": "0xFf4F28f1D1d2294C9Ff8eb17D0b85419Eff8346D",
-    "Characters": [
-      {
-        "MemberAddress": "0x941E92c9Eff78a2b7217057752cf938040a59aE9",
-        "CharacterName": "MrDeadCe11",
-        "uri": "",
-        "Erc6551address": "0x3B39178c8AE4ef6290B6730f5f5485B938D3D7f4"
-      }
-    ],
-    "Items": [
-      {
-        "cid": "false",
-        "name": "invisiblefartofdeath",
-        "supply": "1000000",
-        "soulbound": false,
-        "requirements": {
-          "classRequirements": [],
-          "itemRequirements": [
-            [
-              0,
-              0
-            ]
-          ],
-          "claimable": [
-            [
-              0,
-              0
-            ]
-          ]
-        }
-      }
-    ],
-    "Classes": [
-      {
-        "ClassName": "wizard",
-        "ClassUri": null
-      },
-      {
-        "ClassName": "warrior",
-        "ClassUri": null
-      }
-    ]
+    "HatsContract": "0x3bc1A0Ad72417f2d411118085256fC53CBdDd137",
+    "HatsModuleFactory": "0xfE661c01891172046feE16D3a57c3Cf456729efA",
+    "CharacterAccount": "0xe12974EaCB122b098165396DC16dF433017111ca",
+    "CharacterSheetsImplementation": "0xbB5055A6ff670ff726e04F2Fae058a3838DaC8C3",
+    "ExperienceImplementation": "0x66467555734aa5E89336DD99822DfF9Dcf09bAd7",
+    "ItemsImplementation": "0x19386B06d2182a25CfB90b283Ec2F226BFf08389",
+    "ItemsManagerImplementation": "0x2355D357164F64dAb43A776aE7637d35B61E9a53",
+    "ClassesImplementation": "0x6be4FA764062c6455223a5bE50aEaEA8CEB7009C",
+    "MolochV2EligibilityAdaptor": "0x465887988A5542fFD9252985Efa0C0e2341Df741",
+    "MolochV3EligibilityAdaptor": "0x620646b1E1b27b56afDaf87eE13CA727F4E87cC8",
+    "ClassLevelAdaptor": "0x8aBcdc5B54f8F85eAB5eE21EF4123a78dEd24E6a",
+    "HatsAdaptor": "0xBe7A3fcE59A44F9a025352F2e0f6e7a97e4b83a9",
+    "AdminHatEligibilityModule": "0x802dD2a5B6E5484F08D1730aF14432502f27938f",
+    "GameMasterHatEligibilityModule": "0xACaA422e8bc5a1d7810F5A3923564885B4614c1d",
+    "PlayerHatEligibilityModule": "0xe44680218B2f68a03Df29583B48cA2179044b300",
+    "CharacterHatEligibilityModule": "0xEeDb1BeB64dBc0f8B7FF9f967A4687e30b57b977",
+    "ClonesAddressStorageImplementation": "0x20C270dD8F5F8A341AA90fB8Eb0B3bc44237cc29",
+    "ImplementationAddressStorage": "0xB554A4Cc89047419cf8Eb6230d6fea6Fd37C6c42",
+    "CharacterSheetsFactory": "0x734f6333ADbE88064a5fFdEbb487f59063Ba4068"
   },
   "goerli": {
     "chainId": "5",
     "network": "goerli",
     "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
-    "Dao": "0x36a47AD35F782Fc922b15727b4df64Ea7A3735E5",
-    "CharacterSheetsMetadataUri": "sheet-metadata",
-    "CharacterSheetsBaseUri": "sheet",
-    "ExperienceBaseUri": "exp",
-    "ClassesBaseUri": "class",
-    "CharacterAccount": "0xcC90D67f37b71c2176BCDa42887E9Bc9E6E1b8A2",
-    "CharacterSheetsImplementation": "0x7f9B018c136F3403E42b46A9c246DA279fEfaEa6",
-    "ExperienceAndItemsImplementation": "0x43904C600A2061777d10fb72a565000c4c8c0390",
-    "ClassesImplementation": "0x64D8c4852Ad05bf24807b9541872d37B76F27FaD",
-    "CharacterSheetsFactory": "0x453C82CF49eA5eAa9535b19F858025416be98F79"
+    "HatsContract": "0x3bc1A0Ad72417f2d411118085256fC53CBdDd137",
+    "HatsModuleFactory": "0xfE661c01891172046feE16D3a57c3Cf456729efA",
+    "CharacterAccount": "0x45f024d04b2160851382A427Ae5791D57096ccDc",
+    "CharacterSheetsImplementation": "0x541234Da2553C470f37EAC20d159df0B77e1DDC1",
+    "ExperienceImplementation": "0xD285F614548fF4A1eB5Bf628B4865111f4fc94b4",
+    "ItemsImplementation": "0xB1301d84E4D2491bA7530c8B669CB03acE161959",
+    "ItemsManagerImplementation": "0x078E047c0A6593dAbed005B9da145d3f61aB9eEd",
+    "ClassesImplementation": "0x498FF778C7c89bfb726fDd5dF7d179856f7065f4",
+    "MolochV2EligibilityAdaptor": "0x176E07EcE8E59BF2d74793c68e2ddE694C61dE52",
+    "MolochV3EligibilityAdaptor": "0x8902F04Cd28c3866bC5eA8E033946C3F5D3Be579",
+    "ClassLevelAdaptor": "0x617E5E4463b40f81A4066f738E754F7bb5ebcdeb",
+    "HatsAdaptor": "0xa8a24c75877177EA0BF623E7a8b05Fa5f69C323D",
+    "AdminHatEligibilityModule": "0xEBcFFF189182Ff51265B4962c96B5cc60D99C43E",
+    "GameMasterHatEligibilityModule": "0x658Bdc9B6bEB602Cd48A7984D6B86938e43f8dC9",
+    "PlayerHatEligibilityModule": "0xf875BfFA59cd7321b72E43A78c7F4A92A8d6374A",
+    "CharacterHatEligibilityModule": "0x2527dd012d404fc10cc05597A27F94aA02e7FCF5",
+    "ClonesAddressStorageImplementation": "0x0188f5F5CB84E83865e21b2A9247Cb98A8398535",
+    "ImplementationAddressStorage": "0x64088cb956004763DFb5ed11A29C07B54ccfD7d7",
+    "CharacterSheetsFactory": "0xbF9ED7A8Ee913a4d6e3007421a63C1fe9A8569b8"
+  },
+  "sepolia": {
+    "chainId": "11155111",
+    "network": "sepolia",
+    "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
+    "HatsContract": "0x3bc1A0Ad72417f2d411118085256fC53CBdDd137",
+    "HatsModuleFactory": "0xfE661c01891172046feE16D3a57c3Cf456729efA"
+  },
+  "anvil": {
+    "chainId": "31337",
+    "network": "anvil",
+    "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
+    "HatsContract": "0x3bc1A0Ad72417f2d411118085256fC53CBdDd137",
+    "HatsModuleFactory": "0xfE661c01891172046feE16D3a57c3Cf456729efA",
+    "Erc6551RegistryOld": "0x4e59b44847b379578588920ca78fbf26c0b4956c",
+    "CharacterAccount": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    "ExperienceImplementation": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+    "ItemsImplementation": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+    "ItemsManagerImplementation": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+    "CharacterSheetsImplementation": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+    "ClassesImplementation": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+    "MolochV2EligibilityAdaptor": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+    "MolochV3EligibilityAdaptor": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+    "ClassLevelAdaptor": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+    "HatsAdaptor": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
+    "AdminHatEligibilityModule": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+    "GameMasterHatEligibilityModule": "0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0",
+    "PlayerHatEligibilityModule": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+    "CharacterHatEligibilityModule": "0x9A676e781A523b5d0C0e43731313A708CB607508",
+    "ClonesAddressStorageImplementation": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
+    "ImplementationAddressStorage": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
+    "CharacterSheetsFactory": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed"
   }
 }

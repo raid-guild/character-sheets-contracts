@@ -1,71 +1,68 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.20;
 
-import {Initializable} from "openzeppelin/proxy/utils/Initializable.sol";
-import {ERC1155Receiver} from "openzeppelin/token/ERC1155/utils/ERC1155Receiver.sol";
-import {ERC1155} from "hats/lib/ERC1155/ERC1155.sol";
-import {ERC1155Holder} from "openzeppelin/token/ERC1155/utils/ERC1155Holder.sol";
-import {Counters} from "openzeppelin/utils/Counters.sol";
+import {ERC1155Upgradeable} from "openzeppelin-contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
+import {ERC1155HolderUpgradeable} from
+    "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import {CharacterSheetsImplementation} from "../implementations/CharacterSheetsImplementation.sol";
-import {Class, CharacterSheet} from "../lib/Structs.sol";
-
+import {Class} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
+
+import {IClassLevelAdaptor} from "../interfaces/IClassLevelAdaptor.sol";
+import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
+import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
+import {IExperience} from "../interfaces/IExperience.sol";
 
 /**
  * @title Experience and Items
- * @author MrDeadCe11
- * @notice this is an ERC721 that is designed to intereact with the characterSheets contract.
+ * @author MrDeadCe11 && dan13ram
+ * @notice this is an ERC1155 that is designed to interact with the characterSheets contract.
  * Each item and class is an 1155 token that can soulbound or not to the erc6551 wallet of each player nft
  * in the characterSheets contract.
  */
-contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
-    using Counters for Counters.Counter;
-
-    Counters.Counter private _classIdCounter;
-
-    bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
-    bytes32 public constant PLAYER = keccak256("PLAYER");
-    bytes32 public constant CHARACTER = keccak256("CHARACTER");
-
+contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UUPSUpgradeable {
     /// @dev individual mapping for token URIs
     mapping(uint256 => string) private _classURIs;
+
+    /// @dev character => classId => exp staked
+    mapping(address => mapping(uint256 => uint256)) public classLevels;
 
     /// @dev base URI
     string private _baseURI = "";
 
-    /// @dev individual mapping for token URIs
-    mapping(uint256 => string) private _classTokenURIs;
-
     /// @dev mapping of class token types.  the class Id is the location in this mapping of the class.
-    mapping(uint256 => Class) public classes;
+    mapping(uint256 => Class) private _classes;
 
     /// @dev the total number of class types that have been created
     uint256 public totalClasses;
 
-    /// @dev the interface to the characterSheets erc721 implementation that this is tied to
-    CharacterSheetsImplementation public characterSheets;
+    IClonesAddressStorage public clones;
 
-    event NewClassCreated(uint256 erc1155TokenId, string name);
-    event ClassAssigned(uint256 characterId, uint256 classId);
-    event ClassRevoked(uint256 characterId, uint256 classId);
+    event NewClassCreated(uint256 tokenId);
+    event BaseURIUpdated(string newUri);
+    event ClassAssigned(address character, uint256 classId);
+    event ClassRevoked(address character, uint256 classId);
+    event ClassLeveled(address character, uint256 classId, uint256 newBalance);
+    event ClonesAddressStorageUpdated(address newClonesAddressStorage);
+    event ClassDeLeveled(address character, uint256 classId, uint256 numberOfLevels);
 
-    modifier onlyDungeonMaster() {
-        if (!characterSheets.hasRole(DUNGEON_MASTER, msg.sender)) {
-            revert Errors.DungeonMasterOnly();
+    modifier onlyAdmin() {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isAdmin(msg.sender)) {
+            revert Errors.AdminOnly();
         }
         _;
     }
 
-    modifier onlyPlayer() {
-        if (!characterSheets.hasRole(PLAYER, msg.sender)) {
-            revert Errors.PlayerOnly();
+    modifier onlyGameMaster() {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isGameMaster(msg.sender)) {
+            revert Errors.GameMasterOnly();
         }
         _;
     }
 
     modifier onlyCharacter() {
-        if (!characterSheets.hasRole(CHARACTER, msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(msg.sender)) {
             revert Errors.CharacterOnly();
         }
         _;
@@ -76,158 +73,203 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
     }
 
     function initialize(bytes calldata _encodedData) external initializer {
-        address characterSheetsAddress;
+        __UUPSUpgradeable_init();
+        __ERC1155Holder_init();
+
         string memory baseUri;
-        (characterSheetsAddress, baseUri) = abi.decode(_encodedData, (address, string));
+        address _clonesStorageAdaptor;
+        (_clonesStorageAdaptor, baseUri) = abi.decode(_encodedData, (address, string));
         _baseURI = baseUri;
-        characterSheets = CharacterSheetsImplementation(characterSheetsAddress);
-
-        _classIdCounter.increment();
+        clones = IClonesAddressStorage(_clonesStorageAdaptor);
     }
 
-    function batchCreateClassType(bytes[] calldata classDatas)
-        external
-        onlyDungeonMaster
-        returns (uint256[] memory tokenIds)
-    {
-        tokenIds = new uint256[](classDatas.length);
-
-        for (uint256 i = 0; i < classDatas.length; i++) {
-            bytes calldata classData = classDatas[i];
-            tokenIds[i] = createClassType(classData);
-        }
+    /**
+     * @dev Sets `baseURI` as the `_baseURI` for all tokens
+     */
+    function setBaseURI(string memory _baseUri) external onlyAdmin {
+        _baseURI = _baseUri;
+        emit BaseURIUpdated(_baseUri);
     }
 
-    function assignClasses(uint256 characterId, uint256[] calldata _classIds) external onlyDungeonMaster {
-        for (uint256 i = 0; i < _classIds.length; i++) {
-            assignClass(characterId, _classIds[i]);
+    /**
+     * @dev Sets `tokenURI` as the tokenURI of `tokenId`.
+     */
+    function setURI(uint256 tokenId, string memory tokenURI) external onlyAdmin {
+        _classURIs[tokenId] = tokenURI;
+        emit URI(uri(tokenId), tokenId);
+    }
+
+    function claimClass(uint256 classId) external onlyCharacter returns (bool) {
+        Class storage newClass = _classes[classId];
+
+        if (!newClass.claimable) {
+            revert Errors.ClaimableError();
         }
+
+        _mint(msg.sender, classId, 1, "");
+
+        _classes[classId].supply++;
+
+        emit ClassAssigned(msg.sender, classId);
+
+        bool success = true;
+        return success;
+    }
+
+    function updateClonesAddressStorage(address newClonesStorage) external onlyAdmin {
+        clones = IClonesAddressStorage(newClonesStorage);
+        emit ClonesAddressStorageUpdated(newClonesStorage);
     }
 
     /**
      *
      * @param classData encoded class data includes
-     *  - string name
-     *  - uint256 supply
      *  - string cid
      * @return tokenId the ERC1155 token id
      */
 
-    function createClassType(bytes calldata classData) public onlyDungeonMaster returns (uint256 tokenId) {
-        Class memory _newClass = _createClassStruct(classData);
+    function createClassType(bytes calldata classData) external onlyGameMaster returns (uint256 tokenId) {
+        uint256 _tokenId = totalClasses;
 
-        uint256 _tokenId = _classIdCounter.current();
+        _createClass(classData, _tokenId);
 
-        _newClass.tokenId = _tokenId;
-
-        classes[_tokenId] = _newClass;
-
-        _setURI(_tokenId, _newClass.cid);
-
-        emit NewClassCreated(_tokenId, _newClass.name);
+        emit NewClassCreated(_tokenId);
+        emit URI(uri(_tokenId), _tokenId);
         totalClasses++;
-        _classIdCounter.increment();
 
         return _tokenId;
     }
 
     /**
      * gives an CHARACTER token a class.  can only assign one of each class type to each CHARACTER
-     * @param characterId the tokenId of the player
+     * @param character the tokenId of the player
      * @param classId the classId of the class to be assigned
      */
 
-    function assignClass(uint256 characterId, uint256 classId) public onlyDungeonMaster {
-        CharacterSheet memory player = characterSheets.getCharacterSheetByCharacterId(characterId);
-        Class memory newClass = classes[classId];
-
-        if (player.memberAddress == address(0x0)) {
-            revert Errors.PlayerError();
+    function assignClass(address character, uint256 classId) public onlyGameMaster {
+        if (character == address(0x0)) {
+            revert Errors.CharacterError();
         }
-        if (newClass.tokenId == 0) {
+        if (classId >= totalClasses) {
             revert Errors.ClassError();
         }
-        if (balanceOf(player.ERC6551TokenAddress, newClass.tokenId) != 0) {
-            revert Errors.ClassError();
+        if (balanceOf(character, classId) != 0) {
+            revert Errors.TokenBalanceError();
         }
 
-        _mint(player.ERC6551TokenAddress, classId, 1, bytes(newClass.cid));
+        _mint(character, classId, 1, "");
 
-        classes[classId].supply++;
+        _classes[classId].supply++;
 
-        emit ClassAssigned(characterId, classId);
+        emit ClassAssigned(character, classId);
     }
 
     /**
-     * removes a class from a player token
-     * @param characterId the token Id of the player who needs a class removed
+     * removes a class from a character token must be called by the character account or the game master
+     * @param character the token Id of the player who needs a class removed
      * @param classId the class to be removed
      */
 
-    function revokeClass(uint256 characterId, uint256 classId) public returns (bool success) {
-        if (classId == 0 || characterId == 0) {
+    function revokeClass(address character, uint256 classId) public onlyGameMaster returns (bool success) {
+        return _revokeClass(character, classId);
+    }
+
+    function renounceClass(uint256 classId) public onlyCharacter returns (bool success) {
+        return _revokeClass(msg.sender, classId);
+    }
+    /**
+     * @notice This will level the class of any character class if they have enough exp
+     * @dev As a source of truth, only the game master can call this function so that the correct _classes are leveld
+     * @param character the address of the character account to have a class leveled
+     * @param classId the Id of the class that will be leveled
+     * @return uint256 class token balance
+     */
+
+    function levelClass(address character, uint256 classId) public onlyGameMaster returns (uint256) {
+        if (clones.classLevelAdaptor() == address(0)) {
+            revert Errors.NotInitialized();
+        }
+        if (!IClassLevelAdaptor(clones.classLevelAdaptor()).levelRequirementsMet(character, classId)) {
             revert Errors.ClassError();
         }
 
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(characterId);
+        uint256 currentLevel = balanceOf(character, classId);
+        uint256 requiredAmount = IClassLevelAdaptor(clones.classLevelAdaptor()).getExperienceForNextLevel(currentLevel);
 
-        if (characterSheets.hasRole(DUNGEON_MASTER, msg.sender)) {
-            if (characterSheets.isClassEquipped(characterId, classId)) {
-                if (!characterSheets.unequipClassFromCharacter(characterId, classId)) {
-                    revert Errors.ClassError();
-                }
-            }
-        } else {
-            if (sheet.memberAddress != msg.sender && sheet.ERC6551TokenAddress != msg.sender) {
-                revert Errors.OwnershipError();
-            }
-            if (characterSheets.isClassEquipped(characterId, classId)) {
-                if (!characterSheets.unequipClassFromCharacter(characterId, classId)) {
-                    revert Errors.ClassError();
-                }
-            }
+        //stake appropriate exp
+        classLevels[character][classId] += requiredAmount;
+
+        IExperience(clones.experience()).burnExp(character, requiredAmount);
+
+        //mint another class token
+
+        _mint(character, classId, 1, "");
+
+        uint256 newLevel = balanceOf(character, classId);
+
+        emit ClassLeveled(character, classId, newLevel);
+
+        return newLevel;
+    }
+
+    function deLevelClass(address characterAccount, uint256 classId, uint256 numberOfLevels) public returns (uint256) {
+        if (clones.classLevelAdaptor() == address(0)) {
+            revert Errors.NotInitialized();
         }
 
-        _burn(sheet.ERC6551TokenAddress, classId, 1);
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(characterAccount)) {
+            revert Errors.CharacterError();
+        }
 
-        success = true;
-        emit ClassRevoked(characterId, classId);
+        if (characterAccount != msg.sender && !IHatsAdaptor(clones.hatsAdaptor()).isGameMaster(msg.sender)) {
+            revert Errors.CallerNotApproved();
+        }
+
+        // 1 class token == level 0;
+        uint256 currentLevel = balanceOf(characterAccount, classId) - 1;
+
+        if (currentLevel < numberOfLevels) {
+            revert Errors.InsufficientBalance();
+        }
+
+        uint256 expToRedeem = IClassLevelAdaptor(clones.classLevelAdaptor()).getExpForLevel(currentLevel)
+            - IClassLevelAdaptor(clones.classLevelAdaptor()).getExpForLevel(currentLevel - numberOfLevels);
+
+        //remove level tokens
+        _burn(characterAccount, classId, numberOfLevels);
+
+        //mint replacement exp
+
+        IExperience(clones.experience()).dropExp(characterAccount, expToRedeem);
+
+        //return amount of exp minted
+
+        emit ClassDeLeveled(characterAccount, classId, numberOfLevels);
+        return expToRedeem;
     }
 
     /**
-     *
-     * @param name the name of the class.  is case sensetive.
-     * @return classId storage location of the class in the classes mapping
-     */
-
-    function findClassByName(string calldata name) public view returns (uint256 classId) {
-        string memory temp = name;
-        for (uint256 i = 0; i <= totalClasses; i++) {
-            if (keccak256(abi.encode(classes[i].name)) == keccak256(abi.encode(temp))) {
-                classId = classes[i].tokenId;
-                return classId;
-            }
-        }
-        revert Errors.ClassError();
-    }
-
-    /**
-     * returns an array of all Class structs stored in the classes mapping
+     * @return an array of all Class structs stored in the _classes mapping
      */
 
     function getAllClasses() public view returns (Class[] memory) {
         Class[] memory allClasses = new Class[](totalClasses);
         for (uint256 i = 1; i <= totalClasses; i++) {
-            allClasses[i - 1] = classes[i];
+            allClasses[i - 1] = _classes[i];
         }
         return allClasses;
     }
 
-    function getClassById(uint256 classId) public view returns (Class memory) {
-        return classes[classId];
+    function getClass(uint256 classId) public view returns (Class memory) {
+        return _classes[classId];
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(ERC1155, ERC1155Receiver) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC1155Upgradeable, ERC1155HolderUpgradeable)
+        returns (bool)
+    {
         return super.supportsInterface(interfaceId);
     }
 
@@ -260,18 +302,60 @@ contract ClassesImplementation is ERC1155Holder, Initializable, ERC1155 {
         return _baseURI;
     }
 
+    function _createClass(bytes calldata classData, uint256 tokenId) internal {
+        (bool claimable, string memory cid) = abi.decode(classData, (bool, string));
+
+        _classes[tokenId] = Class({claimable: claimable, supply: 0});
+        _classURIs[tokenId] = cid;
+    }
+
+    // overrides
+
     /**
-     * @dev Sets `tokenURI` as the tokenURI of `tokenId`.
+     * @notice Only game master can transfer _classes. approval of character is not required
      */
+    //solhint-disable-next-line
+    function safeBatchTransferFrom(
+        address from,
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory data
+    ) public override onlyGameMaster {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(to)) {
+            revert Errors.CharacterOnly();
+        }
 
-    function _setURI(uint256 tokenId, string memory tokenURI) internal {
-        _classURIs[tokenId] = tokenURI;
-        emit URI(uri(tokenId), tokenId);
+        super._safeBatchTransferFrom(from, to, ids, amounts, data);
     }
 
-    function _createClassStruct(bytes calldata classData) private pure returns (Class memory) {
-        (string memory name, string memory cid) = abi.decode(classData, (string, string));
-
-        return Class(0, name, 0, cid);
+    function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes memory data)
+        public
+        override
+        onlyGameMaster
+    {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(to)) {
+            revert Errors.CharacterOnly();
+        }
+        super._safeTransferFrom(from, to, id, amount, data);
     }
+
+    function _revokeClass(address character, uint256 classId) internal returns (bool success) {
+        if (classId >= totalClasses) {
+            revert Errors.ClassError();
+        }
+
+        // must be level 0 to revoke.  if class is leveled the character must delevel the class to 0
+        if (balanceOf(character, classId) != 1) {
+            revert Errors.TokenBalanceError();
+        }
+
+        _burn(character, classId, 1);
+
+        success = true;
+        emit ClassRevoked(character, classId);
+    }
+
+    //solhint-disable-next-line no-empty-blocks
+    function _authorizeUpgrade(address newImplementation) internal override onlyGameMaster {}
 }

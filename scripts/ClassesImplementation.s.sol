@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
+//solhint-disable
+
+import "forge-std/Script.sol";
+import "forge-std/StdJson.sol";
 
 import {ClassesImplementation} from "../src/implementations/ClassesImplementation.sol";
 
 import {BaseDeployer} from "./BaseDeployer.sol";
 import {BaseExecutor} from "./BaseExecutor.sol";
-
-//solhint-disable
-import "../lib/forge-std/src/Script.sol";
-import "../lib/forge-std/src/StdJson.sol";
 
 contract DeployClassesImplementation is BaseDeployer {
     using stdJson for string;
@@ -35,9 +35,11 @@ contract ExecuteClassesImplementation is BaseExecutor {
     string public className;
     string public classUri;
     address characterAddress;
+    bool claimable;
 
     function loadBaseData(string memory json, string memory targetEnv) internal override {
         address classes = json.readAddress(string(abi.encodePacked(".", targetEnv, ".CreatedClasses")));
+        claimable = json.readBool(string(abi.encodePacked(".", targetEnv, ".Classes[", arrIndex, "].Claimable")));
         classesImplementation = ClassesImplementation(classes);
         console2.log("ARR INDEX: ", arrIndex);
         className = json.readString(string(abi.encodePacked(".", targetEnv, ".Classes[", arrIndex, "].ClassName")));
@@ -45,7 +47,7 @@ contract ExecuteClassesImplementation is BaseExecutor {
     }
 
     function execute() internal override {
-        bytes memory encodedData = abi.encode(className, classUri);
+        bytes memory encodedData = abi.encode(className, claimable, classUri);
 
         vm.broadcast(deployerPrivateKey);
         classesImplementation.createClassType(encodedData);

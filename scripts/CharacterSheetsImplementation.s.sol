@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {CharacterSheetsImplementation} from "../src/implementations/CharacterSheetsImplementation.sol";
-import {Moloch} from "../src/mocks/MockMoloch.sol";
-import {BaseDeployer} from "./BaseDeployer.sol";
-import {BaseExecutor} from "./BaseExecutor.sol";
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
+
+import {CharacterSheetsImplementation} from "../src/implementations/CharacterSheetsImplementation.sol";
+import {MockMolochV2} from "../src/mocks/MockMoloch.sol";
+import {BaseDeployer} from "./BaseDeployer.sol";
+import {BaseExecutor} from "./BaseExecutor.sol";
 
 contract ExecuteCharacterSheetsImplementation is BaseExecutor {
     using stdJson for string;
@@ -16,7 +17,7 @@ contract ExecuteCharacterSheetsImplementation is BaseExecutor {
     string public characterName;
     string public sheetUri;
     address public memberAddress;
-    Moloch public dao;
+    MockMolochV2 public dao;
 
     function loadBaseData(string memory json, string memory targetEnv) internal override {
         characterSheets = json.readAddress(string(abi.encodePacked(".", targetEnv, ".CreatedCharacterSheet")));
@@ -28,11 +29,11 @@ contract ExecuteCharacterSheetsImplementation is BaseExecutor {
         memberAddress =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".Characters[", arrIndex, "].MemberAddress")));
         address _daoAddress = json.readAddress(string(abi.encodePacked(".", targetEnv, ".Dao")));
-        dao = Moloch(_daoAddress);
+        dao = MockMolochV2(_daoAddress);
     }
 
     function execute() internal override {
-        Moloch.Member memory member = dao.members(memberAddress);
+        MockMolochV2.Member memory member = dao.members(memberAddress);
 
         if (member.shares < 100 && block.chainid == 11155111) {
             vm.broadcast(deployerPrivateKey);
@@ -41,10 +42,8 @@ contract ExecuteCharacterSheetsImplementation is BaseExecutor {
 
         console2.log("SHEET URI: ", sheetUri);
 
-        bytes memory encodedData = abi.encode(characterName, sheetUri);
-
         vm.broadcast(deployerPrivateKey);
-        uint256 tokenId = sheetsImp.rollCharacterSheet(memberAddress, encodedData);
+        uint256 tokenId = sheetsImp.rollCharacterSheet(sheetUri);
         console.log("Character Id:", tokenId);
     }
 }

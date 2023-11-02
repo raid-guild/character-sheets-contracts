@@ -16,7 +16,7 @@
 
 pragma solidity >=0.8.13;
 
-import {MaxLevelsReached} from "../../lib/hats/src/Hats.sol";
+import {MaxLevelsReached} from "hats-protocol/Hats.sol";
 
 contract MockHats {
     struct Hat {

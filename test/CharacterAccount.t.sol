@@ -1,184 +1,150 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 pragma abicoder v2;
-//solhint-disable
 
 import "forge-std/Test.sol";
-import "./helpers/SetUp.sol";
-import "../src/lib/Errors.sol";
+// import "forge-std/console2.sol";
 
-import "forge-std/console2.sol";
+import "./setup/SetUp.sol";
 
-contract CharacterAccountTest is Test, SetUp {
+contract CharacterAccountTest is SetUp {
     function testEquipItemToCharacter() public {
-        bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
+        dao.addMember(accounts.rando);
+        vm.prank(accounts.rando);
+        uint256 tokenId = deployments.characterSheets.rollCharacterSheet("new_test_token_uri/");
+        assertEq(tokenId, 2, "characterId not assigned");
 
-        vm.prank(admin);
-        characterSheets.rollCharacterSheet(admin, encodedData);
+        assertEq(deployments.characterSheets.tokenURI(tokenId), "test_base_uri_character_sheets/new_test_token_uri/");
 
-        assertEq(characterSheets.tokenURI(2), "test_base_uri_character_sheets/test_token_uri/");
+        CharacterSheet memory sheet = deployments.characterSheets.getCharacterSheetByCharacterId(tokenId);
 
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(2);
-        assertEq(sheet.tokenId, 2, "characterId not assigned");
-        assertEq(sheet.memberAddress, admin, "memberAddress not assigned");
+        CharacterAccount account = CharacterAccount(payable(sheet.accountAddress));
 
-        CharacterAccount account = CharacterAccount(payable(sheet.ERC6551TokenAddress));
-
-        address[] memory npc = new address[](1);
-        npc[0] = address(account);
-        uint256[][] memory itemIds = new uint256[][](1);
-        itemIds[0] = new uint256[](1);
-        itemIds[0][0] = 1;
-        uint256[][] memory amounts = new uint256[][](1);
-        amounts[0] = new uint256[](1);
-        amounts[0][0] = 1;
-        vm.prank(admin);
-        experience.dropLoot(npc, itemIds, amounts);
+        vm.startPrank(accounts.gameMaster);
+        dropExp(address(account), 1000, address(deployments.experience));
+        dropItems(address(account), itemsData.itemIdFree, 1, address(deployments.items));
+        vm.stopPrank();
 
         bytes4 selector = bytes4(keccak256("equipItemToCharacter(uint256,uint256)"));
-        bytes memory data = abi.encodeWithSelector(selector, 2, 1);
+        bytes memory data = abi.encodeWithSelector(selector, tokenId, itemsData.itemIdFree);
 
-        vm.prank(admin);
-        account.execute(address(characterSheets), 0, data, 0);
+        vm.prank(accounts.rando);
+        account.execute(address(deployments.characterSheets), 0, data, 0);
 
-        sheet = characterSheets.getCharacterSheetByCharacterId(2);
+        sheet = deployments.characterSheets.getCharacterSheetByCharacterId(tokenId);
         assertEq(sheet.inventory.length, 1, "item not assigned");
-        assertEq(sheet.inventory[0], 1, "item not assigned");
+        assertEq(sheet.inventory[0], 3, "item id incorrect");
     }
 
     function testUnequipItemToCharacter() public {
-        bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
+        dao.addMember(accounts.rando);
+        vm.prank(accounts.rando);
+        uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+        assertEq(tokenId, 2, "characterId not assigned");
 
-        vm.prank(admin);
-        characterSheets.rollCharacterSheet(admin, encodedData);
+        assertEq(deployments.characterSheets.tokenURI(tokenId), "test_base_uri_character_sheets/test_token_uri/");
 
-        assertEq(characterSheets.tokenURI(2), "test_base_uri_character_sheets/test_token_uri/");
+        CharacterSheet memory sheet = deployments.characterSheets.getCharacterSheetByCharacterId(tokenId);
 
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(2);
-        assertEq(sheet.tokenId, 2, "characterId not assigned");
-        assertEq(sheet.memberAddress, admin, "memberAddress not assigned");
+        CharacterAccount account = CharacterAccount(payable(sheet.accountAddress));
 
-        CharacterAccount account = CharacterAccount(payable(sheet.ERC6551TokenAddress));
-
-        address[] memory npc = new address[](1);
-        npc[0] = address(account);
-        uint256[][] memory itemIds = new uint256[][](1);
-        itemIds[0] = new uint256[](1);
-        itemIds[0][0] = 1;
-        uint256[][] memory amounts = new uint256[][](1);
-        amounts[0] = new uint256[](1);
-        amounts[0][0] = 1;
-        vm.prank(admin);
-        experience.dropLoot(npc, itemIds, amounts);
+        vm.startPrank(accounts.gameMaster);
+        dropExp(address(account), 1000, address(deployments.experience));
+        dropItems(address(account), itemsData.itemIdFree, 1, address(deployments.items));
+        vm.stopPrank();
 
         bytes4 selector = bytes4(keccak256("equipItemToCharacter(uint256,uint256)"));
-        bytes memory data = abi.encodeWithSelector(selector, 2, 1);
+        bytes memory data = abi.encodeWithSelector(selector, tokenId, itemsData.itemIdFree);
 
-        vm.prank(admin);
-        account.execute(address(characterSheets), 0, data, 0);
+        vm.prank(accounts.rando);
+        account.execute(address(deployments.characterSheets), 0, data, 0);
 
-        sheet = characterSheets.getCharacterSheetByCharacterId(2);
+        sheet = deployments.characterSheets.getCharacterSheetByCharacterId(tokenId);
         assertEq(sheet.inventory.length, 1, "item not assigned");
-        assertEq(sheet.inventory[0], 1, "item not assigned");
+        assertEq(sheet.inventory[0], itemsData.itemIdFree, "item not equipped");
 
         selector = bytes4(keccak256("unequipItemFromCharacter(uint256,uint256)"));
-        data = abi.encodeWithSelector(selector, 2, 1);
+        data = abi.encodeWithSelector(selector, tokenId, itemsData.itemIdFree);
 
-        vm.prank(admin);
-        account.execute(address(characterSheets), 0, data, 0);
+        vm.prank(accounts.rando);
+        account.execute(address(deployments.characterSheets), 0, data, 0);
 
-        sheet = characterSheets.getCharacterSheetByCharacterId(2);
+        sheet = deployments.characterSheets.getCharacterSheetByCharacterId(1);
         assertEq(sheet.inventory.length, 0, "item still assigned");
     }
 
     function testEquipViaMultiSendDelegateCall() public {
-        bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
+        dao.addMember(accounts.rando);
+        vm.prank(accounts.rando);
+        uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+        assertEq(tokenId, 2, "characterId not assigned");
 
-        vm.prank(admin);
-        characterSheets.rollCharacterSheet(admin, encodedData);
+        assertEq(deployments.characterSheets.tokenURI(tokenId), "test_base_uri_character_sheets/test_token_uri/");
 
-        assertEq(characterSheets.tokenURI(2), "test_base_uri_character_sheets/test_token_uri/");
+        CharacterSheet memory sheet = deployments.characterSheets.getCharacterSheetByCharacterId(tokenId);
 
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(2);
-        assertEq(sheet.tokenId, 2, "characterId not assigned");
-        assertEq(sheet.memberAddress, admin, "memberAddress not assigned");
+        CharacterAccount account = CharacterAccount(payable(sheet.accountAddress));
 
-        CharacterAccount account = CharacterAccount(payable(sheet.ERC6551TokenAddress));
-
-        address[] memory npc = new address[](1);
-        npc[0] = address(account);
-        uint256[][] memory itemIds = new uint256[][](1);
-        itemIds[0] = new uint256[](1);
-        itemIds[0][0] = 1;
-        uint256[][] memory amounts = new uint256[][](1);
-        amounts[0] = new uint256[](1);
-        amounts[0][0] = 1;
-        vm.prank(admin);
-        experience.dropLoot(npc, itemIds, amounts);
+        vm.startPrank(accounts.gameMaster);
+        dropExp(address(account), 1000, address(deployments.experience));
+        dropItems(address(account), itemsData.itemIdFree, 1, address(deployments.items));
+        vm.stopPrank();
 
         bytes4 selector = bytes4(keccak256("equipItemToCharacter(uint256,uint256)"));
-        bytes memory data = abi.encodeWithSelector(selector, 2, 1);
+        bytes memory data = abi.encodeWithSelector(selector, tokenId, itemsData.itemIdFree);
 
         bytes memory transaction =
-            abi.encodePacked(uint8(0), address(characterSheets), uint256(0), uint256(data.length), data);
+            abi.encodePacked(uint8(0), address(deployments.characterSheets), uint256(0), uint256(data.length), data);
 
         selector = bytes4(keccak256("multiSend(bytes)"));
         data = abi.encodeWithSelector(selector, transaction);
 
-        vm.prank(admin);
-        account.execute(address(multiSend), 0, data, 1);
+        vm.startPrank(accounts.rando);
+        account.execute(address(multisend), itemsData.itemIdFree, data, 1);
 
-        sheet = characterSheets.getCharacterSheetByCharacterId(2);
-        assertEq(sheet.inventory.length, 1, "item not assigned");
-        assertEq(sheet.inventory[0], 1, "item not assigned");
+        sheet = deployments.characterSheets.getCharacterSheetByCharacterId(tokenId);
+        assertEq(sheet.inventory.length, 1, "inventory wrong length");
+        assertEq(sheet.inventory[0], itemsData.itemIdFree, "item not equipped");
     }
 
     function testEquipAndUnequipViaMultiSendDelegateCall() public {
-        bytes memory encodedData = abi.encode("Test Name", "test_token_uri/");
+        dao.addMember(accounts.rando);
+        vm.prank(accounts.rando);
+        uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+        assertEq(tokenId, 2, "characterId not assigned");
 
-        vm.prank(admin);
-        characterSheets.rollCharacterSheet(admin, encodedData);
+        assertEq(deployments.characterSheets.tokenURI(tokenId), "test_base_uri_character_sheets/test_token_uri/");
 
-        assertEq(characterSheets.tokenURI(2), "test_base_uri_character_sheets/test_token_uri/");
+        CharacterSheet memory sheet = deployments.characterSheets.getCharacterSheetByCharacterId(tokenId);
 
-        CharacterSheet memory sheet = characterSheets.getCharacterSheetByCharacterId(2);
-        assertEq(sheet.tokenId, 2, "characterId not assigned");
-        assertEq(sheet.memberAddress, admin, "memberAddress not assigned");
+        CharacterAccount account = CharacterAccount(payable(sheet.accountAddress));
 
-        CharacterAccount account = CharacterAccount(payable(sheet.ERC6551TokenAddress));
-
-        address[] memory npc = new address[](1);
-        npc[0] = address(account);
-        uint256[][] memory itemIds = new uint256[][](1);
-        itemIds[0] = new uint256[](1);
-        itemIds[0][0] = 1;
-        uint256[][] memory amounts = new uint256[][](1);
-        amounts[0] = new uint256[](1);
-        amounts[0][0] = 1;
-        vm.prank(admin);
-        experience.dropLoot(npc, itemIds, amounts);
+        vm.startPrank(accounts.gameMaster);
+        dropExp(address(account), 1000, address(deployments.experience));
+        dropItems(address(account), itemsData.itemIdFree, 1, address(deployments.items));
+        vm.stopPrank();
 
         bytes4 selector = bytes4(keccak256("equipItemToCharacter(uint256,uint256)"));
-        bytes memory data = abi.encodeWithSelector(selector, 2, 1);
+        bytes memory data = abi.encodeWithSelector(selector, tokenId, itemsData.itemIdFree);
 
         bytes memory transaction1 =
-            abi.encodePacked(uint8(0), address(characterSheets), uint256(0), uint256(data.length), data);
+            abi.encodePacked(uint8(0), address(deployments.characterSheets), uint256(0), uint256(data.length), data);
 
         selector = bytes4(keccak256("unequipItemFromCharacter(uint256,uint256)"));
-        data = abi.encodeWithSelector(selector, 2, 1);
+        data = abi.encodeWithSelector(selector, tokenId, itemsData.itemIdFree);
 
         bytes memory transaction2 =
-            abi.encodePacked(uint8(0), address(characterSheets), uint256(0), uint256(data.length), data);
+            abi.encodePacked(uint8(0), address(deployments.characterSheets), uint256(0), uint256(data.length), data);
 
         bytes memory transaction = abi.encodePacked(transaction1, transaction2);
 
         selector = bytes4(keccak256("multiSend(bytes)"));
         data = abi.encodeWithSelector(selector, transaction);
 
-        vm.prank(admin);
-        account.execute(address(multiSend), 0, data, 1);
+        vm.prank(accounts.rando);
+        account.execute(address(multisend), 0, data, 1);
 
-        sheet = characterSheets.getCharacterSheetByCharacterId(2);
+        sheet = deployments.characterSheets.getCharacterSheetByCharacterId(tokenId);
         assertEq(sheet.inventory.length, 0, "item still assigned");
     }
 }

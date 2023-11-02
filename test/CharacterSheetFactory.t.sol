@@ -3,127 +3,303 @@ pragma solidity ^0.8.19;
 pragma abicoder v2;
 
 import "forge-std/Test.sol";
-import "./helpers/SetUp.sol";
-import "../src/implementations/ExperienceAndItemsImplementation.sol";
+
+import "./setup/SetUp.sol";
 
 // import "forge-std/console2.sol";
 
-contract CharacterSheetsTest is Test, SetUp {
-    event CharacterSheetsCreated(address creator, address characterSheets, address classes, address experienceAndItems);
-    event CharacterSheetsUpdated(address newCharacterSheets);
-    event ExperienceUpdated(address newExperience);
-    event ExperienceAndItemsCreated(address newExp, address creator);
-    event RegistryUpdated(address newRegistry);
-    event ERC6551AccountImplementationUpdated(address newImplementation);
-    event ClassesImplementationUpdated(address newClasses);
+contract CharacterSheetsFactoryTest is Test, SetUp {
+    struct EncodedHatsData {
+        bytes encodedHatsAddresses;
+        bytes encodedHatsStrings;
+    }
+
+    struct EncodedClonesInitData {
+        bytes encodedCloneAddresses;
+        bytes encodedAdaptorAddresses;
+    }
+
+    event NewGameStarted(address creator, address clonesAddressStorage);
+    event ImplementationAddressStorageUpdated(address newImplementationAddressStorage);
+    event ExperienceCreated(address experienceClone);
+    event CharacterSheetsCreated(address expectedCharacterSheets);
+    event ItemsCreated(address newItems);
+    event ClassesCreated(address expectedClasses);
+    event CharacterEligibilityAdaptorCreated(address expectedCharacterEligibilityAdaptor);
+    event ClassLevelAdaptorCreated(address expectedClassLevelAdaptor);
+
+    // HAPPY PATH
 
     function testDeployment() public {
-        address _characterSheetsImplementation = characterSheetsFactory.characterSheetsImplementation();
-        address _experienceAndItemsImplementation = characterSheetsFactory.experienceAndItemsImplementation();
-        address _classesImplementation = characterSheetsFactory.classesImplementation();
-        address _erc6551Registry = characterSheetsFactory.erc6551Registry();
-        address _erc6551AccountImplementation = characterSheetsFactory.erc6551AccountImplementation();
+        address _implementationStorage = address(characterSheetsFactory.implementations());
 
-        assertEq(
-            _characterSheetsImplementation, address(stored.characterSheetsImplementation), "wrong character sheets"
-        );
-        assertEq(_experienceAndItemsImplementation, address(stored.experienceImplementation), "wrong experience");
-        assertEq(_classesImplementation, address(stored.classesImplementation), "wrong Classes");
-        assertEq(_erc6551Registry, address(erc6551Registry), "wrong registry");
-        assertEq(_erc6551AccountImplementation, address(erc6551Implementation), "wrong erc6551 account implementation.");
+        assertEq(_implementationStorage, address(implementationStorage), "wrong implementations");
     }
 
-    function testUpdateCharacterSheetsImplementation() public {
-        vm.prank(admin);
+    function testUpdateImplementationAddressStorage() public {
+        vm.prank(accounts.admin);
         vm.expectEmit(true, false, false, false);
-        emit CharacterSheetsUpdated(address(1));
-        characterSheetsFactory.updateCharacterSheetsImplementation(address(1));
-        assertEq(characterSheetsFactory.characterSheetsImplementation(), address(1));
+        emit ImplementationAddressStorageUpdated(address(1));
+        characterSheetsFactory.updateImplementationAddressStorage(address(1));
+        assertEq(address(characterSheetsFactory.implementations()), address(1));
     }
 
-    function testUpdateExperienceAndItemsImplementation() public {
-        vm.prank(admin);
+    function testCreateExperience() public {
+        address expectedExperience = 0x45fD5C784fdde25103Cd82cB97065B36Ac227f2a;
+        vm.startPrank(accounts.player1);
         vm.expectEmit(true, false, false, false);
-        emit ExperienceUpdated(address(1));
-        characterSheetsFactory.updateExperienceAndItemsImplementation(address(1));
-        assertEq(characterSheetsFactory.experienceAndItemsImplementation(), address(1));
-    }
-
-    function testUpdateERC6551Registry() public {
-        vm.prank(admin);
-        vm.expectEmit(false, false, false, false);
-        emit RegistryUpdated(address(1));
-        characterSheetsFactory.updateERC6551Registry(address(1));
-        assertEq(characterSheetsFactory.erc6551Registry(), address(1));
-    }
-
-    function testUpdaterERC6551AccountImplementation() public {
-        vm.prank(admin);
-        vm.expectEmit(false, false, false, false);
-        emit ERC6551AccountImplementationUpdated(address(1));
-        characterSheetsFactory.updateERC6551AccountImplementation(address(1));
-        assertEq(characterSheetsFactory.erc6551AccountImplementation(), address(1));
-    }
-
-    function testUpdateClassesImplementation() public {
-        vm.startPrank(admin);
-        vm.expectEmit(false, false, false, false);
-        emit ClassesImplementationUpdated(address(1));
-        characterSheetsFactory.updateClassesImplementation(address(1));
+        emit ExperienceCreated(expectedExperience);
+        address experienceAddress = characterSheetsFactory.createExperience();
         vm.stopPrank();
 
-        assertEq(characterSheetsFactory.classesImplementation(), address(1));
+        assertTrue((experienceAddress == expectedExperience), "invalid Experience");
     }
 
-    function testCreate() public {
-        address[] memory dungeonMasters = new address[](2);
-        dungeonMasters[0] = address(1);
-        dungeonMasters[1] = address(2);
-        //create a bunch of sheets
-        for (uint256 i = 0; i < 10; i++) {
-            vm.prank(player1);
-            vm.expectEmit(true, true, false, false);
-            emit CharacterSheetsCreated(player1, address(0), address(0), address(0));
-            bytes memory baseUriData = abi.encode(
-                "test_metadata_uri_character_sheets/",
-                "test_base_uri_character_sheets/",
-                "test_base_uri_experience/",
-                "test_base_uri_classes/"
-            );
+    function testCreateCharacterSheets() public {
+        address expectedCharacterSheets = 0x45fD5C784fdde25103Cd82cB97065B36Ac227f2a;
+        vm.startPrank(accounts.player1);
+        vm.expectEmit(true, false, false, false);
+        emit CharacterSheetsCreated(expectedCharacterSheets);
+        address characterSheetsAddress = characterSheetsFactory.createCharacterSheets();
+        vm.stopPrank();
 
-            (address sheets, address exp, address class) =
-                characterSheetsFactory.create(dungeonMasters, address(dao), baseUriData);
+        assertTrue((characterSheetsAddress == expectedCharacterSheets), "invalid CharacterSheets");
+    }
 
-            assertEq(address(CharacterSheetsImplementation(sheets).experience()), exp, "wrong experience");
-            assertEq(address(ExperienceAndItemsImplementation(exp).characterSheets()), sheets, "wrong sheets");
-            assertEq(address(ExperienceAndItemsImplementation(exp).classes()), class, "wrong classes");
-            assertEq(
-                CharacterSheetsImplementation(sheets).metadataURI(),
-                "test_metadata_uri_character_sheets/",
-                "Wrong character sheets metadata uri"
-            );
-            assertEq(
-                CharacterSheetsImplementation(sheets).baseTokenURI(),
-                "test_base_uri_character_sheets/",
-                "Wrong character sheets base uri"
-            );
-            assertEq(
-                ExperienceAndItemsImplementation(exp).getBaseURI(), "test_base_uri_experience/", "Wrong exp base uri"
-            );
-            assertEq(ClassesImplementation(class).getBaseURI(), "test_base_uri_classes/", "Wrong classes base uri");
-            assertTrue(
-                CharacterSheetsImplementation(sheets).hasRole(keccak256("DUNGEON_MASTER"), address(1)),
-                "incorrect dungeon master 1 "
-            );
-            assertTrue(
-                CharacterSheetsImplementation(sheets).hasRole(keccak256("DUNGEON_MASTER"), address(2)),
-                "incorrect dungeon master 2 "
-            );
-            assertEq(
-                address(CharacterSheetsImplementation(sheets).erc6551AccountImplementation()),
-                address(erc6551Implementation),
-                "incorrect 6551 account"
-            );
-        }
+    function testCreateItems() public {
+        address expectedItems = 0xD9Ce15d0e3c74B4bc3FC19c15114fc34F95c0Df3;
+        vm.startPrank(accounts.player1);
+        vm.expectEmit(true, false, false, false);
+        emit ItemsCreated(expectedItems);
+        address newItems = characterSheetsFactory.createItems();
+        assertTrue((newItems != address(deployments.items)), "new items not deployed");
+    }
+
+    function testCreateClasses() public {
+        address expectedClasses = 0xD9Ce15d0e3c74B4bc3FC19c15114fc34F95c0Df3;
+        vm.startPrank(accounts.player1);
+        vm.expectEmit(true, false, false, false);
+        emit ClassesCreated(expectedClasses);
+        address newClasses = characterSheetsFactory.createClasses();
+        assertTrue((newClasses != address(deployments.classes)), "new classes not deployed");
+    }
+
+    function testCreateCharacterEligibilityAdaptor() public {
+        address expectedCharacterEligibilityAdaptor = 0xD9Ce15d0e3c74B4bc3FC19c15114fc34F95c0Df3;
+        vm.startPrank(accounts.player1);
+        vm.expectEmit(true, false, false, false);
+        emit CharacterEligibilityAdaptorCreated(expectedCharacterEligibilityAdaptor);
+        address newCharacterEligibilityAdaptor = characterSheetsFactory.createCharacterEligibilityAdaptor(
+            implementationStorage.molochV2EligibilityAdaptorImplementation()
+        );
+        assertTrue(
+            (newCharacterEligibilityAdaptor != address(deployments.characterEligibility)),
+            "new character eligibility adaptor not deployed"
+        );
+    }
+
+    function testCreateClassLevelAdaptor() public {
+        address expectedClassLevelAdaptor = 0xD9Ce15d0e3c74B4bc3FC19c15114fc34F95c0Df3;
+        vm.startPrank(accounts.player1);
+        vm.expectEmit(true, false, false, false);
+        emit ClassLevelAdaptorCreated(expectedClassLevelAdaptor);
+        address newClassLevelAdaptor = characterSheetsFactory.createClassLevelAdaptor();
+        assertTrue((newClassLevelAdaptor != address(deployments.classLevels)), "new class level adaptor not deployed");
+    }
+
+    function testInitializeContracts() public {
+        vm.startPrank(accounts.player1);
+
+        DeployedContracts memory newContracts;
+
+        newContracts.characterSheets = CharacterSheetsImplementation(characterSheetsFactory.createCharacterSheets());
+
+        newContracts.items = ItemsImplementation(characterSheetsFactory.createItems());
+
+        newContracts.experience = ExperienceImplementation(characterSheetsFactory.createExperience());
+
+        newContracts.classes = ClassesImplementation(characterSheetsFactory.createClasses());
+
+        newContracts.clones = ClonesAddressStorageImplementation(characterSheetsFactory.createClonesStorage());
+
+        newContracts.characterEligibility = ICharacterEligibilityAdaptor(
+            characterSheetsFactory.createCharacterEligibilityAdaptor(address(adaptors.molochV2EligibilityAdaptor))
+        );
+
+        newContracts.classLevels =
+            ClassLevelAdaptor(characterSheetsFactory.createClassLevelAdaptor(address(adaptors.classLevelAdaptor)));
+
+        newContracts.itemsManager = ItemsManagerImplementation(characterSheetsFactory.createItemsManager());
+
+        newContracts.hatsAdaptor = HatsAdaptor(characterSheetsFactory.createHatsAdaptor(address(adaptors.hatsAdaptor)));
+
+        address[] memory adminArray = createAddressMemoryArray(1);
+        adminArray[0] = accounts.admin;
+
+        address[] memory gameMastersArray = createAddressMemoryArray(1);
+        gameMastersArray[0] = accounts.gameMaster;
+
+        //STACC TOOO DAMN DANK!
+        EncodedClonesInitData memory clonesData;
+        EncodedHatsData memory hatsData;
+
+        hatsData.encodedHatsAddresses =
+            abi.encode(adminArray, gameMastersArray, address(implementationStorage), address(newContracts.clones));
+
+        hatsData.encodedHatsStrings = abi.encode(
+            "new_new_test_hats_base_img",
+            "new_test tophat description",
+            "new_test_admin_uri",
+            "new_test_admin_description",
+            "new_test_game_uri",
+            "new_test_game_description",
+            "new_test_player_uri",
+            "new_test_player_description",
+            "new_test_character_uri",
+            "new_test_character_description"
+        );
+
+        bytes memory characterSheetsData = abi.encode(
+            address(newContracts.clones),
+            address(implementationStorage),
+            "new_test_metadata_uri_character_sheets/",
+            "new_test_base_uri_character_sheets/"
+        );
+
+        clonesData.encodedCloneAddresses = abi.encode(
+            address(newContracts.characterSheets),
+            address(newContracts.items),
+            address(newContracts.itemsManager),
+            address(newContracts.classes),
+            address(newContracts.experience)
+        );
+
+        clonesData.encodedAdaptorAddresses = abi.encode(
+            address(newContracts.characterEligibility),
+            address(newContracts.classLevels),
+            address(newContracts.hatsAdaptor)
+        );
+
+        // initialize clones address storage contract
+        newContracts.clones.initialize(clonesData.encodedCloneAddresses, clonesData.encodedAdaptorAddresses);
+
+        bytes memory customModuleAddresses = abi.encode(address(0), address(0), address(0), address(0));
+
+        newContracts.characterSheets.initialize(characterSheetsData);
+        newContracts.characterEligibility.initialize(accounts.player1, address(dao));
+        newContracts.classLevels.initialize(address(newContracts.clones));
+        newContracts.hatsAdaptor.initialize(
+            accounts.player1, hatsData.encodedHatsAddresses, hatsData.encodedHatsStrings, customModuleAddresses
+        );
+
+        bytes memory encodedItemsData = abi.encode(address(newContracts.clones), "new_test_base_uri_items/");
+        newContracts.items.initialize(encodedItemsData);
+        bytes memory encodedClassesData = abi.encode(address(newContracts.clones), "new_test_base_uri_classes/");
+        newContracts.classes.initialize(encodedClassesData);
+        newContracts.itemsManager.initialize(address(newContracts.clones));
+        newContracts.experience.initialize(address(newContracts.clones));
+
+        assertEq(newContracts.items.getBaseURI(), "new_test_base_uri_items/", "new_incorrect items base uri");
+        assertEq(newContracts.classes.getBaseURI(), "new_test_base_uri_classes/", "new_incorrect classes baseUri");
+        assertEq(
+            newContracts.characterSheets.baseTokenURI(),
+            "new_test_base_uri_character_sheets/",
+            "new_incorrect sheets base uri"
+        );
+        assertEq(newContracts.experience.name(), "Experience", "incorrect experience name");
+        assertEq(newContracts.characterEligibility.dao(), address(dao), "Character elgibility not initialized");
+        assertEq(newContracts.classLevels.getExpForLevel(2), 900, "Character level adaptor not initialized");
+    }
+
+    /// UNHAPPY PATH
+    //TODO do unhappy path
+
+    function testDeploymentRevert() public {
+        //should revert because already initialized
+        vm.expectRevert();
+        characterSheetsFactory.initialize(address(1));
+
+        address _implementationStorage = address(characterSheetsFactory.implementations());
+        assertEq(_implementationStorage, address(implementationStorage), "wrong implementations");
+    }
+
+    function testCreateAndInitialize() public {
+        bytes memory encodedHatsStrings = abi.encode(
+            "new_new_test_hats_base_img",
+            "new_test tophat description",
+            "new_test_admin_uri",
+            "new_test_admin_description",
+            "new_test_game_uri",
+            "new_test_game_description",
+            "new_test_player_uri",
+            "new_test_player_description",
+            "new_test_character_uri",
+            "new_test_character_description"
+        );
+
+        bytes memory encodedSheetsStrings = abi.encode(
+            "new_test_metadata_uri_character_sheets/",
+            "new_test_base_uri_character_sheets/",
+            "new_test_base_uri_items/",
+            "new_test_base_uri_classes/"
+        );
+
+        address[] memory adminArray = createAddressMemoryArray(1);
+        adminArray[0] = accounts.admin;
+
+        address[] memory gameMastersArray = createAddressMemoryArray(1);
+        gameMastersArray[0] = accounts.gameMaster;
+
+        vm.prank(accounts.player2);
+        address newClonesStorage = characterSheetsFactory.createAndInitialize(
+            address(dao), adminArray, gameMastersArray, encodedHatsStrings, encodedSheetsStrings
+        );
+        ClonesAddressStorageImplementation newClones = ClonesAddressStorageImplementation(newClonesStorage);
+        CharacterSheetsImplementation newSheets = CharacterSheetsImplementation(newClones.characterSheets());
+        HatsAdaptor newHatsAdaptor = HatsAdaptor(newClones.hatsAdaptor());
+        assert(newClones.hatsAdaptor() != address(0));
+        assertEq(newSheets.baseTokenURI(), "new_test_base_uri_character_sheets/", "wrong sheets uri");
+        assertEq(newSheets.metadataURI(), "new_test_metadata_uri_character_sheets/", "wrong sheets metadata uri");
+        assertEq(newHatsAdaptor.isAdmin(accounts.admin), true, "admin not admin");
+    }
+
+    function testCreateAndInitializeWithZeroDao() public {
+        bytes memory encodedHatsStrings = abi.encode(
+            "new_new_test_hats_base_img",
+            "new_test tophat description",
+            "new_test_admin_uri",
+            "new_test_admin_description",
+            "new_test_game_uri",
+            "new_test_game_description",
+            "new_test_player_uri",
+            "new_test_player_description",
+            "new_test_character_uri",
+            "new_test_character_description"
+        );
+
+        bytes memory encodedSheetsStrings = abi.encode(
+            "new_test_metadata_uri_character_sheets/",
+            "new_test_base_uri_character_sheets/",
+            "new_test_base_uri_items/",
+            "new_test_base_uri_classes/"
+        );
+
+        address[] memory adminArray = createAddressMemoryArray(1);
+        adminArray[0] = accounts.admin;
+
+        address[] memory gameMastersArray = createAddressMemoryArray(1);
+        gameMastersArray[0] = accounts.gameMaster;
+
+        vm.prank(accounts.player2);
+        address newClonesStorage = characterSheetsFactory.createAndInitialize(
+            address(0), adminArray, gameMastersArray, encodedHatsStrings, encodedSheetsStrings
+        );
+        ClonesAddressStorageImplementation newClones = ClonesAddressStorageImplementation(newClonesStorage);
+        CharacterSheetsImplementation newSheets = CharacterSheetsImplementation(newClones.characterSheets());
+        HatsAdaptor newHatsAdaptor = HatsAdaptor(newClones.hatsAdaptor());
+        assert(newClones.hatsAdaptor() != address(0));
+        assertEq(newSheets.baseTokenURI(), "new_test_base_uri_character_sheets/", "wrong sheets uri");
+        assertEq(newSheets.metadataURI(), "new_test_metadata_uri_character_sheets/", "wrong sheets metadata uri");
+        assertEq(newHatsAdaptor.isAdmin(accounts.admin), true, "admin not admin");
     }
 }
