@@ -2,8 +2,6 @@
 pragma solidity ^0.8.19;
 pragma abicoder v2;
 
-// //solhint-disable
-
 import "forge-std/Test.sol";
 
 import "../src/implementations/ItemsImplementation.sol";

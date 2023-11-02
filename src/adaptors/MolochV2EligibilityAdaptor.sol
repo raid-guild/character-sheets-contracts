@@ -14,7 +14,7 @@ import {Errors} from "../lib/Errors.sol";
 /**
  * @notice this contract is to check and make sure that an address is eligible to roll a character sheet
  */
-contract CharacterEligibilityAdaptor is
+contract MolochV2EligibilityAdaptor is
     ICharacterEligibilityAdaptor,
     ERC165,
     Initializable,

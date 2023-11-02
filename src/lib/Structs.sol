@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Category, Asset} from "./MultiToken.sol";
+import {Category} from "./MultiToken.sol";
 
 struct ClonesAddresses {
     address characterSheets;
@@ -98,8 +98,8 @@ struct ImplementationAddresses {
 }
 
 struct AdaptorImplementations {
-    address characterEligibilityAdaptorV2Implementation;
-    address characterEligibilityAdaptorV3Implementation;
+    address molochV2EligibilityAdaptorImplementation;
+    address molochV3EligibilityAdaptorImplementation;
     address classLevelAdaptorImplementation;
     address hatsAdaptorImplementation;
 }

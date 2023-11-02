@@ -20,7 +20,8 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
     event RegistryUpdated(address newRegistry);
     event ERC6551AccountImplementationUpdated(address newImplementation);
     event ClassesImplementationUpdated(address newClasses);
-    event CharacterEligibilityAdaptorUpdated(address newAdaptor);
+    event MolochV2EligibilityAdaptorUpdated(address newAdaptor);
+    event MolochV3EligibilityAdaptorUpdated(address newAdaptor);
     event ClassLevelAdaptorUpdated(address newAdaptor);
     event HatsAdaptorUpdated(address newHatsAdaptor);
     event ItemsManagerUpdated(address newItemsManager);
@@ -75,20 +76,20 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         emit ClassesImplementationUpdated(newClasses);
     }
 
-    function updateCharacterEligibilityAdaptorV2Implementation(address newCharacterEligibilityAdaptor)
+    function updateMolochV2EligibilityAdaptorImplementation(address newCharacterEligibilityAdaptor)
         external
         onlyOwner
     {
-        _adaptors.characterEligibilityAdaptorV2Implementation = newCharacterEligibilityAdaptor;
-        emit CharacterEligibilityAdaptorUpdated(newCharacterEligibilityAdaptor);
+        _adaptors.molochV2EligibilityAdaptorImplementation = newCharacterEligibilityAdaptor;
+        emit MolochV2EligibilityAdaptorUpdated(newCharacterEligibilityAdaptor);
     }
 
-    function updateCharacterEligibilityAdaptorV3Implementation(address newCharacterEligibilityAdaptor)
+    function updateMolochV3EligibilityAdaptorImplementation(address newCharacterEligibilityAdaptor)
         external
         onlyOwner
     {
-        _adaptors.characterEligibilityAdaptorV3Implementation = newCharacterEligibilityAdaptor;
-        emit CharacterEligibilityAdaptorUpdated(newCharacterEligibilityAdaptor);
+        _adaptors.molochV3EligibilityAdaptorImplementation = newCharacterEligibilityAdaptor;
+        emit MolochV3EligibilityAdaptorUpdated(newCharacterEligibilityAdaptor);
     }
 
     function updateClassLevelAdaptorImplementation(address newClassLevelAdaptor) external onlyOwner {
@@ -177,12 +178,12 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         return _implementationsAddresses.erc6551AccountImplementation;
     }
 
-    function characterEligibilityAdaptorV2Implementation() public view returns (address) {
-        return _adaptors.characterEligibilityAdaptorV2Implementation;
+    function molochV2EligibilityAdaptorImplementation() public view returns (address) {
+        return _adaptors.molochV2EligibilityAdaptorImplementation;
     }
 
-    function characterEligibilityAdaptorV3Implementation() public view returns (address) {
-        return _adaptors.characterEligibilityAdaptorV3Implementation;
+    function molochV3EligibilityAdaptorImplementation() public view returns (address) {
+        return _adaptors.molochV3EligibilityAdaptorImplementation;
     }
 
     function classLevelAdaptorImplementation() public view returns (address) {
@@ -245,8 +246,8 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
     function _initAdaptors(bytes calldata encodedAdaptorAddresses) internal {
         (
             _adaptors.hatsAdaptorImplementation,
-            _adaptors.characterEligibilityAdaptorV2Implementation,
-            _adaptors.characterEligibilityAdaptorV3Implementation,
+            _adaptors.molochV2EligibilityAdaptorImplementation,
+            _adaptors.molochV3EligibilityAdaptorImplementation,
             _adaptors.classLevelAdaptorImplementation
         ) = abi.decode(encodedAdaptorAddresses, (address, address, address, address));
     }

@@ -12,7 +12,7 @@ import {IMolochDAOV3} from "../interfaces/IMolochDAOV3.sol";
 import {ICharacterEligibilityAdaptor} from "../interfaces/ICharacterEligibilityAdaptor.sol";
 import {Errors} from "../lib/Errors.sol";
 
-contract CharacterEligibilityAdaptorV3 is
+contract MolochV3EligibilityAdaptor is
     ICharacterEligibilityAdaptor,
     ERC165,
     Initializable,

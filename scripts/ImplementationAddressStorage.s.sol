@@ -15,8 +15,8 @@ struct ImplementationAddresses {
     address classesImplementation;
     address erc6551AccountImplementation;
     address experienceImplementation;
-    address characterEligibilityAdaptorV2Implementation;
-    address characterEligibilityAdaptorV3Implementation;
+    address molochV2EligibilityAdaptorImplementation;
+    address molochV3EligibilityAdaptorImplementation;
     address classLevelAdaptorImplementation;
     address hatsAdaptorImplementation;
     address cloneAddressStorage;
@@ -34,41 +34,6 @@ struct HatsAddresses {
     address erc6551Registry;
 }
 
-/**
- * function _initImplementations(bytes calldata encodedImplementationAddresses) internal {
- *         (
- *             _implementationsAddresses.characterSheetsImplementation,
- *             _implementationsAddresses.itemsImplementation,
- *             _implementationsAddresses.classesImplementation,
- *             _implementationsAddresses.experienceImplementation,
- *             _implementationsAddresses.cloneAddressStorage,
- *             _implementationsAddresses.itemsManagerImplementation,
- *             _implementationsAddresses.erc6551AccountImplementation
- *         ) = abi.decode(encodedImplementationAddresses, (address, address, address, address, address, address, address));
- *     }
- *
- *     function _initAdaptorsAndModules(bytes calldata encodedAdaptorsAndModuleAddresses) internal {
- *         (
- *             _implementationsAddresses.adminHatsEligibilityModule,
- *             _implementationsAddresses.gameMasterHatsEligibilityModule,
- *             _implementationsAddresses.playerHatsEligibilityModule,
- *             _implementationsAddresses.characterHatsEligibilityModule,
- *             _implementationsAddresses.hatsAdaptorImplementation,
- *             _implementationsAddresses.characterEligibilityAdaptorImplementation,
- *             _implementationsAddresses.classLevelAdaptorImplementation
- *         ) = abi.decode(
- *             encodedAdaptorsAndModuleAddresses, (address, address, address, address, address, address, address)
- *         );
- *     }
- *
- *     function _initExternalAddresses(bytes calldata encodedExternalAddresses) internal {
- *         (
- *             _implementationsAddresses.erc6551Registry,
- *             _implementationsAddresses.hatsContract,
- *             _implementationsAddresses.hatsModuleFactory
- *         ) = abi.decode(encodedExternalAddresses, (address, address, address));
- *     }
- */
 contract DeployImplementationAddressStorage is BaseDeployer {
     using stdJson for string;
 
@@ -115,10 +80,10 @@ contract DeployImplementationAddressStorage is BaseDeployer {
     function _loadAdaptorsAndModuleAddresses(string memory json, string memory targetEnv) internal {
         implementationAddresses.erc6551AccountImplementation =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterAccount")));
-        implementationAddresses.characterEligibilityAdaptorV2Implementation =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterEligibilityAdaptorV2")));
-        implementationAddresses.characterEligibilityAdaptorV3Implementation =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterEligibilityAdaptorV3")));
+        implementationAddresses.molochV2EligibilityAdaptorImplementation =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".MolochV2EligibilityAdaptor")));
+        implementationAddresses.molochV3EligibilityAdaptorImplementation =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".MolochV3EligibilityAdaptor")));
         hatsAddresses.adminHatsEligibilityModule =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".AdminHatEligibilityModule")));
         hatsAddresses.gameMasterHatsEligibilityModule =
@@ -158,8 +123,8 @@ contract DeployImplementationAddressStorage is BaseDeployer {
     function _encodeAdaptorAddresses() internal view returns (bytes memory) {
         bytes memory encodedAdaptorsAddresses = abi.encode(
             implementationAddresses.hatsAdaptorImplementation,
-            implementationAddresses.characterEligibilityAdaptorV2Implementation,
-            implementationAddresses.characterEligibilityAdaptorV3Implementation,
+            implementationAddresses.molochV2EligibilityAdaptorImplementation,
+            implementationAddresses.molochV3EligibilityAdaptorImplementation,
             implementationAddresses.classLevelAdaptorImplementation
         );
 

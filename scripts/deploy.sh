@@ -15,9 +15,9 @@ cat << "EOF"
                                                                                           
 EOF
 
-if [[ $1 == "" || $2 == "" || ( $3 != "--verify"   && $3 != "--force"  && $3 != "" ) || ($4 != "--verify" && $4 != "--force" && $4 != "") ]]; then
+if [[ $1 == "" || $2 == "" || ($3 != "--verify" && $3 != "--force" && $3 != "") || ($4 != "--verify" && $4 != "--force" && $4 != "") ]]; then
     echo "Usage:"
-    echo "  deploy.sh [target environment] [contractName] --verify-only [constructor-args]"
+    echo "  deploy.sh [target environment] [contractName]"
     echo "    where target environment (required): mainnet / testnet"
     echo "    where contractName (required): contract name you want to deploy"
     echo "    --verify: if you want to verify the deployed source code"
@@ -88,7 +88,7 @@ if [[ $3 == "--verify" || $4 == "--verify" ]]; then
     VERIFY=true
 fi
 
-if [[ $VERIFY == false ]]; then
+if [[ $VERIFY == false || $NETWORK == "anvil" ]]; then
     echo "Skipping verification"
     exit 0
 fi

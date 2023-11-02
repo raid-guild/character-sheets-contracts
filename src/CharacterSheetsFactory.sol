@@ -64,10 +64,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         address itemsManagerClone = createItemsManager();
         address hatsAdaptorClone = createHatsAdaptor();
 
-        address characterEligibilityAdaptorClone = _checkDao(dao)
-            ? createCharacterEligibilityAdaptor(implementations.characterEligibilityAdaptorV3Implementation())
-            : createCharacterEligibilityAdaptor();
-
+        address characterEligibilityAdaptorClone = createCharacterEligibilityAdaptorFromDao(dao);
         (address characterSheetsClone, address itemsClone) = _createSheetsAndItems();
 
         (address classesClone, address experienceClone, address classLevelAdaptorClone) =
@@ -157,18 +154,27 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         return classesClone;
     }
 
-    function createCharacterEligibilityAdaptor() public returns (address) {
-        if (implementations.characterEligibilityAdaptorV2Implementation() == address(0)) {
-            revert Errors.NotInitialized();
+    function createCharacterEligibilityAdaptorFromDao(address _dao) public returns (address) {
+        if (_dao == address(0)) {
+            return address(0);
         }
-        return createCharacterEligibilityAdaptor(implementations.characterEligibilityAdaptorV2Implementation());
+        if (_checkMolochV3Dao(_dao)) {
+            return createCharacterEligibilityAdaptor(implementations.molochV3EligibilityAdaptorImplementation());
+        }
+        if (_checkMolochV2Dao(_dao)) {
+            return createCharacterEligibilityAdaptor(implementations.molochV2EligibilityAdaptorImplementation());
+        }
+        revert Errors.UnsupportedInterface();
     }
 
     function createCharacterEligibilityAdaptor(address _characterEligibilityAdaptorImplementation)
         public
         returns (address)
     {
-        if (!IERC165(_characterEligibilityAdaptorImplementation).supportsInterface(ELIGIBILITY_INTERFACE_ID)) {
+        if (
+            _characterEligibilityAdaptorImplementation == address(0)
+                || !IERC165(_characterEligibilityAdaptorImplementation).supportsInterface(ELIGIBILITY_INTERFACE_ID)
+        ) {
             revert Errors.UnsupportedInterface();
         }
 
@@ -288,13 +294,21 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         return (classesClone, experienceClone, classLevelAdaptorClone);
     }
 
-    function _checkDao(address dao) private view returns (bool) {
+    function _checkMolochV3Dao(address dao) private view returns (bool) {
         if (dao != address(0)) {
             (bool success,) = address(dao).staticcall(abi.encodeWithSelector(bytes4(keccak256("sharesToken()"))));
             return success;
-        } else {
-            return false;
         }
+        return false;
+    }
+
+    function _checkMolochV2Dao(address dao) private view returns (bool) {
+        if (dao != address(0)) {
+            (bool success,) =
+                address(dao).staticcall(abi.encodeWithSelector(bytes4(keccak256("members(address)")), address(0)));
+            return success;
+        }
+        return false;
     }
 
     function _encodeCharacterInitData(address clonesStorage, bytes memory data) private view returns (bytes memory) {

@@ -89,7 +89,9 @@ contract CharacterSheetsFactoryTest is Test, SetUp {
         vm.startPrank(accounts.player1);
         vm.expectEmit(true, false, false, false);
         emit CharacterEligibilityAdaptorCreated(expectedCharacterEligibilityAdaptor);
-        address newCharacterEligibilityAdaptor = characterSheetsFactory.createCharacterEligibilityAdaptor();
+        address newCharacterEligibilityAdaptor = characterSheetsFactory.createCharacterEligibilityAdaptor(
+            implementationStorage.molochV2EligibilityAdaptorImplementation()
+        );
         assertTrue(
             (newCharacterEligibilityAdaptor != address(deployments.characterEligibility)),
             "new character eligibility adaptor not deployed"
@@ -121,7 +123,7 @@ contract CharacterSheetsFactoryTest is Test, SetUp {
         newContracts.clones = ClonesAddressStorageImplementation(characterSheetsFactory.createClonesStorage());
 
         newContracts.characterEligibility = ICharacterEligibilityAdaptor(
-            characterSheetsFactory.createCharacterEligibilityAdaptor(address(adaptors.characterEligibilityAdaptorV2))
+            characterSheetsFactory.createCharacterEligibilityAdaptor(address(adaptors.molochV2EligibilityAdaptor))
         );
 
         newContracts.classLevels =

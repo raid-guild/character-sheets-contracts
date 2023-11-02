@@ -2,9 +2,8 @@
 pragma solidity ^0.8.0;
 
 import {IMolochDAOV2} from "../interfaces/IMolochDAOV2.sol";
-import {IMolochDAOV3} from "../interfaces/IMolochDAOV3.sol";
 
-contract Moloch is IMolochDAOV2 {
+contract MockMolochV2 is IMolochDAOV2 {
     mapping(address => Member) private _members;
     // address public sharesToken;
 

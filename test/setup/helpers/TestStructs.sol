@@ -38,9 +38,6 @@ import {GameMasterHatEligibilityModule} from "../../../src/adaptors/hats-modules
 import {PlayerHatEligibilityModule} from "../../../src/adaptors/hats-modules/PlayerHatEligibilityModule.sol";
 import {CharacterHatEligibilityModule} from "../../../src/adaptors/hats-modules/CharacterHatEligibilityModule.sol";
 
-//test and mocks
-import {Moloch} from "../../../src/mocks/MockMoloch.sol";
-
 import "murky/src/Merkle.sol";
 
 interface TestStructs {
@@ -102,8 +99,8 @@ interface TestStructs {
     }
 
     struct Adaptors {
-        ICharacterEligibilityAdaptor characterEligibilityAdaptorV2;
-        ICharacterEligibilityAdaptor characterEligibilityAdaptorV3;
+        ICharacterEligibilityAdaptor molochV2EligibilityAdaptor;
+        ICharacterEligibilityAdaptor molochV3EligibilityAdaptor;
         ClassLevelAdaptor classLevelAdaptor;
         HatsAdaptor hatsAdaptor;
     }

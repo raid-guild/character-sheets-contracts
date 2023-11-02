@@ -21,7 +21,6 @@ if [[ $1 == "" || $2 == "" ]]
         echo "  verify.sh [target environment] [contractName]"
         echo "    where target environment (required): gnosis / sepolia"
         echo "    where contractName (required): contract name you want to verify the action from"
-        echo "    where actionName (required): action name you want to verify"
         echo ""
         echo "Example:"
         echo "  verify.sh sepolia CharacterSheetsFactory"

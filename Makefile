@@ -30,53 +30,47 @@ format :; forge fmt
 # solhint should be installed globally
 lint :; solhint "src/**/*.sol"
 
-anvil :; anvil -m 'junk junk junk junk junk junk junk junk junk junk junk junk'
+anvil :; anvil -m 'test test test test test test test test test test test junk'
 
-# deploy commands
-deploy-anvil :; ./scripts/deploy.sh anvil ${contract}
-deploy-sepolia :; ./scripts/deploy.sh sepolia ${contract} --verify
-deploy-goerli :; ./scripts/deploy.sh goerli ${contract} --verify
-deploy-gnosis :; ./scripts/deploy.sh gnosis ${contract} --verify
+# deploy
+deploy :; 
+	@if [ ${force} = "true" ]; then \
+    ./scripts/deploy.sh ${network} ${contract} --force; \
+	else\
+    ./scripts/deploy.sh ${network} ${contract}; \
+	fi
 
-# verify commands
-verify-sepolia :; ./scripts/verify.sh sepolia ${contract}
-verify-goerli :; ./scripts/verify.sh goerli ${contract}
-verify-gnosis :; ./scripts/verify.sh gnosis ${contract}
+# verify
+verify :; ./scripts/verify.sh ${network} ${contract}
 
-deploy-contracts :; make deploy-${network} contract=CharacterAccount && \
-	make deploy-${network} contract=CharacterSheetsImplementation && \
-	make deploy-${network} contract=ExperienceImplementation && \
-	make deploy-${network} contract=ItemsImplementation && \
-	make deploy-${network} contract=ItemsManagerImplementation && \
-	make deploy-${network} contract=ClassesImplementation && \
-	make deploy-${network} contract=CharacterEligibilityAdaptorV2 && \
-	make deploy-${network} contract=CharacterEligibilityAdaptorV3 && \
-	make deploy-${network} contract=ClassLevelAdaptor && \
-	make deploy-${network} contract=HatsAdaptor && \
-	make deploy-${network} contract=AdminHatEligibilityModule && \
-	make deploy-${network} contract=GameMasterHatEligibilityModule && \
-	make deploy-${network} contract=PlayerHatEligibilityModule && \
-	make deploy-${network} contract=CharacterHatEligibilityModule && \
-	make deploy-${network} contract=ClonesAddressStorageImplementation && \
-	make deploy-${network} contract=ImplementationAddressStorage && \
-	make deploy-${network} contract=CharacterSheetsFactory;
+CONTRACTS = \
+CharacterAccount \
+CharacterSheetsImplementation \
+ExperienceImplementation \
+ItemsImplementation \
+ItemsManagerImplementation \
+ClassesImplementation \
+MolochV2EligibilityAdaptor \
+MolochV3EligibilityAdaptor \
+ClassLevelAdaptor \
+HatsAdaptor \
+AdminHatEligibilityModule \
+GameMasterHatEligibilityModule \
+PlayerHatEligibilityModule \
+CharacterHatEligibilityModule \
+ClonesAddressStorageImplementation \
+ImplementationAddressStorage \
+CharacterSheetsFactory
 
-verify-contracts :; make verify-${network} contract=CharacterAccount && \
-	make verify-${network} contract=CharacterSheetsImplementation && \
-	make verify-${network} contract=ExperienceImplementation && \
-	make verify-${network} contract=ItemsImplementation && \
-	make verify-${network} contract=ItemsManagerImplementation && \
-	make verify-${network} contract=ClassesImplementation && \
-	make verify-${network} contract=CharacterEligibilityAdaptorImplementation && \
-	make verify-${network} contract=ClassLevelAdaptorImplementation && \
-	make verify-${network} contract=HatsAdaptorImplementation && \
-	make verify-${network} contract=AdminHatEligibilityModule && \
-	make verify-${network} contract=GameMasterHatEligibilityModule && \
-	make verify-${network} contract=PlayerHatEligibilityModule && \
-	make verify-${network} contract=CharacterHatEligibilityModule && \
-	make deploy-${network} contract=ClonesAddressStorageImplementation && \
-	make deploy-${network} contract=ImplementationAddressStorage && \
-	make verify-${network} contract=CharacterSheetsFactory;
+deploy-contracts :; 
+	@for contract in ${CONTRACTS}; do \
+		make deploy network=${network} force=${force} contract=$$contract; \
+	done
+
+verify-contracts :; 
+	@for contract in ${CONTRACTS}; do \
+		make verify network=${network} contract=$$contract; \
+	done
 
 # execute commands
 create-sheets :; scripts/createSheets.sh ${network}  
