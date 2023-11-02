@@ -108,4 +108,11 @@ interface TestStructs {
         ERC6551Registry erc6551Registry;
         CharacterAccount erc6551Implementation;
     }
+
+    struct EncodedAddresses {
+        bytes encodedImplementationAddresses;
+        bytes encodedModuleAddresses;
+        bytes encodedAdaptorAddresses;
+        bytes encodedExternalAddresses;
+    }
 }
