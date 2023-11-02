@@ -287,6 +287,15 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         return (classesClone, experienceClone, classLevelAdaptorClone);
     }
 
+    function _checkDao(address dao) private view returns (bool) {
+        if (dao != address(0)) {
+            (bool success,) = dao.staticcall(abi.encodeWithSelector(bytes4(keccak256("sharesToken()"))));
+            return success;
+        } else {
+            return false;
+        }
+    }
+
     function _encodeCharacterInitData(address clonesStorage, bytes memory data) private view returns (bytes memory) {
         (string memory characterSheetsMetadataUri, string memory characterSheetsBaseUri,,) = _decodeStrings(data);
 
