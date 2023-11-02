@@ -103,7 +103,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         address clones = create(dao);
         bytes memory encodedHatsAddresses = abi.encode(admins, dungeonMasters, implementations, clones);
 
-        this.initializeContracts(clones, dao, encodedHatsAddresses, encodedHatsStrings, sheetsStrings);
+        initializeContracts(clones, dao, encodedHatsAddresses, encodedHatsStrings, sheetsStrings);
 
         return clones;
     }
@@ -245,7 +245,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
     function initializeContracts(
         address clonesStorageAddress,
         address dao,
-        bytes calldata encodedHatsAddresses,
+        bytes memory encodedHatsAddresses,
         bytes calldata encodedHatsStrings,
         bytes calldata sheetsStrings
     ) public {

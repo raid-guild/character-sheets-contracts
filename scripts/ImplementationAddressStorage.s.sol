@@ -114,13 +114,13 @@ contract DeployImplementationAddressStorage is BaseDeployer {
         implementationAddresses.characterEligibilityAdaptorImplementation =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterEligibilityAdaptor")));
         hatsAddresses.adminHatsEligibilityModule =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".AdminHatsEligibilityModule")));
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".AdminHatEligibilityModule")));
         hatsAddresses.gameMasterHatsEligibilityModule =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".GameMasterHatsEligibilityModule")));
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".GameMasterHatEligibilityModule")));
         hatsAddresses.playerHatsEligibilityModule =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".PlayerHatsEligibilityModule")));
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".PlayerHatEligibilityModule")));
         hatsAddresses.characterHatsEligibilityModule =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterHatsEligibilityModule")));
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterHatEligibilityModule")));
     }
 
     function _loadExternalAddresses(string memory json, string memory targetEnv) internal {
@@ -129,7 +129,7 @@ contract DeployImplementationAddressStorage is BaseDeployer {
         implementationAddresses.hatsAdaptorImplementation =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".HatsAdaptor")));
         implementationAddresses.cloneAddressStorage =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".CloneAddressStorage")));
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".ClonesAddressStorageImplementation")));
         hatsAddresses.hatsContract = json.readAddress(string(abi.encodePacked(".", targetEnv, ".HatsContract")));
         hatsAddresses.hatsModuleFactory =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".HatsModuleFactory")));

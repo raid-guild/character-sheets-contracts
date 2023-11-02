@@ -35,7 +35,7 @@ anvil :; anvil -m 'junk junk junk junk junk junk junk junk junk junk junk junk'
 # deploy commands
 deploy-anvil :; ./scripts/deploy.sh anvil ${contract}
 deploy-sepolia :; ./scripts/deploy.sh sepolia ${contract} --verify
-deploy-goerli :; ./scripts/deploy.sh goerli ${contract} --verify --force
+deploy-goerli :; ./scripts/deploy.sh goerli ${contract} --verify
 deploy-gnosis :; ./scripts/deploy.sh gnosis ${contract} --verify
 
 # verify commands
