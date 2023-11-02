@@ -11,6 +11,7 @@ import "./lib/Structs.sol";
 
 contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
     ImplementationAddresses internal _implementationsAddresses;
+    AdaptorImplementations internal _adaptors;
 
     // update events
     event CharacterSheetsUpdated(address newCharacterSheets);
@@ -33,12 +34,14 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
 
     function initialize(
         bytes calldata encodedImplementationAddresses,
-        bytes calldata encodedAdaptorsAndMOduleAddresses,
+        bytes calldata encodedModuleAddresses,
+        bytes calldata encodedAdaptorAddresses,
         bytes calldata encodedExternalAddresses
     ) external initializer {
         __Ownable_init_unchained(msg.sender);
         _initImplementations(encodedImplementationAddresses);
-        _initAdaptorsAndModules(encodedAdaptorsAndMOduleAddresses);
+        _initModules(encodedModuleAddresses);
+        _initAdaptors(encodedAdaptorAddresses);
         _initExternalAddresses(encodedExternalAddresses);
     }
 
@@ -76,17 +79,25 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         external
         onlyOwner
     {
-        _implementationsAddresses.characterEligibilityAdaptorV2Implementation = newCharacterEligibilityAdaptor;
+        _adaptors.characterEligibilityAdaptorV2Implementation = newCharacterEligibilityAdaptor;
+        emit CharacterEligibilityAdaptorUpdated(newCharacterEligibilityAdaptor);
+    }
+
+    function updateCharacterEligibilityAdaptorV3Implementation(address newCharacterEligibilityAdaptor)
+        external
+        onlyOwner
+    {
+        _adaptors.characterEligibilityAdaptorV3Implementation = newCharacterEligibilityAdaptor;
         emit CharacterEligibilityAdaptorUpdated(newCharacterEligibilityAdaptor);
     }
 
     function updateClassLevelAdaptorImplementation(address newClassLevelAdaptor) external onlyOwner {
-        _implementationsAddresses.classLevelAdaptorImplementation = newClassLevelAdaptor;
+        _adaptors.classLevelAdaptorImplementation = newClassLevelAdaptor;
         emit ClassLevelAdaptorUpdated(newClassLevelAdaptor);
     }
 
     function updateHatsAdaptorImplementation(address newHatsAdaptor) external onlyOwner {
-        _implementationsAddresses.hatsAdaptorImplementation = newHatsAdaptor;
+        _adaptors.hatsAdaptorImplementation = newHatsAdaptor;
 
         emit HatsAdaptorUpdated(newHatsAdaptor);
     }
@@ -166,16 +177,20 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         return _implementationsAddresses.erc6551AccountImplementation;
     }
 
-    function characterEligibilityAdaptorImplementation() public view returns (address) {
-        return _implementationsAddresses.characterEligibilityAdaptorV2Implementation;
+    function characterEligibilityAdaptorV2Implementation() public view returns (address) {
+        return _adaptors.characterEligibilityAdaptorV2Implementation;
+    }
+
+    function characterEligibilityAdaptorV3Implementation() public view returns (address) {
+        return _adaptors.characterEligibilityAdaptorV3Implementation;
     }
 
     function classLevelAdaptorImplementation() public view returns (address) {
-        return _implementationsAddresses.classLevelAdaptorImplementation;
+        return _adaptors.classLevelAdaptorImplementation;
     }
 
     function hatsAdaptorImplementation() public view returns (address) {
-        return _implementationsAddresses.hatsAdaptorImplementation;
+        return _adaptors.hatsAdaptorImplementation;
     }
 
     function cloneAddressStorage() public view returns (address) {
@@ -218,18 +233,22 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         ) = abi.decode(encodedImplementationAddresses, (address, address, address, address, address, address, address));
     }
 
-    function _initAdaptorsAndModules(bytes calldata encodedAdaptorsAndModuleAddresses) internal {
+    function _initModules(bytes calldata encodedModuleAddresses) internal {
         (
             _implementationsAddresses.adminHatsEligibilityModule,
             _implementationsAddresses.gameMasterHatsEligibilityModule,
             _implementationsAddresses.playerHatsEligibilityModule,
-            _implementationsAddresses.characterHatsEligibilityModule,
-            _implementationsAddresses.hatsAdaptorImplementation,
-            _implementationsAddresses.characterEligibilityAdaptorV2Implementation,
-            _implementationsAddresses.classLevelAdaptorImplementation
-        ) = abi.decode(
-            encodedAdaptorsAndModuleAddresses, (address, address, address, address, address, address, address)
-        );
+            _implementationsAddresses.characterHatsEligibilityModule
+        ) = abi.decode(encodedModuleAddresses, (address, address, address, address));
+    }
+
+    function _initAdaptors(bytes calldata encodedAdaptorAddresses) internal {
+        (
+            _adaptors.hatsAdaptorImplementation,
+            _adaptors.characterEligibilityAdaptorV2Implementation,
+            _adaptors.characterEligibilityAdaptorV3Implementation,
+            _adaptors.classLevelAdaptorImplementation
+        ) = abi.decode(encodedAdaptorAddresses, (address, address, address, address));
     }
 
     function _initExternalAddresses(bytes calldata encodedExternalAddresses) internal {

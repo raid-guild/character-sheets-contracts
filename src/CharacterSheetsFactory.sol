@@ -12,7 +12,7 @@ import {CharacterSheetsImplementation} from "./implementations/CharacterSheetsIm
 import {ClassesImplementation} from "./implementations/ClassesImplementation.sol";
 import {ExperienceImplementation} from "./implementations/ExperienceImplementation.sol";
 import {ItemsImplementation} from "./implementations/ItemsImplementation.sol";
-import {CharacterEligibilityAdaptor} from "./adaptors/CharacterEligibilityAdaptor.sol";
+import {ICharacterEligibilityAdaptor} from "./interfaces/ICharacterEligibilityAdaptor.sol";
 import {ClassLevelAdaptor} from "./adaptors/ClassLevelAdaptor.sol";
 import {ItemsManagerImplementation} from "./implementations/ItemsManagerImplementation.sol";
 import {HatsAdaptor} from "./adaptors/HatsAdaptor.sol";
@@ -156,10 +156,10 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
     }
 
     function createCharacterEligibilityAdaptor() public returns (address) {
-        if (implementations.characterEligibilityAdaptorImplementation() == address(0)) {
+        if (implementations.characterEligibilityAdaptorV2Implementation() == address(0)) {
             revert Errors.NotInitialized();
         }
-        return createCharacterEligibilityAdaptor(implementations.characterEligibilityAdaptorImplementation());
+        return createCharacterEligibilityAdaptor(implementations.characterEligibilityAdaptorV2Implementation());
     }
 
     function createCharacterEligibilityAdaptor(address _characterEligibilityAdaptorImplementation)
@@ -250,7 +250,7 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         IClonesAddressStorage clones = IClonesAddressStorage(clonesStorageAddress);
 
         //stacc too dank
-        CharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).initialize(msg.sender, dao);
+        ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).initialize(msg.sender, dao);
         ClassLevelAdaptor(clones.classLevelAdaptor()).initialize(clonesStorageAddress);
         HatsAdaptor(clones.hatsAdaptor()).initialize(msg.sender, encodedHatsAddresses, encodedHatsStrings);
 

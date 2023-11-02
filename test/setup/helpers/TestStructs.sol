@@ -16,7 +16,7 @@ import {ImplementationAddressStorage} from "../../../src/ImplementationAddressSt
 import {ClonesAddressStorageImplementation} from "../../../src/implementations/ClonesAddressStorageImplementation.sol";
 
 //adaptors
-import {CharacterEligibilityAdaptor} from "../../../src/adaptors/CharacterEligibilityAdaptor.sol";
+import {ICharacterEligibilityAdaptor} from "../../../src/interfaces/ICharacterEligibilityAdaptor.sol";
 import {ClassLevelAdaptor} from "../../../src/adaptors/ClassLevelAdaptor.sol";
 import {HatsAdaptor} from "../../../src/adaptors/HatsAdaptor.sol";
 
@@ -51,7 +51,7 @@ interface TestStructs {
         ItemsManagerImplementation itemsManager;
         ClassesImplementation classes;
         ClonesAddressStorageImplementation clones;
-        CharacterEligibilityAdaptor characterEligibility;
+        ICharacterEligibilityAdaptor characterEligibility;
         ClassLevelAdaptor classLevels;
         HatsAdaptor hatsAdaptor;
     }
@@ -95,13 +95,17 @@ interface TestStructs {
         ItemsManagerImplementation itemsManager;
         ClassesImplementation classes;
         ClonesAddressStorageImplementation clonesAddressStorage;
-        CharacterEligibilityAdaptor characterEligibilityAdaptor;
-        ClassLevelAdaptor classLevelAdaptor;
-        HatsAdaptor hatsAdaptor;
         AdminHatEligibilityModule adminModule;
         GameMasterHatEligibilityModule dmModule;
         PlayerHatEligibilityModule playerModule;
         CharacterHatEligibilityModule characterModule;
+    }
+
+    struct Adaptors {
+        ICharacterEligibilityAdaptor characterEligibilityAdaptorV2;
+        ICharacterEligibilityAdaptor characterEligibilityAdaptorV3;
+        ClassLevelAdaptor classLevelAdaptor;
+        HatsAdaptor hatsAdaptor;
     }
 
     struct ERC6551Contracts {

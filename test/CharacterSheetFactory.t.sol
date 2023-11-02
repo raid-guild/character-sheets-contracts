@@ -120,20 +120,16 @@ contract CharacterSheetsFactoryTest is Test, SetUp {
 
         newContracts.clones = ClonesAddressStorageImplementation(characterSheetsFactory.createClonesStorage());
 
-        newContracts.characterEligibility = CharacterEligibilityAdaptor(
-            characterSheetsFactory.createCharacterEligibilityAdaptor(
-                address(implementations.characterEligibilityAdaptor)
-            )
+        newContracts.characterEligibility = ICharacterEligibilityAdaptor(
+            characterSheetsFactory.createCharacterEligibilityAdaptor(address(adaptors.characterEligibilityAdaptorV2))
         );
 
-        newContracts.classLevels = ClassLevelAdaptor(
-            characterSheetsFactory.createClassLevelAdaptor(address(implementations.classLevelAdaptor))
-        );
+        newContracts.classLevels =
+            ClassLevelAdaptor(characterSheetsFactory.createClassLevelAdaptor(address(adaptors.classLevelAdaptor)));
 
         newContracts.itemsManager = ItemsManagerImplementation(characterSheetsFactory.createItemsManager());
 
-        newContracts.hatsAdaptor =
-            HatsAdaptor(characterSheetsFactory.createHatsAdaptor(address(implementations.hatsAdaptor)));
+        newContracts.hatsAdaptor = HatsAdaptor(characterSheetsFactory.createHatsAdaptor(address(adaptors.hatsAdaptor)));
 
         address[] memory adminArray = createAddressMemoryArray(1);
         adminArray[0] = accounts.admin;
