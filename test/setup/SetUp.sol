@@ -51,6 +51,7 @@ import {CharacterHatEligibilityModule} from "../../src/adaptors/hats-modules/Cha
 //test and mocks
 import {IMolochDAOV2} from "../../src/interfaces/IMolochDAOV2.sol";
 import {Moloch} from "../../src/mocks/MockMoloch.sol";
+import {MockSharesToken} from "../../src/mocks/MockSharesToken.sol";
 
 import {Merkle} from "murky/src/Merkle.sol";
 
@@ -70,6 +71,7 @@ contract SetUp is Test, Accounts, TestStructs {
 
     Moloch public dao;
     Merkle public merkle;
+    MockSharesToken public mockShares;
 
     MultiSend public multisend;
 
@@ -86,6 +88,8 @@ contract SetUp is Test, Accounts, TestStructs {
 
         _initializeContracts(address(deployments.clones), address(dao));
         _activateContracts(address(deployments.clones));
+        mockShares = new MockSharesToken();
+        // dao.setSharesToken(address(mockShares));
         vm.stopPrank();
 
         vm.startPrank(accounts.gameMaster);
@@ -106,6 +110,8 @@ contract SetUp is Test, Accounts, TestStructs {
         //create free item
         itemsData.itemIdFree =
             deployments.items.createItemType(createNewItem(true, false, bytes32(0), 1, createEmptyRequiredAssets()));
+        mockShares.mint(accounts.player1, 100e18);
+        mockShares.mint(accounts.player2, 100e18);
         vm.stopPrank();
 
         vm.startPrank(accounts.player1);
@@ -117,6 +123,7 @@ contract SetUp is Test, Accounts, TestStructs {
         //store character address
         accounts.character1 =
             deployments.characterSheets.getCharacterSheetByCharacterId(sheetsData.characterId1).accountAddress;
+
         vm.stopPrank();
 
         vm.startPrank(accounts.player2);

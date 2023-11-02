@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import {IMolochDAOV2} from "../interfaces/IMolochDAOV2.sol";
 import {IMolochDAOV3} from "../interfaces/IMolochDAOV3.sol";
 
-contract Moloch is IMolochDAOV2, IMolochDAOV3 {
+contract Moloch is IMolochDAOV2 {
     mapping(address => Member) private _members;
-    address public sharesToken;
+    // address public sharesToken;
 
     function members(address memberAddress) external view override returns (Member memory member) {
         return _members[memberAddress];
@@ -21,9 +21,9 @@ contract Moloch is IMolochDAOV2, IMolochDAOV3 {
         _members[_newMember] = newMember;
     }
 
-    function setSharesToken(address newToken) public {
-        sharesToken = newToken;
-    }
+    // function setSharesToken(address newToken) public {
+    //     sharesToken = newToken;
+    // }
 
     function jailMember(address member) public {
         _members[member].jailed = 100;
