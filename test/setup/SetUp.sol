@@ -24,9 +24,7 @@ import {ImplementationAddressStorage} from "../../src/ImplementationAddressStora
 import {ClonesAddressStorageImplementation} from "../../src/implementations/ClonesAddressStorageImplementation.sol";
 
 //adaptors
-import {CharacterEligibilityAdaptorV2} from "../../src/adaptors/CharacterEligibilityAdaptorV2.sol";
-import {CharacterEligibilityAdaptorV3} from "../../src/adaptors/CharacterEligibilityAdaptorV3.sol";
-import {ICharacterEligibilityAdaptor} from "../../src/interfaces/ICharacterEligibilityAdaptor.sol";
+import {CharacterEligibilityAdaptor} from "../../src/adaptors/CharacterEligibilityAdaptor.sol";
 import {ClassLevelAdaptor} from "../../src/adaptors/ClassLevelAdaptor.sol";
 import {HatsAdaptor} from "../../src/adaptors/HatsAdaptor.sol";
 
@@ -50,7 +48,6 @@ import {CharacterHatEligibilityModule} from "../../src/adaptors/hats-modules/Cha
 
 //test and mocks
 import {IMolochDAOV2} from "../../src/interfaces/IMolochDAOV2.sol";
-import {IMolochDAOV3} from "../../src/interfaces/IMolochDAOV3.sol";
 import {Moloch} from "../../src/mocks/MockMoloch.sol";
 
 import {Merkle} from "murky/src/Merkle.sol";
@@ -83,8 +80,6 @@ contract SetUp is Test, Accounts, TestStructs {
 
         _deployCharacterSheetsFactory();
         _createContracts();
-        // set shares token to test dao to experience erc20  cause I'm in a hurry and don't want to make a test erc20
-        dao.setSharesToken(address(deployments.experience));
 
         _initializeContracts(address(deployments.clones), address(dao));
         _activateContracts(address(deployments.clones));
@@ -108,8 +103,6 @@ contract SetUp is Test, Accounts, TestStructs {
         //create free item
         itemsData.itemIdFree =
             deployments.items.createItemType(createNewItem(true, false, bytes32(0), 1, createEmptyRequiredAssets()));
-        //give exp to dao member
-        deployments.experience.dropExp(accounts.player1, 100);
         vm.stopPrank();
 
         vm.startPrank(accounts.player1);
@@ -240,7 +233,7 @@ contract SetUp is Test, Accounts, TestStructs {
         deployments.items = ItemsImplementation(internalClones.items());
         deployments.itemsManager = ItemsManagerImplementation(internalClones.itemsManager());
         deployments.classes = ClassesImplementation(internalClones.classes());
-        deployments.characterEligibility = ICharacterEligibilityAdaptor(internalClones.characterEligibilityAdaptor());
+        deployments.characterEligibility = CharacterEligibilityAdaptor(internalClones.characterEligibilityAdaptor());
         deployments.classLevels = ClassLevelAdaptor(internalClones.classLevelAdaptor());
         deployments.hatsAdaptor = HatsAdaptor(internalClones.hatsAdaptor());
 
@@ -265,8 +258,7 @@ contract SetUp is Test, Accounts, TestStructs {
         implementations.classes = new ClassesImplementation();
         implementations.clonesAddressStorage = new ClonesAddressStorageImplementation();
 
-        implementations.characterEligibilityAdaptorV2 = new CharacterEligibilityAdaptorV2();
-        implementations.characterEligibilityAdaptorV3 = new CharacterEligibilityAdaptorV3();
+        implementations.characterEligibilityAdaptor = new CharacterEligibilityAdaptor();
         implementations.classLevelAdaptor = new ClassLevelAdaptor();
         implementations.hatsAdaptor = new HatsAdaptor();
         implementations.adminModule = new AdminHatEligibilityModule("v 0.1");
@@ -282,12 +274,7 @@ contract SetUp is Test, Accounts, TestStructs {
         vm.label(address(implementations.experience), "Experience Implementation");
         vm.label(address(implementations.classes), "Classes Implementation");
         vm.label(address(implementations.clonesAddressStorage), "Clones Address Storage Implementation");
-        vm.label(
-            address(implementations.characterEligibilityAdaptorV2), "Character Eligibility adaptor V2 Implementation"
-        );
-        vm.label(
-            address(implementations.characterEligibilityAdaptorV3), "Character Eligibility adaptor V3 Implementation"
-        );
+        vm.label(address(implementations.characterEligibilityAdaptor), "Character Eligibility adaptor Implementation");
         vm.label(address(implementations.classLevelAdaptor), "Class Level adaptor Implementation");
         vm.label(address(implementations.hatsAdaptor), "Hats adaptor Implementation");
         vm.label(address(implementations.adminModule), "Admin Hats Eligibility adaptor Implementation");
@@ -320,9 +307,8 @@ contract SetUp is Test, Accounts, TestStructs {
         vm.label(address(characterSheetsFactory), "Character Sheets Factory");
         vm.label(address(implementationStorage), "Implementation Address Storage");
         vm.label(address(multisend), "MultiSend");
-        EncodedAddresses memory encodedAddresses;
 
-        encodedAddresses.encodedImplementationAddresses = abi.encode(
+        bytes memory encodedImplementationAddresses = abi.encode(
             implementations.characterSheets,
             implementations.items,
             implementations.classes,
@@ -332,31 +318,23 @@ contract SetUp is Test, Accounts, TestStructs {
             address(erc6551Contracts.erc6551Implementation)
         );
 
-        encodedAddresses.encodedModuleAddresses = abi.encode(
+        bytes memory encodedAdaptorsAndModuleAddresses = abi.encode(
             implementations.adminModule,
             implementations.dmModule,
             implementations.playerModule,
-            implementations.characterModule
-        );
-
-        encodedAddresses.encodedAdaptorAddresses = abi.encode(
+            implementations.characterModule,
             implementations.hatsAdaptor,
-            implementations.characterEligibilityAdaptorV2,
-            implementations.characterEligibilityAdaptorV3,
+            implementations.characterEligibilityAdaptor,
             implementations.classLevelAdaptor
         );
 
-        encodedAddresses.encodedExternalAddresses = abi.encode(
+        bytes memory encodedExternalAddresses = abi.encode(
             address(erc6551Contracts.erc6551Registry),
             address(hatsContracts.hats),
             address(hatsContracts.hatsModuleFactory)
         );
-
         implementationStorage.initialize(
-            encodedAddresses.encodedImplementationAddresses,
-            encodedAddresses.encodedModuleAddresses,
-            encodedAddresses.encodedAdaptorAddresses,
-            encodedAddresses.encodedExternalAddresses
+            encodedImplementationAddresses, encodedAdaptorsAndModuleAddresses, encodedExternalAddresses
         );
         characterSheetsFactory.initialize(address(implementationStorage));
     }

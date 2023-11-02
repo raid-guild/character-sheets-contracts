@@ -86,7 +86,8 @@ struct ImplementationAddresses {
     address erc6551Registry;
     address erc6551AccountImplementation;
     address experienceImplementation;
-    address characterEligibilityAdaptorImplementation;
+    address characterEligibilityAdaptorV2Implementation;
+    address characterEligibilityAdaptorV3Implementation;
     address classLevelAdaptorImplementation;
     address hatsAdaptorImplementation;
     address cloneAddressStorage;

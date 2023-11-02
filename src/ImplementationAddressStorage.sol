@@ -72,11 +72,11 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         emit ClassesImplementationUpdated(newClasses);
     }
 
-    function updateCharacterEligibilityAdaptorImplementation(address newCharacterEligibilityAdaptor)
+    function updateCharacterEligibilityAdaptorV2Implementation(address newCharacterEligibilityAdaptor)
         external
         onlyOwner
     {
-        _implementationsAddresses.characterEligibilityAdaptorImplementation = newCharacterEligibilityAdaptor;
+        _implementationsAddresses.characterEligibilityAdaptorV2Implementation = newCharacterEligibilityAdaptor;
         emit CharacterEligibilityAdaptorUpdated(newCharacterEligibilityAdaptor);
     }
 
@@ -167,7 +167,7 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
     }
 
     function characterEligibilityAdaptorImplementation() public view returns (address) {
-        return _implementationsAddresses.characterEligibilityAdaptorImplementation;
+        return _implementationsAddresses.characterEligibilityAdaptorV2Implementation;
     }
 
     function classLevelAdaptorImplementation() public view returns (address) {
@@ -225,7 +225,7 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
             _implementationsAddresses.playerHatsEligibilityModule,
             _implementationsAddresses.characterHatsEligibilityModule,
             _implementationsAddresses.hatsAdaptorImplementation,
-            _implementationsAddresses.characterEligibilityAdaptorImplementation,
+            _implementationsAddresses.characterEligibilityAdaptorV2Implementation,
             _implementationsAddresses.classLevelAdaptorImplementation
         ) = abi.decode(
             encodedAdaptorsAndModuleAddresses, (address, address, address, address, address, address, address)
