@@ -13,20 +13,24 @@ abstract contract Errors {
     error ClaimableError();
     error TransferError();
     error DuplicateError();
-    error DungeonMasterOnly();
+    error GameMasterOnly();
     error PlayerOnly();
+    error AdminOnly();
     error CharacterOnly();
     error ClassError();
     error RequirementError();
     error ItemError();
     error LengthMismatch();
-    error InvalidProof();
+
     error Jailed();
     error InsufficientBalance();
     error CallerNotApproved();
     error SoulboundToken();
     error RequirementNotMet();
 
+    //merkle proof erros
+    error CannotClaim(uint256);
+    error InvalidProof();
     // CharacterAccount.sol
     error InvalidSigner();
     error InvalidOperation();
@@ -39,4 +43,6 @@ abstract contract Errors {
 
     // Factory
     error UnsupportedInterface();
+
+    error MustRefundFullReceiptAmount(uint256 amountRequired);
 }

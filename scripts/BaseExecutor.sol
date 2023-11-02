@@ -48,6 +48,7 @@ contract BaseExecutor is Script, ForkManagement {
     function execute() internal virtual {}
 }
 
+/*
 abstract contract BaseFactoryExecutor is Script, ForkManagement {
     using stdJson for string;
 
@@ -90,3 +91,4 @@ abstract contract BaseFactoryExecutor is Script, ForkManagement {
 
     function initializeContracts() internal virtual {}
 }
+*/

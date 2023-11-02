@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.20;
 
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -9,6 +9,8 @@ import {ERC1155HolderUpgradeable} from
     "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import {IHatsEligibility} from "hats-protocol/Interfaces/IHatsEligibility.sol";
 import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
+import {ImplementationAddressStorage} from "../ImplementationAddressStorage.sol";
+import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 
 import {Errors} from "../lib/Errors.sol";
 import {HatsData} from "../lib/Structs.sol";
@@ -17,9 +19,16 @@ import {HatsData} from "../lib/Structs.sol";
  * @title Hats Adaptor
  * @author MrDeadCe11
  * @notice This is an adaptor that will automatically create the appropriate hat tree for the
- * character sheets contracts.  It also allows the minting of hats to players and characters
+ * character sheets contacts.  It also allows the minting of hats to players and characters
  * and checks if any address is wearing the player or character hat.
  */
+
+struct InitStruct {
+    address _owner;
+    bytes hatsAddresses;
+    bytes hatsStrings;
+    bytes customModuleImplementations;
+}
 
 contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1155HolderUpgradeable {
     HatsData private _hatsData;
@@ -30,45 +39,45 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
      * @notice these are the addresses of the eligibility modules after they are created by
      * the hats module factory during contract initialization.
      */
+
+    ImplementationAddressStorage public implementations;
+    IClonesAddressStorage public clones;
+
     address public adminHatEligibilityModule;
-    address public dungeonMasterHatEligibilityModule;
+    address public gameMasterHatEligibilityModule;
     address public playerHatEligibilityModule;
     address public characterHatEligibilityModule;
 
-    uint32 public constant MAX_SUPPLY = 200;
+    /**
+     * @notice the max hat supply is set to uint32 max for now.  can be changed down the line.
+     */
+    uint32 public constant MAX_SUPPLY = type(uint32).max - 1;
 
     string private _baseHatImgUri;
 
-    event HatsAddressUpdated(address);
-    event AdminHatEligibilityModuleAddressUpdated(address);
-    event DungeonMasterHatEligibilityModuleAddressUpdated(address);
-    event CharacterHatEligibilityModuleAddressUpdated(address);
-    event PlayerHatEligibilityModuleAddressUpdated(address);
-    event AdminHatIdUpdated(uint256);
-    event DungeonMasterHatIdUpdated(uint256);
-    event PlayerHatIdUpdated(uint256);
-    event CharacterHatIdUpdated(uint256);
+    event AdminHatIdUpdated(uint256 newAdminHatId);
+    event GameMasterHatIdUpdated(uint256 newGameMasterHatId);
+    event PlayerHatIdUpdated(uint256 newPlayerHatId);
+    event CharacterHatIdUpdated(uint256 newCharacterHatId);
+    event HatsUpdated(address newHats);
+    event ImplementationAddressStorageUpdated(address newImplementations);
+    event GameMasterHatEligibilityModuleUpdated(address newGameMasterHatEligibilityModule);
+    event PlayerHatEligibilityModuleUpdated(address newPlayerHatEligibilityModule);
+    event CharacterHatEligibilityModuleUpdated(address newCharacterHatEligibilityModule);
+    event AdminEligibilityModuleUpdated(address newAdminEligibilityModule);
+    event HatTreeInitialized(address owner, bytes hatsAddresses, bytes hatsStrings, bytes customModuleImplementations);
 
     constructor() {
         _disableInitializers();
     }
 
     /**
+     * @notice call this function if you want to initialize with default Hats Eligibility modules.
+     * for custom modules see the other initializer below.
      * HATS ADDRESSES
-     *        1.  address hats,
-     *        2.  address hatsModuleFactory,
-     *        3.  address adminHatEligibilityModule
-     *        4.  address dungeonMasterEligibilityModuleImplementation
-     *        5.  address playerHatEligibilityModuleImplementation
-     *        6.  address characterHatEligibilityModuleImplementation
-     *        7.  address[]  admins
-     *        8.  address[] dungeon masters
-     *        9.  address character sheets
-     *        10.  address erc6551 registry
-     *        11. address erc6551 account implementation
-     */
-
-    /**
+     *        1.  address[]  admins
+     *        2.  address[] dungeon masters
+     *        3.  address implementations
      * HATS STRINGS
      *        1.  string _baseImgUri
      *        2.  string topHatDescription
@@ -86,52 +95,31 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         external
         initializer
     {
-        (
-            _hatsData.hats,
-            _hatsData.hatsModuleFactory,
-            _hatsData.adminHatEligibilityModuleImplementation,
-            _hatsData.dungeonMasterHatEligibilityModuleImplementation,
-            _hatsData.playerHatEligibilityModuleImplementation,
-            _hatsData.characterHatEligibilityModuleImplementation,
-            ,
-            ,
-            ,
-            ,
-        ) = abi.decode(
-            hatsAddresses,
-            (address, address, address, address, address, address, address[], address[], address, address, address)
-        );
-
-        _hats = IHats(_hatsData.hats);
-
-        _initHatTree(_owner, hatsStrings, hatsAddresses);
-
-        __Ownable_init(_owner);
+        bytes memory customModuleImplementation = abi.encode(address(0), address(0), address(0), address(0));
+        return _initialize(_owner, hatsAddresses, hatsStrings, customModuleImplementation);
     }
 
-    function updateHatsAddress(address newHatsAddress) external onlyOwner {
-        _hatsData.hats = newHatsAddress;
-        emit HatsAddressUpdated(newHatsAddress);
+    /**
+     * @notice call this function if you want to initialize with custom eligibility modules.
+     * custom module implementations
+     *  1. admin hats eligibility Module enter address of custom implementation, or enter address(0) to use default.
+     *  2. gamemaster admin hats eligibility Module
+     *  3. player admin hats eligibility Module
+     *  4. character admin hats eligibility Module
+     */
+
+    function initialize(
+        address _owner,
+        bytes calldata hatsAddresses,
+        bytes calldata hatsStrings,
+        bytes calldata customModuleImplementations
+    ) external initializer {
+        return _initialize(_owner, hatsAddresses, hatsStrings, customModuleImplementations);
     }
 
-    function updateCharacterHatModuleImplementationAddress(address newCharacterHatAddress) external onlyOwner {
-        _hatsData.characterHatEligibilityModuleImplementation = newCharacterHatAddress;
-        emit CharacterHatEligibilityModuleAddressUpdated(newCharacterHatAddress);
-    }
-
-    function updatePlayerHatModuleImplementationAddress(address newPlayerAddress) external onlyOwner {
-        _hatsData.playerHatEligibilityModuleImplementation = newPlayerAddress;
-        emit PlayerHatEligibilityModuleAddressUpdated(newPlayerAddress);
-    }
-
-    function updateadminHatModuleImplementationAddress(address newadminAddress) external onlyOwner {
-        _hatsData.adminHatEligibilityModuleImplementation = newadminAddress;
-        emit AdminHatEligibilityModuleAddressUpdated(newadminAddress);
-    }
-
-    function updateDungeonMasterHatModuleImplementationAddress(address newDungeonMasterAddress) external onlyOwner {
-        _hatsData.dungeonMasterHatEligibilityModuleImplementation = newDungeonMasterAddress;
-        emit DungeonMasterHatEligibilityModuleAddressUpdated(newDungeonMasterAddress);
+    function updateImplementations(address newImplementations) external onlyOwner {
+        implementations = ImplementationAddressStorage(newImplementations);
+        emit ImplementationAddressStorageUpdated(newImplementations);
     }
 
     function updateAdminHatId(uint256 newAdminHatId) external onlyOwner {
@@ -139,9 +127,9 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         emit AdminHatIdUpdated(newAdminHatId);
     }
 
-    function updateDungeonMasterHatId(uint256 newDungeonMasterHatId) external onlyOwner {
-        _hatsData.dungeonMasterHatId = newDungeonMasterHatId;
-        emit DungeonMasterHatIdUpdated(newDungeonMasterHatId);
+    function updateGameMasterHatId(uint256 newGameMasterHatId) external onlyOwner {
+        _hatsData.gameMasterHatId = newGameMasterHatId;
+        emit GameMasterHatIdUpdated(newGameMasterHatId);
     }
 
     function updatePlayerHatId(uint256 newPlayerHatId) external onlyOwner {
@@ -149,9 +137,47 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         emit PlayerHatIdUpdated(newPlayerHatId);
     }
 
-    function updateCharacterHatId(uint256 newCharacterHatId) external onlyOwner {
-        _hatsData.characterHatId = newCharacterHatId;
-        emit CharacterHatIdUpdated(newCharacterHatId);
+    /// @notice the following update functions will use the base implementation addresses stored in the implementationAddressStorage contract.
+
+    function updateAdminEligibilityModule(uint256 adminId, bytes calldata encodedAdmins, address adminImplementation)
+        external
+        onlyOwner
+    {
+        adminHatEligibilityModule = _createAdminHatEligibilityModule(adminId, encodedAdmins, adminImplementation);
+        emit AdminEligibilityModuleUpdated(adminHatEligibilityModule);
+    }
+
+    function updateGameMasterHatEligibilityModule(
+        uint256 gameMasterId,
+        bytes calldata gameMasters,
+        address dmImplementation
+    ) external onlyOwner {
+        gameMasterHatEligibilityModule =
+            _createGameMasterHatEligibilityModule(gameMasterId, gameMasters, dmImplementation);
+        emit GameMasterHatEligibilityModuleUpdated(gameMasterHatEligibilityModule);
+    }
+
+    function updatePlayerHatEligibilityModule(
+        uint256 playerHatId,
+        address characterSheets,
+        address playerImplementation
+    ) external onlyOwner {
+        playerHatEligibilityModule =
+            _createPlayerHatEligibilityModule(playerHatId, characterSheets, playerImplementation);
+        emit PlayerHatEligibilityModuleUpdated(playerHatEligibilityModule);
+    }
+
+    function updateCharacterHatEligibilityModule(uint256 characterHatId, address characterImplementation)
+        external
+        onlyOwner
+    {
+        characterHatEligibilityModule = _createCharacterHatEligibilityModule(characterHatId, characterImplementation);
+        emit CharacterHatEligibilityModuleUpdated(characterHatEligibilityModule);
+    }
+
+    function updateHats(address newHats) external onlyOwner {
+        _hats = IHats(newHats);
+        emit HatsUpdated(newHats);
     }
 
     function mintPlayerHat(address wearer) external returns (bool) {
@@ -212,61 +238,95 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         return _hats.balanceOf(wearer, _hatsData.adminHatId) > 0;
     }
 
-    function isDungeonMaster(address wearer) public view returns (bool) {
-        if (_hatsData.dungeonMasterHatId == uint256(0)) {
+    function isGameMaster(address wearer) public view returns (bool) {
+        if (_hatsData.gameMasterHatId == uint256(0)) {
             revert Errors.VariableNotSet();
         }
-        return _hats.balanceOf(wearer, _hatsData.dungeonMasterHatId) > 0;
+        return _hats.balanceOf(wearer, _hatsData.gameMasterHatId) > 0;
     }
 
     //solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
 
-    function _initHatTree(address _owner, bytes calldata hatsStrings, bytes calldata hatsAddresses)
-        private
-        returns (bool success)
-    {
-        if (
-            address(_hats) == address(0) || _hatsData.characterHatEligibilityModuleImplementation == address(0)
-                || _hatsData.playerHatEligibilityModuleImplementation == address(0)
-                || _hatsData.adminHatEligibilityModuleImplementation == address(0)
-                || _hatsData.dungeonMasterHatEligibilityModuleImplementation == address(0)
-        ) {
+    function _initialize(
+        address _owner,
+        bytes calldata hatsAddresses,
+        bytes calldata hatsStrings,
+        bytes memory customModuleImplementations
+    ) private {
+        (,, address _implementations, address _clonesStorage) =
+            abi.decode(hatsAddresses, (address[], address[], address, address));
+
+        implementations = ImplementationAddressStorage(_implementations);
+        clones = IClonesAddressStorage(_clonesStorage);
+        _hats = IHats(implementations.hatsContract());
+
+        // init struct because STACC TOO DANK!
+        InitStruct memory initStruct;
+        initStruct._owner = _owner;
+        initStruct.hatsAddresses = hatsAddresses;
+        initStruct.hatsStrings = hatsStrings;
+        initStruct.customModuleImplementations = customModuleImplementations;
+
+        __Ownable_init(_owner);
+
+        _initHatTree(initStruct);
+    }
+
+    function _initHatTree(InitStruct memory _initStruct) private returns (bool) {
+        if (address(_hats) == address(0) || address(implementations) == address(0)) {
             revert Errors.VariableNotSet();
         }
 
         //mint tophat to this contract
-        _hatsData.topHatId = _initTopHat(hatsStrings);
+        _hatsData.topHatId = _initTopHat(_initStruct.hatsStrings);
 
         // create admin hats
-        _initAdminHat(hatsStrings, hatsAddresses, _owner);
+        _initAdminHat(
+            _initStruct.hatsStrings,
+            _initStruct.hatsAddresses,
+            _initStruct._owner,
+            _initStruct.customModuleImplementations
+        );
 
         //transfer topHat to owner
-        _hats.transferHat(_hatsData.topHatId, address(this), _owner);
+        _hats.transferHat(_hatsData.topHatId, address(this), _initStruct._owner);
 
-        // create dungeon master hats
-        _initDungeonMasterHat(hatsStrings, hatsAddresses, _owner);
+        // create game master hats
+        _initGameMasterHat(
+            _initStruct.hatsStrings,
+            _initStruct.hatsAddresses,
+            _initStruct._owner,
+            _initStruct.customModuleImplementations
+        );
         // init player hats
-        _initPlayerHat(hatsStrings, hatsAddresses, _owner);
+        _initPlayerHat(_initStruct.hatsStrings, _initStruct._owner, _initStruct.customModuleImplementations);
 
         // init character hats
-        _initCharacterHat(hatsStrings, hatsAddresses, _owner);
+        _initCharacterHat(_initStruct.hatsStrings, _initStruct._owner, _initStruct.customModuleImplementations);
 
-        success = true;
-        return success;
+        emit HatTreeInitialized(
+            _initStruct._owner,
+            _initStruct.hatsAddresses,
+            _initStruct.hatsStrings,
+            _initStruct.customModuleImplementations
+        );
+        return true;
     }
 
-    function _initTopHat(bytes calldata hatsStrings) private returns (uint256 topHatId) {
+    function _initTopHat(bytes memory hatsStrings) private returns (uint256 topHatId) {
         string memory topHatDescription;
         (_baseHatImgUri, topHatDescription,,,,,,,,) =
             abi.decode(hatsStrings, (string, string, string, string, string, string, string, string, string, string));
         topHatId = _hats.mintTopHat(address(this), topHatDescription, _baseHatImgUri);
     }
 
-    function _initAdminHat(bytes calldata hatsStrings, bytes calldata hatsAddresses, address _owner)
-        private
-        returns (uint256 adminId)
-    {
+    function _initAdminHat(
+        bytes memory hatsStrings,
+        bytes memory hatsAddresses,
+        address _owner,
+        bytes memory customModuleImplementations
+    ) private returns (uint256 adminId) {
         string memory adminDescription;
         string memory adminUri;
         (,, adminUri, adminDescription,,,,,,) =
@@ -275,13 +335,12 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         bytes memory encodedAdmins;
         address[] memory newAdmins;
 
+        (address customAdminModule,,,) = abi.decode(customModuleImplementations, (address, address, address, address));
+
         {
             address[] memory admins;
 
-            (,,,,,, admins,,,,) = abi.decode(
-                hatsAddresses,
-                (address, address, address, address, address, address, address[], address[], address, address, address)
-            );
+            (admins,,) = abi.decode(hatsAddresses, (address[], address[], address));
 
             // add this address to admins array
             newAdmins = new address[](admins.length + 1);
@@ -301,7 +360,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         adminId = _hats.getNextId(_hatsData.topHatId);
 
         // create admin hat Eligibility module
-        adminHatEligibilityModule = _createAdminHatEligibilityModule(adminId, encodedAdmins);
+        adminHatEligibilityModule = _createAdminHatEligibilityModule(adminId, encodedAdmins, customAdminModule);
 
         // create admin hat with eligibility module
         _hatsData.adminHatId = _hats.createHat(
@@ -317,87 +376,94 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         }
     }
 
-    function _createAdminHatEligibilityModule(uint256 adminId, bytes memory encodedAdmins) private returns (address) {
-        bytes memory encodedHatsAddress = abi.encode(_hatsData.hats);
-        return HatsModuleFactory(_hatsData.hatsModuleFactory).createHatsModule(
-            _hatsData.adminHatEligibilityModuleImplementation, adminId, encodedHatsAddress, encodedAdmins
-        );
-    }
-
-    function _initDungeonMasterHat(bytes calldata hatsStrings, bytes calldata hatsAddresses, address _owner)
-        private
-        returns (uint256 dungeonMasterId)
-    {
-        string memory dungeonMasterDescription;
-        string memory dungeonMasterUri;
-        (,,,, dungeonMasterUri, dungeonMasterDescription,,,,) =
-            abi.decode(hatsStrings, (string, string, string, string, string, string, string, string, string, string));
-
-        address[] memory dungeonMasters;
-
-        (,,,,,,, dungeonMasters,,,) = abi.decode(
-            hatsAddresses,
-            (address, address, address, address, address, address, address[], address[], address, address, address)
-        );
-
-        // predict dungeonMaster hat ID.
-        dungeonMasterId = _hats.getNextId(_hatsData.adminHatId);
-        // encode dungeon masters array for module creation
-        bytes memory encodedDungeonMasters = abi.encode(dungeonMasters);
-        // create dungeonMaster hat Eligibility module
-        dungeonMasterHatEligibilityModule =
-            _createDungeonMasterHatEligibilityModule(dungeonMasterId, encodedDungeonMasters);
-
-        // create dungeonMaster hat with eligibility module
-        _hatsData.dungeonMasterHatId = _hats.createHat(
-            _hatsData.adminHatId,
-            dungeonMasterDescription,
-            MAX_SUPPLY,
-            dungeonMasterHatEligibilityModule,
-            _owner,
-            true,
-            dungeonMasterUri
-        );
-
-        //check that Ids match
-        assert(_hatsData.dungeonMasterHatId == dungeonMasterId);
-
-        //mint dungeonMaster hats for the dungeonMasters
-        for (uint256 i; i < dungeonMasters.length; i++) {
-            _hats.mintHat(dungeonMasterId, dungeonMasters[i]);
-        }
-    }
-
-    function _createDungeonMasterHatEligibilityModule(uint256 dungeonMasterId, bytes memory dungeonMasters)
+    function _createAdminHatEligibilityModule(uint256 adminId, bytes memory encodedAdmins, address customAdminModule)
         private
         returns (address)
     {
-        bytes memory encodedHatsAddress = abi.encode(_hatsData.hats);
-        return HatsModuleFactory(_hatsData.hatsModuleFactory).createHatsModule(
-            _hatsData.dungeonMasterHatEligibilityModuleImplementation,
-            dungeonMasterId,
-            encodedHatsAddress,
-            dungeonMasters
+        bytes memory encodedHatsAddress = abi.encode(implementations.hatsContract());
+        customAdminModule =
+            customAdminModule == address(0) ? implementations.adminHatsEligibilityModule() : customAdminModule;
+        return HatsModuleFactory(implementations.hatsModuleFactory()).createHatsModule(
+            customAdminModule, adminId, encodedHatsAddress, encodedAdmins
         );
     }
 
-    function _initPlayerHat(bytes calldata hatsStrings, bytes calldata hatsAddresses, address _owner)
+    function _initGameMasterHat(
+        bytes memory hatsStrings,
+        bytes memory hatsAddresses,
+        address _owner,
+        bytes memory customModuleImplementations
+    ) private returns (uint256 gameMasterId) {
+        string memory gameMasterDescription;
+        string memory gameMasterUri;
+        (,,,, gameMasterUri, gameMasterDescription,,,,) =
+            abi.decode(hatsStrings, (string, string, string, string, string, string, string, string, string, string));
+
+        address[] memory gameMasters;
+
+        (, gameMasters,) = abi.decode(hatsAddresses, (address[], address[], address));
+
+        (, address customDmModule,,) = abi.decode(customModuleImplementations, (address, address, address, address));
+
+        // predict gameMaster hat ID.
+        gameMasterId = _hats.getNextId(_hatsData.adminHatId);
+        // encode game masters array for module creation
+        bytes memory encodedGameMasters = abi.encode(gameMasters);
+        // create gameMaster hat Eligibility module
+        gameMasterHatEligibilityModule =
+            _createGameMasterHatEligibilityModule(gameMasterId, encodedGameMasters, customDmModule);
+
+        // create gameMaster hat with eligibility module
+        _hatsData.gameMasterHatId = _hats.createHat(
+            _hatsData.adminHatId,
+            gameMasterDescription,
+            MAX_SUPPLY,
+            gameMasterHatEligibilityModule,
+            _owner,
+            true,
+            gameMasterUri
+        );
+
+        //check that Ids match
+        assert(_hatsData.gameMasterHatId == gameMasterId);
+
+        //mint gameMaster hats for the gameMasters
+        for (uint256 i; i < gameMasters.length; i++) {
+            _hats.mintHat(gameMasterId, gameMasters[i]);
+        }
+    }
+
+    function _createGameMasterHatEligibilityModule(
+        uint256 gameMasterId,
+        bytes memory gameMasters,
+        address customDmModule
+    ) private returns (address) {
+        bytes memory encodedHatsAddress = abi.encode(implementations.hatsContract());
+
+        customDmModule =
+            customDmModule == address(0) ? implementations.gameMasterHatsEligibilityModule() : customDmModule;
+
+        return HatsModuleFactory(implementations.hatsModuleFactory()).createHatsModule(
+            customDmModule, gameMasterId, encodedHatsAddress, gameMasters
+        );
+    }
+
+    function _initPlayerHat(bytes memory hatsStrings, address _owner, bytes memory customModuleImplementations)
         private
         returns (uint256 playerHatId)
     {
         (,,,,,, string memory playerUri, string memory playerDescription,,) =
             abi.decode(hatsStrings, (string, string, string, string, string, string, string, string, string, string));
 
-        (,,,,,,,, address characterSheets,,) = abi.decode(
-            hatsAddresses,
-            (address, address, address, address, address, address, address[], address[], address, address, address)
-        );
-        playerHatId = _hats.getNextId(_hatsData.dungeonMasterHatId);
+        playerHatId = _hats.getNextId(_hatsData.gameMasterHatId);
 
-        playerHatEligibilityModule = _createPlayerHatEligibilityModule(playerHatId, characterSheets);
+        (,, address customPlayerModule,) = abi.decode(customModuleImplementations, (address, address, address, address));
+
+        playerHatEligibilityModule =
+            _createPlayerHatEligibilityModule(playerHatId, clones.characterSheets(), customPlayerModule);
 
         _hatsData.playerHatId = _hats.createHat(
-            _hatsData.dungeonMasterHatId,
+            _hatsData.gameMasterHatId,
             playerDescription,
             MAX_SUPPLY,
             playerHatEligibilityModule,
@@ -411,24 +477,20 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         return playerHatId;
     }
 
-    function _initCharacterHat(bytes calldata hatsStrings, bytes calldata hatsAddresses, address _owner)
+    function _initCharacterHat(bytes memory hatsStrings, address _owner, bytes memory customModuleImplementations)
         private
         returns (uint256 characterHatId)
     {
         (,,,,,,,, string memory characterUri, string memory characterDescription) =
             abi.decode(hatsStrings, (string, string, string, string, string, string, string, string, string, string));
+        (,,, address customCharacterModule) =
+            abi.decode(customModuleImplementations, (address, address, address, address));
+        characterHatId = _hats.getNextId(_hatsData.gameMasterHatId);
 
-        (,,,,,,,, address characterSheets, address erc6551Registry, address erc6551Account) = abi.decode(
-            hatsAddresses,
-            (address, address, address, address, address, address, address[], address[], address, address, address)
-        );
-        characterHatId = _hats.getNextId(_hatsData.dungeonMasterHatId);
-
-        characterHatEligibilityModule =
-            _createCharacterHatEligibilityModule(characterHatId, characterSheets, erc6551Registry, erc6551Account);
+        characterHatEligibilityModule = _createCharacterHatEligibilityModule(characterHatId, customCharacterModule);
 
         _hatsData.characterHatId = _hats.createHat(
-            _hatsData.dungeonMasterHatId,
+            _hatsData.gameMasterHatId,
             characterDescription,
             MAX_SUPPLY,
             characterHatEligibilityModule,
@@ -442,39 +504,44 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         return characterHatId;
     }
 
-    function _createCharacterHatEligibilityModule(
-        uint256 characterHatId,
-        address characterSheets,
-        address erc6551Registry,
-        address erc6551AccountImplementation
-    ) private returns (address) {
-        if (
-            _hatsData.hatsModuleFactory == address(0)
-                || _hatsData.characterHatEligibilityModuleImplementation == address(0)
-        ) {
-            revert Errors.VariableNotSet();
-        }
-        bytes memory characterModuleData =
-            abi.encodePacked(erc6551Registry, erc6551AccountImplementation, characterSheets);
-        address characterHatsModule = HatsModuleFactory(_hatsData.hatsModuleFactory).createHatsModule(
-            _hatsData.characterHatEligibilityModuleImplementation, characterHatId, characterModuleData, ""
-        );
-        return characterHatsModule;
-    }
-
-    function _createPlayerHatEligibilityModule(uint256 playerHatId, address characterSheets)
+    function _createCharacterHatEligibilityModule(uint256 characterHatId, address customCharacterModule)
         private
         returns (address)
     {
         if (
-            _hatsData.hatsModuleFactory == address(0)
-                || _hatsData.playerHatEligibilityModuleImplementation == address(0)
+            implementations.hatsModuleFactory() == address(0)
+                || implementations.characterHatsEligibilityModule() == address(0)
         ) {
             revert Errors.VariableNotSet();
         }
+        bytes memory characterModuleData = abi.encodePacked(
+            implementations.erc6551Registry(), implementations.erc6551AccountImplementation(), clones.characterSheets()
+        );
+        customCharacterModule = customCharacterModule == address(0)
+            ? implementations.characterHatsEligibilityModule()
+            : customCharacterModule;
+        address characterHatsModule = HatsModuleFactory(implementations.hatsModuleFactory()).createHatsModule(
+            customCharacterModule, characterHatId, characterModuleData, ""
+        );
+        return characterHatsModule;
+    }
+
+    function _createPlayerHatEligibilityModule(uint256 playerHatId, address characterSheets, address customPlayerModule)
+        private
+        returns (address)
+    {
+        if (
+            implementations.hatsModuleFactory() == address(0)
+                || implementations.playerHatsEligibilityModule() == address(0)
+        ) {
+            revert Errors.VariableNotSet();
+        }
+
         bytes memory playerModuleData = abi.encodePacked(characterSheets, uint256(1));
-        address playerHatsModule = HatsModuleFactory(_hatsData.hatsModuleFactory).createHatsModule(
-            _hatsData.playerHatEligibilityModuleImplementation, playerHatId, playerModuleData, ""
+        customPlayerModule =
+            customPlayerModule == address(0) ? implementations.playerHatsEligibilityModule() : customPlayerModule;
+        address playerHatsModule = HatsModuleFactory(implementations.hatsModuleFactory()).createHatsModule(
+            customPlayerModule, playerHatId, playerModuleData, ""
         );
         return playerHatsModule;
     }

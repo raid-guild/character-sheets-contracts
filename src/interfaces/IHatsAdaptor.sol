@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.20;
 
 /**
  * @title IHats Adaptor
@@ -13,7 +13,7 @@ interface IHatsAdaptor {
 
     function updateAdminHatId(uint256 newAdminHatId) external;
 
-    function updateDungeonMasterHatId(uint256 newDungeonMasterHatId) external;
+    function updateGameMasterHatId(uint256 newGameMasterHatId) external;
 
     function updateCharacterHatModuleAddress(address newCharacterHatAddress) external;
 
@@ -31,7 +31,7 @@ interface IHatsAdaptor {
 
     function isPlayer(address wearer) external view returns (bool);
 
-    function isDungeonMaster(address wearer) external view returns (bool);
+    function isGameMaster(address wearer) external view returns (bool);
 
     function isAdmin(address wearer) external view returns (bool);
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.20;
 
 import {ERC165} from "openzeppelin-contracts/utils/introspection/ERC165.sol";
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -7,19 +7,22 @@ import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/Owna
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import {IMolochDAO} from "../interfaces/IMolochDAO.sol";
-import {IEligibilityAdaptor} from "../interfaces/IEligibilityAdaptor.sol";
+import {IMolochDAOV2} from "../interfaces/IMolochDAOV2.sol";
+import {ICharacterEligibilityAdaptor} from "../interfaces/ICharacterEligibilityAdaptor.sol";
 import {Errors} from "../lib/Errors.sol";
 
 /**
  * @notice this contract is to check and make sure that an address is eligible to roll a character sheet
  */
-contract EligibilityAdaptor is IEligibilityAdaptor, ERC165, Initializable, OwnableUpgradeable, UUPSUpgradeable {
+contract MolochV2EligibilityAdaptor is
+    ICharacterEligibilityAdaptor,
+    ERC165,
+    Initializable,
+    OwnableUpgradeable,
+    UUPSUpgradeable
+{
     //(this.isEligible.selector ^ this.supportsInterface.selector);
     bytes4 public constant INTERFACE_ID = 0x671ccc5a;
-
-    /// @dev the admin of the contract
-    bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
 
     address public dao;
 
@@ -44,11 +47,16 @@ contract EligibilityAdaptor is IEligibilityAdaptor, ERC165, Initializable, Ownab
             revert Errors.NotInitialized();
         }
 
-        IMolochDAO.Member memory newMember = IMolochDAO(dao).members(account);
+        IMolochDAOV2.Member memory newMember = IMolochDAOV2(dao).members(account);
         return (newMember.shares >= 100 && newMember.jailed == 0);
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC165, ICharacterEligibilityAdaptor)
+        returns (bool)
+    {
         return interfaceId == 0x01ffc9a7 || interfaceId == INTERFACE_ID || super.supportsInterface(interfaceId);
     }
 

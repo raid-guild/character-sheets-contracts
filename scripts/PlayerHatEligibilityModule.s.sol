@@ -4,7 +4,6 @@ pragma solidity ^0.8.19;
 import {PlayerHatEligibilityModule} from "../src/adaptors/hats-modules/PlayerHatEligibilityModule.sol";
 
 import {BaseDeployer} from "./BaseDeployer.sol";
-import {BaseFactoryExecutor} from "./BaseExecutor.sol";
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
 

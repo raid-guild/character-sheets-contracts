@@ -2,14 +2,20 @@ pragma solidity ^0.8.19;
 // SPDX-License-Identifier: MIT
 
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {ImplementationAddressStorage} from "./ImplementationAddressStorage.sol";
+
+import {IClonesAddressStorage} from "./interfaces/IClonesAddressStorage.sol";
 
 import {CharacterSheetsImplementation} from "./implementations/CharacterSheetsImplementation.sol";
 import {ClassesImplementation} from "./implementations/ClassesImplementation.sol";
 import {ExperienceImplementation} from "./implementations/ExperienceImplementation.sol";
 import {ItemsImplementation} from "./implementations/ItemsImplementation.sol";
-import {EligibilityAdaptor} from "./adaptors/EligibilityAdaptor.sol";
+import {ICharacterEligibilityAdaptor} from "./interfaces/ICharacterEligibilityAdaptor.sol";
 import {ClassLevelAdaptor} from "./adaptors/ClassLevelAdaptor.sol";
+import {ItemsManagerImplementation} from "./implementations/ItemsManagerImplementation.sol";
+import {HatsAdaptor} from "./adaptors/HatsAdaptor.sol";
 
 import {IERC165} from "openzeppelin-contracts/utils/introspection/IERC165.sol";
 
@@ -17,173 +23,173 @@ import {Errors} from "./lib/Errors.sol";
 
 // import "forge-std/console2.sol";
 
-contract CharacterSheetsFactory is OwnableUpgradeable {
-    address public characterSheetsImplementation;
-    address public itemsImplementation;
-    address public classesImplementation;
-    address public erc6551Registry;
-    address public erc6551AccountImplementation;
-    address public experienceImplementation;
-    address public eligibilityAdaptorImplementation;
-    address public classLevelAdaptorImplementation;
+contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
+    // address storage
 
-    //hats addresses
-    address public hatsModuleFactory;
-    address public characterHatsEligibilityModule;
-    address public playerHatsEligibilityModule;
-    address public hatsAdaptorImplementation;
+    ImplementationAddressStorage public implementations;
 
     bytes4 public constant ELIGIBILITY_INTERFACE_ID = 0x671ccc5a;
     bytes4 public constant CLASS_LEVELS_INTERFACE_ID = 0xfe211eb1;
 
-    uint256 private _nonce;
-
-    event CharacterSheetsCreated(
-        address creator, address characterSheets, address classes, address items, address experience
+    event NewGameStarted(
+        address starter, address clonesAddressStorage, bytes encodedHatsAddresses, bytes encodedHatsStrings
     );
-    event CharacterSheetsUpdated(address newCharacterSheets);
-    event ExperienceUpdated(address newExperience);
-    event ItemsUpdated(address newItems);
-    event RegistryUpdated(address newRegistry);
-    event ERC6551AccountImplementationUpdated(address newImplementation);
-    event ClassesImplementationUpdated(address newClasses);
-    event EligibilityAdaptorUpdated(address newAdaptor);
-    event ClassLevelAdaptorUpdated(address newAdaptor);
-    event HatsAdaptorUpdated(address newHatsAdaptor);
+    event NewGameCreated(address creator, address clonesAddressStorage);
+    event ImplementationAddressStorageUpdated(address newImplementationAddressStorage);
+    event ExperienceCreated(address experienceClone);
+    event CharacterSheetsCreated(address characterSheetsClone);
+    event ItemsCreated(address newItems);
+    event ClassesCreated(address classesClone);
+    event CharacterEligibilityAdaptorCreated(address characterEligibilityAdaptorClone);
+    event ClassLevelAdaptorCreated(address classLevelAdaptorClone);
 
-    function initialize() external initializer {
+    function initialize(address _implementationAddressStorage) external initializer {
         __Context_init_unchained();
         __Ownable_init_unchained(msg.sender);
+        implementations = ImplementationAddressStorage(_implementationAddressStorage);
     }
 
-    function updateCharacterSheetsImplementation(address _sheetImplementation) external onlyOwner {
-        characterSheetsImplementation = _sheetImplementation;
-        emit CharacterSheetsUpdated(_sheetImplementation);
+    function updateImplementationAddressStorage(address _implementationAddressStorage) external onlyOwner {
+        implementations = ImplementationAddressStorage(_implementationAddressStorage);
+        emit ImplementationAddressStorageUpdated(_implementationAddressStorage);
     }
-
-    function updateItemsImplementation(address _itemsImplementation) external onlyOwner {
-        itemsImplementation = _itemsImplementation;
-        emit ItemsUpdated(_itemsImplementation);
-    }
-
-    function updateExperienceImplementation(address _experienceImplementation) external onlyOwner {
-        experienceImplementation = _experienceImplementation;
-        emit ExperienceUpdated(_experienceImplementation);
-    }
-
-    function updateERC6551Registry(address _newRegistry) external onlyOwner {
-        erc6551Registry = _newRegistry;
-        emit RegistryUpdated(erc6551Registry);
-    }
-
-    function updateERC6551AccountImplementation(address _newImplementation) external onlyOwner {
-        erc6551AccountImplementation = _newImplementation;
-        emit ERC6551AccountImplementationUpdated(_newImplementation);
-    }
-
-    function updateClassesImplementation(address _newClasses) external onlyOwner {
-        classesImplementation = _newClasses;
-        emit ClassesImplementationUpdated(classesImplementation);
-    }
-
-    function updateEligibilityAdaptorImplementation(address _newEligibilityAdaptor) external onlyOwner {
-        eligibilityAdaptorImplementation = _newEligibilityAdaptor;
-        emit EligibilityAdaptorUpdated(_newEligibilityAdaptor);
-    }
-
-    function updateClassLevelAdaptorImplementation(address _newClassLevelAdaptor) external onlyOwner {
-        classLevelAdaptorImplementation = _newClassLevelAdaptor;
-        emit ClassLevelAdaptorUpdated(_newClassLevelAdaptor);
-    }
-
-    function updateHatsAdaptorImplementation(address _newHatsAdaptor) external onlyOwner {
-        hatsAdaptorImplementation = _newHatsAdaptor;
-
-        emit HatsAdaptorUpdated(_newHatsAdaptor);
-    }
-
-    /// create functions must be called first before the initialize call is made
 
     /**
-     * @dev create function for all contracts and adaptors
+     *     @notice creates all contracts and adaptors with default implementations
      *     @param dao the address of a dao to be used with the character sheets elegibility adaptor pass in address(0) to have no elegibilty limitations
-     *     @param _classLevelAdaptorImplementation the class Level adaptor address to be used.  pass in address(0) to use the default adaptor with D&D style leveling requirements
-     *     @param data the encoded bytes of the correct initilization data see init function notes for correct data to be encoded
+     *     @return (clonesAddressStorage)  this is the data needed to pass into the initialize function to initialize all the contracts.
      */
-    function create(address dao, address _classLevelAdaptorImplementation, bytes calldata data)
-        external
-        returns (address, address, address, address)
-    {
-        address hatsAdaptor = createHatsAdaptor();
-        (address characterSheetsClone, address itemsClone) = _createSheetsAndItems(dao, hatsAdaptor, data);
+    function create(address dao) public returns (address) {
+        address clonesAddressStorage = createClonesStorage();
+        address itemsManagerClone = createItemsManager();
+        address hatsAdaptorClone = createHatsAdaptor();
 
-        (address classesClone, address experienceClone) =
-            _createClassesAndExperience(characterSheetsClone, _classLevelAdaptorImplementation, hatsAdaptor, data);
+        address characterEligibilityAdaptorClone = createCharacterEligibilityAdaptorFromDao(dao);
+        (address characterSheetsClone, address itemsClone) = _createSheetsAndItems();
 
-        emit CharacterSheetsCreated(msg.sender, characterSheetsClone, classesClone, itemsClone, experienceClone);
+        (address classesClone, address experienceClone, address classLevelAdaptorClone) =
+            _createClassesAndExperience(address(0));
 
-        return (characterSheetsClone, classesClone, itemsClone, experienceClone);
+        bytes memory encodedCloneAddresses =
+            abi.encode(characterSheetsClone, itemsClone, itemsManagerClone, classesClone, experienceClone);
+
+        bytes memory encodedAdaptorAddresses =
+            abi.encode(characterEligibilityAdaptorClone, classLevelAdaptorClone, hatsAdaptorClone);
+
+        // initialize clones address storage contract
+        IClonesAddressStorage(clonesAddressStorage).initialize(encodedCloneAddresses, encodedAdaptorAddresses);
+
+        emit NewGameCreated(msg.sender, clonesAddressStorage);
+
+        return (clonesAddressStorage);
+    }
+
+    /**
+     *    @notice this function will call both the create and initializeContracts functions
+     *    @dev check notes on the initializeContracts function to see what needs to be
+     *     in the encoded hatsStrings and the encoded sheets strings
+     */
+
+    function createAndInitialize(
+        address dao,
+        address[] calldata admins,
+        address[] calldata dungeonMasters,
+        bytes calldata encodedHatsStrings,
+        bytes calldata sheetsStrings
+    ) public returns (address) {
+        address clones = create(dao);
+        bytes memory encodedHatsAddresses = abi.encode(admins, dungeonMasters, implementations, clones);
+
+        initializeContracts(clones, dao, encodedHatsAddresses, encodedHatsStrings, sheetsStrings);
+
+        return clones;
     }
 
     function createExperience() public returns (address) {
-        if (experienceImplementation == address(0)) {
+        if (implementations.experienceImplementation() == address(0)) {
             revert Errors.NotInitialized();
         }
 
-        address experienceClone = address(new ERC1967Proxy(experienceImplementation, ""));
-
+        address experienceClone = address(new ERC1967Proxy(implementations.experienceImplementation(), ""));
+        emit ExperienceCreated(experienceClone);
         return experienceClone;
     }
 
     function createCharacterSheets() public returns (address) {
-        if (characterSheetsImplementation == address(0)) {
+        if (implementations.characterSheetsImplementation() == address(0)) {
             revert Errors.NotInitialized();
         }
 
-        address characterSheetsClone = address(new ERC1967Proxy(characterSheetsImplementation, ""));
+        address characterSheetsClone = address(new ERC1967Proxy(implementations.characterSheetsImplementation(), ""));
+
+        emit CharacterSheetsCreated(characterSheetsClone);
 
         return characterSheetsClone;
     }
 
-    function createItems() public returns (address) {
-        if (itemsImplementation == address(0)) {
+    function createItemsManager() public returns (address) {
+        if (implementations.itemsManagerImplementation() == address(0)) {
             revert Errors.NotInitialized();
         }
-        address itemsClone = address(new ERC1967Proxy(itemsImplementation, ""));
+        address itemsManager = address(new ERC1967Proxy(implementations.itemsManagerImplementation(), ""));
+        return itemsManager;
+    }
+
+    function createItems() public returns (address) {
+        if (implementations.itemsImplementation() == address(0)) {
+            revert Errors.NotInitialized();
+        }
+        address itemsClone = address(new ERC1967Proxy(implementations.itemsImplementation(), ""));
+
+        emit ItemsCreated(itemsClone);
         return itemsClone;
     }
 
     function createClasses() public returns (address) {
-        if (classesImplementation == address(0)) {
+        if (implementations.classesImplementation() == address(0)) {
             revert Errors.NotInitialized();
         }
-        address classesClone = address(new ERC1967Proxy(classesImplementation, ""));
+        address classesClone = address(new ERC1967Proxy(implementations.classesImplementation(), ""));
+        emit ClassesCreated(classesClone);
         return classesClone;
     }
 
-    function createEligibilityAdaptor() public returns (address) {
-        if (eligibilityAdaptorImplementation == address(0)) {
-            revert Errors.NotInitialized();
+    function createCharacterEligibilityAdaptorFromDao(address _dao) public returns (address) {
+        if (_dao == address(0)) {
+            return address(0);
         }
-
-        return createEligibilityAdaptor(eligibilityAdaptorImplementation);
+        if (_checkMolochV3Dao(_dao)) {
+            return createCharacterEligibilityAdaptor(implementations.molochV3EligibilityAdaptorImplementation());
+        }
+        if (_checkMolochV2Dao(_dao)) {
+            return createCharacterEligibilityAdaptor(implementations.molochV2EligibilityAdaptorImplementation());
+        }
+        revert Errors.UnsupportedInterface();
     }
 
-    function createEligibilityAdaptor(address _eligibilityAdaptorImplementation) public returns (address) {
-        if (!IERC165(_eligibilityAdaptorImplementation).supportsInterface(ELIGIBILITY_INTERFACE_ID)) {
+    function createCharacterEligibilityAdaptor(address _characterEligibilityAdaptorImplementation)
+        public
+        returns (address)
+    {
+        if (
+            _characterEligibilityAdaptorImplementation == address(0)
+                || !IERC165(_characterEligibilityAdaptorImplementation).supportsInterface(ELIGIBILITY_INTERFACE_ID)
+        ) {
             revert Errors.UnsupportedInterface();
         }
 
-        address eligibilityAdaptorClone = address(new ERC1967Proxy(_eligibilityAdaptorImplementation, ""));
-        return eligibilityAdaptorClone;
+        address characterEligibilityAdaptorClone =
+            address(new ERC1967Proxy(_characterEligibilityAdaptorImplementation, ""));
+        emit CharacterEligibilityAdaptorCreated(characterEligibilityAdaptorClone);
+        return characterEligibilityAdaptorClone;
     }
 
     function createClassLevelAdaptor() public returns (address) {
-        if (classLevelAdaptorImplementation == address(0)) {
+        if (implementations.classLevelAdaptorImplementation() == address(0)) {
             revert Errors.NotInitialized();
         }
 
-        return createClassLevelAdaptor(classLevelAdaptorImplementation);
+        return createClassLevelAdaptor(implementations.classLevelAdaptorImplementation());
     }
 
     function createClassLevelAdaptor(address _classLevelAdaptorImplementation) public returns (address) {
@@ -192,15 +198,16 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         }
 
         address classLevelAdaptorClone = address(new ERC1967Proxy(_classLevelAdaptorImplementation, ""));
+        emit ClassLevelAdaptorCreated(classLevelAdaptorClone);
         return classLevelAdaptorClone;
     }
 
     function createHatsAdaptor() public returns (address) {
-        if (hatsAdaptorImplementation == address(0)) {
+        if (implementations.hatsAdaptorImplementation() == address(0)) {
             revert Errors.VariableNotSet();
         }
 
-        return createHatsAdaptor(hatsAdaptorImplementation);
+        return createHatsAdaptor(implementations.hatsAdaptorImplementation());
     }
 
     function createHatsAdaptor(address _hatsAdaptorImplementation) public returns (address) {
@@ -208,156 +215,122 @@ contract CharacterSheetsFactory is OwnableUpgradeable {
         return hatsAdaptor;
     }
 
-    /**
-     * @notice adaptors must be initialized seperately  ***************
-     */
-
-    /**
-     * @notice This will initialize all the contracts except the adaptors
-     * @dev this function should be called immediately after all the create functions have been called
-     * @param encodedAddresses the encoded addresses must include in this order:
-     * -eligibility adaptor clone address
-     * - class level adaptor clone address
-     * - dungeon masters: an array of addresses that will have dungeonMaster permission on the character sheets contract
-     * - character sheets clone address to be initialized
-     * - experience clone to address be initialized
-     * - items clone address to be initialized
-     * - classes clone address to be initialized
-     * -
-     * @param data encoded string data strings to include must be in this order:
-     * - the base metadata uri for the character sheets clone
-     * - the base character token uri for the character sheets clone
-     * - the base uri for the ITEMS clone
-     * - the base uri for the CLASSES clone
-     */
-    function initializeContracts(bytes calldata encodedAddresses, bytes calldata data) public {
-        (
-            address eligibilityAdaptorClone,
-            address classLevelAdaptorClone,
-            address hatsAdaptor,
-            address characterSheetsClone,
-            address experienceClone,
-            address itemsClone,
-            address classesClone
-        ) = abi.decode(encodedAddresses, (address, address, address, address, address, address, address));
-
-        //stacc too dank
-        bytes memory encodedCharInitAddresses = abi.encode(eligibilityAdaptorClone, hatsAdaptor, itemsClone);
-
-        CharacterSheetsImplementation(characterSheetsClone).initialize(
-            _encodeCharacterInitData(encodedCharInitAddresses, data)
-        );
-
-        ItemsImplementation(itemsClone).initialize(_encodeItemsData(hatsAdaptor, data));
-
-        bytes memory encodedClassesInitdata =
-            abi.encode(characterSheetsClone, experienceClone, hatsAdaptor, classLevelAdaptorClone);
-        ClassesImplementation(classesClone).initialize(_encodeClassesData(encodedClassesInitdata, data));
-
-        ExperienceImplementation(experienceClone).initialize(
-            _encodeExpData(characterSheetsClone, classesClone, hatsAdaptor)
-        );
+    function createClonesStorage() public returns (address) {
+        address clonesStorage = address(new ERC1967Proxy(implementations.cloneAddressStorage(), ""));
+        return clonesStorage;
     }
 
-    function _createSheetsAndItems(address dao, address hatsAdaptor, bytes calldata data)
-        private
-        returns (address, address)
-    {
-        address characterSheetsClone = createCharacterSheets();
-        address itemsClone = createItems();
+    /**
+     * @notice This will initialize all the contracts with default values.
+     * @dev If custom settings are required for contracts (custom eligibility adaptors, level adaptors etc.  please initialize the contracts seperatly)
+     * @param dao the address of the dao who's membership will restrict character sheets eligibility.  address(0) for no dao restriction;
+     * @param encodedHatsAddresses this will be the hats adaptor initialization data
+     *        1. address[] admins the list of addresses that will have admin priviledges
+     *        2. address[] gameMasters the list of addresses that will have gameMasterpriviledges
+     *        3. address implementations the address of the ImplementationAddressStorage contract
+     *        4. address clonesStorage the address of the cloned clones storageContract;
+     *
+     * @param encodedHatsStrings the encoded strings needed for the hats adaptor init.
+     *        1.  string _baseImgUri
+     *        2.  string topHatDescription
+     *        3.  string adminUri
+     *        4.  string adminDescription
+     *        5.  string gameMasterUri
+     *        6.  string gameMasterDescription
+     *        7.  string playerUri
+     *        8.  string playerDescription
+     *        9.  string characterUri
+     *        10. string characterDescription
+     *
+     * @param sheetsStrings encoded string data strings to include must be in this order:
+     *        1. the base metadata uri for the character sheets clone
+     *        2. the base character token uri for the character sheets clone
+     *        3. the base uri for the ITEMS contract
+     *        4. the base uri for the CLASSES contract
+     */
+    function initializeContracts(
+        address clonesStorageAddress,
+        address dao,
+        bytes memory encodedHatsAddresses,
+        bytes calldata encodedHatsStrings,
+        bytes calldata sheetsStrings
+    ) public {
+        IClonesAddressStorage clones = IClonesAddressStorage(clonesStorageAddress);
 
-        address eligibilityAdaptorClone = dao != address(0) ? createEligibilityAdaptor() : address(0);
+        if (clones.characterEligibilityAdaptor() != address(0)) {
+            ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).initialize(msg.sender, dao);
+        }
+        ClassLevelAdaptor(clones.classLevelAdaptor()).initialize(clonesStorageAddress);
+        HatsAdaptor(clones.hatsAdaptor()).initialize(msg.sender, encodedHatsAddresses, encodedHatsStrings);
 
-        bytes memory encodedCharInitAddresses = abi.encode(eligibilityAdaptorClone, hatsAdaptor, itemsClone);
-
-        CharacterSheetsImplementation(characterSheetsClone).initialize(
-            _encodeCharacterInitData(encodedCharInitAddresses, data)
+        CharacterSheetsImplementation(clones.characterSheets()).initialize(
+            _encodeCharacterInitData(clonesStorageAddress, sheetsStrings)
         );
 
-        if (dao != address(0)) {
-            EligibilityAdaptor(eligibilityAdaptorClone).initialize(msg.sender, dao);
-        }
+        ItemsImplementation(clones.items()).initialize(_encodeItemsData(clonesStorageAddress, sheetsStrings));
 
-        ItemsImplementation(itemsClone).initialize(_encodeItemsData(characterSheetsClone, data));
+        ClassesImplementation(clones.classes()).initialize(_encodeClassesData(clonesStorageAddress, sheetsStrings));
+        ItemsManagerImplementation(clones.itemsManager()).initialize(clonesStorageAddress);
+        ExperienceImplementation(clones.experience()).initialize(clonesStorageAddress);
+
+        emit NewGameStarted(msg.sender, clonesStorageAddress, encodedHatsAddresses, encodedHatsStrings);
+    }
+
+    function _createSheetsAndItems() private returns (address, address) {
+        address characterSheetsClone = createCharacterSheets();
+        address itemsClone = createItems();
 
         return (characterSheetsClone, itemsClone);
     }
 
-    function _createClassesAndExperience(
-        address characterSheetsClone,
-        address _classLevelAdaptorImplementation,
-        address hatsAdaptorClone,
-        bytes calldata data
-    ) private returns (address, address) {
+    function _createClassesAndExperience(address _classLevelAdaptorImplementation)
+        private
+        returns (address, address, address)
+    {
         address experienceClone = createExperience();
         address classesClone = createClasses();
         address classLevelAdaptorClone = _classLevelAdaptorImplementation == address(0)
             ? createClassLevelAdaptor()
             : createClassLevelAdaptor(_classLevelAdaptorImplementation);
-        bytes memory encodedClassData =
-            abi.encode(characterSheetsClone, experienceClone, hatsAdaptorClone, classLevelAdaptorClone);
-        ClassesImplementation(classesClone).initialize(_encodeClassesData(encodedClassData, data));
 
-        ExperienceImplementation(experienceClone).initialize(
-            _encodeExpData(characterSheetsClone, classesClone, hatsAdaptorClone)
-        );
-
-        ClassLevelAdaptor(classLevelAdaptorClone).initialize(msg.sender, classesClone, experienceClone);
-
-        return (classesClone, experienceClone);
+        return (classesClone, experienceClone, classLevelAdaptorClone);
     }
 
-    function _encodeCharacterInitData(bytes memory encodedInitData, bytes memory data)
-        private
-        view
-        returns (bytes memory)
-    {
+    function _checkMolochV3Dao(address dao) private view returns (bool) {
+        if (dao != address(0)) {
+            (bool success,) = address(dao).staticcall(abi.encodeWithSelector(bytes4(keccak256("sharesToken()"))));
+            return success;
+        }
+        return false;
+    }
+
+    function _checkMolochV2Dao(address dao) private view returns (bool) {
+        if (dao != address(0)) {
+            (bool success,) =
+                address(dao).staticcall(abi.encodeWithSelector(bytes4(keccak256("members(address)")), address(0)));
+            return success;
+        }
+        return false;
+    }
+
+    function _encodeCharacterInitData(address clonesStorage, bytes memory data) private view returns (bytes memory) {
         (string memory characterSheetsMetadataUri, string memory characterSheetsBaseUri,,) = _decodeStrings(data);
 
-        (address eligibilityAdaptorClone, address hatsAdaptor, address itemsClone) =
-            abi.decode(encodedInitData, (address, address, address));
-
-        bytes memory encodedCharacterSheetParameters = abi.encode(
-            eligibilityAdaptorClone,
-            hatsAdaptor,
-            itemsClone,
-            erc6551Registry,
-            erc6551AccountImplementation,
-            characterSheetsMetadataUri,
-            characterSheetsBaseUri
-        );
+        bytes memory encodedCharacterSheetParameters =
+            abi.encode(clonesStorage, address(implementations), characterSheetsMetadataUri, characterSheetsBaseUri);
 
         return (encodedCharacterSheetParameters);
     }
 
-    function _encodeItemsData(address characterSheetsClone, bytes memory data) private pure returns (bytes memory) {
+    function _encodeItemsData(address clonesStorage, bytes memory data) private pure returns (bytes memory) {
         (,, string memory itemsBaseUri,) = _decodeStrings(data);
 
-        return abi.encode(characterSheetsClone, itemsBaseUri);
+        return abi.encode(clonesStorage, itemsBaseUri);
     }
 
-    function _encodeClassesData(bytes memory encodedClassesData, bytes memory data)
-        private
-        pure
-        returns (bytes memory)
-    {
-        (
-            address characterSheetsClone,
-            address experienceClone,
-            address hatsAdaptorClone,
-            address classLevelAdaptorClone
-        ) = abi.decode(encodedClassesData, (address, address, address, address));
+    function _encodeClassesData(address clonesStorage, bytes memory data) private pure returns (bytes memory) {
         (,,, string memory classesBaseUri) = _decodeStrings(data);
-        return
-            abi.encode(characterSheetsClone, experienceClone, hatsAdaptorClone, classLevelAdaptorClone, classesBaseUri);
-    }
-
-    function _encodeExpData(address characterSheetsClone, address classesClone, address hatsAdaptor)
-        private
-        pure
-        returns (bytes memory)
-    {
-        return abi.encode(characterSheetsClone, classesClone, hatsAdaptor);
+        return abi.encode(clonesStorage, classesBaseUri);
     }
 
     function _decodeStrings(bytes memory data)

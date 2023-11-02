@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
-pragma abicoder v2;
+pragma solidity ^0.8.20;
+// pragma abicoder v2;
 
 import {
     ERC721URIStorageUpgradeable,
@@ -11,10 +11,13 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UU
 import {IERC1155} from "openzeppelin-contracts/token/ERC1155/IERC1155.sol";
 
 import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
-import {IEligibilityAdaptor} from "../interfaces/IEligibilityAdaptor.sol";
-import {ICharacterSheets} from "../interfaces/ICharacterSheets.sol";
+import {ICharacterEligibilityAdaptor} from "../interfaces/ICharacterEligibilityAdaptor.sol";
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 import {IItems} from "../interfaces/IItems.sol";
+import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
+
+import {ImplementationAddressStorage} from "../ImplementationAddressStorage.sol";
+
 import {CharacterSheet} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
 
@@ -24,29 +27,18 @@ import {Errors} from "../lib/Errors.sol";
  * @notice This is a gamified reputation managment system desgigned for raid guild but
  * left composable for use with any dao or organization
  * @dev this is an erc721 contract that calculates the erc6551 address of every token at token creation and then uses that address as the character for
- * a rpg themed reputation system with experience points awarded by a centralized authority the "DUNGEON_MASTER" and items and classes that can be owned and equipped
+ * a rpg themed reputation system with experience points awarded by a centralized authority the "GAME_MASTER" and items and classes that can be owned and equipped
  * by the base character account.
  */
 
-contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgradeable, UUPSUpgradeable {
-    /// @dev the admin of the contract
-    bytes32 public constant DUNGEON_MASTER = keccak256("DUNGEON_MASTER");
-    /// @dev the EOA of the dao member who owns a sheet
-    bytes32 public constant PLAYER = keccak256("PLAYER");
-    /// @dev the tokenbound account of the sheet nft
-    bytes32 public constant CHARACTER = keccak256("CHARACTER");
-
-    address public items;
-
+contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgradeable {
     string public baseTokenURI;
     string public metadataURI;
 
+    address public erc6551CharacterAccount;
     address public erc6551Registry;
-    address public erc6551AccountImplementation;
 
-    address public eligibilityAdaptor;
-
-    address public hatsAdaptor;
+    IClonesAddressStorage public clones;
 
     // characterId => characterSheet
     mapping(uint256 => CharacterSheet) private _sheets;
@@ -62,52 +54,66 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
     event NewCharacterSheetRolled(address player, address account, uint256 characterId);
     event MetadataURIUpdated(string newURI);
     event BaseURIUpdated(string newURI);
+    event Erc6551CharacterAccountUpdated(address newERC6551CharacterAccount);
+    event Erc6551RegistryUpdated(address newERC6551Registry);
     event CharacterRemoved(uint256 characterId);
-    event ItemsUpdated(address items);
-    event HatsAdaptorUpdated(address newAdaptor);
+    event Erc6551AddressesUpdated(address newErc6551Storage);
+    event ClonesAddressStorageUpdated(address newClonesStorageAddress);
     event ItemEquipped(uint256 characterId, uint256 itemId);
     event ItemUnequipped(uint256 characterId, uint256 itemId);
     event CharacterUpdated(uint256 characterId);
     event PlayerJailed(address playerAddress, bool thrownInJail);
     event CharacterRestored(address player, address account, uint256 characterId);
-    event EligibilityAdaptorUpdated(address newAdaptor);
 
     modifier onlyContract() {
-        if (msg.sender != items) {
+        if (msg.sender != clones.items()) {
             revert Errors.CallerNotApproved();
         }
         _;
     }
 
     modifier onlyAdmin() {
-        if (!IHatsAdaptor(hatsAdaptor).isAdmin(msg.sender)) {
-            revert Errors.CallerNotApproved();
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isAdmin(msg.sender)) {
+            revert Errors.AdminOnly();
         }
         _;
     }
 
-    modifier onlyDungeonMaster() {
-        if (!IHatsAdaptor(hatsAdaptor).isDungeonMaster(msg.sender)) {
-            revert Errors.DungeonMasterOnly();
+    modifier onlyGameMaster() {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isGameMaster(msg.sender)) {
+            revert Errors.GameMasterOnly();
         }
         _;
     }
 
     modifier onlyPlayer() {
-        if (!IHatsAdaptor(hatsAdaptor).isPlayer(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isPlayer(msg.sender)) {
             revert Errors.PlayerOnly();
         }
         _;
     }
 
     modifier onlyCharacter() {
-        if (!IHatsAdaptor(hatsAdaptor).isCharacter(msg.sender)) {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(msg.sender)) {
             revert Errors.CharacterOnly();
         }
         _;
     }
 
-    //solhint-disable-next-line
+    modifier validTransfer(address from, address to, uint256 characterId) {
+        if (balanceOf(to) != 0) {
+            revert Errors.TokenBalanceError();
+        }
+
+        _;
+
+        _playerSheets[from] = 0;
+        _playerSheets[to] = characterId;
+        _sheets[characterId].playerAddress = to;
+
+        IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(to);
+    }
+
     constructor() {
         _disableInitializers();
     }
@@ -117,7 +123,7 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
      * @param _encodedParameters encoded parameters must include:
      * - address daoAddress: the address of the dao who's member list will be allowed to become players and who
      *      will be able to interact with this contract
-     * - address[] dungeonMasters: an array addresses of the person/persons who are authorized to issue player
+     * - address[] gameMasters: an array addresses of the person/persons who are authorized to issue player
      *      cards, classes, and items.
      * - address owner: the account that will have the DEFAULT_ADMIN role
      * - address CharacterAccountImplementation: the erc 4337 implementation of the Character account.
@@ -134,15 +140,14 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
         __ERC721_init_unchained("CharacterSheet", "CHAS");
         __UUPSUpgradeable_init();
 
-        (
-            eligibilityAdaptor,
-            hatsAdaptor,
-            items,
-            erc6551Registry,
-            erc6551AccountImplementation,
-            metadataURI,
-            baseTokenURI
-        ) = abi.decode(_encodedParameters, (address, address, address, address, address, string, string));
+        address clonesStorage;
+        address implementationStorage;
+
+        (clonesStorage, implementationStorage, metadataURI, baseTokenURI) =
+            abi.decode(_encodedParameters, (address, address, string, string));
+        clones = IClonesAddressStorage(clonesStorage);
+        erc6551Registry = ImplementationAddressStorage(implementationStorage).erc6551Registry();
+        erc6551CharacterAccount = ImplementationAddressStorage(implementationStorage).erc6551AccountImplementation();
     }
 
     /**
@@ -152,13 +157,20 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
      */
 
     function rollCharacterSheet(string calldata _tokenURI) external returns (uint256) {
-        if (erc6551AccountImplementation == address(0) || erc6551Registry == address(0)) {
+        if (erc6551CharacterAccount == address(0) || erc6551Registry == address(0)) {
             revert Errors.NotInitialized();
         }
 
         // check the eligibility adaptor to see if the player is eligible to roll a character sheet
-        if (eligibilityAdaptor != address(0) && !IEligibilityAdaptor(eligibilityAdaptor).isEligible(msg.sender)) {
+        if (
+            clones.characterEligibilityAdaptor() != address(0)
+                && !ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(msg.sender)
+        ) {
             revert Errors.EligibilityError();
+        }
+        // a character cannot be a character
+        if (_characterSheets[msg.sender] != 0) {
+            revert Errors.CharacterError();
         }
 
         if (jailed[msg.sender]) {
@@ -180,7 +192,7 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
 
         // calculate ERC6551 account address
         address characterAccount = IERC6551Registry(erc6551Registry).createAccount(
-            erc6551AccountImplementation, block.chainid, address(this), characterId, characterId, ""
+            erc6551CharacterAccount, block.chainid, address(this), characterId, characterId, ""
         );
         // setting salt as characterId
 
@@ -192,8 +204,8 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
         _playerSheets[msg.sender] = characterId;
         _characterSheets[characterAccount] = characterId;
 
-        IHatsAdaptor(hatsAdaptor).mintPlayerHat(msg.sender);
-        IHatsAdaptor(hatsAdaptor).mintCharacterHat(characterAccount);
+        IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(msg.sender);
+        IHatsAdaptor(clones.hatsAdaptor()).mintCharacterHat(characterAccount);
 
         totalSheets++;
         emit NewCharacterSheetRolled(msg.sender, characterAccount, characterId);
@@ -211,7 +223,7 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
             revert Errors.OwnershipError();
         }
 
-        if (IERC1155(items).balanceOf(msg.sender, itemId) == 0) {
+        if (IERC1155(clones.items()).balanceOf(msg.sender, itemId) == 0) {
             // TODO ensure that when items are transferred from a character sheet that they are unequipped
             revert Errors.InventoryError();
         }
@@ -255,7 +267,7 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
             revert Errors.OwnershipError();
         }
 
-        if (IERC1155(items).balanceOf(msg.sender, itemId) < 1) {
+        if (IERC1155(clones.items()).balanceOf(msg.sender, itemId) < 1) {
             revert Errors.InsufficientBalance();
         }
 
@@ -294,14 +306,17 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
         if (_ownerOf(characterId) != address(0)) {
             revert Errors.OwnershipError();
         }
-        if (eligibilityAdaptor != address(0) && !IEligibilityAdaptor(eligibilityAdaptor).isEligible(msg.sender)) {
+        if (
+            clones.characterEligibilityAdaptor() != address(0)
+                && !ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(msg.sender)
+        ) {
             revert Errors.EligibilityError();
         }
         if (jailed[msg.sender]) {
             revert Errors.Jailed();
         }
         address restoredAccount = IERC6551Registry(erc6551Registry).createAccount(
-            erc6551AccountImplementation, block.chainid, address(this), characterId, characterId, ""
+            erc6551CharacterAccount, block.chainid, address(this), characterId, characterId, ""
         );
         // setting salt as characterId
 
@@ -324,13 +339,16 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
      * @param characterId the characterId of the player to be removed.
      */
 
-    function removeSheet(uint256 characterId) external onlyDungeonMaster {
+    function removeSheet(uint256 characterId) external onlyGameMaster {
         address playerAddress = _ownerOf(characterId);
         if (playerAddress == address(0)) {
             revert Errors.CharacterError();
         }
 
-        if (eligibilityAdaptor != address(0) && IEligibilityAdaptor(eligibilityAdaptor).isEligible(playerAddress)) {
+        if (
+            clones.characterEligibilityAdaptor() != address(0)
+                && ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(playerAddress)
+        ) {
             revert Errors.EligibilityError();
         }
 
@@ -359,51 +377,37 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
         emit CharacterUpdated(characterId);
     }
 
-    function jailPlayer(address playerAddress, bool throwInJail) external onlyDungeonMaster {
+    function jailPlayer(address playerAddress, bool throwInJail) external onlyGameMaster {
         jailed[playerAddress] = throwInJail;
         emit PlayerJailed(playerAddress, throwInJail);
     }
 
-    function updateItemsContract(address expContract) public onlyAdmin {
-        items = expContract;
-        emit ItemsUpdated(expContract);
+    function updateClones(address clonesStorage) public onlyAdmin {
+        clones = IClonesAddressStorage(clonesStorage);
+        emit ClonesAddressStorageUpdated(clonesStorage);
     }
 
-    function updateEligibilityAdaptor(address newAdaptor) public onlyAdmin {
-        eligibilityAdaptor = newAdaptor;
-        emit EligibilityAdaptorUpdated(newAdaptor);
+    function updateErc6551Registry(address newErc6551Storage) public onlyAdmin {
+        erc6551Registry = newErc6551Storage;
+        emit Erc6551RegistryUpdated(newErc6551Storage);
     }
 
-    function updateHatsAdaptor(address newHatsAdaptor) public onlyAdmin {
-        hatsAdaptor = newHatsAdaptor;
-        emit HatsAdaptorUpdated(newHatsAdaptor);
+    function updateErc6551CharacterAccount(address newERC6551CharacterAccount) public onlyAdmin {
+        erc6551CharacterAccount = newERC6551CharacterAccount;
+        emit Erc6551CharacterAccountUpdated(newERC6551CharacterAccount);
     }
 
-    function setBaseUri(string memory _uri) public onlyDungeonMaster {
+    function updateBaseUri(string memory _uri) public onlyAdmin {
         baseTokenURI = _uri;
         emit BaseURIUpdated(_uri);
     }
 
-    function setMetadataUri(string memory _uri) public onlyDungeonMaster {
+    function updateMetadataUri(string memory _uri) public onlyAdmin {
         metadataURI = _uri;
         emit MetadataURIUpdated(_uri);
     }
 
-    /**
-     * @dev Sets the address of the ERC6551 registry
-     */
-    function setERC6551Registry(address registry) public onlyDungeonMaster {
-        erc6551Registry = registry;
-    }
-
-    /**
-     * @dev Sets the address of the ERC6551 account implementation
-     */
-    function setERC6551Implementation(address implementation) public onlyDungeonMaster {
-        erc6551AccountImplementation = implementation;
-    }
-
-    // transfer overrides since these tokens should be soulbound or only transferable by the dungeonMaster
+    // transfer overrides since these tokens should be soulbound or only transferable by the gameMaster
 
     /**
      * @dev See {IERC721-approve}.
@@ -427,58 +431,24 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
         public
         virtual
         override(ERC721Upgradeable, IERC721)
-        onlyDungeonMaster
+        onlyGameMaster
+        validTransfer(from, to, characterId)
     {
-        if (_playerSheets[to] != 0) {
-            revert Errors.TokenBalanceError();
-        }
-        _playerSheets[to] = characterId;
-
-        // TODO: update sheet erc6551 account address
-
-        return super.transferFrom(from, to, characterId);
+        super.transferFrom(from, to, characterId);
     }
 
     /**
-     * revert(Errors."This token cannot be transfered");
-     * revert(Errors."This token cannot be transfered");
      * @dev See {IERC721-safeTransferFrom}.
      */
-    // function safeTransferFrom(address from, address to, uint256 characterId)
-    //     public
-    //     virtual
-    //     override(ERC721Upgradeable, IERC721)
-    //     onlyDungeonMaster
-    // {
-    //     if (_sheets[_playerSheets[to]].playerAddress != address(0)) {
-    //         revert Errors.CharacterError();
-    //     }
-    //     _playerSheets[to] = characterId;
-    //     _sheets[characterId].playerAddress = to;
 
-    //     // TODO: update sheet erc6551 account address
-
-    //     return super.safeTransferFrom(from, to, characterId);
-    // }
-
-    /**
-     * @dev See {IERC721-safeTransferFrom}.
-     */
-    function safeTransferFrom(address from, address to, uint256 characterId, bytes memory data)
+    function safeTransferFrom(address from, address to, uint256 characterId, bytes memory)
         public
         virtual
         override(ERC721Upgradeable, IERC721)
-        onlyDungeonMaster
+        onlyGameMaster
+        validTransfer(from, to, characterId)
     {
-        if (_sheets[_playerSheets[to]].playerAddress != address(0)) {
-            revert Errors.CharacterError();
-        }
-        _playerSheets[to] = characterId;
-        _sheets[characterId].playerAddress = to;
-
-        // TODO: update sheet erc6551 account address
-
-        return super.safeTransferFrom(from, to, characterId, data);
+        super.transferFrom(from, to, characterId);
     }
 
     function getCharacterSheetByCharacterId(uint256 characterId) public view returns (CharacterSheet memory) {
@@ -509,7 +479,7 @@ contract CharacterSheetsImplementation is ICharacterSheets, ERC721URIStorageUpgr
         if (sheet.inventory.length == 0) {
             return false;
         }
-        uint256 supply = IItems(items).getItem(itemId).supply;
+        uint256 supply = IItems(clones.items()).getItem(itemId).supply;
         if (supply == 0) {
             revert Errors.ItemError();
         }

@@ -10,7 +10,7 @@ clean  :; forge clean
 # Remove modules
 remove :; rm -rf .gitmodules && rm -rf .git/modules/* && rm -rf lib && touch .gitmodules && git add . && git commit -m "modules"
 
-install :; forge install --no-commit foundry-rs/forge-std openzeppelin/openzeppelin-contracts https://github.com/Hats-Protocol/hats-protocol.git https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable.git https://github.com/dmfxyz/murky.git
+install :; forge install --no-commit foundry-rs/forge-std openzeppelin/openzeppelin-contracts https://github.com/Hats-Protocol/hats-protocol.git https://github.com/Hats-Protocol/hats-module https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable.git https://github.com/dmfxyz/murky.git
 
 # Update Dependencies
 update:; forge update
@@ -32,44 +32,45 @@ lint :; solhint "src/**/*.sol"
 
 anvil :; anvil -m 'test test test test test test test test test test test junk'
 
-# deploy commands
-deploy-anvil :; ./scripts/deploy.sh anvil ${contract}
-deploy-sepolia :; ./scripts/deploy.sh sepolia ${contract} --verify
-deploy-goerli :; ./scripts/deploy.sh goerli ${contract} --verify
-deploy-gnosis :; ./scripts/deploy.sh gnosis ${contract} --verify
+# deploy
+deploy :; 
+	@if [ -n "${force}" ]; then \
+    ./scripts/deploy.sh ${network} ${contract} --force --verify; \
+	else\
+    ./scripts/deploy.sh ${network} ${contract} --verify; \
+	fi
 
-# verify commands
-verify-sepolia :; ./scripts/verify.sh sepolia ${contract}
-verify-goerli :; ./scripts/verify.sh goerli ${contract}
-verify-gnosis :; ./scripts/verify.sh gnosis ${contract}
+# verify
+verify :; ./scripts/verify.sh ${network} ${contract}
 
-deploy-contracts :; make deploy-${network} contract=CharacterAccount && \
-	make deploy-${network} contract=CharacterSheetsImplementation && \
-	make deploy-${network} contract=ExperienceImplementation && \
-	make deploy-${network} contract=ItemsImplementation && \
-	make deploy-${network} contract=ClassesImplementation && \
-	make deploy-${network} contract=EligibilityAdaptor && \
-	make deploy-${network} contract=ClassLevelAdaptor && \
-	make deploy-${network} contract=HatsAdaptor && \
-	make deploy-${network} contract=AdminHatEligibilityModule && \
-	make deploy-${network} contract=DungeonMasterHatEligibilityModule && \
-	make deploy-${network} contract=PlayerHatEligibilityModule && \
-	make deploy-${network} contract=CharacterHatEligibilityModule && \
-	make deploy-${network} contract=CharacterSheetsFactory;
+CONTRACTS = \
+CharacterAccount \
+CharacterSheetsImplementation \
+ExperienceImplementation \
+ItemsImplementation \
+ItemsManagerImplementation \
+ClassesImplementation \
+MolochV2EligibilityAdaptor \
+MolochV3EligibilityAdaptor \
+ClassLevelAdaptor \
+HatsAdaptor \
+AdminHatEligibilityModule \
+GameMasterHatEligibilityModule \
+PlayerHatEligibilityModule \
+CharacterHatEligibilityModule \
+ClonesAddressStorageImplementation \
+ImplementationAddressStorage \
+CharacterSheetsFactory
 
-verify-contracts :; make verify-${network} contract=CharacterAccount && \
-	make verify-${network} contract=CharacterSheetsImplementation && \
-	make verify-${network} contract=ExperienceImplementation && \
-	make verify-${network} contract=ItemsImplementation && \
-	make verify-${network} contract=ClassesImplementation && \
-	make verify-${network} contract=EligibilityAdaptor && \
-	make verify-${network} contract=ClassLevelAdaptor && \
-	make verify-${network} contract=HatsAdaptor && \
-	make verify-${network} contract=AdminHatEligibilityModule && \
-	make verify-${network} contract=DungeonMasterHatEligibilityModule && \
-	make verify-${network} contract=PlayerHatEligibilityModule && \
-	make verify-${network} contract=CharacterHatEligibilityModule && \
-	make verify-${network} contract=CharacterSheetsFactory;
+deploy-contracts :; 
+	@for contract in ${CONTRACTS}; do \
+		make deploy network=${network} force=${force} contract=$$contract; \
+	done
+
+verify-contracts :; 
+	@for contract in ${CONTRACTS}; do \
+		make verify network=${network} contract=$$contract; \
+	done
 
 # execute commands
 create-sheets :; scripts/createSheets.sh ${network}  

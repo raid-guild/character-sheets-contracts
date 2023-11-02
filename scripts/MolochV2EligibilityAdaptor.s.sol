@@ -1,25 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {EligibilityAdaptor} from "../src/adaptors/EligibilityAdaptor.sol";
+import {MolochV2EligibilityAdaptor} from "../src/adaptors/MolochV2EligibilityAdaptor.sol";
 
 import {BaseDeployer} from "./BaseDeployer.sol";
-import {BaseFactoryExecutor} from "./BaseExecutor.sol";
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
 
-contract DeployEligibilityAdaptor is BaseDeployer {
+contract DeployMolochV2EligibilityAdaptor is BaseDeployer {
     using stdJson for string;
 
-    EligibilityAdaptor public eligibilityAdaptor;
+    MolochV2EligibilityAdaptor public molochV2EligibilityAdaptor;
 
     function deploy() internal override returns (address) {
         vm.startBroadcast(deployerPrivateKey);
 
-        eligibilityAdaptor = new EligibilityAdaptor();
+        molochV2EligibilityAdaptor = new MolochV2EligibilityAdaptor();
 
         vm.stopBroadcast();
 
-        return address(eligibilityAdaptor);
+        return address(molochV2EligibilityAdaptor);
     }
 }

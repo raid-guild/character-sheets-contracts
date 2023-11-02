@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 //solhint-disable
 
 import {HatsEligibilityModule, HatsModule} from "hats-module/HatsEligibilityModule.sol";
@@ -8,11 +8,11 @@ import {HatsEligibilityModule, HatsModule} from "hats-module/HatsEligibilityModu
  * @title AddressEligibility
  * @author pumpedlunch
  * @notice A Hats Protocol eligibility module that allows admin's of a hat to whitelist eligible addresses for that hat
- * the admins of this contract will be the admins set by the admin contract.  This was to allow a more flexible set of dungeon masters
+ * the admins of this contract will be the admins set by the admin contract.  This was to allow a more flexible set of game masters
  * controlled by a more difficult to change set of admins.
  */
 
-contract DungeonMasterHatEligibilityModule is HatsEligibilityModule {
+contract GameMasterHatEligibilityModule is HatsEligibilityModule {
     /*//////////////////////////////////////////////////////////////
                             CUSTOM ERRORS
     //////////////////////////////////////////////////////////////*/
