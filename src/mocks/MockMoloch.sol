@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IMolochDAO} from "../interfaces/IMolochDAO.sol";
+import {IMolochDAOV2} from "../interfaces/IMolochDAOV2.sol";
+import {IMolochDAOV3} from "../interfaces/IMolochDAOV3.sol";
 
-contract Moloch is IMolochDAO {
+contract Moloch is IMolochDAOV2, IMolochDAOV3 {
     mapping(address => Member) private _members;
     address public sharesToken;
 

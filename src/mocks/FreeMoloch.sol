@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IMolochDAO} from "../interfaces/IMolochDAO.sol";
+import {IMolochDAOV2} from "../interfaces/IMolochDAOV2.sol";
 
 contract FreeMoloch is IMolochDAO {
     function members(address _member) external pure returns (Member memory m) {
