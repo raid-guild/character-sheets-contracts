@@ -28,7 +28,7 @@
     "CharacterHatEligibilityModule": "0x3bA35F1101fae3339DDb716f964922afb3fBCd31",
     "ClonesAddressStorageImplementation": "0x1676e44156ba89b99309E1AFb26CA1c07b47082a",
     "ImplementationAddressStorage": "0x83E0E9be1bBFE62e9753Cf24C920f183967Bc556",
-    "CharacterSheetsFactory": "0x4a8225dc5A5CA076f88779De223195d6af441444"
+    "CharacterSheetsFactory": "0x50Bf95Db862C0f5d6251cf22B0C000C2e24C3C6e"
   },
   "sepolia": {
     "chainId": "11155111",

@@ -257,7 +257,9 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
     ) public {
         IClonesAddressStorage clones = IClonesAddressStorage(clonesStorageAddress);
 
-        ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).initialize(msg.sender, dao);
+        if (clones.characterEligibilityAdaptor() != address(0)) {
+            ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).initialize(msg.sender, dao);
+        }
         ClassLevelAdaptor(clones.classLevelAdaptor()).initialize(clonesStorageAddress);
         HatsAdaptor(clones.hatsAdaptor()).initialize(msg.sender, encodedHatsAddresses, encodedHatsStrings);
 
