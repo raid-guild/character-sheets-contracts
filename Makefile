@@ -35,30 +35,32 @@ anvil :; anvil -m 'test test test test test test test test test test test junk'
 # deploy
 deploy :; 
 	@if [ ${force} = "true" ]; then \
-    ./scripts/deploy.sh ${network} ${contract} --force; \
+    ./scripts/deploy.sh ${network} ${contract} --force --verify; \
 	else\
-    ./scripts/deploy.sh ${network} ${contract}; \
+    ./scripts/deploy.sh ${network} ${contract} --verify; \
 	fi
 
 # verify
 verify :; ./scripts/verify.sh ${network} ${contract}
 
+# CONTRACTS = \
+# CharacterAccount \
+# CharacterSheetsImplementation \
+# ExperienceImplementation \
+# ItemsImplementation \
+# ItemsManagerImplementation \
+# ClassesImplementation \
+# MolochV2EligibilityAdaptor \
+# MolochV3EligibilityAdaptor \
+# ClassLevelAdaptor \
+# HatsAdaptor \
+# AdminHatEligibilityModule \
+# GameMasterHatEligibilityModule \
+# PlayerHatEligibilityModule \
+# CharacterHatEligibilityModule \
+# ClonesAddressStorageImplementation \
+
 CONTRACTS = \
-CharacterAccount \
-CharacterSheetsImplementation \
-ExperienceImplementation \
-ItemsImplementation \
-ItemsManagerImplementation \
-ClassesImplementation \
-MolochV2EligibilityAdaptor \
-MolochV3EligibilityAdaptor \
-ClassLevelAdaptor \
-HatsAdaptor \
-AdminHatEligibilityModule \
-GameMasterHatEligibilityModule \
-PlayerHatEligibilityModule \
-CharacterHatEligibilityModule \
-ClonesAddressStorageImplementation \
 ImplementationAddressStorage \
 CharacterSheetsFactory
 

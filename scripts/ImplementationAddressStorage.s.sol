@@ -55,8 +55,8 @@ contract DeployImplementationAddressStorage is BaseDeployer {
         implementationAddressStorage = new ImplementationAddressStorage();
         implementationAddressStorage.initialize(
             _encodeImplementationAddresses(),
-            _encodeAdaptorAddresses(),
             _encodeModuleAddresses(),
+            _encodeAdaptorAddresses(),
             _encodeExternalAddresses()
         );
         vm.stopBroadcast();

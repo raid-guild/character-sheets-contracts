@@ -262,4 +262,44 @@ contract CharacterSheetsFactoryTest is Test, SetUp {
         assertEq(newSheets.metadataURI(), "new_test_metadata_uri_character_sheets/", "wrong sheets metadata uri");
         assertEq(newHatsAdaptor.isAdmin(accounts.admin), true, "admin not admin");
     }
+
+    function testCreateAndInitializeWithZeroDao() public {
+        bytes memory encodedHatsStrings = abi.encode(
+            "new_new_test_hats_base_img",
+            "new_test tophat description",
+            "new_test_admin_uri",
+            "new_test_admin_description",
+            "new_test_game_uri",
+            "new_test_game_description",
+            "new_test_player_uri",
+            "new_test_player_description",
+            "new_test_character_uri",
+            "new_test_character_description"
+        );
+
+        bytes memory encodedSheetsStrings = abi.encode(
+            "new_test_metadata_uri_character_sheets/",
+            "new_test_base_uri_character_sheets/",
+            "new_test_base_uri_items/",
+            "new_test_base_uri_classes/"
+        );
+
+        address[] memory adminArray = createAddressMemoryArray(1);
+        adminArray[0] = accounts.admin;
+
+        address[] memory gameMastersArray = createAddressMemoryArray(1);
+        gameMastersArray[0] = accounts.gameMaster;
+
+        vm.prank(accounts.player2);
+        address newClonesStorage = characterSheetsFactory.createAndInitialize(
+            address(0), adminArray, gameMastersArray, encodedHatsStrings, encodedSheetsStrings
+        );
+        ClonesAddressStorageImplementation newClones = ClonesAddressStorageImplementation(newClonesStorage);
+        CharacterSheetsImplementation newSheets = CharacterSheetsImplementation(newClones.characterSheets());
+        HatsAdaptor newHatsAdaptor = HatsAdaptor(newClones.hatsAdaptor());
+        assert(newClones.hatsAdaptor() != address(0));
+        assertEq(newSheets.baseTokenURI(), "new_test_base_uri_character_sheets/", "wrong sheets uri");
+        assertEq(newSheets.metadataURI(), "new_test_metadata_uri_character_sheets/", "wrong sheets metadata uri");
+        assertEq(newHatsAdaptor.isAdmin(accounts.admin), true, "admin not admin");
+    }
 }
