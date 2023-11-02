@@ -73,67 +73,67 @@ contract SetUp is Test, Accounts, TestStructs {
 
     MultiSend public multisend;
 
-    // function setUp() public {
-    //     vm.startPrank(accounts.admin);
-    //     _deployImplementations();
-    //     _deployHatsContracts();
-    //     _deployErc6551Contracts();
+    function setUp() public {
+        vm.startPrank(accounts.admin);
+        _deployImplementations();
+        _deployHatsContracts();
+        _deployErc6551Contracts();
 
-    //     implementationStorage = new ImplementationAddressStorage();
+        implementationStorage = new ImplementationAddressStorage();
 
-    //     _deployCharacterSheetsFactory();
-    //     _createContracts();
-    //     // set shares token to test dao to experience erc20  cause I'm in a hurry and don't want to make a test erc20
-    //     dao.setSharesToken(address(deployments.experience));
+        _deployCharacterSheetsFactory();
+        _createContracts();
+        // set shares token to test dao to experience erc20  cause I'm in a hurry and don't want to make a test erc20
+        dao.setSharesToken(address(deployments.experience));
 
-    //     _initializeContracts(address(deployments.clones), address(dao));
-    //     _activateContracts(address(deployments.clones));
-    //     vm.stopPrank();
+        _initializeContracts(address(deployments.clones), address(dao));
+        _activateContracts(address(deployments.clones));
+        vm.stopPrank();
 
-    //     vm.startPrank(accounts.gameMaster);
-    //     //create a claimable class
-    //     classData.classIdClaimable = deployments.classes.createClassType(createNewClass(true));
-    //     // create a non claimable class
-    //     classData.classId = deployments.classes.createClassType(createNewClass(false));
-    //     bytes memory expRequirement = createRequiredAsset(Category.ERC20, address(deployments.experience), 0, 100);
-    //     //create a soulbound item
-    //     itemsData.itemIdSoulbound =
-    //         deployments.items.createItemType(createNewItem(false, true, bytes32(keccak256("null")), 0, expRequirement));
-    //     //create claimable Item
-    //     itemsData.itemIdClaimable =
-    //         deployments.items.createItemType(createNewItem(false, true, bytes32(0), 1, expRequirement));
-    //     // create craftable item
-    //     itemsData.itemIdCraftable =
-    //         deployments.items.createItemType(createNewItem(true, false, bytes32(keccak256("null")), 1, expRequirement));
-    //     //create free item
-    //     itemsData.itemIdFree =
-    //         deployments.items.createItemType(createNewItem(true, false, bytes32(0), 1, createEmptyRequiredAssets()));
-    //     //give exp to dao member
-    //     deployments.experience.dropExp(accounts.player1, 100);
-    //     vm.stopPrank();
+        vm.startPrank(accounts.gameMaster);
+        //create a claimable class
+        classData.classIdClaimable = deployments.classes.createClassType(createNewClass(true));
+        // create a non claimable class
+        classData.classId = deployments.classes.createClassType(createNewClass(false));
+        bytes memory expRequirement = createRequiredAsset(Category.ERC20, address(deployments.experience), 0, 100);
+        //create a soulbound item
+        itemsData.itemIdSoulbound =
+            deployments.items.createItemType(createNewItem(false, true, bytes32(keccak256("null")), 0, expRequirement));
+        //create claimable Item
+        itemsData.itemIdClaimable =
+            deployments.items.createItemType(createNewItem(false, true, bytes32(0), 1, expRequirement));
+        // create craftable item
+        itemsData.itemIdCraftable =
+            deployments.items.createItemType(createNewItem(true, false, bytes32(keccak256("null")), 1, expRequirement));
+        //create free item
+        itemsData.itemIdFree =
+            deployments.items.createItemType(createNewItem(true, false, bytes32(0), 1, createEmptyRequiredAssets()));
+        //give exp to dao member
+        deployments.experience.dropExp(accounts.player1, 100);
+        vm.stopPrank();
 
-    //     vm.startPrank(accounts.player1);
-    //     //add player to dao
-    //     dao.addMember(accounts.player1);
-    //     // roll characterSheet for player 1
-    //     sheetsData.characterId1 = deployments.characterSheets.rollCharacterSheet("player1_test_uri");
+        vm.startPrank(accounts.player1);
+        //add player to dao
+        dao.addMember(accounts.player1);
+        // roll characterSheet for player 1
+        sheetsData.characterId1 = deployments.characterSheets.rollCharacterSheet("player1_test_uri");
 
-    //     //store character address
-    //     accounts.character1 =
-    //         deployments.characterSheets.getCharacterSheetByCharacterId(sheetsData.characterId1).accountAddress;
-    //     vm.stopPrank();
+        //store character address
+        accounts.character1 =
+            deployments.characterSheets.getCharacterSheetByCharacterId(sheetsData.characterId1).accountAddress;
+        vm.stopPrank();
 
-    //     vm.startPrank(accounts.player2);
-    //     //add player to dao
-    //     dao.addMember(accounts.player2);
-    //     // roll characterSheet for player 2
-    //     sheetsData.characterId2 = deployments.characterSheets.rollCharacterSheet("player2_test_uri");
+        vm.startPrank(accounts.player2);
+        //add player to dao
+        dao.addMember(accounts.player2);
+        // roll characterSheet for player 2
+        sheetsData.characterId2 = deployments.characterSheets.rollCharacterSheet("player2_test_uri");
 
-    //     //store character address
-    //     accounts.character2 =
-    //         deployments.characterSheets.getCharacterSheetByCharacterId(sheetsData.characterId2).accountAddress;
-    //     vm.stopPrank();
-    // }
+        //store character address
+        accounts.character2 =
+            deployments.characterSheets.getCharacterSheetByCharacterId(sheetsData.characterId2).accountAddress;
+        vm.stopPrank();
+    }
 
     function dropItems(address character, uint256 _itemId, uint256 amount, address itemsContract) public {
         address[] memory characters = new address[](1);
@@ -232,171 +232,171 @@ contract SetUp is Test, Accounts, TestStructs {
         return requiredAssets;
     }
 
-    // function _activateContracts(address clonesAddress) internal {
-    //     ClonesAddressStorageImplementation internalClones = ClonesAddressStorageImplementation(clonesAddress);
+    function _activateContracts(address clonesAddress) internal {
+        ClonesAddressStorageImplementation internalClones = ClonesAddressStorageImplementation(clonesAddress);
 
-    //     deployments.characterSheets = CharacterSheetsImplementation(internalClones.characterSheets());
-    //     deployments.experience = ExperienceImplementation(internalClones.experience());
-    //     deployments.items = ItemsImplementation(internalClones.items());
-    //     deployments.itemsManager = ItemsManagerImplementation(internalClones.itemsManager());
-    //     deployments.classes = ClassesImplementation(internalClones.classes());
-    //     deployments.characterEligibility = ICharacterEligibilityAdaptor(internalClones.characterEligibilityAdaptor());
-    //     deployments.classLevels = ClassLevelAdaptor(internalClones.classLevelAdaptor());
-    //     deployments.hatsAdaptor = HatsAdaptor(internalClones.hatsAdaptor());
+        deployments.characterSheets = CharacterSheetsImplementation(internalClones.characterSheets());
+        deployments.experience = ExperienceImplementation(internalClones.experience());
+        deployments.items = ItemsImplementation(internalClones.items());
+        deployments.itemsManager = ItemsManagerImplementation(internalClones.itemsManager());
+        deployments.classes = ClassesImplementation(internalClones.classes());
+        deployments.characterEligibility = ICharacterEligibilityAdaptor(internalClones.characterEligibilityAdaptor());
+        deployments.classLevels = ClassLevelAdaptor(internalClones.classLevelAdaptor());
+        deployments.hatsAdaptor = HatsAdaptor(internalClones.hatsAdaptor());
 
-    //     vm.label(address(deployments.characterSheets), "Character Sheets Clone");
-    //     vm.label(address(deployments.experience), "Experience Clone");
-    //     vm.label(address(deployments.items), "Items Clone");
-    //     vm.label(address(deployments.itemsManager), "Items Manager Clone");
-    //     vm.label(address(deployments.classes), "Classes Clone");
-    //     vm.label(address(deployments.characterEligibility), "Character Eligibility Adaptor Clone");
-    //     vm.label(address(deployments.classLevels), "Class Levels Adaptor Clone");
-    //     vm.label(address(deployments.hatsAdaptor), "Hats Adaptor Clone");
-    // }
+        vm.label(address(deployments.characterSheets), "Character Sheets Clone");
+        vm.label(address(deployments.experience), "Experience Clone");
+        vm.label(address(deployments.items), "Items Clone");
+        vm.label(address(deployments.itemsManager), "Items Manager Clone");
+        vm.label(address(deployments.classes), "Classes Clone");
+        vm.label(address(deployments.characterEligibility), "Character Eligibility Adaptor Clone");
+        vm.label(address(deployments.classLevels), "Class Levels Adaptor Clone");
+        vm.label(address(deployments.hatsAdaptor), "Hats Adaptor Clone");
+    }
 
-    // function _deployImplementations() internal {
-    //     dao = new Moloch();
-    //     merkle = new Merkle();
+    function _deployImplementations() internal {
+        dao = new Moloch();
+        merkle = new Merkle();
 
-    //     implementations.characterSheets = new CharacterSheetsImplementation();
-    //     implementations.items = new ItemsImplementation();
-    //     implementations.itemsManager = new ItemsManagerImplementation();
-    //     implementations.experience = new ExperienceImplementation();
-    //     implementations.classes = new ClassesImplementation();
-    //     implementations.clonesAddressStorage = new ClonesAddressStorageImplementation();
+        implementations.characterSheets = new CharacterSheetsImplementation();
+        implementations.items = new ItemsImplementation();
+        implementations.itemsManager = new ItemsManagerImplementation();
+        implementations.experience = new ExperienceImplementation();
+        implementations.classes = new ClassesImplementation();
+        implementations.clonesAddressStorage = new ClonesAddressStorageImplementation();
 
-    //     implementations.characterEligibilityAdaptorV2 = new CharacterEligibilityAdaptorV2();
-    //     implementations.characterEligibilityAdaptorV3 = new CharacterEligibilityAdaptorV3();
-    //     implementations.classLevelAdaptor = new ClassLevelAdaptor();
-    //     implementations.hatsAdaptor = new HatsAdaptor();
-    //     implementations.adminModule = new AdminHatEligibilityModule("v 0.1");
-    //     implementations.dmModule = new GameMasterHatEligibilityModule("v 0.1");
-    //     implementations.playerModule = new PlayerHatEligibilityModule("v 0.1");
-    //     implementations.characterModule = new CharacterHatEligibilityModule("v 0.1");
+        implementations.characterEligibilityAdaptorV2 = new CharacterEligibilityAdaptorV2();
+        implementations.characterEligibilityAdaptorV3 = new CharacterEligibilityAdaptorV3();
+        implementations.classLevelAdaptor = new ClassLevelAdaptor();
+        implementations.hatsAdaptor = new HatsAdaptor();
+        implementations.adminModule = new AdminHatEligibilityModule("v 0.1");
+        implementations.dmModule = new GameMasterHatEligibilityModule("v 0.1");
+        implementations.playerModule = new PlayerHatEligibilityModule("v 0.1");
+        implementations.characterModule = new CharacterHatEligibilityModule("v 0.1");
 
-    //     vm.label(address(dao), "Moloch Implementation");
-    //     vm.label(address(merkle), "Merkle Implementation");
-    //     vm.label(address(implementations.characterSheets), "Character Sheets Implementation");
-    //     vm.label(address(implementations.items), "Items Implementation");
-    //     vm.label(address(implementations.itemsManager), "Items Manager Implementation");
-    //     vm.label(address(implementations.experience), "Experience Implementation");
-    //     vm.label(address(implementations.classes), "Classes Implementation");
-    //     vm.label(address(implementations.clonesAddressStorage), "Clones Address Storage Implementation");
-    //     vm.label(
-    //         address(implementations.characterEligibilityAdaptorV2), "Character Eligibility adaptor V2 Implementation"
-    //     );
-    //     vm.label(
-    //         address(implementations.characterEligibilityAdaptorV3), "Character Eligibility adaptor V3 Implementation"
-    //     );
-    //     vm.label(address(implementations.classLevelAdaptor), "Class Level adaptor Implementation");
-    //     vm.label(address(implementations.hatsAdaptor), "Hats adaptor Implementation");
-    //     vm.label(address(implementations.adminModule), "Admin Hats Eligibility adaptor Implementation");
-    //     vm.label(address(implementations.dmModule), "Game Master Hats Eligibility adaptor Implementation");
-    //     vm.label(address(implementations.playerModule), "Player Hats Eligibility adaptor Implementation");
-    //     vm.label(address(implementations.characterModule), "Character Hats Eligibility adaptor Implementation");
-    // }
+        vm.label(address(dao), "Moloch Implementation");
+        vm.label(address(merkle), "Merkle Implementation");
+        vm.label(address(implementations.characterSheets), "Character Sheets Implementation");
+        vm.label(address(implementations.items), "Items Implementation");
+        vm.label(address(implementations.itemsManager), "Items Manager Implementation");
+        vm.label(address(implementations.experience), "Experience Implementation");
+        vm.label(address(implementations.classes), "Classes Implementation");
+        vm.label(address(implementations.clonesAddressStorage), "Clones Address Storage Implementation");
+        vm.label(
+            address(implementations.characterEligibilityAdaptorV2), "Character Eligibility adaptor V2 Implementation"
+        );
+        vm.label(
+            address(implementations.characterEligibilityAdaptorV3), "Character Eligibility adaptor V3 Implementation"
+        );
+        vm.label(address(implementations.classLevelAdaptor), "Class Level adaptor Implementation");
+        vm.label(address(implementations.hatsAdaptor), "Hats adaptor Implementation");
+        vm.label(address(implementations.adminModule), "Admin Hats Eligibility adaptor Implementation");
+        vm.label(address(implementations.dmModule), "Game Master Hats Eligibility adaptor Implementation");
+        vm.label(address(implementations.playerModule), "Player Hats Eligibility adaptor Implementation");
+        vm.label(address(implementations.characterModule), "Character Hats Eligibility adaptor Implementation");
+    }
 
-    // function _deployHatsContracts() internal {
-    //     hatsContracts.hats = new Hats("Test Hats", "test_hats_base_img_uri");
-    //     hatsContracts.hatsModuleFactory = new HatsModuleFactory(hatsContracts.hats, "test hats factory");
+    function _deployHatsContracts() internal {
+        hatsContracts.hats = new Hats("Test Hats", "test_hats_base_img_uri");
+        hatsContracts.hatsModuleFactory = new HatsModuleFactory(hatsContracts.hats, "test hats factory");
 
-    //     vm.label(address(hatsContracts.hats), "Hats Contract");
-    //     vm.label(address(hatsContracts.hatsModuleFactory), "Hats Module Factory");
-    // }
+        vm.label(address(hatsContracts.hats), "Hats Contract");
+        vm.label(address(hatsContracts.hatsModuleFactory), "Hats Module Factory");
+    }
 
-    // function _deployErc6551Contracts() internal {
-    //     erc6551Contracts.erc6551Registry = new ERC6551Registry();
-    //     erc6551Contracts.erc6551Implementation = new CharacterAccount();
+    function _deployErc6551Contracts() internal {
+        erc6551Contracts.erc6551Registry = new ERC6551Registry();
+        erc6551Contracts.erc6551Implementation = new CharacterAccount();
 
-    //     vm.label(address(erc6551Contracts.erc6551Registry), "ERC6551 Registry");
-    //     vm.label(address(erc6551Contracts.erc6551Implementation), "ERC6551 Character Account Implementation");
-    // }
+        vm.label(address(erc6551Contracts.erc6551Registry), "ERC6551 Registry");
+        vm.label(address(erc6551Contracts.erc6551Implementation), "ERC6551 Character Account Implementation");
+    }
 
-    // function _deployCharacterSheetsFactory() internal {
-    //     characterSheetsFactory = new CharacterSheetsFactory();
-    //     implementationStorage = new ImplementationAddressStorage();
-    //     multisend = new MultiSend();
+    function _deployCharacterSheetsFactory() internal {
+        characterSheetsFactory = new CharacterSheetsFactory();
+        implementationStorage = new ImplementationAddressStorage();
+        multisend = new MultiSend();
 
-    //     vm.label(address(characterSheetsFactory), "Character Sheets Factory");
-    //     vm.label(address(implementationStorage), "Implementation Address Storage");
-    //     vm.label(address(multisend), "MultiSend");
-    //     EncodedAddresses memory encodedAddresses;
+        vm.label(address(characterSheetsFactory), "Character Sheets Factory");
+        vm.label(address(implementationStorage), "Implementation Address Storage");
+        vm.label(address(multisend), "MultiSend");
+        EncodedAddresses memory encodedAddresses;
 
-    //     encodedAddresses.encodedImplementationAddresses = abi.encode(
-    //         implementations.characterSheets,
-    //         implementations.items,
-    //         implementations.classes,
-    //         implementations.experience,
-    //         implementations.clonesAddressStorage,
-    //         implementations.itemsManager,
-    //         address(erc6551Contracts.erc6551Implementation)
-    //     );
+        encodedAddresses.encodedImplementationAddresses = abi.encode(
+            implementations.characterSheets,
+            implementations.items,
+            implementations.classes,
+            implementations.experience,
+            implementations.clonesAddressStorage,
+            implementations.itemsManager,
+            address(erc6551Contracts.erc6551Implementation)
+        );
 
-    //     encodedAddresses.encodedModuleAddresses = abi.encode(
-    //         implementations.adminModule,
-    //         implementations.dmModule,
-    //         implementations.playerModule,
-    //         implementations.characterModule
-    //     );
+        encodedAddresses.encodedModuleAddresses = abi.encode(
+            implementations.adminModule,
+            implementations.dmModule,
+            implementations.playerModule,
+            implementations.characterModule
+        );
 
-    //     encodedAddresses.encodedAdaptorAddresses = abi.encode(
-    //         implementations.hatsAdaptor,
-    //         implementations.characterEligibilityAdaptorV2,
-    //         implementations.characterEligibilityAdaptorV3,
-    //         implementations.classLevelAdaptor
-    //     );
+        encodedAddresses.encodedAdaptorAddresses = abi.encode(
+            implementations.hatsAdaptor,
+            implementations.characterEligibilityAdaptorV2,
+            implementations.characterEligibilityAdaptorV3,
+            implementations.classLevelAdaptor
+        );
 
-    //     encodedAddresses.encodedExternalAddresses = abi.encode(
-    //         address(erc6551Contracts.erc6551Registry),
-    //         address(hatsContracts.hats),
-    //         address(hatsContracts.hatsModuleFactory)
-    //     );
+        encodedAddresses.encodedExternalAddresses = abi.encode(
+            address(erc6551Contracts.erc6551Registry),
+            address(hatsContracts.hats),
+            address(hatsContracts.hatsModuleFactory)
+        );
 
-    //     implementationStorage.initialize(
-    //         encodedAddresses.encodedImplementationAddresses,
-    //         encodedAddresses.encodedModuleAddresses,
-    //         encodedAddresses.encodedAdaptorAddresses,
-    //         encodedAddresses.encodedExternalAddresses
-    //     );
-    //     characterSheetsFactory.initialize(address(implementationStorage));
-    // }
+        implementationStorage.initialize(
+            encodedAddresses.encodedImplementationAddresses,
+            encodedAddresses.encodedModuleAddresses,
+            encodedAddresses.encodedAdaptorAddresses,
+            encodedAddresses.encodedExternalAddresses
+        );
+        characterSheetsFactory.initialize(address(implementationStorage));
+    }
 
-    // function _createContracts() internal {
-    //     deployments.clones = ClonesAddressStorageImplementation(characterSheetsFactory.create(address(dao)));
-    // }
+    function _createContracts() internal {
+        deployments.clones = ClonesAddressStorageImplementation(characterSheetsFactory.create(address(dao)));
+    }
 
-    // function _initializeContracts(address clonesStorageAddress, address _dao) internal {
-    //     address[] memory adminArray = createAddressMemoryArray(1);
-    //     adminArray[0] = accounts.admin;
+    function _initializeContracts(address clonesStorageAddress, address _dao) internal {
+        address[] memory adminArray = createAddressMemoryArray(1);
+        adminArray[0] = accounts.admin;
 
-    //     address[] memory gameMastersArray = createAddressMemoryArray(1);
-    //     gameMastersArray[0] = accounts.gameMaster;
+        address[] memory gameMastersArray = createAddressMemoryArray(1);
+        gameMastersArray[0] = accounts.gameMaster;
 
-    //     bytes memory encodedHatsAddresses =
-    //         abi.encode(adminArray, gameMastersArray, address(implementationStorage), address(deployments.clones));
+        bytes memory encodedHatsAddresses =
+            abi.encode(adminArray, gameMastersArray, address(implementationStorage), address(deployments.clones));
 
-    //     bytes memory encodedHatsStrings = abi.encode(
-    //         "test_hats_base_img",
-    //         "test tophat description",
-    //         "test_admin_uri",
-    //         "test_admin_description",
-    //         "test_game_uri",
-    //         "test_game_description",
-    //         "test_player_uri",
-    //         "test_player_description",
-    //         "test_character_uri",
-    //         "test_character_description"
-    //     );
+        bytes memory encodedHatsStrings = abi.encode(
+            "test_hats_base_img",
+            "test tophat description",
+            "test_admin_uri",
+            "test_admin_description",
+            "test_game_uri",
+            "test_game_description",
+            "test_player_uri",
+            "test_player_description",
+            "test_character_uri",
+            "test_character_description"
+        );
 
-    //     bytes memory baseUriData = abi.encode(
-    //         "test_metadata_uri_character_sheets/",
-    //         "test_base_uri_character_sheets/",
-    //         "test_base_uri_items/",
-    //         "test_base_uri_classes/"
-    //     );
+        bytes memory baseUriData = abi.encode(
+            "test_metadata_uri_character_sheets/",
+            "test_base_uri_character_sheets/",
+            "test_base_uri_items/",
+            "test_base_uri_classes/"
+        );
 
-    //     characterSheetsFactory.initializeContracts(
-    //         clonesStorageAddress, _dao, encodedHatsAddresses, encodedHatsStrings, baseUriData
-    //     );
-    // }
+        characterSheetsFactory.initializeContracts(
+            clonesStorageAddress, _dao, encodedHatsAddresses, encodedHatsStrings, baseUriData
+        );
+    }
 }
