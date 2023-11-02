@@ -120,9 +120,9 @@ contract CharacterSheetsFactoryTest is Test, SetUp {
 
         newContracts.clones = ClonesAddressStorageImplementation(characterSheetsFactory.createClonesStorage());
 
-        newContracts.characterEligibility = ICharacterEligibilityAdaptor(
+        newContracts.characterEligibility = CharacterEligibilityAdaptor(
             characterSheetsFactory.createCharacterEligibilityAdaptor(
-                address(implementations.characterEligibilityAdaptorV2)
+                address(implementations.characterEligibilityAdaptor)
             )
         );
 
