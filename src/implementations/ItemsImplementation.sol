@@ -53,6 +53,7 @@ contract ItemsImplementation is
     IItemsManager public itemsManager;
 
     event NewItemTypeCreated(uint256 itemId);
+    event BaseURIUpdated(string newUri);
     event ItemTransfered(address character, uint256 itemId, uint256 amount);
     event ItemClaimableUpdated(uint256 itemId, bytes32 merkleRoot, uint256 newDistribution);
     event ItemDeleted(uint256 itemId);
@@ -244,7 +245,7 @@ contract ItemsImplementation is
      */
     function setBaseURI(string memory _baseUri) external onlyGameMaster {
         _baseURI = _baseUri;
-        // TODO: add event
+        emit BaseURIUpdated(_baseUri);
     }
 
     /**

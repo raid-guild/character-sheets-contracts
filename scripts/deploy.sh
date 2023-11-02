@@ -120,6 +120,7 @@ API_KEY=$ETHERSCAN_API_KEY
 
 if [[ $NETWORK == "gnosis" ]]; then
     API_KEY=$GNOSISSCAN_API_KEY
+    export VERIFIER_URL="https://api.gnosisscan.io/api/"
 fi
 
 
