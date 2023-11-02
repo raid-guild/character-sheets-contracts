@@ -47,7 +47,8 @@ import {PlayerHatEligibilityModule} from "../../src/adaptors/hats-modules/Player
 import {CharacterHatEligibilityModule} from "../../src/adaptors/hats-modules/CharacterHatEligibilityModule.sol";
 
 //test and mocks
-import {IMolochDAO} from "../../src/interfaces/IMolochDAO.sol";
+import {IMolochDAOV2} from "../../src/interfaces/IMolochDAOV2.sol";
+import {IMolochDAOV3} from "../../src/interfaces/IMolochDAOV3.sol";
 import {Moloch} from "../../src/mocks/MockMoloch.sol";
 
 import {Merkle} from "murky/src/Merkle.sol";

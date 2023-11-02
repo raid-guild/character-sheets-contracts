@@ -47,7 +47,7 @@ contract CharacterEligibilityAdaptor is
             revert Errors.NotInitialized();
         }
 
-        IMolochDAO.Member memory newMember = IMolochDAO(dao).members(account);
+        IMolochDAOV2.Member memory newMember = IMolochDAOV2(dao).members(account);
         return (newMember.shares >= 100 && newMember.jailed == 0);
     }
 
