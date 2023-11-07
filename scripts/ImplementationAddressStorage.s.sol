@@ -27,10 +27,9 @@ struct HatsAddresses {
     address hatsContract;
     address hatsModuleFactory;
     //eligibility modules
-    address adminHatsEligibilityModule;
-    address gameMasterHatsEligibilityModule;
-    address playerHatsEligibilityModule;
-    address characterHatsEligibilityModule;
+    address addressHatsEligibilityModule;
+    address erc721HatsEligibilityModule;
+    address erc6551HatsEligitbilityModule;
     address erc6551Registry;
 }
 
@@ -49,10 +48,10 @@ struct HatsAddresses {
  *
  *     function _initAdaptorsAndModules(bytes calldata encodedAdaptorsAndModuleAddresses) internal {
  *         (
- *             _implementationsAddresses.adminHatsEligibilityModule,
+ *             _implementationsAddresses.addressHatsEligibilityModule,
  *             _implementationsAddresses.gameMasterHatsEligibilityModule,
- *             _implementationsAddresses.playerHatsEligibilityModule,
- *             _implementationsAddresses.characterHatsEligibilityModule,
+ *             _implementationsAddresses.erc721HatsEligibilityModule,
+ *             _implementationsAddresses.erc6551HatsEligitbilityModule,
  *             _implementationsAddresses.hatsAdaptorImplementation,
  *             _implementationsAddresses.characterEligibilityAdaptorImplementation,
  *             _implementationsAddresses.classLevelAdaptorImplementation
@@ -119,14 +118,12 @@ contract DeployImplementationAddressStorage is BaseDeployer {
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterEligibilityAdaptorV2")));
         implementationAddresses.characterEligibilityAdaptorV3Implementation =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterEligibilityAdaptorV3")));
-        hatsAddresses.adminHatsEligibilityModule =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".AdminHatEligibilityModule")));
-        hatsAddresses.gameMasterHatsEligibilityModule =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".GameMasterHatEligibilityModule")));
-        hatsAddresses.playerHatsEligibilityModule =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".PlayerHatEligibilityModule")));
-        hatsAddresses.characterHatsEligibilityModule =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterHatEligibilityModule")));
+        hatsAddresses.addressHatsEligibilityModule =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".AddressHatsEligibilityModule")));
+        hatsAddresses.erc721HatsEligibilityModule =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".ERC721HatsEligibilityModule")));
+        hatsAddresses.erc6551HatsEligitbilityModule =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".ERC6511HatsEligibilityModule")));
     }
 
     function _loadExternalAddresses(string memory json, string memory targetEnv) internal {
@@ -168,9 +165,8 @@ contract DeployImplementationAddressStorage is BaseDeployer {
 
     function _encodeModuleAddresses() internal view returns (bytes memory) {
         bytes memory encodedModuleAddresses = abi.encode(
-            hatsAddresses.adminHatsEligibilityModule,
-            hatsAddresses.gameMasterHatsEligibilityModule,
-            hatsAddresses.playerHatsEligibilityModule,
+            hatsAddresses.addressHatsEligibilityModule,
+            hatsAddresses.erc721HatsEligibilityModule,
             hatsAddresses.characterHatsEligibilityModule
         );
 

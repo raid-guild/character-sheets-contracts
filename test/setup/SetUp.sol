@@ -43,10 +43,9 @@ import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
 import {Hats} from "hats-protocol/Hats.sol";
 
 // hats eligibility modules
-import {AdminHatEligibilityModule} from "../../src/adaptors/hats-modules/AdminHatEligibilityModule.sol";
-import {GameMasterHatEligibilityModule} from "../../src/adaptors/hats-modules/GameMasterHatEligibilityModule.sol";
-import {PlayerHatEligibilityModule} from "../../src/adaptors/hats-modules/PlayerHatEligibilityModule.sol";
-import {CharacterHatEligibilityModule} from "../../src/adaptors/hats-modules/CharacterHatEligibilityModule.sol";
+import {AddressHatsEligibilityModule} from "../../src/mocks/AddressHatsEligibilityModule.sol";
+import {ERC721HatsEligibilityModule} from "../../src/mocks/ERC721HatsEligibilityModule.sol";
+import {ERC6551HatsEligibilityModule} from "../../src/adaptors/hats-modules/ERC6551HatsEligibilityModule.sol";
 
 //test and mocks
 import {IMolochDAOV2} from "../../src/interfaces/IMolochDAOV2.sol";
@@ -272,10 +271,9 @@ contract SetUp is Test, Accounts, TestStructs {
         adaptors.characterEligibilityAdaptorV3 = new CharacterEligibilityAdaptorV3();
         adaptors.classLevelAdaptor = new ClassLevelAdaptor();
         adaptors.hatsAdaptor = new HatsAdaptor();
-        implementations.adminModule = new AdminHatEligibilityModule("v 0.1");
-        implementations.dmModule = new GameMasterHatEligibilityModule("v 0.1");
-        implementations.playerModule = new PlayerHatEligibilityModule("v 0.1");
-        implementations.characterModule = new CharacterHatEligibilityModule("v 0.1");
+        implementations.addressModule = new AddressHatsEligibilityModule("v 0.1");
+        implementations.erc721Module = new ERC721HatsEligibilityModule("v 0.1");
+        implementations.erc6551Module = new ERC6551HatsEligibilityModule("v 0.1");
 
         vm.label(address(dao), "Moloch Implementation");
         vm.label(address(merkle), "Merkle Implementation");
@@ -288,10 +286,9 @@ contract SetUp is Test, Accounts, TestStructs {
         vm.label(address(adaptors.characterEligibilityAdaptorV2), "Character Eligibility adaptor V2 Implementation");
         vm.label(address(adaptors.classLevelAdaptor), "Class Level adaptor Implementation");
         vm.label(address(adaptors.hatsAdaptor), "Hats adaptor Implementation");
-        vm.label(address(implementations.adminModule), "Admin Hats Eligibility adaptor Implementation");
-        vm.label(address(implementations.dmModule), "Game Master Hats Eligibility adaptor Implementation");
-        vm.label(address(implementations.playerModule), "Player Hats Eligibility adaptor Implementation");
-        vm.label(address(implementations.characterModule), "Character Hats Eligibility adaptor Implementation");
+        vm.label(address(implementations.addressModule), "Admin Hats Eligibility adaptor Implementation");
+        vm.label(address(implementations.erc721Module), "Player Hats Eligibility adaptor Implementation");
+        vm.label(address(implementations.erc6551Module), "Character Hats Eligibility adaptor Implementation");
     }
 
     function _deployHatsContracts() internal {
@@ -330,10 +327,9 @@ contract SetUp is Test, Accounts, TestStructs {
         );
 
         bytes memory encodedModuleAddresses = abi.encode(
-            address(implementations.adminModule),
-            address(implementations.dmModule),
-            address(implementations.playerModule),
-            address(implementations.characterModule)
+            address(implementations.addressModule),
+            address(implementations.erc721Module),
+            address(implementations.erc6551Module)
         );
 
         bytes memory encodedAdaptorAddresses = abi.encode(
