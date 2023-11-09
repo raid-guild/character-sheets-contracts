@@ -31,10 +31,6 @@
     "MolochV3EligibilityAdaptor": "0x620646b1E1b27b56afDaf87eE13CA727F4E87cC8",
     "ClassLevelAdaptor": "0x8aBcdc5B54f8F85eAB5eE21EF4123a78dEd24E6a",
     "HatsAdaptor": "0xBe7A3fcE59A44F9a025352F2e0f6e7a97e4b83a9",
-    "AdminHatEligibilityModule": "0x802dD2a5B6E5484F08D1730aF14432502f27938f",
-    "GameMasterHatEligibilityModule": "0xACaA422e8bc5a1d7810F5A3923564885B4614c1d",
-    "PlayerHatEligibilityModule": "0xe44680218B2f68a03Df29583B48cA2179044b300",
-    "CharacterHatEligibilityModule": "0xEeDb1BeB64dBc0f8B7FF9f967A4687e30b57b977",
     "ClonesAddressStorageImplementation": "0x20C270dD8F5F8A341AA90fB8Eb0B3bc44237cc29",
     "ImplementationAddressStorage": "0xB554A4Cc89047419cf8Eb6230d6fea6Fd37C6c42",
     "CharacterSheetsFactory": "0x734f6333ADbE88064a5fFdEbb487f59063Ba4068"
@@ -104,11 +100,11 @@
     "ClassLevelAdaptor": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
     "HatsAdaptor": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
     "AdminHatEligibilityModule": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
-    "GameMasterHatEligibilityModule": "0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0",
-    "PlayerHatEligibilityModule": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
-    "CharacterHatEligibilityModule": "0x9A676e781A523b5d0C0e43731313A708CB607508",
     "ClonesAddressStorageImplementation": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
     "ImplementationAddressStorage": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
-    "CharacterSheetsFactory": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed"
+    "CharacterSheetsFactory": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
+    "AddressHatsEligibilityModule": "0x9AaF0df5657b634131784523F4F5e83459c61986",
+    "ERC721HatsEligibilityModule": "0x6bAa65D3E024D8ebA717085691dd8A985e9F267E",
+    "ERC6551HatsEligibilityModule": ""
   }
 }
