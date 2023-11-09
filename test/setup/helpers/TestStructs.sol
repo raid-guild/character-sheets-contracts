@@ -38,9 +38,6 @@ import {AddressHatsEligibilityModule} from "../../../src/mocks/AddressHatsEligib
 import {ERC721HatsEligibilityModule} from "../../../src/mocks/ERC721HatsEligibilityModule.sol";
 import {ERC6551HatsEligibilityModule} from "../../../src/adaptors/hats-modules/ERC6551HatsEligibilityModule.sol";
 
-//test and mocks
-import {Moloch} from "../../../src/mocks/MockMoloch.sol";
-
 import "murky/src/Merkle.sol";
 
 interface TestStructs {
@@ -101,8 +98,8 @@ interface TestStructs {
     }
 
     struct Adaptors {
-        ICharacterEligibilityAdaptor characterEligibilityAdaptorV2;
-        ICharacterEligibilityAdaptor characterEligibilityAdaptorV3;
+        ICharacterEligibilityAdaptor molochV2EligibilityAdaptor;
+        ICharacterEligibilityAdaptor molochV3EligibilityAdaptor;
         ClassLevelAdaptor classLevelAdaptor;
         HatsAdaptor hatsAdaptor;
     }

@@ -15,9 +15,9 @@ cat << "EOF"
                                                                                           
 EOF
 
-if [[ $1 == "" || $2 == "" || ( $3 != "--verify"   && $3 != "--force"  && $3 != "" ) || ($4 != "--verify" && $4 != "--force" && $4 != "") ]]; then
+if [[ $1 == "" || $2 == "" || ($3 != "--verify" && $3 != "--force" && $3 != "") || ($4 != "--verify" && $4 != "--force" && $4 != "") ]]; then
     echo "Usage:"
-    echo "  deploy.sh [target environment] [contractName] --verify-only [constructor-args]"
+    echo "  deploy.sh [target environment] [contractName]"
     echo "    where target environment (required): mainnet / testnet"
     echo "    where contractName (required): contract name you want to deploy"
     echo "    --verify: if you want to verify the deployed source code"
@@ -60,11 +60,11 @@ if [[ $1 == "anvil" ]]; then
 fi
 
 CALLDATA=$(cast calldata "run(string)" $1)
-PRIVATE_KEY=$PRIVATE_KEY forge script scripts/$2.s.sol:Deploy$2 -s $CALLDATA --rpc-url $NETWORK
 
 CONFIRMATION="n"
 
 if [[ $FORCE == false ]]; then
+    PRIVATE_KEY=$PRIVATE_KEY forge script scripts/$2.s.sol:Deploy$2 -s $CALLDATA --rpc-url $NETWORK
     read -p "Please verify the data and confirm the deployment (y/n):" CONFIRMATION
 fi
 
@@ -88,7 +88,7 @@ if [[ $3 == "--verify" || $4 == "--verify" ]]; then
     VERIFY=true
 fi
 
-if [[ $VERIFY == false ]]; then
+if [[ $VERIFY == false || $NETWORK == "anvil" ]]; then
     echo "Skipping verification"
     exit 0
 fi
@@ -116,15 +116,23 @@ done
 
 echo ""
 
+API_KEY=$ETHERSCAN_API_KEY
+
+if [[ $NETWORK == "gnosis" ]]; then
+    API_KEY=$GNOSISSCAN_API_KEY
+    export VERIFIER_URL="https://api.gnosisscan.io/api/"
+fi
+
+
 if [[ $2 == *"Implementation" ]]; then
-    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $ETHERSCAN_API_KEY --num-of-optimizations 20000 $DEPLOYED_ADDRESS src/implementations/$2.sol:$2 
+    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $API_KEY --num-of-optimizations 20000 $DEPLOYED_ADDRESS src/implementations/$2.sol:$2 
 elif [[ $2 == *"Adaptor" ]]; then
-    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $ETHERSCAN_API_KEY --num-of-optimizations 20000 $DEPLOYED_ADDRESS src/adaptors/$2.sol:$2 
+    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $API_KEY --num-of-optimizations 20000 $DEPLOYED_ADDRESS src/adaptors/$2.sol:$2 
 elif [[ $2 == *"EligibilityModule" ]]; then
     CONSTRUCTOR_ARGS="0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000b76657273696f6e20302e31000000000000000000000000000000000000000000"
-    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $ETHERSCAN_API_KEY --num-of-optimizations 20000 --constructor-args $CONSTRUCTOR_ARGS $DEPLOYED_ADDRESS src/adaptors/hats-modules/$2.sol:$2 
+    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $API_KEY --num-of-optimizations 20000 --constructor-args $CONSTRUCTOR_ARGS $DEPLOYED_ADDRESS src/adaptors/hats-modules/$2.sol:$2 
 else
-    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $ETHERSCAN_API_KEY  --num-of-optimizations 20000 $DEPLOYED_ADDRESS src/$2.sol:$2
+    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $API_KEY  --num-of-optimizations 20000 $DEPLOYED_ADDRESS src/$2.sol:$2
 fi
 
 echo "end verification"

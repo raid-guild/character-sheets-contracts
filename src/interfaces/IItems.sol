@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {Item, Asset} from "../lib/Structs.sol";
+import {Item} from "../lib/Structs.sol";
+import {Asset} from "../lib/MultiToken.sol";
 
 interface IItems {
     function dropLoot(address[] calldata characterAccounts, uint256[][] calldata itemIds, uint256[][] calldata amounts)

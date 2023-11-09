@@ -21,7 +21,6 @@ if [[ $1 == "" || $2 == "" ]]
         echo "  verify.sh [target environment] [contractName]"
         echo "    where target environment (required): gnosis / sepolia"
         echo "    where contractName (required): contract name you want to verify the action from"
-        echo "    where actionName (required): action name you want to verify"
         echo ""
         echo "Example:"
         echo "  verify.sh sepolia CharacterSheetsFactory"
@@ -66,15 +65,22 @@ then
     exit 1
 fi
 
+API_KEY=$ETHERSCAN_API_KEY
+
+if [[ $NETWORK == "gnosis" ]]; then
+    API_KEY=$GNOSISSCAN_API_KEY
+    export VERIFIER_URL="https://api.gnosisscan.io/api/"
+fi
+
 if [[ $2 == *"Implementation" ]]; then
-    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $ETHERSCAN_API_KEY --num-of-optimizations 20000 $SAVED_ADDRESS src/implementations/$2.sol:$2 
+    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $API_KEY --num-of-optimizations 20000 $SAVED_ADDRESS src/implementations/$2.sol:$2 
 elif [[ $2 == *"Adaptor" ]]; then
-    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $ETHERSCAN_API_KEY --num-of-optimizations 20000 $SAVED_ADDRESS src/adaptors/$2.sol:$2 
+    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $API_KEY --num-of-optimizations 20000 $SAVED_ADDRESS src/adaptors/$2.sol:$2 
 elif [[ $2 == *"EligibilityModule" ]]; then
     CONSTRUCTOR_ARGS="0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000b76657273696f6e20302e31000000000000000000000000000000000000000000"
-    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $ETHERSCAN_API_KEY --num-of-optimizations 20000 --constructor-args $CONSTRUCTOR_ARGS $SAVED_ADDRESS src/adaptors/hats-modules/$2.sol:$2 
+    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $API_KEY --num-of-optimizations 20000 --constructor-args $CONSTRUCTOR_ARGS $SAVED_ADDRESS src/adaptors/hats-modules/$2.sol:$2 
 else
-    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $ETHERSCAN_API_KEY  --num-of-optimizations 20000 $SAVED_ADDRESS src/$2.sol:$2
+    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $API_KEY  --num-of-optimizations 20000 $SAVED_ADDRESS src/$2.sol:$2
 fi
 
 echo "end verification"

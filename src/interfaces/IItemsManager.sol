@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {Asset, Item} from "../lib/Structs.sol";
+import {Item} from "../lib/Structs.sol";
+import {Asset} from "../lib/MultiToken.sol";
 
 interface IItemsManager {
     function craftItem(Item memory item, uint256 itemId, uint256 amount, address caller)

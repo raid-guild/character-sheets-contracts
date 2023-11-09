@@ -24,8 +24,8 @@ import {ImplementationAddressStorage} from "../../src/ImplementationAddressStora
 import {ClonesAddressStorageImplementation} from "../../src/implementations/ClonesAddressStorageImplementation.sol";
 
 //adaptors
-import {CharacterEligibilityAdaptorV2} from "../../src/adaptors/CharacterEligibilityAdaptorV2.sol";
-import {CharacterEligibilityAdaptorV3} from "../../src/adaptors/CharacterEligibilityAdaptorV3.sol";
+import {MolochV2EligibilityAdaptor} from "../../src/adaptors/MolochV2EligibilityAdaptor.sol";
+import {MolochV3EligibilityAdaptor} from "../../src/adaptors/MolochV3EligibilityAdaptor.sol";
 import {ICharacterEligibilityAdaptor} from "../../src/interfaces/ICharacterEligibilityAdaptor.sol";
 import {ClassLevelAdaptor} from "../../src/adaptors/ClassLevelAdaptor.sol";
 import {HatsAdaptor} from "../../src/adaptors/HatsAdaptor.sol";
@@ -49,7 +49,7 @@ import {ERC6551HatsEligibilityModule} from "../../src/adaptors/hats-modules/ERC6
 
 //test and mocks
 import {IMolochDAOV2} from "../../src/interfaces/IMolochDAOV2.sol";
-import {Moloch} from "../../src/mocks/MockMoloch.sol";
+import {MockMolochV2} from "../../src/mocks/MockMoloch.sol";
 import {MockSharesToken} from "../../src/mocks/MockSharesToken.sol";
 
 import {Merkle} from "murky/src/Merkle.sol";
@@ -68,7 +68,7 @@ contract SetUp is Test, Accounts, TestStructs {
     SheetsData public sheetsData;
     ItemsData public itemsData;
 
-    Moloch public dao;
+    MockMolochV2 public dao;
     Merkle public merkle;
     MockSharesToken public mockShares;
 
@@ -257,7 +257,7 @@ contract SetUp is Test, Accounts, TestStructs {
     }
 
     function _deployImplementations() internal {
-        dao = new Moloch();
+        dao = new MockMolochV2();
         merkle = new Merkle();
 
         implementations.characterSheets = new CharacterSheetsImplementation();
@@ -267,8 +267,8 @@ contract SetUp is Test, Accounts, TestStructs {
         implementations.classes = new ClassesImplementation();
         implementations.clonesAddressStorage = new ClonesAddressStorageImplementation();
 
-        adaptors.characterEligibilityAdaptorV2 = new CharacterEligibilityAdaptorV2();
-        adaptors.characterEligibilityAdaptorV3 = new CharacterEligibilityAdaptorV3();
+        adaptors.molochV2EligibilityAdaptor = new MolochV2EligibilityAdaptor();
+        adaptors.molochV3EligibilityAdaptor = new MolochV3EligibilityAdaptor();
         adaptors.classLevelAdaptor = new ClassLevelAdaptor();
         adaptors.hatsAdaptor = new HatsAdaptor();
         implementations.addressModule = new AddressHatsEligibilityModule("v 0.1");
@@ -283,7 +283,7 @@ contract SetUp is Test, Accounts, TestStructs {
         vm.label(address(implementations.experience), "Experience Implementation");
         vm.label(address(implementations.classes), "Classes Implementation");
         vm.label(address(implementations.clonesAddressStorage), "Clones Address Storage Implementation");
-        vm.label(address(adaptors.characterEligibilityAdaptorV2), "Character Eligibility adaptor V2 Implementation");
+        vm.label(address(adaptors.molochV2EligibilityAdaptor), "Character Eligibility adaptor V2 Implementation");
         vm.label(address(adaptors.classLevelAdaptor), "Class Level adaptor Implementation");
         vm.label(address(adaptors.hatsAdaptor), "Hats adaptor Implementation");
         vm.label(address(implementations.addressModule), "Admin Hats Eligibility adaptor Implementation");
@@ -334,8 +334,8 @@ contract SetUp is Test, Accounts, TestStructs {
 
         bytes memory encodedAdaptorAddresses = abi.encode(
             address(adaptors.hatsAdaptor),
-            address(adaptors.characterEligibilityAdaptorV2),
-            address(adaptors.characterEligibilityAdaptorV3),
+            address(adaptors.molochV2EligibilityAdaptor),
+            address(adaptors.molochV3EligibilityAdaptor),
             address(adaptors.classLevelAdaptor)
         );
 
