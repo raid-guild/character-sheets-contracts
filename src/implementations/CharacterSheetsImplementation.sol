@@ -110,8 +110,9 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         _playerSheets[from] = 0;
         _playerSheets[to] = characterId;
         _sheets[characterId].playerAddress = to;
-
-        IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(to);
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isPlayer(to)) {
+            IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(to);
+        }
     }
 
     constructor() {

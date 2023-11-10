@@ -283,8 +283,7 @@ contract CharacterSheetsTest is SetUp {
 
     //UNHAPPY PATH
     function testRollCharacterSheetFailNonMember() public {
-        address rando = address(777);
-        vm.prank(rando);
+        vm.prank(accounts.rando);
         vm.expectRevert(Errors.EligibilityError.selector);
         deployments.characterSheets.rollCharacterSheet("test_token_uri/");
     }
@@ -423,5 +422,93 @@ contract CharacterSheetsTest is SetUp {
             accounts.rando,
             "Incorrect player address"
         );
+    }
+
+    function testSafeTransferFrom() public {
+        assertEq(deployments.characterSheets.balanceOf(accounts.player1), 1, "Incorrect balance for player 1");
+        assertEq(deployments.hatsAdaptor.isPlayer(accounts.player1), true, "player 1 is not a player");
+        assertEq(deployments.hatsAdaptor.isCharacter(accounts.character1), true, "char 1 not a character");
+
+        assertEq(deployments.characterSheets.balanceOf(accounts.player2), 1, "Incorrect balance for player 2");
+        assertEq(deployments.hatsAdaptor.isPlayer(accounts.player2), true, "player 2 is not a player");
+
+        assertEq(deployments.characterSheets.balanceOf(accounts.rando), 0, "Incorrect balance for rando");
+        assertEq(deployments.hatsAdaptor.isPlayer(accounts.rando), false, "rando is a player");
+
+        assertEq(
+            deployments.characterSheets.getCharacterIdByPlayerAddress(accounts.player1), 0, "Incorrect characterId"
+        );
+        assertEq(
+            deployments.characterSheets.getCharacterSheetByCharacterId(0).accountAddress,
+            accounts.character1,
+            "Incorrect account1 address"
+        );
+        assertEq(
+            deployments.characterSheets.getCharacterSheetByCharacterId(0).playerAddress,
+            accounts.player1,
+            "Incorrect player1 address"
+        );
+
+        assertEq(
+            deployments.characterSheets.getCharacterIdByPlayerAddress(accounts.player2), 1, "Incorrect characterId"
+        );
+        assertEq(
+            deployments.characterSheets.getCharacterSheetByCharacterId(1).accountAddress,
+            accounts.character2,
+            "Incorrect account2 address"
+        );
+        assertEq(
+            deployments.characterSheets.getCharacterSheetByCharacterId(1).playerAddress,
+            accounts.player2,
+            "Incorrect player2 address"
+        );
+
+        console.log("OWNER OF: ", deployments.characterSheets.ownerOf(1));
+
+        vm.prank(accounts.player1);
+        vm.expectRevert(Errors.GameMasterOnly.selector);
+        deployments.characterSheets.safeTransferFrom(accounts.player1, accounts.player2, 0);
+
+        vm.prank(accounts.gameMaster);
+        vm.expectRevert(Errors.TokenBalanceError.selector);
+        deployments.characterSheets.safeTransferFrom(accounts.player1, accounts.player2, 0);
+
+        vm.prank(accounts.gameMaster);
+        vm.expectRevert(
+            abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, accounts.gameMaster, 0)
+        );
+        deployments.characterSheets.safeTransferFrom(accounts.player1, accounts.rando, 0);
+
+        vm.prank(accounts.player1);
+        deployments.characterSheets.approve(accounts.gameMaster, 0);
+
+        vm.prank(accounts.gameMaster);
+        deployments.characterSheets.safeTransferFrom(accounts.player1, accounts.rando, 0);
+
+        assertEq(deployments.characterSheets.balanceOf(accounts.player1), 0, "Incorrect balance");
+        assertEq(deployments.hatsAdaptor.isPlayer(accounts.player1), false, "player 1 is a player");
+        assertEq(deployments.hatsAdaptor.isCharacter(accounts.character1), true, "char 1 is not a character");
+
+        assertEq(deployments.characterSheets.balanceOf(accounts.rando), 1, "Incorrect balance");
+        assertEq(deployments.hatsAdaptor.isPlayer(accounts.rando), true, "rando is not a player");
+
+        assertEq(deployments.characterSheets.getCharacterIdByPlayerAddress(accounts.rando), 0, "Incorrect characterId");
+        assertEq(
+            deployments.characterSheets.getCharacterSheetByCharacterId(0).accountAddress,
+            accounts.character1,
+            "Incorrect account address"
+        );
+        assertEq(
+            deployments.characterSheets.getCharacterSheetByCharacterId(0).playerAddress,
+            accounts.rando,
+            "Incorrect player address"
+        );
+        //transfer character back to original owner
+
+        vm.prank(accounts.rando);
+        deployments.characterSheets.approve(accounts.gameMaster, 0);
+
+        vm.prank(accounts.gameMaster);
+        deployments.characterSheets.safeTransferFrom(accounts.rando, accounts.player1, 0);
     }
 }
