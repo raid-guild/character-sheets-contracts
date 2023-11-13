@@ -25,8 +25,7 @@ import {Errors} from "../lib/Errors.sol";
  * @title Character Sheets
  * @author MrDeadCe11 && dan13ram
  * @notice This is a gamified reputation managment system desgigned for raid guild but
- * left composable for use with any dao or organization
- * @dev this is an erc721 contract that calculates the erc6551 address of every token at token creation and then uses that address as the character for
+ * left composable for use with any dao or organization.  This is an erc721 contract that calculates the erc6551 address of every token at token creation and then uses that address as the character for
  * a rpg themed reputation system with experience points awarded by a centralized authority the "GAME_MASTER" and items and classes that can be owned and equipped
  * by the base character account.
  */
