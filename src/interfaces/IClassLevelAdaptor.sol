@@ -12,5 +12,5 @@ interface IClassLevelAdaptor {
 
     function levelRequirementsMet(address account, uint256 currentLevel) external view returns (bool);
     function getLockedExperience(uint256 currentLevel) external view returns (uint256);
-    function supportsInterface(bytes4 interfaceId) external view override returns (bool);
+    function supportsInterface(bytes4 interfaceId) external view returns (bool);
 }
