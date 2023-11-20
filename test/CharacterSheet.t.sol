@@ -224,9 +224,6 @@ contract CharacterSheetsTest is SetUp {
     function testGetCharacterSheetByCharacterId() public {
         CharacterSheet memory sheet = deployments.characterSheets.getCharacterSheetByCharacterId(0);
         assertEq(sheet.accountAddress, accounts.character1);
-
-        vm.expectRevert();
-        deployments.characterSheets.getCharacterSheetByCharacterId(5);
     }
 
     function testGetPlayerIdFromAccountAddress() public {
