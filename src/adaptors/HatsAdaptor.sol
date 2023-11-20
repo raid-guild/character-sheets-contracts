@@ -383,6 +383,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         bytes memory encodedHatsAddress = abi.encode(implementations.hatsContract());
         customAdminModule =
             customAdminModule == address(0) ? implementations.addressHatsEligibilityModule() : customAdminModule;
+
         return HatsModuleFactory(implementations.hatsModuleFactory()).createHatsModule(
             customAdminModule, adminId, encodedHatsAddress, encodedAdmins
         );

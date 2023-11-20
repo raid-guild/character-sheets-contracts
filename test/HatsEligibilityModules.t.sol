@@ -18,6 +18,7 @@ import {Hats} from "hats-protocol/Hats.sol";
 import {AddressHatsEligibilityModule} from "../src/mocks/AddressHatsEligibilityModule.sol";
 import {ERC721HatsEligibilityModule} from "../src/mocks/ERC721HatsEligibilityModule.sol";
 import {ERC6551HatsEligibilityModule} from "../src/adaptors/hats-modules/ERC6551HatsEligibilityModule.sol";
+import {ElderEligibilityModule} from "../src/adaptors/hats-modules/ElderEligibilityModule.sol";
 
 contract HatsEligibilityModulesTest is SetUp {
     HatsAdaptor public newAdaptor;
@@ -25,6 +26,7 @@ contract HatsEligibilityModulesTest is SetUp {
     AddressHatsEligibilityModule public dmModule;
     ERC721HatsEligibilityModule public playerModule;
     ERC6551HatsEligibilityModule public characterModule;
+    ElderEligibilityModule public elderModule;
 
     address public topHatWearer = address(1);
     address public adminHatWearer = address(2);
@@ -178,5 +180,57 @@ contract HatsEligibilityModulesTest is SetUp {
         dmModule.removeEligibleAddresses(testAdmins);
 
         assertEq(newAdaptor.isGameMaster(adminHatWearer), false, "admin hat not removed");
+    }
+
+    function testElderEligibilityModule() public {
+        // deploy elder hat
+        address elderModuleImplementation = address(new ElderEligibilityModule("V1"));
+
+        uint256[] memory tokenIds = new uint256[](2);
+        tokenIds[1] = 1;
+
+        uint256[] memory balances = new uint256[](2);
+        balances[0] = 2;
+        balances[1] = 3;
+        bytes memory immutableArgs = abi.encodePacked(
+            address(deployments.classes), address(deployments.characterSheets), uint256(2), tokenIds, balances
+        );
+
+        uint256 admin = deployments.hatsAdaptor.getHatsData().adminHatId;
+
+        address elderMod =
+            hatsContracts.hatsModuleFactory.createHatsModule(elderModuleImplementation, admin, immutableArgs, "");
+        vm.prank(accounts.admin);
+
+        uint256 elderHat =
+            hatsContracts.hats.createHat(admin, "elder Hat", 100, elderMod, accounts.admin, true, "test_hats_uri");
+
+        assertEq(elderHat, 26960358055844173566950915356986848857678722938711691764997516427264, "wrong elder hat Id");
+        // assign classes to potential elder
+        vm.startPrank(accounts.gameMaster);
+        deployments.classes.assignClass(accounts.character1, 0);
+        deployments.classes.assignClass(accounts.character1, 1);
+
+        assertEq(deployments.classes.balanceOf(accounts.character1, 0), 1);
+        assertEq(deployments.classes.balanceOf(accounts.character1, 1), 1);
+        // should revert because class is too low level
+        vm.stopPrank();
+
+        vm.prank(accounts.admin);
+        vm.expectRevert();
+        hatsContracts.hats.mintHat(elderHat, accounts.player1);
+
+        //level class 2
+        vm.startPrank(accounts.gameMaster);
+        deployments.experience.dropExp(accounts.character1, 2000);
+        deployments.classes.levelClass(accounts.character1, 1);
+        deployments.classes.levelClass(accounts.character1, 1);
+        vm.stopPrank();
+
+        // mint hat to elder
+        vm.prank(accounts.admin);
+        hatsContracts.hats.mintHat(elderHat, accounts.player1);
+
+        assertTrue(hatsContracts.hats.isWearerOfHat(accounts.player1, elderHat));
     }
 }
