@@ -13,17 +13,18 @@ import {HatsErrors} from "hats-protocol/Interfaces/HatsErrors.sol";
 import {HatsAdaptor} from "../src/adaptors/HatsAdaptor.sol";
 import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
 import {Hats} from "hats-protocol/Hats.sol";
-import {AdminHatEligibilityModule} from "../src/adaptors/hats-modules/AdminHatEligibilityModule.sol";
-import {GameMasterHatEligibilityModule} from "../src/adaptors/hats-modules/GameMasterHatEligibilityModule.sol";
-import {PlayerHatEligibilityModule} from "../src/adaptors/hats-modules/PlayerHatEligibilityModule.sol";
-import {CharacterHatEligibilityModule} from "../src/adaptors/hats-modules/CharacterHatEligibilityModule.sol";
+
+// hats eligibility modules
+import {AddressHatsEligibilityModule} from "../src/mocks/AddressHatsEligibilityModule.sol";
+import {ERC721HatsEligibilityModule} from "../src/mocks/ERC721HatsEligibilityModule.sol";
+import {ERC6551HatsEligibilityModule} from "../src/adaptors/hats-modules/ERC6551HatsEligibilityModule.sol";
 
 contract HatsEligibilityModulesTest is SetUp {
     HatsAdaptor public newAdaptor;
-    AdminHatEligibilityModule public adminModule;
-    GameMasterHatEligibilityModule public dmModule;
-    PlayerHatEligibilityModule public playerModule;
-    CharacterHatEligibilityModule public characterModule;
+    AddressHatsEligibilityModule public adminModule;
+    AddressHatsEligibilityModule public dmModule;
+    ERC721HatsEligibilityModule public playerModule;
+    ERC6551HatsEligibilityModule public characterModule;
 
     address public topHatWearer = address(1);
     address public adminHatWearer = address(2);
@@ -65,10 +66,10 @@ contract HatsEligibilityModulesTest is SetUp {
 
         newAdaptor.initialize(topHatWearer, encodedHatsAddresses, encodedHatsStrings, customModuleAddresses);
 
-        adminModule = AdminHatEligibilityModule(newAdaptor.adminHatEligibilityModule());
-        dmModule = GameMasterHatEligibilityModule(newAdaptor.gameMasterHatEligibilityModule());
-        characterModule = CharacterHatEligibilityModule(newAdaptor.characterHatEligibilityModule());
-        playerModule = PlayerHatEligibilityModule(newAdaptor.playerHatEligibilityModule());
+        adminModule = AddressHatsEligibilityModule(newAdaptor.adminHatEligibilityModule());
+        dmModule = AddressHatsEligibilityModule(newAdaptor.gameMasterHatEligibilityModule());
+        characterModule = ERC6551HatsEligibilityModule(newAdaptor.characterHatEligibilityModule());
+        playerModule = ERC721HatsEligibilityModule(newAdaptor.playerHatEligibilityModule());
 
         vm.prank(accounts.admin);
         deployments.clones.updateHatsAdaptor(address(newAdaptor));

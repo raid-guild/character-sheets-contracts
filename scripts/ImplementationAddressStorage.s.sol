@@ -27,13 +27,47 @@ struct HatsAddresses {
     address hatsContract;
     address hatsModuleFactory;
     //eligibility modules
-    address adminHatsEligibilityModule;
-    address gameMasterHatsEligibilityModule;
-    address playerHatsEligibilityModule;
-    address characterHatsEligibilityModule;
+    address addressHatsEligibilityModule;
+    address erc721HatsEligibilityModule;
+    address erc6551HatsEligitbilityModule;
     address erc6551Registry;
 }
 
+/**
+ * function _initImplementations(bytes calldata encodedImplementationAddresses) internal {
+ *         (
+ *             _implementationsAddresses.characterSheetsImplementation,
+ *             _implementationsAddresses.itemsImplementation,
+ *             _implementationsAddresses.classesImplementation,
+ *             _implementationsAddresses.experienceImplementation,
+ *             _implementationsAddresses.cloneAddressStorage,
+ *             _implementationsAddresses.itemsManagerImplementation,
+ *             _implementationsAddresses.erc6551AccountImplementation
+ *         ) = abi.decode(encodedImplementationAddresses, (address, address, address, address, address, address, address));
+ *     }
+ *
+ *     function _initAdaptorsAndModules(bytes calldata encodedAdaptorsAndModuleAddresses) internal {
+ *         (
+ *             _implementationsAddresses.addressHatsEligibilityModule,
+ *             _implementationsAddresses.gameMasterHatsEligibilityModule,
+ *             _implementationsAddresses.erc721HatsEligibilityModule,
+ *             _implementationsAddresses.erc6551HatsEligitbilityModule,
+ *             _implementationsAddresses.hatsAdaptorImplementation,
+ *             _implementationsAddresses.characterEligibilityAdaptorImplementation,
+ *             _implementationsAddresses.classLevelAdaptorImplementation
+ *         ) = abi.decode(
+ *             encodedAdaptorsAndModuleAddresses, (address, address, address, address, address, address, address)
+ *         );
+ *     }
+ *
+ *     function _initExternalAddresses(bytes calldata encodedExternalAddresses) internal {
+ *         (
+ *             _implementationsAddresses.erc6551Registry,
+ *             _implementationsAddresses.hatsContract,
+ *             _implementationsAddresses.hatsModuleFactory
+ *         ) = abi.decode(encodedExternalAddresses, (address, address, address));
+ *     }
+ */
 contract DeployImplementationAddressStorage is BaseDeployer {
     using stdJson for string;
 
@@ -84,14 +118,12 @@ contract DeployImplementationAddressStorage is BaseDeployer {
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".MolochV2EligibilityAdaptor")));
         implementationAddresses.molochV3EligibilityAdaptorImplementation =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".MolochV3EligibilityAdaptor")));
-        hatsAddresses.adminHatsEligibilityModule =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".AdminHatEligibilityModule")));
-        hatsAddresses.gameMasterHatsEligibilityModule =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".GameMasterHatEligibilityModule")));
-        hatsAddresses.playerHatsEligibilityModule =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".PlayerHatEligibilityModule")));
-        hatsAddresses.characterHatsEligibilityModule =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterHatEligibilityModule")));
+        hatsAddresses.addressHatsEligibilityModule =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".AddressHatsEligibilityModule")));
+        hatsAddresses.erc721HatsEligibilityModule =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".ERC721HatsEligibilityModule")));
+        hatsAddresses.erc6551HatsEligitbilityModule =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".ERC6511HatsEligibilityModule")));
     }
 
     function _loadExternalAddresses(string memory json, string memory targetEnv) internal {
@@ -133,9 +165,8 @@ contract DeployImplementationAddressStorage is BaseDeployer {
 
     function _encodeModuleAddresses() internal view returns (bytes memory) {
         bytes memory encodedModuleAddresses = abi.encode(
-            hatsAddresses.adminHatsEligibilityModule,
-            hatsAddresses.gameMasterHatsEligibilityModule,
-            hatsAddresses.playerHatsEligibilityModule,
+            hatsAddresses.addressHatsEligibilityModule,
+            hatsAddresses.erc721HatsEligibilityModule,
             hatsAddresses.characterHatsEligibilityModule
         );
 

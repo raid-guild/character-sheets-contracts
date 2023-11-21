@@ -229,13 +229,11 @@ contract ItemsTest is SetUp {
 
         assertEq(deployments.items.balanceOf(accounts.character1, newItem), 0, "new item not consumed in crafting");
 
-        console2.log("ItemError");
         // should revert if trying to dismantle un-crafted item
         vm.expectRevert(Errors.InsufficientBalance.selector);
         deployments.items.dismantleItems(0, 1);
 
         //should revert if trying to dismantle more than have been crafted
-        console2.log("InsufficientBalance");
         vm.expectRevert(Errors.InsufficientBalance.selector);
         deployments.items.dismantleItems(craftableItemId, 4);
 

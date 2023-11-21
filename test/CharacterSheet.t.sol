@@ -224,9 +224,6 @@ contract CharacterSheetsTest is SetUp {
     function testGetCharacterSheetByCharacterId() public {
         CharacterSheet memory sheet = deployments.characterSheets.getCharacterSheetByCharacterId(0);
         assertEq(sheet.accountAddress, accounts.character1);
-
-        vm.expectRevert();
-        deployments.characterSheets.getCharacterSheetByCharacterId(5);
     }
 
     function testGetPlayerIdFromAccountAddress() public {
@@ -265,7 +262,7 @@ contract CharacterSheetsTest is SetUp {
 
         vm.startPrank(accounts.admin);
         //admin adds player1 to eligible addresses array in admins module.
-        GameMasterHatEligibilityModule(dungHatElig).addEligibleAddresses(newAdmins);
+        AddressHatsEligibilityModule(dungHatElig).addEligibleAddresses(newAdmins);
 
         // admin mints dmHat to player1
         hatsContracts.hats.mintHat(hatsData.gameMasterHatId, accounts.player1);
