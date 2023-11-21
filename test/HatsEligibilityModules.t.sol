@@ -192,20 +192,33 @@ contract HatsEligibilityModulesTest is SetUp {
         uint256[] memory balances = new uint256[](2);
         balances[0] = 2;
         balances[1] = 3;
-        bytes memory immutableArgs = abi.encodePacked(
-            address(deployments.classes), address(deployments.characterSheets), uint256(2), tokenIds, balances
+
+        bytes memory immutableArgs =
+            abi.encodePacked(address(deployments.classes), address(deployments.characterSheets));
+
+        bytes memory initData = abi.encode(tokenIds, balances);
+
+        uint256 elderModId = hatsContracts.hats.getNextId(deployments.hatsAdaptor.getHatsData().gameMasterHatId);
+        address elderModAddress = hatsContracts.hatsModuleFactory.createHatsModule(
+            elderModuleImplementation, elderModId, immutableArgs, initData
         );
 
-        uint256 admin = deployments.hatsAdaptor.getHatsData().adminHatId;
+        vm.startPrank(accounts.admin);
+        ElderEligibilityModule elderMod = ElderEligibilityModule(elderModAddress);
+        uint256 elderHat = hatsContracts.hats.createHat(
+            deployments.hatsAdaptor.getHatsData().gameMasterHatId,
+            "elder Hat",
+            100,
+            elderModAddress,
+            accounts.admin,
+            true,
+            "test_hats_uri"
+        );
+        vm.stopPrank();
+        assertEq(elderHat, elderModId, "wrong elder hat Id");
+        assertEq(elderMod.classIds(1), 1, "incorrect classes id init");
+        assertEq(elderMod.minLevels(0), 2, "incorrect min level init");
 
-        address elderMod =
-            hatsContracts.hatsModuleFactory.createHatsModule(elderModuleImplementation, admin, immutableArgs, "");
-        vm.prank(accounts.admin);
-
-        uint256 elderHat =
-            hatsContracts.hats.createHat(admin, "elder Hat", 100, elderMod, accounts.admin, true, "test_hats_uri");
-
-        assertEq(elderHat, 26960358055844173566950915356986848857678722938711691764997516427264, "wrong elder hat Id");
         // assign classes to potential elder
         vm.startPrank(accounts.gameMaster);
         deployments.classes.assignClass(accounts.character1, 0);
@@ -228,9 +241,67 @@ contract HatsEligibilityModulesTest is SetUp {
         vm.stopPrank();
 
         // mint hat to elder
-        vm.prank(accounts.admin);
+        vm.prank(accounts.gameMaster);
         hatsContracts.hats.mintHat(elderHat, accounts.player1);
 
         assertTrue(hatsContracts.hats.isWearerOfHat(accounts.player1, elderHat));
+    }
+
+    function testAddClassToElderModule() public {
+        // deploy elder hat
+        address elderModuleImplementation = address(new ElderEligibilityModule("V1"));
+
+        uint256[] memory tokenIds = new uint256[](2);
+        tokenIds[1] = 1;
+
+        uint256[] memory balances = new uint256[](2);
+        balances[0] = 2;
+        balances[1] = 3;
+        bytes memory immutableArgs =
+            abi.encodePacked(address(deployments.classes), address(deployments.characterSheets));
+
+        bytes memory initData = abi.encode(tokenIds, balances);
+
+        uint256 elderModId = hatsContracts.hats.getNextId(deployments.hatsAdaptor.getHatsData().gameMasterHatId);
+        address elderModAddress = hatsContracts.hatsModuleFactory.createHatsModule(
+            elderModuleImplementation, elderModId, immutableArgs, initData
+        );
+
+        vm.startPrank(accounts.admin);
+        ElderEligibilityModule elderMod = ElderEligibilityModule(elderModAddress);
+        uint256 elderHat = hatsContracts.hats.createHat(
+            deployments.hatsAdaptor.getHatsData().gameMasterHatId,
+            "elder Hat",
+            100,
+            elderModAddress,
+            accounts.admin,
+            true,
+            "test_hats_uri"
+        );
+        vm.stopPrank();
+        assertEq(elderHat, elderModId, "wrong elder hat Id");
+        assertEq(elderMod.classIds(1), 1, "incorrect classes id init");
+        assertEq(elderMod.minLevels(0), 2, "incorrec min level init");
+
+        vm.startPrank(accounts.gameMaster);
+        uint256[] memory newClasses = new uint256[](2);
+        uint256[] memory newMinLevels = new uint256[](2);
+
+        uint256 newClass1 = deployments.classes.createClassType(createNewClass(true));
+        uint256 newClass2 = deployments.classes.createClassType(createNewClass(true));
+
+        newClasses[0] = newClass1;
+        newClasses[1] = newClass2;
+        newMinLevels[0] = 1;
+        newMinLevels[1] = 2;
+
+        //add class to elder module
+
+        elderMod.addClasses(newClasses, newMinLevels);
+
+        assertEq(elderMod.classIds(2), newClass1, "incorrect class added");
+        assertEq(elderMod.classIds(3), newClass2, "incorrect class 2 added");
+        assertEq(elderMod.minLevels(2), 1, "incorrect level added");
+        assertEq(elderMod.minLevels(3), 2, "incorrect level 2 added");
     }
 }

@@ -14,6 +14,15 @@ import {ICharacterSheets} from "../../interfaces/ICharacterSheets.sol";
  */
 
 contract ElderEligibilityModule is HatsEligibilityModule {
+    event ElderEligibilityDeployed(address);
+    event ClassesAdded(uint256[], uint256[]);
+
+    /// @notice Thrown when a non-admin tries to call an admin restricted function.
+    error ElderEligibility_NotHatAdmin();
+    /// @notice Thrown when a change to the eligible addresses is attempted on an immutable hat.
+    error ElderEligibility_HatImmutable();
+    /// @notice Thrown if the init data arrays are mismatched lengths
+    error LengthMismatch();
     /*//////////////////////////////////////////////////////////////
                           PUBLIC CONSTANTS
     //////////////////////////////////////////////////////////////*/
@@ -30,14 +39,62 @@ contract ElderEligibilityModule is HatsEligibilityModule {
      * 40                 | hatId           | uint256 | 32              |
      * 72                 | CLASSES_ADDRESS | address | 20              |
      * 92                 | SHEETS_ADDRESS  | address | 20              |
-     * 112                | ARRAY_LENGTH    | uint256 | 32              |
-     * 144                | TOKEN_IDS       | uint256 | ARRAY_LENGTH*32 |
-     * 144+(ARRAY_LENGTH) | MIN_BALANCES    | uint256 | ARRAY_LENGTH*32 |
      * -----------------------------------------------------------------+
      */
 
-    /// The address of the ERC1155 contract used to check eligibility
+    /// The ERC1155token IDs that allow eligibility.
+    /// @dev NOTE: Wearer must satisfy only one token ID criteria for eligiblity.
+    /// @dev NOTE: the TOKEN_IDS length must match the MIN_BALANCES length
+    uint256[] public classIds;
 
+    /// The minimum balances required (for token ID in the corresponding index) for eligibility.
+    /// @dev NOTE: Wearer must satisfy only one token ID criteria for eligiblity
+    /// @dev NOTE: the TOKEN_IDS length must match the MIN_BALANCES length
+    uint256[] public minLevels;
+
+    function _setUp(bytes calldata _initData) internal override {
+        // decode the _initData bytes and set the addresses as eligible
+        (uint256[] memory _classIds, uint256[] memory _minLevels) = abi.decode(_initData, (uint256[], uint256[]));
+        uint256 len = _classIds.length;
+
+        if (len != _minLevels.length) {
+            revert LengthMismatch();
+        }
+
+        for (uint256 i = 0; i < len; i++) {
+            classIds.push(_classIds[i]);
+            minLevels.push(_minLevels[i]);
+        }
+
+        // log the deployment & setup
+        emit ElderEligibilityDeployed(address(this));
+    }
+
+    /// adds a class and minimum level to the classes and minLevels arrays
+    function addClasses(uint256[] calldata _classIds, uint256[] calldata _minLevels)
+        external
+        onlyHatAdmin
+        hatIsMutable
+    {
+        uint256 len = _classIds.length;
+
+        if (len != _minLevels.length) {
+            revert LengthMismatch();
+        }
+
+        for (uint256 i = 0; i < len;) {
+            classIds.push(_classIds[i]);
+            minLevels.push(_minLevels[i]);
+
+            unchecked {
+                i++;
+            }
+        }
+
+        emit ClassesAdded(_classIds, _minLevels);
+    }
+
+    /// The address of the ERC1155 contract used to check eligibility
     function CLASSES_ADDRESS() public pure returns (address) {
         return _getArgAddress(72);
     }
@@ -49,20 +106,6 @@ contract ElderEligibilityModule is HatsEligibilityModule {
 
     function ARRAY_LENGTH() public pure returns (uint256) {
         return _getArgUint256(112);
-    }
-
-    /// The ERC1155token IDs that allow eligibility.
-    /// @dev NOTE: Wearer must satisfy only one token ID criteria for eligiblity.
-    /// @dev NOTE: the TOKEN_IDS length must match the MIN_BALANCES length
-    function TOKEN_IDS() public pure returns (uint256[] memory) {
-        return _getArgUint256Array(144, ARRAY_LENGTH());
-    }
-
-    /// The minimum balances required (for token ID in the corresponding index) for eligibility.
-    /// @dev NOTE: Wearer must satisfy only one token ID criteria for eligiblity
-    /// @dev NOTE: the TOKEN_IDS length must match the MIN_BALANCES length
-    function MIN_BALANCES() public pure returns (uint256[] memory) {
-        return _getArgUint256Array(144 + ARRAY_LENGTH() * 32, ARRAY_LENGTH());
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -86,23 +129,47 @@ contract ElderEligibilityModule is HatsEligibilityModule {
         override
         returns (bool eligible, bool standing)
     {
-        uint256 len = ARRAY_LENGTH();
+        uint256 len = minLevels.length;
         IERC1155 token = IERC1155(CLASSES_ADDRESS());
 
         uint256 characterId = ICharacterSheets(SHEETS_ADDRESS()).getCharacterIdByPlayerAddress(_wearer);
         address character =
             ICharacterSheets(SHEETS_ADDRESS()).getCharacterSheetByCharacterId(characterId).accountAddress;
 
-        uint256[] memory tokenIds = TOKEN_IDS();
-        uint256[] memory minBalances = MIN_BALANCES();
-
         for (uint256 i = 0; i < len;) {
-            eligible = token.balanceOf(character, tokenIds[i]) >= minBalances[i];
+            eligible = token.balanceOf(character, classIds[i]) >= minLevels[i];
             if (eligible) break;
             unchecked {
                 ++i;
             }
         }
         standing = true;
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                        INTERNAL FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @dev Returns whether this instance of ERC721Eligibility's hatId is mutable
+     */
+    function _hatIsMutable() internal view returns (bool _isMutable) {
+        (,,,,,,, _isMutable,) = HATS().viewHat(hatId());
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                            MODIFIERS
+    //////////////////////////////////////////////////////////////*/
+
+    modifier onlyHatAdmin() {
+        if (!HATS().isAdminOfHat(msg.sender, hatId())) {
+            revert ElderEligibility_NotHatAdmin();
+        }
+        _;
+    }
+
+    modifier hatIsMutable() {
+        if (!_hatIsMutable()) revert ElderEligibility_HatImmutable();
+        _;
     }
 }
