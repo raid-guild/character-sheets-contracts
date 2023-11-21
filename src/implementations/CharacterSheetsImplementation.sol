@@ -109,9 +109,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         _playerSheets[to] = characterId;
         _sheets[characterId].playerAddress = to;
 
-        if (!IHatsAdaptor(clones.hatsAdaptor()).isPlayer(to)) {
-            IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(to);
-        }
+        _ifNotPlayerMintHat(to);
     }
 
     constructor() {
@@ -204,7 +202,8 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         _playerSheets[msg.sender] = characterId;
         _characterSheets[characterAccount] = characterId;
 
-        IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(msg.sender);
+        _ifNotPlayerMintHat(msg.sender);
+
         IHatsAdaptor(clones.hatsAdaptor()).mintCharacterHat(characterAccount);
 
         totalSheets++;
@@ -488,6 +487,12 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
 
     function supportsInterface(bytes4 interfaceId) public view override(ERC721URIStorageUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
+    }
+
+    function _ifNotPlayerMintHat(address wearer) internal {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isPlayer(wearer)) {
+            IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(wearer);
+        }
     }
 
     //solhint-disable-next-line no-empty-blocks
