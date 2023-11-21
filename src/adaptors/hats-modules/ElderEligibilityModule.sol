@@ -19,7 +19,7 @@ contract ElderEligibilityModule is HatsEligibilityModule {
 
     /// @notice Thrown when a non-admin tries to call an admin restricted function.
     error ElderEligibility_NotHatAdmin();
-    /// @notice Thrown when a change to the eligible addresses is attempted on an immutable hat.
+    /// @notice Thrown when a class addition is attempted on an immutable hat.
     error ElderEligibility_HatImmutable();
     /// @notice Thrown if the init data arrays are mismatched lengths
     error LengthMismatch();
