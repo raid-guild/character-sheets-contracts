@@ -520,7 +520,9 @@ contract CharacterSheetsTest is SetUp {
         assertEq(deployments.hatsAdaptor.isPlayer(accounts.player1), false, "player 1 is a player");
         assertEq(deployments.hatsAdaptor.isCharacter(accounts.character1), true, "char 1 is not a character");
 
-        vm.prank(accounts.player1);
-        deployments.characterSheets.rollCharacterSheet("new_test");
+        vm.prank(accounts.rando);
+        deployments.characterSheets.approve(accounts.gameMaster, 0);
+        vm.prank(accounts.gameMaster);
+        deployments.characterSheets.safeTransferFrom(accounts.rando, accounts.player1, 0, "");
     }
 }
