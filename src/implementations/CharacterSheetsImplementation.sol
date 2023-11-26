@@ -15,8 +15,7 @@ import {ICharacterEligibilityAdaptor} from "../interfaces/ICharacterEligibilityA
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 import {IItems} from "../interfaces/IItems.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
-
-import {ImplementationAddressStorage} from "../ImplementationAddressStorage.sol";
+import {IImplementationAddressStorage} from "../interfaces/IImplementationAddressStorage.sol";
 
 import {CharacterSheet} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
@@ -25,8 +24,7 @@ import {Errors} from "../lib/Errors.sol";
  * @title Character Sheets
  * @author MrDeadCe11 && dan13ram
  * @notice This is a gamified reputation managment system desgigned for raid guild but
- * left composable for use with any dao or organization
- * @dev this is an erc721 contract that calculates the erc6551 address of every token at token creation and then uses that address as the character for
+ * left composable for use with any dao or organization.  This is an erc721 contract that calculates the erc6551 address of every token at token creation and then uses that address as the character for
  * a rpg themed reputation system with experience points awarded by a centralized authority the "GAME_MASTER" and items and classes that can be owned and equipped
  * by the base character account.
  */
@@ -111,7 +109,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         _playerSheets[to] = characterId;
         _sheets[characterId].playerAddress = to;
 
-        IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(to);
+        _ifNotPlayerMintHat(to);
     }
 
     constructor() {
@@ -146,8 +144,8 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         (clonesStorage, implementationStorage, metadataURI, baseTokenURI) =
             abi.decode(_encodedParameters, (address, address, string, string));
         clones = IClonesAddressStorage(clonesStorage);
-        erc6551Registry = ImplementationAddressStorage(implementationStorage).erc6551Registry();
-        erc6551CharacterAccount = ImplementationAddressStorage(implementationStorage).erc6551AccountImplementation();
+        erc6551Registry = IImplementationAddressStorage(implementationStorage).erc6551Registry();
+        erc6551CharacterAccount = IImplementationAddressStorage(implementationStorage).erc6551AccountImplementation();
     }
 
     /**
@@ -204,7 +202,8 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         _playerSheets[msg.sender] = characterId;
         _characterSheets[characterAccount] = characterId;
 
-        IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(msg.sender);
+        _ifNotPlayerMintHat(msg.sender);
+
         IHatsAdaptor(clones.hatsAdaptor()).mintCharacterHat(characterAccount);
 
         totalSheets++;
@@ -345,10 +344,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
             revert Errors.CharacterError();
         }
 
-        if (
-            clones.characterEligibilityAdaptor() != address(0)
-                && ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(playerAddress)
-        ) {
+        if (ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(playerAddress)) {
             revert Errors.EligibilityError();
         }
 
@@ -452,9 +448,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
     }
 
     function getCharacterSheetByCharacterId(uint256 characterId) public view returns (CharacterSheet memory) {
-        if (_ownerOf(characterId) == address(0)) {
-            revert Errors.CharacterError();
-        }
         return _sheets[characterId];
     }
 
@@ -471,10 +464,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
     }
 
     function isItemEquipped(uint256 characterId, uint256 itemId) public view returns (bool) {
-        if (_ownerOf(characterId) == address(0)) {
-            revert Errors.CharacterError();
-        }
-
         CharacterSheet storage sheet = _sheets[characterId];
         if (sheet.inventory.length == 0) {
             return false;
@@ -498,6 +487,12 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
 
     function supportsInterface(bytes4 interfaceId) public view override(ERC721URIStorageUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
+    }
+
+    function _ifNotPlayerMintHat(address wearer) internal {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isPlayer(wearer)) {
+            IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(wearer);
+        }
     }
 
     //solhint-disable-next-line no-empty-blocks

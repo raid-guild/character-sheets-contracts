@@ -45,7 +45,7 @@ contract CharacterSheetsFactoryTest is Test, SetUp {
     }
 
     function testCreateExperience() public {
-        address expectedExperience = 0x45fD5C784fdde25103Cd82cB97065B36Ac227f2a;
+        address expectedExperience = 0xD9Ce15d0e3c74B4bc3FC19c15114fc34F95c0Df3;
         vm.startPrank(accounts.player1);
         vm.expectEmit(true, false, false, false);
         emit ExperienceCreated(expectedExperience);
@@ -56,7 +56,7 @@ contract CharacterSheetsFactoryTest is Test, SetUp {
     }
 
     function testCreateCharacterSheets() public {
-        address expectedCharacterSheets = 0x45fD5C784fdde25103Cd82cB97065B36Ac227f2a;
+        address expectedCharacterSheets = 0xD9Ce15d0e3c74B4bc3FC19c15114fc34F95c0Df3;
         vm.startPrank(accounts.player1);
         vm.expectEmit(true, false, false, false);
         emit CharacterSheetsCreated(expectedCharacterSheets);

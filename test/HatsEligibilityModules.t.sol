@@ -13,17 +13,20 @@ import {HatsErrors} from "hats-protocol/Interfaces/HatsErrors.sol";
 import {HatsAdaptor} from "../src/adaptors/HatsAdaptor.sol";
 import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
 import {Hats} from "hats-protocol/Hats.sol";
-import {AdminHatEligibilityModule} from "../src/adaptors/hats-modules/AdminHatEligibilityModule.sol";
-import {GameMasterHatEligibilityModule} from "../src/adaptors/hats-modules/GameMasterHatEligibilityModule.sol";
-import {PlayerHatEligibilityModule} from "../src/adaptors/hats-modules/PlayerHatEligibilityModule.sol";
-import {CharacterHatEligibilityModule} from "../src/adaptors/hats-modules/CharacterHatEligibilityModule.sol";
+
+// hats eligibility modules
+import {AddressHatsEligibilityModule} from "../src/mocks/AddressHatsEligibilityModule.sol";
+import {ERC721HatsEligibilityModule} from "../src/mocks/ERC721HatsEligibilityModule.sol";
+import {ERC6551HatsEligibilityModule} from "../src/adaptors/hats-modules/ERC6551HatsEligibilityModule.sol";
+import {ElderEligibilityModule} from "../src/adaptors/hats-modules/ElderEligibilityModule.sol";
 
 contract HatsEligibilityModulesTest is SetUp {
     HatsAdaptor public newAdaptor;
-    AdminHatEligibilityModule public adminModule;
-    GameMasterHatEligibilityModule public dmModule;
-    PlayerHatEligibilityModule public playerModule;
-    CharacterHatEligibilityModule public characterModule;
+    AddressHatsEligibilityModule public adminModule;
+    AddressHatsEligibilityModule public dmModule;
+    ERC721HatsEligibilityModule public playerModule;
+    ERC6551HatsEligibilityModule public characterModule;
+    ElderEligibilityModule public elderModule;
 
     address public topHatWearer = address(1);
     address public adminHatWearer = address(2);
@@ -65,10 +68,10 @@ contract HatsEligibilityModulesTest is SetUp {
 
         newAdaptor.initialize(topHatWearer, encodedHatsAddresses, encodedHatsStrings, customModuleAddresses);
 
-        adminModule = AdminHatEligibilityModule(newAdaptor.adminHatEligibilityModule());
-        dmModule = GameMasterHatEligibilityModule(newAdaptor.gameMasterHatEligibilityModule());
-        characterModule = CharacterHatEligibilityModule(newAdaptor.characterHatEligibilityModule());
-        playerModule = PlayerHatEligibilityModule(newAdaptor.playerHatEligibilityModule());
+        adminModule = AddressHatsEligibilityModule(newAdaptor.adminHatEligibilityModule());
+        dmModule = AddressHatsEligibilityModule(newAdaptor.gameMasterHatEligibilityModule());
+        characterModule = ERC6551HatsEligibilityModule(newAdaptor.characterHatEligibilityModule());
+        playerModule = ERC721HatsEligibilityModule(newAdaptor.playerHatEligibilityModule());
 
         vm.prank(accounts.admin);
         deployments.clones.updateHatsAdaptor(address(newAdaptor));
@@ -177,5 +180,128 @@ contract HatsEligibilityModulesTest is SetUp {
         dmModule.removeEligibleAddresses(testAdmins);
 
         assertEq(newAdaptor.isGameMaster(adminHatWearer), false, "admin hat not removed");
+    }
+
+    function testElderEligibilityModule() public {
+        // deploy elder hat
+        address elderModuleImplementation = address(new ElderEligibilityModule("V1"));
+
+        uint256[] memory tokenIds = new uint256[](2);
+        tokenIds[1] = 1;
+
+        uint256[] memory balances = new uint256[](2);
+        balances[0] = 2;
+        balances[1] = 3;
+
+        bytes memory immutableArgs =
+            abi.encodePacked(address(deployments.classes), address(deployments.characterSheets));
+
+        bytes memory initData = abi.encode(tokenIds, balances);
+
+        uint256 elderModId = hatsContracts.hats.getNextId(deployments.hatsAdaptor.getHatsData().gameMasterHatId);
+        address elderModAddress = hatsContracts.hatsModuleFactory.createHatsModule(
+            elderModuleImplementation, elderModId, immutableArgs, initData
+        );
+
+        vm.startPrank(accounts.admin);
+        ElderEligibilityModule elderMod = ElderEligibilityModule(elderModAddress);
+        uint256 elderHat = hatsContracts.hats.createHat(
+            deployments.hatsAdaptor.getHatsData().gameMasterHatId,
+            "elder Hat",
+            100,
+            elderModAddress,
+            accounts.admin,
+            true,
+            "test_hats_uri"
+        );
+        vm.stopPrank();
+        assertEq(elderHat, elderModId, "wrong elder hat Id");
+        assertEq(elderMod.classIds(1), 1, "incorrect classes id init");
+        assertEq(elderMod.minLevels(0), 2, "incorrect min level init");
+
+        // assign classes to potential elder
+        vm.startPrank(accounts.gameMaster);
+        deployments.classes.assignClass(accounts.character1, 0);
+        deployments.classes.assignClass(accounts.character1, 1);
+
+        assertEq(deployments.classes.balanceOf(accounts.character1, 0), 1);
+        assertEq(deployments.classes.balanceOf(accounts.character1, 1), 1);
+        // should revert because class is too low level
+        vm.stopPrank();
+
+        vm.prank(accounts.admin);
+        vm.expectRevert();
+        hatsContracts.hats.mintHat(elderHat, accounts.player1);
+
+        //level class 2
+        vm.startPrank(accounts.gameMaster);
+        deployments.experience.dropExp(accounts.character1, 2000);
+        deployments.classes.levelClass(accounts.character1, 1);
+        deployments.classes.levelClass(accounts.character1, 1);
+        vm.stopPrank();
+
+        // mint hat to elder
+        vm.prank(accounts.gameMaster);
+        hatsContracts.hats.mintHat(elderHat, accounts.player1);
+
+        assertTrue(hatsContracts.hats.isWearerOfHat(accounts.player1, elderHat));
+    }
+
+    function testAddClassToElderModule() public {
+        // deploy elder hat
+        address elderModuleImplementation = address(new ElderEligibilityModule("V1"));
+
+        uint256[] memory tokenIds = new uint256[](2);
+        tokenIds[1] = 1;
+
+        uint256[] memory balances = new uint256[](2);
+        balances[0] = 2;
+        balances[1] = 3;
+        bytes memory immutableArgs =
+            abi.encodePacked(address(deployments.classes), address(deployments.characterSheets));
+
+        bytes memory initData = abi.encode(tokenIds, balances);
+
+        uint256 elderModId = hatsContracts.hats.getNextId(deployments.hatsAdaptor.getHatsData().gameMasterHatId);
+        address elderModAddress = hatsContracts.hatsModuleFactory.createHatsModule(
+            elderModuleImplementation, elderModId, immutableArgs, initData
+        );
+
+        vm.startPrank(accounts.admin);
+        ElderEligibilityModule elderMod = ElderEligibilityModule(elderModAddress);
+        uint256 elderHat = hatsContracts.hats.createHat(
+            deployments.hatsAdaptor.getHatsData().gameMasterHatId,
+            "elder Hat",
+            100,
+            elderModAddress,
+            accounts.admin,
+            true,
+            "test_hats_uri"
+        );
+        vm.stopPrank();
+        assertEq(elderHat, elderModId, "wrong elder hat Id");
+        assertEq(elderMod.classIds(1), 1, "incorrect classes id init");
+        assertEq(elderMod.minLevels(0), 2, "incorrec min level init");
+
+        vm.startPrank(accounts.gameMaster);
+        uint256[] memory newClasses = new uint256[](2);
+        uint256[] memory newMinLevels = new uint256[](2);
+
+        uint256 newClass1 = deployments.classes.createClassType(createNewClass(true));
+        uint256 newClass2 = deployments.classes.createClassType(createNewClass(true));
+
+        newClasses[0] = newClass1;
+        newClasses[1] = newClass2;
+        newMinLevels[0] = 1;
+        newMinLevels[1] = 2;
+
+        //add class to elder module
+
+        elderMod.addClasses(newClasses, newMinLevels);
+
+        assertEq(elderMod.classIds(2), newClass1, "incorrect class added");
+        assertEq(elderMod.classIds(3), newClass2, "incorrect class 2 added");
+        assertEq(elderMod.minLevels(2), 1, "incorrect level added");
+        assertEq(elderMod.minLevels(3), 2, "incorrect level 2 added");
     }
 }
