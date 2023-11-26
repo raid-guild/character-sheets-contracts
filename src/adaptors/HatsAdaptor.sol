@@ -8,12 +8,15 @@ import {IHats} from "hats-protocol/Interfaces/IHats.sol";
 import {ERC1155HolderUpgradeable} from
     "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import {IHatsEligibility} from "hats-protocol/Interfaces/IHatsEligibility.sol";
+import {IAddressEligibilityModule} from "../interfaces/IAddressEligibilityModule.sol";
 import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
 import {ImplementationAddressStorage} from "../ImplementationAddressStorage.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 
 import {Errors} from "../lib/Errors.sol";
 import {HatsData} from "../lib/Structs.sol";
+
+import "forge-std/console2.sol";
 
 /**
  * @title Hats Adaptor
@@ -66,6 +69,13 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     event CharacterHatEligibilityModuleUpdated(address newCharacterHatEligibilityModule);
     event AdminEligibilityModuleUpdated(address newAdminEligibilityModule);
     event HatTreeInitialized(address owner, bytes hatsAddresses, bytes hatsStrings, bytes customModuleImplementations);
+
+    modifier onlyAdmin() {
+        if (!_hats.isWearerOfHat(msg.sender, _hatsData.adminHatId)) {
+            revert Errors.AdminOnly();
+        }
+        _;
+    }
 
     constructor() {
         _disableInitializers();
@@ -180,6 +190,14 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         emit HatsUpdated(newHats);
     }
 
+    function addGameMasters(address[] calldata newGameMasters) external onlyAdmin {
+        IAddressEligibilityModule(gameMasterHatEligibilityModule).addEligibleAddresses(newGameMasters);
+        //check eligibility module for emitted event
+        for (uint256 i = 0; i < newGameMasters.length; i++) {
+            _ifNotHatMint(newGameMasters[i], _hatsData.gameMasterHatId);
+        }
+    }
+
     function mintPlayerHat(address wearer) external returns (bool) {
         if (_hatsData.playerHatId == uint256(0)) {
             revert Errors.VariableNotSet();
@@ -243,6 +261,12 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
             revert Errors.VariableNotSet();
         }
         return _hats.balanceOf(wearer, _hatsData.gameMasterHatId) > 0;
+    }
+
+    function _ifNotHatMint(address wearer, uint256 hatId) internal {
+        if (!_hats.isWearerOfHat(wearer, hatId)) {
+            _hats.mintHat(hatId, wearer);
+        }
     }
 
     //solhint-disable-next-line no-empty-blocks
