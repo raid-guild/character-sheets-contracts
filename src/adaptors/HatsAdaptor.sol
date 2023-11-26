@@ -16,8 +16,6 @@ import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 import {Errors} from "../lib/Errors.sol";
 import {HatsData} from "../lib/Structs.sol";
 
-import "forge-std/console2.sol";
-
 /**
  * @title Hats Adaptor
  * @author MrDeadCe11
