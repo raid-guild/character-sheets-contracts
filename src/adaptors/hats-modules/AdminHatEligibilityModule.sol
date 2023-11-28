@@ -11,7 +11,7 @@ import {HatsEligibilityModule, HatsModule} from "hats-module/HatsEligibilityModu
  * this is set so the admin will be the Top Hat and all admins will be set be that top hat.  Ideally this will be A guild or multisig.
  */
 
-contract AddressHatsEligibilityModule is HatsEligibilityModule {
+contract AdminHatEligibilityModule is HatsEligibilityModule {
     /*//////////////////////////////////////////////////////////////
                             CUSTOM ERRORS
     //////////////////////////////////////////////////////////////*/

@@ -66,9 +66,3 @@ once new contracts are deployed you can...
 ```sh
 make execute network=<sepolia/gnosis>
 ```
-
-Pumpedlunch's Hats Module addresses: from https://github.com/pumpedlunch/HatsEligibilityModules/releases
-
-- Gnosis
-- AddressHatsEligiblityModule: 0x9AaF0df5657b634131784523F4F5e83459c61986
-- ERC721HatsEligibilityModule: 0x6bAa65D3E024D8ebA717085691dd8A985e9F267E
