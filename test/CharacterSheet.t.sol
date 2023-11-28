@@ -423,5 +423,30 @@ contract CharacterSheetsTest is SetUp {
             accounts.rando,
             "Incorrect player address"
         );
+
+        //transfer character back to original owner
+
+        vm.prank(accounts.rando);
+        deployments.characterSheets.approve(accounts.gameMaster, 0);
+
+        vm.prank(accounts.gameMaster);
+        deployments.characterSheets.safeTransferFrom(accounts.rando, accounts.player1, 0);
+    }
+
+    function testSafeTransferFromBackAndForth() public {
+        vm.prank(accounts.player1);
+        deployments.characterSheets.approve(accounts.gameMaster, 0);
+
+        vm.prank(accounts.gameMaster);
+        deployments.characterSheets.safeTransferFrom(accounts.player1, accounts.rando, 0);
+
+        assertEq(deployments.characterSheets.balanceOf(accounts.player1), 0, "Incorrect balance");
+        assertEq(deployments.hatsAdaptor.isPlayer(accounts.player1), false, "player 1 is a player");
+        assertEq(deployments.hatsAdaptor.isCharacter(accounts.character1), true, "char 1 is not a character");
+
+        vm.prank(accounts.rando);
+        deployments.characterSheets.approve(accounts.gameMaster, 0);
+        vm.prank(accounts.gameMaster);
+        deployments.characterSheets.safeTransferFrom(accounts.rando, accounts.player1, 0, "");
     }
 }
