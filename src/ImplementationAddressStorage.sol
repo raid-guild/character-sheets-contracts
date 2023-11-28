@@ -23,18 +23,14 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
     event MolochV2EligibilityAdaptorUpdated(address newAdaptor);
     event MolochV3EligibilityAdaptorUpdated(address newAdaptor);
     event ClassLevelAdaptorUpdated(address newAdaptor);
-
+    event HatsAdaptorUpdated(address newHatsAdaptor);
     event ItemsManagerUpdated(address newItemsManager);
-
-    //hats events
     event HatsContractUpdated(address newHatsContract);
     event HatsModuleFactoryUpdated(address newHatsModule);
-    event HatsAdaptorUpdated(address newHatsAdaptor);
-
-    event AddressHatsEligibilityModuleUpdated(address newAddressModule);
-    event ERC721HatsEligibilityModuleUpdated(address newERC721Module);
-    event ERC6551HatsEligibilityModuleUpdated(address newERC6551Module);
-
+    event AdminHatsEligibilityModuleUpdated(address newAdminModule);
+    event GameMasterHatsEligibilityModuleUpdated(address newGameMasterModule);
+    event PlayerHatsEligibilityModuleUpdated(address newPlayerModule);
+    event CharacterHatsEligibilityModuleUpdated(address newCharacterModule);
     event CloneAddressStorageUpdated(address newCloneAddressStorage);
 
     function initialize(
@@ -124,22 +120,28 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         emit HatsModuleFactoryUpdated(newHatsModuleFactory);
     }
 
-    function updateAddressHatsEligibilityModule(address newAddressHatsEligibilityModule) external onlyOwner {
-        _implementationsAddresses.addressHatsEligibilityModule = newAddressHatsEligibilityModule;
+    function updateAdminHatsEligibilityModule(address newAdminHatsEligibilityModule) external onlyOwner {
+        _implementationsAddresses.adminHatsEligibilityModule = newAdminHatsEligibilityModule;
 
-        emit AddressHatsEligibilityModuleUpdated(newAddressHatsEligibilityModule);
+        emit AdminHatsEligibilityModuleUpdated(newAdminHatsEligibilityModule);
     }
 
-    function updateERC721HatsEligibilityModule(address newERC721HatsEligibilityModule) external onlyOwner {
-        _implementationsAddresses.erc721HatsEligibilityModule = newERC721HatsEligibilityModule;
+    function updateGameMasterHatsEligibilityModule(address newGameMasterHatsEligibilityModule) external onlyOwner {
+        _implementationsAddresses.gameMasterHatsEligibilityModule = newGameMasterHatsEligibilityModule;
 
-        emit ERC721HatsEligibilityModuleUpdated(newERC721HatsEligibilityModule);
+        emit GameMasterHatsEligibilityModuleUpdated(newGameMasterHatsEligibilityModule);
     }
 
-    function updateERC6551HatsEligibilityModule(address newERC6551HatsEligibilityModule) external onlyOwner {
-        _implementationsAddresses.erc6551HatsEligibilityModule = newERC6551HatsEligibilityModule;
+    function updatePlayerHatsEligibilityModule(address newPlayerHatsEligibilityModule) external onlyOwner {
+        _implementationsAddresses.playerHatsEligibilityModule = newPlayerHatsEligibilityModule;
 
-        emit ERC6551HatsEligibilityModuleUpdated(newERC6551HatsEligibilityModule);
+        emit PlayerHatsEligibilityModuleUpdated(newPlayerHatsEligibilityModule);
+    }
+
+    function updateCharacterHatsEligibilityModule(address newCharacterHatsEligibilityModule) external onlyOwner {
+        _implementationsAddresses.characterHatsEligibilityModule = newCharacterHatsEligibilityModule;
+
+        emit CharacterHatsEligibilityModuleUpdated(newCharacterHatsEligibilityModule);
     }
 
     function updateCloneAddressStorage(address newCloneAddressStorage) external onlyOwner {
@@ -204,16 +206,20 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         return _implementationsAddresses.hatsModuleFactory;
     }
 
-    function addressHatsEligibilityModule() public view returns (address) {
-        return _implementationsAddresses.addressHatsEligibilityModule;
+    function adminHatsEligibilityModule() public view returns (address) {
+        return _implementationsAddresses.adminHatsEligibilityModule;
     }
 
-    function erc721HatsEligibilityModule() public view returns (address) {
-        return _implementationsAddresses.erc721HatsEligibilityModule;
+    function gameMasterHatsEligibilityModule() public view returns (address) {
+        return _implementationsAddresses.gameMasterHatsEligibilityModule;
     }
 
-    function erc6551HatsEligibilityModule() public view returns (address) {
-        return _implementationsAddresses.erc6551HatsEligibilityModule;
+    function playerHatsEligibilityModule() public view returns (address) {
+        return _implementationsAddresses.playerHatsEligibilityModule;
+    }
+
+    function characterHatsEligibilityModule() public view returns (address) {
+        return _implementationsAddresses.characterHatsEligibilityModule;
     }
 
     function _initImplementations(bytes calldata encodedImplementationAddresses) internal {
@@ -230,10 +236,11 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
 
     function _initModules(bytes calldata encodedModuleAddresses) internal {
         (
-            _implementationsAddresses.addressHatsEligibilityModule,
-            _implementationsAddresses.erc721HatsEligibilityModule,
-            _implementationsAddresses.erc6551HatsEligibilityModule
-        ) = abi.decode(encodedModuleAddresses, (address, address, address));
+            _implementationsAddresses.adminHatsEligibilityModule,
+            _implementationsAddresses.gameMasterHatsEligibilityModule,
+            _implementationsAddresses.playerHatsEligibilityModule,
+            _implementationsAddresses.characterHatsEligibilityModule
+        ) = abi.decode(encodedModuleAddresses, (address, address, address, address));
     }
 
     function _initAdaptors(bytes calldata encodedAdaptorAddresses) internal {

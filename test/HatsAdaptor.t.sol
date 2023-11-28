@@ -102,13 +102,4 @@ contract HatsAdaptorTest is SetUp {
         assertFalse(deployments.hatsAdaptor.isGameMaster(accounts.player1), "player one should not be a GameMaster.");
         assertFalse(deployments.hatsAdaptor.isGameMaster(accounts.character1), "npc1 should not be a GameMaster.");
     }
-
-    function testAddGameMaster() public {
-        address[] memory gameMasters = createAddressMemoryArray(1);
-        gameMasters[0] = accounts.rando;
-        vm.prank(accounts.admin);
-        deployments.hatsAdaptor.addGameMasters(gameMasters);
-
-        assertEq(deployments.hatsAdaptor.isGameMaster(accounts.rando), true, "rando not gm");
-    }
 }

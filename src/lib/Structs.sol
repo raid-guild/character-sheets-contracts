@@ -91,9 +91,10 @@ struct ImplementationAddresses {
     address hatsContract;
     address hatsModuleFactory;
     //eligibility modules
-    address addressHatsEligibilityModule;
-    address erc721HatsEligibilityModule;
-    address erc6551HatsEligibilityModule;
+    address adminHatsEligibilityModule;
+    address gameMasterHatsEligibilityModule;
+    address playerHatsEligibilityModule;
+    address characterHatsEligibilityModule;
 }
 
 struct AdaptorImplementations {
