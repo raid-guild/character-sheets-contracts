@@ -11,7 +11,7 @@
     "CharacterEligibilityAdaptor": "",
     "ClassLevelAdaptor": "0x8aBcdc5B54f8F85eAB5eE21EF4123a78dEd24E6a",
     "HatsAdaptor": "0xBe7A3fcE59A44F9a025352F2e0f6e7a97e4b83a9",
-    "ElderEligibilityModule": "0xccac6713F2647E8Df9c5F56F3607543093D22828",
+    "CharacterSheetsLevelEligibility": "0xccac6713F2647E8Df9c5F56F3607543093D22828",
     "AddressHatsEligibilityModule": "0x9AaF0df5657b634131784523F4F5e83459c61986",
     "ERC721HatsEligibilityModule": "0x6bAa65D3E024D8ebA717085691dd8A985e9F267E",
     "ERC6551HatsEligibilityModule": "0x36C55610d6043703bF7Ae29a8aa5768FC4772738",
@@ -47,7 +47,7 @@
     "ClassLevelAdaptor": "0x1F4Bf13C531f4875fb5d2859dCD88591b8d471f1",
     "HatsAdaptor": "0x163920D269760feB9eD161601648832d963e4143",
     "AddressHatsEligibilityModule": "0x9AaF0df5657b634131784523F4F5e83459c61986",
-    "ElderEligibilityModule": "",
+    "CharacterSheetsLevelEligibility": "",
     "ERC721HatsEligibilityModule": "0x6bAa65D3E024D8ebA717085691dd8A985e9F267E",
     "ERC6551HatsEligibilityModule": "0xa25B005B82209B2D2dC6E86006ae75649b1dAb5b",
     "ClonesAddressStorageImplementation": "0xfFE77f170cEFcC2248e6697c32ef665FcF685E14"
@@ -66,7 +66,7 @@
     "AddressHatsEligibilityModule": "",
     "ERC721HatsEligibilityModule": "",
     "ERC6551HatsEligibilityModule": "",
-    "ElderEligibilityModule": "",
+    "CharacterSheetsLevelEligibility": "",
     "ExperienceImplementation": "",
     "ItemsManagerImplementation": "",
     "ClonesAddressStorage": "",
@@ -97,7 +97,7 @@
     "ImplementationAddressStorage": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
     "CharacterSheetsFactory": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
     "AddressHatsEligibilityModule": "0x9AaF0df5657b634131784523F4F5e83459c61986",
-    "ElderEligibilityModule": "",
+    "CharacterSheetsLevelEligibility": "",
     "ERC721HatsEligibilityModule": "0x6bAa65D3E024D8ebA717085691dd8A985e9F267E",
     "ERC6551HatsEligibilityModule": ""
   }

@@ -54,7 +54,7 @@ MolochV2EligibilityAdaptor \
 MolochV3EligibilityAdaptor \
 ClassLevelAdaptor \
 HatsAdaptor \
-ElderEligibilityModule \
+CharacterSheetsLevelEligibility \
 ERC6551HatsEligibilityModule \
 ClonesAddressStorageImplementation \
 ImplementationAddressStorage \

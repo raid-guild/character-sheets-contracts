@@ -14,7 +14,7 @@ import {ICharacterSheets} from "../../interfaces/ICharacterSheets.sol";
  * of class Levels of any particular class tokenId
  */
 
-contract ElderEligibilityModule is HatsEligibilityModule {
+contract CharacterSheetsLevelEligibility is HatsEligibilityModule {
     event ElderEligibilityDeployed(address);
     event ClassesAdded(uint256[], uint256[]);
 
