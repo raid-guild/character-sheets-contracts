@@ -18,7 +18,8 @@ import {Hats} from "hats-protocol/Hats.sol";
 import {AddressHatsEligibilityModule} from "../src/mocks/AddressHatsEligibilityModule.sol";
 import {ERC721HatsEligibilityModule} from "../src/mocks/ERC721HatsEligibilityModule.sol";
 import {ERC6551HatsEligibilityModule} from "../src/adaptors/hats-modules/ERC6551HatsEligibilityModule.sol";
-import {CharacterSheetsLevelEligibility} from "../src/adaptors/hats-modules/CharacterSheetsLevelEligibility.sol";
+import {CharacterSheetsLevelEligibilityModule} from
+    "../src/adaptors/hats-modules/CharacterSheetsLevelEligibilityModule.sol";
 
 contract HatsEligibilityModulesTest is SetUp {
     HatsAdaptor public newAdaptor;
@@ -26,7 +27,7 @@ contract HatsEligibilityModulesTest is SetUp {
     AddressHatsEligibilityModule public dmModule;
     ERC721HatsEligibilityModule public playerModule;
     ERC6551HatsEligibilityModule public characterModule;
-    CharacterSheetsLevelEligibility public elderModule;
+    CharacterSheetsLevelEligibilityModule public elderModule;
 
     address public topHatWearer = address(1);
     address public adminHatWearer = address(2);
@@ -182,9 +183,9 @@ contract HatsEligibilityModulesTest is SetUp {
         assertEq(newAdaptor.isGameMaster(adminHatWearer), false, "admin hat not removed");
     }
 
-    function testCharacterSheetsLevelEligibility() public {
+    function testCharacterSheetsLevelEligibilityModule() public {
         // deploy elder hat
-        address elderModuleImplementation = address(new CharacterSheetsLevelEligibility("V1"));
+        address elderModuleImplementation = address(new CharacterSheetsLevelEligibilityModule("V1"));
 
         uint256[] memory tokenIds = new uint256[](2);
         tokenIds[1] = 1;
@@ -204,7 +205,7 @@ contract HatsEligibilityModulesTest is SetUp {
         );
 
         vm.startPrank(accounts.admin);
-        CharacterSheetsLevelEligibility elderMod = CharacterSheetsLevelEligibility(elderModAddress);
+        CharacterSheetsLevelEligibilityModule elderMod = CharacterSheetsLevelEligibilityModule(elderModAddress);
         uint256 elderHat = hatsContracts.hats.createHat(
             deployments.hatsAdaptor.getHatsData().gameMasterHatId,
             "elder Hat",
@@ -249,7 +250,7 @@ contract HatsEligibilityModulesTest is SetUp {
 
     function testAddClassToElderModule() public {
         // deploy elder hat
-        address elderModuleImplementation = address(new CharacterSheetsLevelEligibility("V1"));
+        address elderModuleImplementation = address(new CharacterSheetsLevelEligibilityModule("V1"));
 
         uint256[] memory tokenIds = new uint256[](2);
         tokenIds[1] = 1;
@@ -268,7 +269,7 @@ contract HatsEligibilityModulesTest is SetUp {
         );
 
         vm.startPrank(accounts.admin);
-        CharacterSheetsLevelEligibility elderMod = CharacterSheetsLevelEligibility(elderModAddress);
+        CharacterSheetsLevelEligibilityModule elderMod = CharacterSheetsLevelEligibilityModule(elderModAddress);
         uint256 elderHat = hatsContracts.hats.createHat(
             deployments.hatsAdaptor.getHatsData().gameMasterHatId,
             "elder Hat",
