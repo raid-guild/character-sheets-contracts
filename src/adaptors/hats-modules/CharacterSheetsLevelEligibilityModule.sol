@@ -142,6 +142,10 @@ contract CharacterSheetsLevelEligibilityModule is HatsEligibilityModule {
         standing = true;
     }
 
+    function arrayLength() public view returns (uint256) {
+        return classIds.length;
+    }
+
     /*//////////////////////////////////////////////////////////////
                         INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
