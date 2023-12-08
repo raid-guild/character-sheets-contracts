@@ -103,11 +103,6 @@ contract CharacterSheetsLevelEligibilityModule is HatsEligibilityModule {
     function SHEETS_ADDRESS() public pure returns (address) {
         return _getArgAddress(92);
     }
-    /// The length of the TOKEN_IDS & MIN_BALANCES arrays - these MUST be equal.
-
-    function ARRAY_LENGTH() public pure returns (uint256) {
-        return _getArgUint256(112);
-    }
 
     /*//////////////////////////////////////////////////////////////
                             CONSTRUCTOR
