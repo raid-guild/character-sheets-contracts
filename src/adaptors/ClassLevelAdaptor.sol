@@ -99,7 +99,7 @@ contract ClassLevelAdaptor is ERC165, Initializable, UUPSUpgradeable {
     }
 
     function getExperienceForNextLevel(uint256 currentLevel) public view returns (uint256) {
-        if (currentLevel >= MAX_LEVEL) {
+        if (currentLevel >= MAX_LEVEL || currentLevel == 0) {
             revert Errors.InvalidClassLevel();
         }
         return _experiencePoints[currentLevel] - getLockedExperience(currentLevel);

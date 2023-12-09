@@ -47,7 +47,7 @@
     "ClassLevelAdaptor": "0x1F4Bf13C531f4875fb5d2859dCD88591b8d471f1",
     "HatsAdaptor": "0x163920D269760feB9eD161601648832d963e4143",
     "AddressHatsEligibilityModule": "0x9AaF0df5657b634131784523F4F5e83459c61986",
-    "CharacterSheetsLevelEligibilityModule": "",
+    "CharacterSheetsLevelEligibilityModule": "0x6f52b30a4730C5Cb765E7c762249dc4Ae02fB8eD",
     "ERC721HatsEligibilityModule": "0x6bAa65D3E024D8ebA717085691dd8A985e9F267E",
     "ERC6551HatsEligibilityModule": "0xa25B005B82209B2D2dC6E86006ae75649b1dAb5b",
     "ClonesAddressStorageImplementation": "0xfFE77f170cEFcC2248e6697c32ef665FcF685E14"

@@ -248,6 +248,61 @@ contract HatsEligibilityModulesTest is SetUp {
         assertTrue(hatsContracts.hats.isWearerOfHat(accounts.player1, elderHat));
     }
 
+    function testElderModuleNoCharacter() public {
+        // deploy elder hat
+        address elderModuleImplementation = address(new CharacterSheetsLevelEligibilityModule("V1"));
+        uint256[] memory tokenIds = new uint256[](2);
+        tokenIds[1] = 1;
+
+        uint256[] memory balances = new uint256[](2);
+        balances[0] = 2;
+        balances[1] = 3;
+        bytes memory immutableArgs =
+            abi.encodePacked(address(deployments.classes), address(deployments.characterSheets));
+
+        bytes memory initData = abi.encode(tokenIds, balances);
+
+        uint256 elderModId = hatsContracts.hats.getNextId(deployments.hatsAdaptor.getHatsData().gameMasterHatId);
+        address elderModAddress = hatsContracts.hatsModuleFactory.createHatsModule(
+            elderModuleImplementation, elderModId, immutableArgs, initData
+        );
+
+        vm.startPrank(accounts.admin);
+        CharacterSheetsLevelEligibilityModule elderMod = CharacterSheetsLevelEligibilityModule(elderModAddress);
+        uint256 elderHat = hatsContracts.hats.createHat(
+            deployments.hatsAdaptor.getHatsData().gameMasterHatId,
+            "elder Hat",
+            100,
+            elderModAddress,
+            accounts.admin,
+            true,
+            "test_hats_uri"
+        );
+        vm.stopPrank();
+        assertEq(elderHat, elderModId, "wrong elder hat Id");
+        assertEq(elderMod.classIds(1), 1, "incorrect classes id init");
+        assertEq(elderMod.minLevels(0), 2, "incorrec min level init");
+
+        vm.startPrank(accounts.gameMaster);
+        uint256[] memory newClasses = new uint256[](2);
+        uint256[] memory newMinLevels = new uint256[](2);
+
+        uint256 newClass1 = deployments.classes.createClassType(createNewClass(true));
+        uint256 newClass2 = deployments.classes.createClassType(createNewClass(true));
+
+        newClasses[0] = newClass1;
+        newClasses[1] = newClass2;
+        newMinLevels[0] = 1;
+        newMinLevels[1] = 2;
+
+        //add class to elder module
+
+        elderMod.addClasses(newClasses, newMinLevels);
+
+        vm.startPrank(accounts.rando);
+        elderMod.getWearerStatus(accounts.rando, elderHat);
+    }
+
     function testAddClassToElderModule() public {
         // deploy elder hat
         address elderModuleImplementation = address(new CharacterSheetsLevelEligibilityModule("V1"));

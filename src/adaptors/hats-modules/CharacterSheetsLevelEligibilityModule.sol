@@ -127,7 +127,9 @@ contract CharacterSheetsLevelEligibilityModule is HatsEligibilityModule {
     {
         uint256 len = minLevels.length;
         IERC1155 token = IERC1155(CLASSES_ADDRESS());
-
+        if (ICharacterSheets(SHEETS_ADDRESS()).balanceOf(_wearer) == 0) {
+            return (standing = false, eligible = false);
+        }
         uint256 characterId = ICharacterSheets(SHEETS_ADDRESS()).getCharacterIdByPlayerAddress(_wearer);
         address character =
             ICharacterSheets(SHEETS_ADDRESS()).getCharacterSheetByCharacterId(characterId).accountAddress;

@@ -49,4 +49,6 @@ interface ICharacterSheets {
     function tokenURI(uint256 characterId) external view returns (string memory);
 
     function supportsInterface(bytes4 interfaceId) external view returns (bool);
+
+    function balanceOf(address) external view returns (uint256);
 }
