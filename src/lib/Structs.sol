@@ -72,9 +72,9 @@ struct HatsData {
     /// @dev the uint256 id of the gameMaster hat
     uint256 gameMasterHatId;
     /// @dev the uint256 hat id of the player hat
-    uint256 playerHatId;
+    uint256[] playerHatIds;
     /// @dev the uint256 hat id of the character hat
-    uint256 characterHatId;
+    uint256[] characterHatIds;
 }
 
 struct ImplementationAddresses {

@@ -6,7 +6,7 @@ import "forge-std/Test.sol";
 
 import "../src/lib/Structs.sol";
 import {Errors} from "../src/lib/Errors.sol";
-import {SetUp} from "./setup/SetUp.sol";
+import {SetUp, ClonesAddressStorageImplementation, HatsAdaptor, HatsData} from "./setup/SetUp.sol";
 import {HatsErrors} from "hats-protocol/Interfaces/HatsErrors.sol";
 
 contract HatsAdaptorTest is SetUp {
@@ -29,12 +29,12 @@ contract HatsAdaptorTest is SetUp {
             "incorrect game master admin"
         );
         assertEq(
-            hatsContracts.hats.isAdminOfHat(address(deployments.hatsAdaptor), _hatsData.playerHatId),
+            hatsContracts.hats.isAdminOfHat(address(deployments.hatsAdaptor), _hatsData.playerHatIds[0]),
             true,
             "incorrect player admin"
         );
         assertEq(
-            hatsContracts.hats.isAdminOfHat(address(deployments.hatsAdaptor), _hatsData.characterHatId),
+            hatsContracts.hats.isAdminOfHat(address(deployments.hatsAdaptor), _hatsData.characterHatIds[0]),
             true,
             "incorrect character admin"
         );
@@ -49,7 +49,7 @@ contract HatsAdaptorTest is SetUp {
         HatsData memory _hatsData = deployments.hatsAdaptor.getHatsData();
         //should revert if player is already wearing a hat
         vm.expectRevert(
-            abi.encodeWithSelector(HatsErrors.AlreadyWearingHat.selector, accounts.player1, _hatsData.playerHatId)
+            abi.encodeWithSelector(HatsErrors.AlreadyWearingHat.selector, accounts.player1, _hatsData.playerHatIds[0])
         );
         deployments.hatsAdaptor.mintPlayerHat(accounts.player1);
 
@@ -63,14 +63,18 @@ contract HatsAdaptorTest is SetUp {
         vm.prank(accounts.rando);
         deployments.characterSheets.rollCharacterSheet("rando_token_uri");
 
-        assertTrue(hatsContracts.hats.isWearerOfHat(accounts.rando, _hatsData.playerHatId), "not wearing player hat");
+        assertTrue(
+            hatsContracts.hats.isWearerOfHat(accounts.rando, _hatsData.playerHatIds[0]), "not wearing player hat"
+        );
     }
 
     function testMintCharacterHat() public {
         HatsData memory _hatsData = deployments.hatsAdaptor.getHatsData();
         //should revert if character is already wearing a character hat
         vm.expectRevert(
-            abi.encodeWithSelector(HatsErrors.AlreadyWearingHat.selector, accounts.character1, _hatsData.characterHatId)
+            abi.encodeWithSelector(
+                HatsErrors.AlreadyWearingHat.selector, accounts.character1, _hatsData.characterHatIds[0]
+            )
         );
         deployments.hatsAdaptor.mintCharacterHat(accounts.character1);
 
@@ -80,7 +84,8 @@ contract HatsAdaptorTest is SetUp {
 
         //should mint character hat when sheet is rolled
         assertTrue(
-            hatsContracts.hats.isWearerOfHat(accounts.character1, _hatsData.characterHatId), "not wearing character hat"
+            hatsContracts.hats.isWearerOfHat(accounts.character1, _hatsData.characterHatIds[0]),
+            "not wearing character hat"
         );
     }
 
@@ -110,5 +115,73 @@ contract HatsAdaptorTest is SetUp {
         deployments.hatsAdaptor.addGameMasters(gameMasters);
 
         assertEq(deployments.hatsAdaptor.isGameMaster(accounts.rando), true, "rando not gm");
+    }
+
+    function testAddNewGame() public {
+        bytes memory encodedHatsStrings = abi.encode(
+            "new_new_test_hats_base_img",
+            "new_test tophat description",
+            "new_test_admin_uri",
+            "new_test_admin_description",
+            "new_test_game_uri",
+            "new_test_game_description",
+            "new_test_player_uri",
+            "new_test_player_description",
+            "new_test_character_uri",
+            "new_test_character_description"
+        );
+
+        bytes memory encodedSheetsStrings = abi.encode(
+            "new_test_metadata_uri_character_sheets/",
+            "new_test_base_uri_character_sheets/",
+            "new_test_base_uri_items/",
+            "new_test_base_uri_classes/"
+        );
+
+        address[] memory adminArray = createAddressMemoryArray(1);
+        adminArray[0] = accounts.admin;
+
+        address[] memory gameMastersArray = createAddressMemoryArray(1);
+        gameMastersArray[0] = accounts.gameMaster;
+
+        vm.prank(accounts.player2);
+        address newClonesStorage = characterSheetsFactory.createAndInitialize(
+            address(dao), adminArray, gameMastersArray, encodedHatsStrings, encodedSheetsStrings
+        );
+
+        ClonesAddressStorageImplementation clones = ClonesAddressStorageImplementation(newClonesStorage);
+
+        HatsAdaptor newAdaptor = HatsAdaptor(clones.hatsAdaptor());
+
+        HatsData memory oldData = deployments.hatsAdaptor.getHatsData();
+
+        vm.prank(accounts.admin);
+        newAdaptor.addHatsIds(oldData.playerHatIds[0], oldData.characterHatIds[0]);
+
+        HatsData memory newData = newAdaptor.getHatsData();
+
+        assertEq(newData.playerHatIds.length, 2, "new player id not added");
+        assertEq(newData.characterHatIds.length, 2, "new character id not added");
+        assertEq(newAdaptor.isCharacter(accounts.character1), true, "old character not valid");
+        assertEq(newAdaptor.isPlayer(accounts.player1), true, "old player not valid");
+        assertEq(newAdaptor.isPlayer(accounts.rando), false, "rando is player?");
+    }
+
+    function testRemoveGameIds() public {
+        vm.prank(accounts.admin);
+        deployments.hatsAdaptor.addHatsIds(1, 1);
+
+        HatsData memory modifiedData = deployments.hatsAdaptor.getHatsData();
+
+        assertEq(modifiedData.playerHatIds.length, 2, "new player id not added");
+        assertEq(modifiedData.characterHatIds.length, 2, "new character id not added");
+
+        vm.prank(accounts.admin);
+        deployments.hatsAdaptor.removeHatsIds(1, 1);
+
+        modifiedData = deployments.hatsAdaptor.getHatsData();
+
+        assertEq(modifiedData.playerHatIds.length, 1, "new player id not removed");
+        assertEq(modifiedData.characterHatIds.length, 1, "new character id not removed");
     }
 }

@@ -451,7 +451,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         return _sheets[characterId];
     }
 
-    function getCharacterIdByAccountAddress(address _account) public view returns (uint256 id) {
+    function getCharacterIdByAccountAddress(address _account) public view returns (uint256) {
         return _characterSheets[_account];
     }
 
