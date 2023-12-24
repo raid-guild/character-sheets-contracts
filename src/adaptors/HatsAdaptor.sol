@@ -58,8 +58,8 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
 
     event AdminHatIdUpdated(uint256 newAdminHatId);
     event GameMasterHatIdUpdated(uint256 newGameMasterHatId);
-    event PlayerHatIdUpdated(uint256 newPlayerHatId);
-    event CharacterHatIdUpdated(uint256 newCharacterHatId);
+    event HatsIdsAdded(uint256 newPlayerHatId, uint256 newCharacterHatId);
+    event HatsIdsRemoved(uint256 newPlayerHatId, uint256 newCharacterHatId);
     event HatsUpdated(address newHats);
     event ImplementationAddressStorageUpdated(address newImplementations);
     event GameMasterHatEligibilityModuleUpdated(address newGameMasterHatEligibilityModule);
@@ -140,9 +140,65 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         emit GameMasterHatIdUpdated(newGameMasterHatId);
     }
 
-    function updatePlayerHatId(uint256 newPlayerHatId) external onlyOwner {
-        _hatsData.playerHatId = newPlayerHatId;
-        emit PlayerHatIdUpdated(newPlayerHatId);
+    /// @notice this function will add another hat ID to the list of valid player and character hats
+    ///  this will add interoperability with other games
+
+    function addHatsIds(uint256 newPlayerHatId, uint256 newCharacterHatId) external onlyAdmin {
+        _hatsData.playerHatIds.push(newPlayerHatId);
+        _hatsData.characterHatIds.push(newCharacterHatId);
+        emit HatsIdsAdded(newPlayerHatId, newCharacterHatId);
+    }
+
+    /// @notice doing this as one function instead of two because the player and character hats should always
+    /// be added and removed as pairs.
+
+    function removeHatsIds(uint256 playerHatToBeRemoved, uint256 characterHatToBeRemoved) external onlyAdmin {
+        uint256[] memory arr = _hatsData.playerHatIds;
+        uint256[] memory arr2 = _hatsData.characterHatIds;
+
+        bool success;
+        bool success2;
+        for (uint256 i = 0; i < arr.length; i++) {
+            if (arr[i] == playerHatToBeRemoved) {
+                for (uint256 j = i; j < arr.length; j++) {
+                    if (j + 1 < arr.length) {
+                        arr[j] = arr[j + 1];
+                    } else if (j + 1 >= arr.length) {
+                        arr[j] = 0;
+                    }
+                }
+
+                _hatsData.playerHatIds = arr;
+                _hatsData.playerHatIds.pop();
+
+                success = true;
+                break;
+            }
+        }
+
+        for (uint256 i = 0; i < arr2.length; i++) {
+            if (arr2[i] == characterHatToBeRemoved) {
+                for (uint256 j = i; j < arr2.length; j++) {
+                    if (j + 1 < arr2.length) {
+                        arr2[j] = arr2[j + 1];
+                    } else if (j + 1 >= arr2.length) {
+                        arr2[j] = 0;
+                    }
+                }
+
+                _hatsData.characterHatIds = arr2;
+                _hatsData.characterHatIds.pop();
+
+                success2 = true;
+                break;
+            }
+        }
+
+        if (success && success2) {
+            emit HatsIdsRemoved(playerHatToBeRemoved, characterHatToBeRemoved);
+        } else {
+            revert Errors.HatsIdsNotRemoved(playerHatToBeRemoved, characterHatToBeRemoved);
+        }
     }
 
     /// @notice the following update functions will use the base implementation addresses stored in the implementationAddressStorage contract.
@@ -197,7 +253,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     }
 
     function mintPlayerHat(address wearer) external returns (bool) {
-        if (_hatsData.playerHatId == uint256(0)) {
+        if (_hatsData.playerHatIds[0] == uint256(0)) {
             revert Errors.VariableNotSet();
         }
         (bool eligible,) = checkPlayerHatEligibility(wearer);
@@ -206,11 +262,11 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
             revert Errors.PlayerError();
         }
         // look for emitted event from hats contract
-        return _hats.mintHat(_hatsData.playerHatId, wearer);
+        return _hats.mintHat(_hatsData.playerHatIds[0], wearer);
     }
 
     function mintCharacterHat(address wearer) external returns (bool) {
-        if (_hatsData.characterHatId == uint256(0)) {
+        if (_hatsData.characterHatIds[0] == uint256(0)) {
             revert Errors.VariableNotSet();
         }
         (bool eligible,) = checkCharacterHatEligibility(wearer);
@@ -218,7 +274,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
             revert Errors.CharacterError();
         }
         // look for emitted event from hats contract
-        return _hats.mintHat(_hatsData.characterHatId, wearer);
+        return _hats.mintHat(_hatsData.characterHatIds[0], wearer);
     }
 
     function getHatsData() external view returns (HatsData memory) {
@@ -226,25 +282,44 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     }
 
     function checkCharacterHatEligibility(address account) public view returns (bool eligible, bool standing) {
-        return IHatsEligibility(characterHatEligibilityModule).getWearerStatus(account, _hatsData.characterHatId);
+        return IHatsEligibility(characterHatEligibilityModule).getWearerStatus(account, _hatsData.characterHatIds[0]);
     }
 
     function checkPlayerHatEligibility(address account) public view returns (bool eligible, bool standing) {
-        return IHatsEligibility(playerHatEligibilityModule).getWearerStatus(account, _hatsData.playerHatId);
+        return IHatsEligibility(playerHatEligibilityModule).getWearerStatus(account, _hatsData.playerHatIds[0]);
     }
 
     function isCharacter(address wearer) public view returns (bool) {
-        if (_hatsData.characterHatId == uint256(0)) {
+        if (_hatsData.characterHatIds[0] == uint256(0)) {
             revert Errors.VariableNotSet();
         }
-        return _hats.balanceOf(wearer, _hatsData.characterHatId) > 0;
+
+        uint256 balance;
+        for (uint256 i; i < _hatsData.characterHatIds.length;) {
+            balance = _hats.balanceOf(wearer, _hatsData.characterHatIds[i]);
+
+            if (balance > 0) break;
+            unchecked {
+                ++i;
+            }
+        }
+        return balance > 0;
     }
 
     function isPlayer(address wearer) public view returns (bool) {
-        if (_hatsData.playerHatId == uint256(0)) {
+        if (_hatsData.playerHatIds[0] == uint256(0)) {
             revert Errors.VariableNotSet();
         }
-        return _hats.balanceOf(wearer, _hatsData.playerHatId) > 0;
+        uint256 balance;
+        for (uint256 i; i < _hatsData.playerHatIds.length;) {
+            balance = _hats.balanceOf(wearer, _hatsData.playerHatIds[i]);
+
+            if (balance > 0) break;
+            unchecked {
+                ++i;
+            }
+        }
+        return balance > 0;
     }
 
     function isAdmin(address wearer) public view returns (bool) {
@@ -484,17 +559,19 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         playerHatEligibilityModule =
             _createPlayerHatEligibilityModule(playerHatId, clones.characterSheets(), customPlayerModule);
 
-        _hatsData.playerHatId = _hats.createHat(
-            _hatsData.gameMasterHatId,
-            playerDescription,
-            MAX_SUPPLY,
-            playerHatEligibilityModule,
-            _owner,
-            true,
-            playerUri
+        _hatsData.playerHatIds.push(
+            _hats.createHat(
+                _hatsData.gameMasterHatId,
+                playerDescription,
+                MAX_SUPPLY,
+                playerHatEligibilityModule,
+                _owner,
+                true,
+                playerUri
+            )
         );
 
-        assert(_hatsData.playerHatId == playerHatId);
+        assert(_hatsData.playerHatIds[0] == playerHatId);
 
         return playerHatId;
     }
@@ -511,17 +588,19 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
 
         characterHatEligibilityModule = _createCharacterHatEligibilityModule(characterHatId, customCharacterModule);
 
-        _hatsData.characterHatId = _hats.createHat(
-            _hatsData.gameMasterHatId,
-            characterDescription,
-            MAX_SUPPLY,
-            characterHatEligibilityModule,
-            _owner,
-            true,
-            characterUri
+        _hatsData.characterHatIds.push(
+            _hats.createHat(
+                _hatsData.gameMasterHatId,
+                characterDescription,
+                MAX_SUPPLY,
+                characterHatEligibilityModule,
+                _owner,
+                true,
+                characterUri
+            )
         );
 
-        assert(_hatsData.characterHatId == characterHatId);
+        assert(_hatsData.characterHatIds[0] == characterHatId);
 
         return characterHatId;
     }

@@ -23,6 +23,10 @@ interface IHatsAdaptor {
 
     function mintPlayerHat(address wearer) external returns (bool);
 
+    function addHatsIds(uint256 newPlayerHatId, uint256 newCharacterHatId) external;
+
+    function removeHatsIds(uint256 newPlayerHatId, uint256 newCharacterHatId) external;
+
     function checkCharacterHatEligibility(address account) external view returns (bool eligible, bool standing);
 
     function checkPlayerHatEligibility(address account) external view returns (bool eligible, bool standing);

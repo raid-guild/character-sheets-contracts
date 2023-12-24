@@ -87,8 +87,8 @@ contract HatsEligibilityModulesTest is SetUp {
         newTopHatId = newData.topHatId;
         newAdminHatId = newData.adminHatId;
         newGameMasterHatId = newData.gameMasterHatId;
-        newPlayerHatId = newData.playerHatId;
-        newCharacterHatId = newData.characterHatId;
+        newPlayerHatId = newData.playerHatIds[0];
+        newCharacterHatId = newData.characterHatIds[0];
     }
 
     function testNewModuleSetup() public {

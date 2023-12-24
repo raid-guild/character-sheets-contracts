@@ -45,4 +45,7 @@ abstract contract Errors {
     error UnsupportedInterface();
 
     error MustRefundFullReceiptAmount(uint256 amountRequired);
+
+    // Hats adaptor
+    error HatsIdsNotRemoved(uint256 playerHatId, uint256 characterHatId);
 }
