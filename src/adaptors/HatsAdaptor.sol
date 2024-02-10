@@ -16,6 +16,8 @@ import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 import {Errors} from "../lib/Errors.sol";
 import {HatsData} from "../lib/Structs.sol";
 
+import "forge-std/console2.sol";
+
 /**
  * @title Hats Adaptor
  * @author MrDeadCe11
@@ -62,7 +64,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     event ImplementationAddressStorageUpdated(address newImplementations);
     event GameMasterHatEligibilityModuleUpdated(address newGameMasterHatEligibilityModule);
     event PlayerHatEligibilityModuleUpdated(address newPlayerHatEligibilityModule);
-    event CharacterHatEligibilityModuleUpdated(address newCharacterHatEligibilityModule);
+    event CharacterHatEligibilityModuleAdded(ValidModule newCharacterHatEligibilityModule);
     event AdminEligibilityModuleUpdated(address newAdminEligibilityModule);
     event HatTreeInitialized(address owner, bytes hatsAddresses, bytes hatsStrings, bytes customModuleImplementations);
 
@@ -171,12 +173,15 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         emit PlayerHatEligibilityModuleUpdated(playerHatEligibilityModule);
     }
 
-    function updateCharacterHatEligibilityModule(uint256 characterHatId, address characterImplementation)
-        external
-        onlyOwner
-    {
-        characterHatEligibilityModule = _createCharacterHatEligibilityModule(characterHatId, characterImplementation);
-        emit CharacterHatEligibilityModuleUpdated(characterHatEligibilityModule);
+    function addNewGame(address characterSheet) external onlyAdmin {
+        //todo finish this function to add new game to multi-erc6551 module
+        // assert(_validModule.module != address(0));
+        // characterHatEligibilityModule.push(_validModule);
+        // emit CharacterHatEligibilityModuleAdded(_validModule);
+    }
+
+    function removeGame(uint256 moduleIndex) external onlyAdmin {
+        //removes module from mult-erc 6551 adaptor
     }
 
     function updateHats(address newHats) external onlyOwner {
@@ -499,22 +504,18 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         private
         returns (uint256 characterHatId)
     {
+        //todo update this to work with multi erc6551 modue
         (,,,,,,,, string memory characterUri, string memory characterDescription) =
             abi.decode(hatsStrings, (string, string, string, string, string, string, string, string, string, string));
         (,,, address customCharacterModule) =
             abi.decode(customModuleImplementations, (address, address, address, address));
+
         characterHatId = _hats.getNextId(_hatsData.gameMasterHatId);
 
         characterHatEligibilityModule = _createCharacterHatEligibilityModule(characterHatId, customCharacterModule);
 
         _hatsData.characterHatId = _hats.createHat(
-            _hatsData.gameMasterHatId,
-            characterDescription,
-            MAX_SUPPLY,
-            characterHatEligibilityModule,
-            _owner,
-            true,
-            characterUri
+            _hatsData.gameMasterHatId, characterDescription, MAX_SUPPLY, newModule, _owner, true, characterUri
         );
 
         assert(_hatsData.characterHatId == characterHatId);

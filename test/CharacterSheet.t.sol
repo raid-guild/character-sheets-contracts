@@ -3,11 +3,12 @@ pragma solidity ^0.8.19;
 pragma abicoder v2;
 
 import "forge-std/Test.sol";
-// import "forge-std/console2.sol";
+import "forge-std/console2.sol";
 
 import "./setup/SetUp.sol";
 
 import {IERC721Errors} from "openzeppelin-contracts/interfaces/draft-IERC6093.sol";
+import {ValidModule} from "../src/adaptors/HatsAdaptor.sol";
 
 contract CharacterSheetsTest is SetUp {
     event ItemsUpdated(address exp);
@@ -524,5 +525,57 @@ contract CharacterSheetsTest is SetUp {
         deployments.characterSheets.approve(accounts.gameMaster, 0);
         vm.prank(accounts.gameMaster);
         deployments.characterSheets.safeTransferFrom(accounts.rando, accounts.player1, 0, "");
+    }
+
+    function test_addExternalCharacter() public {
+        bytes memory encodedHatsStrings = abi.encode(
+            "new_new_test_hats_base_img",
+            "new_test tophat description",
+            "new_test_admin_uri",
+            "new_test_admin_description",
+            "new_test_game_uri",
+            "new_test_game_description",
+            "new_test_player_uri",
+            "new_test_player_description",
+            "new_test_character_uri",
+            "new_test_character_description"
+        );
+
+        bytes memory encodedSheetsStrings = abi.encode(
+            "new_test_metadata_uri_character_sheets/",
+            "new_test_base_uri_character_sheets/",
+            "new_test_base_uri_items/",
+            "new_test_base_uri_classes/"
+        );
+
+        address[] memory adminArray = createAddressMemoryArray(1);
+        adminArray[0] = accounts.admin;
+
+        address[] memory gameMastersArray = createAddressMemoryArray(1);
+        gameMastersArray[0] = accounts.gameMaster;
+
+        vm.prank(accounts.rando);
+        address newClonesStorage = characterSheetsFactory.createAndInitialize(
+            address(0), adminArray, gameMastersArray, encodedHatsStrings, encodedSheetsStrings
+        );
+        ClonesAddressStorageImplementation newClones = ClonesAddressStorageImplementation(newClonesStorage);
+        CharacterSheetsImplementation newSheets = CharacterSheetsImplementation(newClones.characterSheets());
+
+        vm.prank(accounts.rando);
+        uint256 newCharId = newSheets.rollCharacterSheet("new_test_uri");
+        address newCharAccount = newSheets.getCharacterSheetByCharacterId(newCharId).accountAddress;
+        console2.log("new char acc", newCharAccount);
+        mockShares.mint(accounts.rando, 100e18);
+        dao.addMember(accounts.rando);
+
+        ValidModule memory newModule = HatsAdaptor(newClones.hatsAdaptor()).getAllCharacterModules()[0];
+        console2.log("NEW HATID", newModule.hatId);
+        console2.log(newModule.module);
+        console2.log(newModule.implementation);
+        vm.prank(accounts.admin);
+        deployments.hatsAdaptor.addCharacterHatEligibilityModule(newModule);
+
+        vm.prank(accounts.gameMaster);
+        deployments.characterSheets.addExternalCharacter(accounts.rando, payable(newCharAccount), "2new_test_uri");
     }
 }

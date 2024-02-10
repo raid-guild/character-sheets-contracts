@@ -23,6 +23,7 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
     event MolochV2EligibilityAdaptorUpdated(address newAdaptor);
     event MolochV3EligibilityAdaptorUpdated(address newAdaptor);
     event ClassLevelAdaptorUpdated(address newAdaptor);
+    event MultiERC6551HatsEligibilityModuleUpdated(address newMultiERC6551HatsEligibilityModule);
 
     event ItemsManagerUpdated(address newItemsManager);
 
@@ -142,6 +143,12 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         emit ERC6551HatsEligibilityModuleUpdated(newERC6551HatsEligibilityModule);
     }
 
+    function updateMultiERC6551HatsEligibilityModule(address newMultiERC6551HatsEligibilityModule) external onlyOwner {
+        _implementationsAddresses.multiERC6551HatsEligibilityModule = newMultiERC6551HatsEligibilityModule;
+
+        emit MultiERC6551HatsEligibilityModuleUpdated(newMultiERC6551HatsEligibilityModule);
+    }
+
     function updateCloneAddressStorage(address newCloneAddressStorage) external onlyOwner {
         _implementationsAddresses.cloneAddressStorage = newCloneAddressStorage;
 
@@ -232,8 +239,9 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         (
             _implementationsAddresses.addressHatsEligibilityModule,
             _implementationsAddresses.erc721HatsEligibilityModule,
-            _implementationsAddresses.erc6551HatsEligibilityModule
-        ) = abi.decode(encodedModuleAddresses, (address, address, address));
+            _implementationsAddresses.erc6551HatsEligibilityModule,
+            _implementationsAddresses.multiERC6551HatsEligibilityModule
+        ) = abi.decode(encodedModuleAddresses, (address, address, address, address));
     }
 
     function _initAdaptors(bytes calldata encodedAdaptorAddresses) internal {

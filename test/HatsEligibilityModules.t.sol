@@ -18,6 +18,7 @@ import {Hats} from "hats-protocol/Hats.sol";
 import {AddressHatsEligibilityModule} from "../src/mocks/AddressHatsEligibilityModule.sol";
 import {ERC721HatsEligibilityModule} from "../src/mocks/ERC721HatsEligibilityModule.sol";
 import {ERC6551HatsEligibilityModule} from "../src/adaptors/hats-modules/ERC6551HatsEligibilityModule.sol";
+import {MultiERC6551HatsEligibilityModule} from "../src/adaptors/hats-modules/MultiERC6551HatsEligibilityModule.sol";
 import {CharacterSheetsLevelEligibilityModule} from
     "../src/adaptors/hats-modules/CharacterSheetsLevelEligibilityModule.sol";
 
@@ -28,6 +29,7 @@ contract HatsEligibilityModulesTest is SetUp {
     ERC721HatsEligibilityModule public playerModule;
     ERC6551HatsEligibilityModule public characterModule;
     CharacterSheetsLevelEligibilityModule public elderModule;
+    MultiERC6551HatsEligibilityModule public multiModule;
 
     address public topHatWearer = address(1);
     address public adminHatWearer = address(2);
@@ -71,7 +73,8 @@ contract HatsEligibilityModulesTest is SetUp {
 
         adminModule = AddressHatsEligibilityModule(newAdaptor.adminHatEligibilityModule());
         dmModule = AddressHatsEligibilityModule(newAdaptor.gameMasterHatEligibilityModule());
-        characterModule = ERC6551HatsEligibilityModule(newAdaptor.characterHatEligibilityModule());
+        (,, address moduleAddress) = newAdaptor.characterHatEligibilityModules(0);
+        characterModule = ERC6551HatsEligibilityModule(moduleAddress);
         playerModule = ERC721HatsEligibilityModule(newAdaptor.playerHatEligibilityModule());
 
         vm.prank(accounts.admin);

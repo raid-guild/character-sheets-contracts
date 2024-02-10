@@ -9,7 +9,7 @@ import {
 import {IERC721} from "openzeppelin-contracts/token/ERC721/IERC721.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {IERC1155} from "openzeppelin-contracts/token/ERC1155/IERC1155.sol";
-
+import {CharacterAccount} from "../CharacterAccount.sol";
 import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
 import {ICharacterEligibilityAdaptor} from "../interfaces/ICharacterEligibilityAdaptor.sol";
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
@@ -61,6 +61,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
     event CharacterUpdated(uint256 characterId);
     event PlayerJailed(address playerAddress, bool thrownInJail);
     event CharacterRestored(address player, address account, uint256 characterId);
+    event ExternalCharacterAdded(address player, address account, uint256 characterId);
 
     modifier onlyContract() {
         if (msg.sender != clones.items()) {
@@ -194,18 +195,59 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         _sheets[characterId] =
             CharacterSheet({accountAddress: characterAccount, playerAddress: msg.sender, inventory: new uint256[](0)});
 
-        _safeMint(msg.sender, characterId);
+        _mintSheet(msg.sender, characterAccount, characterId, _tokenURI);
+
+        emit NewCharacterSheetRolled(msg.sender, characterAccount, characterId);
+        return characterId;
+    }
+
+    /**
+     * adds an account from an external game to this game.
+     * @param playerAddress the address of the player to join the game
+     * @param characterAccount the erc6651 account address of the character associated with this player
+     * @param _tokenURI the address of the token metadata
+     */
+    function addExternalCharacter(address playerAddress, address payable characterAccount, string calldata _tokenURI)
+        external
+        onlyGameMaster
+        returns (uint256 tokenId)
+    {
+        if (!ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(playerAddress)) {
+            revert Errors.EligibilityError();
+        }
+
+        if (CharacterAccount(characterAccount).owner() != playerAddress) {
+            revert Errors.CharacterError();
+        }
+
+        uint256 existingCharacterId = _playerSheets[playerAddress];
+
+        if (existingCharacterId != 0 || _sheets[existingCharacterId].playerAddress == playerAddress) {
+            // must restore sheet
+            revert Errors.PlayerError();
+        }
+
+        uint256 characterId = totalSheets;
+        _mintSheet(playerAddress, characterAccount, characterId, _tokenURI);
+
+        emit ExternalCharacterAdded(playerAddress, characterAccount, characterId);
+
+        return characterId;
+    }
+
+    function _mintSheet(address playerAddress, address characterAccount, uint256 characterId, string memory _tokenURI)
+        internal
+    {
+        _safeMint(playerAddress, characterId);
         _setTokenURI(characterId, _tokenURI);
-        _playerSheets[msg.sender] = characterId;
+        _playerSheets[playerAddress] = characterId;
         _characterSheets[characterAccount] = characterId;
 
-        _ifNotPlayerMintHat(msg.sender);
+        _ifNotPlayerMintHat(playerAddress);
 
         IHatsAdaptor(clones.hatsAdaptor()).mintCharacterHat(characterAccount);
 
         totalSheets++;
-        emit NewCharacterSheetRolled(msg.sender, characterAccount, characterId);
-        return characterId;
     }
 
     /**
@@ -290,6 +332,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
 
     /**
      * restores a previously renounced sheet if called by the wrong player and incorrect address will be created that does not control any assets
+     * does not work with imported characters.  must be done in original game.
      * @return the ERC6551 account address
      */
     function restoreSheet() external returns (address) {
