@@ -12,6 +12,7 @@ import {IAddressEligibilityModule} from "../interfaces/IAddressEligibilityModule
 import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
 import {ImplementationAddressStorage} from "../ImplementationAddressStorage.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
+import {IMultiERC6551HatsEligibilityModule} from "../interfaces/IMultiERC6551HatsEligibilityModule.sol";
 
 import {Errors} from "../lib/Errors.sol";
 import {HatsData} from "../lib/Structs.sol";
@@ -64,7 +65,8 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     event ImplementationAddressStorageUpdated(address newImplementations);
     event GameMasterHatEligibilityModuleUpdated(address newGameMasterHatEligibilityModule);
     event PlayerHatEligibilityModuleUpdated(address newPlayerHatEligibilityModule);
-    event CharacterHatEligibilityModuleAdded(ValidModule newCharacterHatEligibilityModule);
+    event CharacterHatEligibilityModuleUpdated(address newCharacterHatEligibilityModule);
+    event NewGameAddedToCharacterModule(address newCharacterSheet);
     event AdminEligibilityModuleUpdated(address newAdminEligibilityModule);
     event HatTreeInitialized(address owner, bytes hatsAddresses, bytes hatsStrings, bytes customModuleImplementations);
 
@@ -173,15 +175,22 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         emit PlayerHatEligibilityModuleUpdated(playerHatEligibilityModule);
     }
 
+    function updateCharacterHatEligibilityModule(uint256 characterHatId, address characterModuleImplementation)
+        external
+        onlyAdmin
+    {
+        characterHatEligibilityModule =
+            _createCharacterHatEligibilityModule(characterHatId, characterModuleImplementation);
+        emit CharacterHatEligibilityModuleUpdated(characterHatEligibilityModule);
+    }
+
     function addNewGame(address characterSheet) external onlyAdmin {
-        //todo finish this function to add new game to multi-erc6551 module
-        // assert(_validModule.module != address(0));
-        // characterHatEligibilityModule.push(_validModule);
-        // emit CharacterHatEligibilityModuleAdded(_validModule);
+        IMultiERC6551HatsEligibilityModule(characterHatEligibilityModule).addValidGame(characterSheet);
+        emit NewGameAddedToCharacterModule(characterSheet);
     }
 
     function removeGame(uint256 moduleIndex) external onlyAdmin {
-        //removes module from mult-erc 6551 adaptor
+        IMultiERC6551HatsEligibilityModule(characterHatEligibilityModule).removeGame(moduleIndex);
     }
 
     function updateHats(address newHats) external onlyOwner {
@@ -515,7 +524,13 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         characterHatEligibilityModule = _createCharacterHatEligibilityModule(characterHatId, customCharacterModule);
 
         _hatsData.characterHatId = _hats.createHat(
-            _hatsData.gameMasterHatId, characterDescription, MAX_SUPPLY, newModule, _owner, true, characterUri
+            _hatsData.gameMasterHatId,
+            characterDescription,
+            MAX_SUPPLY,
+            characterHatEligibilityModule,
+            _owner,
+            true,
+            characterUri
         );
 
         assert(_hatsData.characterHatId == characterHatId);
@@ -533,13 +548,17 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         ) {
             revert Errors.VariableNotSet();
         }
+
         bytes memory characterModuleData = abi.encodePacked(
-            implementations.erc6551Registry(), implementations.erc6551AccountImplementation(), clones.characterSheets()
+            _hatsData.adminHatId, implementations.erc6551Registry(), implementations.erc6551AccountImplementation()
         );
-        customCharacterModule =
-            customCharacterModule == address(0) ? implementations.erc6551HatsEligibilityModule() : customCharacterModule;
+
+        bytes memory characterModuleInitData = abi.encode(address(clones.characterSheets()));
+        customCharacterModule = customCharacterModule == address(0)
+            ? implementations.multiERC6551HatsEligibilityModule()
+            : customCharacterModule;
         address characterHatsModule = HatsModuleFactory(implementations.hatsModuleFactory()).createHatsModule(
-            customCharacterModule, characterHatId, characterModuleData, ""
+            customCharacterModule, characterHatId, characterModuleData, characterModuleInitData
         );
         return characterHatsModule;
     }

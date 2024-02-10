@@ -223,6 +223,10 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         return _implementationsAddresses.erc6551HatsEligibilityModule;
     }
 
+    function multiERC6551HatsEligibilityModule() public view returns (address) {
+        return _implementationsAddresses.multiERC6551HatsEligibilityModule;
+    }
+
     function _initImplementations(bytes calldata encodedImplementationAddresses) internal {
         (
             _implementationsAddresses.characterSheetsImplementation,

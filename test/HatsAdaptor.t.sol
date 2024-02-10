@@ -7,7 +7,6 @@ import "forge-std/Test.sol";
 import "../src/lib/Structs.sol";
 import {Errors} from "../src/lib/Errors.sol";
 import {SetUp} from "./setup/SetUp.sol";
-import {ValidModule} from "../src/adaptors/HatsAdaptor.sol";
 import {HatsErrors} from "hats-protocol/Interfaces/HatsErrors.sol";
 
 contract HatsAdaptorTest is SetUp {
@@ -113,16 +112,5 @@ contract HatsAdaptorTest is SetUp {
         assertEq(deployments.hatsAdaptor.isGameMaster(accounts.rando), true, "rando not gm");
     }
 
-    function test_addValidAdaptor() public {
-        ValidModule memory testAdaptor;
-        testAdaptor.hatId = 100;
-        testAdaptor.implementation = address(123);
-        testAdaptor.module = address(345);
-        vm.prank(accounts.admin);
-        deployments.hatsAdaptor.addCharacterHatEligibilityModule(testAdaptor);
-
-        ValidModule[] memory testAdaptors = deployments.hatsAdaptor.getAllCharacterModules();
-        assertEq(testAdaptors.length, 2, "incorrect length");
-        assertEq(testAdaptors[1].hatId, 100, "incorrect hatId");
-    }
+    function test_addValidGame() public {}
 }

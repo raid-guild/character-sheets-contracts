@@ -8,7 +8,6 @@ import "forge-std/console2.sol";
 import "./setup/SetUp.sol";
 
 import {IERC721Errors} from "openzeppelin-contracts/interfaces/draft-IERC6093.sol";
-import {ValidModule} from "../src/adaptors/HatsAdaptor.sol";
 
 contract CharacterSheetsTest is SetUp {
     event ItemsUpdated(address exp);
@@ -527,7 +526,7 @@ contract CharacterSheetsTest is SetUp {
         deployments.characterSheets.safeTransferFrom(accounts.rando, accounts.player1, 0, "");
     }
 
-    function test_addExternalCharacter() public {
+    function testAddExternalCharacter() public {
         bytes memory encodedHatsStrings = abi.encode(
             "new_new_test_hats_base_img",
             "new_test tophat description",
@@ -564,18 +563,16 @@ contract CharacterSheetsTest is SetUp {
         vm.prank(accounts.rando);
         uint256 newCharId = newSheets.rollCharacterSheet("new_test_uri");
         address newCharAccount = newSheets.getCharacterSheetByCharacterId(newCharId).accountAddress;
-        console2.log("new char acc", newCharAccount);
+
         mockShares.mint(accounts.rando, 100e18);
         dao.addMember(accounts.rando);
 
-        ValidModule memory newModule = HatsAdaptor(newClones.hatsAdaptor()).getAllCharacterModules()[0];
-        console2.log("NEW HATID", newModule.hatId);
-        console2.log(newModule.module);
-        console2.log(newModule.implementation);
         vm.prank(accounts.admin);
-        deployments.hatsAdaptor.addCharacterHatEligibilityModule(newModule);
+        deployments.hatsAdaptor.addNewGame(address(newSheets));
 
         vm.prank(accounts.gameMaster);
         deployments.characterSheets.addExternalCharacter(accounts.rando, payable(newCharAccount), "2new_test_uri");
+
+        assertTrue(deployments.hatsAdaptor.isCharacter(newCharAccount), "new character is not valid");
     }
 }

@@ -170,7 +170,8 @@ contract DeployImplementationAddressStorage is BaseDeployer {
         bytes memory encodedModuleAddresses = abi.encode(
             hatsAddresses.addressHatsEligibilityModule,
             hatsAddresses.erc721HatsEligibilityModule,
-            hatsAddresses.characterHatsEligibilityModule
+            hatsAddresses.characterHatsEligibilityModule,
+            hatsAddresses.multiErc6551HatsEligitbilityModule
         );
 
         return encodedModuleAddresses;

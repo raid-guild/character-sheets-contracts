@@ -73,8 +73,7 @@ contract HatsEligibilityModulesTest is SetUp {
 
         adminModule = AddressHatsEligibilityModule(newAdaptor.adminHatEligibilityModule());
         dmModule = AddressHatsEligibilityModule(newAdaptor.gameMasterHatEligibilityModule());
-        (,, address moduleAddress) = newAdaptor.characterHatEligibilityModules(0);
-        characterModule = ERC6551HatsEligibilityModule(moduleAddress);
+        characterModule = ERC6551HatsEligibilityModule(newAdaptor.characterHatEligibilityModule());
         playerModule = ERC721HatsEligibilityModule(newAdaptor.playerHatEligibilityModule());
 
         vm.prank(accounts.admin);
