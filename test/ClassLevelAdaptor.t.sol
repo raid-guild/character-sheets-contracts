@@ -16,22 +16,18 @@ contract ClassLevelAdaptorTest is SetUp {
         assertTrue(deployments.classLevels.supportsInterface(0x01ffc9a7));
     }
 
-    function testLevelRequirementsMet() public {
-        vm.expectRevert();
-        vm.startPrank(accounts.character1);
-        deployments.classLevels.levelRequirementsMet(accounts.character1, 1);
+    function testFuzz_GetCurrentLevel(uint256 exp) public {
+        exp = bound(exp, 0, 455000);
+        uint256 currentLevel = deployments.classLevels.getCurrentLevel(exp);
+        uint256 desiredLevelExp = deployments.classLevels.getExpForLevel(currentLevel - 1);
+        bool accurateLevel;
+        if (currentLevel < 20) {
+            uint256 desiredNextLevelExp = deployments.classLevels.getExpForLevel(currentLevel);
+            accurateLevel = desiredLevelExp <= exp && desiredNextLevelExp > exp;
+        } else {
+            accurateLevel = desiredLevelExp <= exp;
+        }
 
-        deployments.classes.claimClass(0);
-        assertFalse(deployments.classLevels.levelRequirementsMet(accounts.character1, 0), "should not be met");
-        vm.stopPrank();
-        uint256 expAmount = 301 * 10 ** 18;
-        vm.prank(accounts.gameMaster);
-        deployments.experience.dropExp(accounts.character1, expAmount);
-
-        assertEq(deployments.experience.balanceOf(accounts.character1), expAmount, "incorrect exp amount");
-
-        vm.prank(accounts.character1);
-
-        assertTrue(deployments.classLevels.levelRequirementsMet(accounts.character1, 0), "should be met");
+        assertTrue(accurateLevel, "wrong level given");
     }
 }

@@ -13,7 +13,7 @@ import {IClassLevelAdaptor} from "../interfaces/IClassLevelAdaptor.sol";
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 import {IExperience} from "../interfaces/IExperience.sol";
-
+import "forge-std/console2.sol";
 /**
  * @title Experience and Items
  * @author MrDeadCe11 && dan13ram
@@ -21,18 +21,18 @@ import {IExperience} from "../interfaces/IExperience.sol";
  * Each item and class is an 1155 token that can soulbound or not to the erc6551 wallet of each player nft
  * in the characterSheets contract.
  */
+
 contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, UUPSUpgradeable {
     /// @dev individual mapping for token URIs
     mapping(uint256 => string) private _classURIs;
-
-    /// @dev character => classId => exp staked
-    mapping(address => mapping(uint256 => uint256)) public classLevels;
 
     /// @dev base URI
     string private _baseURI = "";
 
     /// @dev mapping of class token types.  the class Id is the location in this mapping of the class.
     mapping(uint256 => Class) private _classes;
+
+    mapping(address account => mapping(uint256 classId => uint256 classExp)) private _expPerClass;
 
     /// @dev the total number of class types that have been created
     uint256 public totalClasses;
@@ -45,7 +45,8 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     event ClassRevoked(address character, uint256 classId);
     event ClassLeveled(address character, uint256 classId, uint256 newBalance);
     event ClonesAddressStorageUpdated(address newClonesAddressStorage);
-    event ClassDeLeveled(address character, uint256 classId, uint256 numberOfLevels);
+    event ClassExpGiven(address characterAccount, uint256 classId, uint256 amountOfExp);
+    event ClassExpRevoked(address characterAccount, uint256 classId, uint256 amountOfExp);
 
     modifier onlyAdmin() {
         if (!IHatsAdaptor(clones.hatsAdaptor()).isAdmin(msg.sender)) {
@@ -99,7 +100,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
         emit URI(uri(tokenId), tokenId);
     }
 
-    function claimClass(uint256 classId) external onlyCharacter returns (bool) {
+    function claimClass(uint256 classId) external onlyCharacter returns (bool success) {
         Class storage newClass = _classes[classId];
 
         if (!newClass.claimable) {
@@ -112,8 +113,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
 
         emit ClassAssigned(msg.sender, classId);
 
-        bool success = true;
-        return success;
+        success = true;
     }
 
     function updateClonesAddressStorage(address newClonesStorage) external onlyAdmin {
@@ -128,15 +128,29 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
      * @return tokenId the ERC1155 token id
      */
     function createClassType(bytes calldata classData) external onlyGameMaster returns (uint256 tokenId) {
-        uint256 _tokenId = totalClasses;
+        _createClass(classData);
 
-        _createClass(classData, _tokenId);
+        emit NewClassCreated(totalClasses);
+        emit URI(uri(totalClasses), totalClasses);
 
-        emit NewClassCreated(_tokenId);
-        emit URI(uri(_tokenId), _tokenId);
-        totalClasses++;
+        return totalClasses;
+    }
 
-        return _tokenId;
+    function giveClassExp(address characterAccount, uint256 classId, uint256 amountOfExp) public onlyGameMaster {
+        // todo add some verification that the amount of exp given is valid according to experince rules (e.g. relating to stablecoin distribution or what have you)
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(characterAccount)) {
+            revert Errors.CharacterError();
+        }
+        _expPerClass[characterAccount][classId] += amountOfExp;
+        emit ClassExpGiven(characterAccount, classId, amountOfExp);
+    }
+
+    function revokeClassExp(address characterAccount, uint256 classId, uint256 amountOfExp) public onlyGameMaster {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(characterAccount)) {
+            revert Errors.CharacterError();
+        }
+        _expPerClass[characterAccount][classId] -= amountOfExp;
+        emit ClassExpRevoked(characterAccount, classId, amountOfExp);
     }
 
     /**
@@ -148,7 +162,8 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
         if (character == address(0x0)) {
             revert Errors.CharacterError();
         }
-        if (classId >= totalClasses) {
+
+        if (classId > totalClasses) {
             revert Errors.ClassError();
         }
         if (balanceOf(character, classId) != 0) {
@@ -174,75 +189,26 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     function renounceClass(uint256 classId) public onlyCharacter returns (bool success) {
         return _revokeClass(msg.sender, classId);
     }
-    /**
-     * @notice This will level the class of any character class if they have enough exp
-     * @dev As a source of truth, only the game master can call this function so that the correct _classes are leveld
-     * @param character the address of the character account to have a class leveled
-     * @param classId the Id of the class that will be leveled
-     * @return uint256 class token balance
-     */
 
-    function levelClass(address character, uint256 classId) public onlyGameMaster returns (uint256) {
-        if (clones.classLevelAdaptor() == address(0)) {
-            revert Errors.NotInitialized();
-        }
-        if (!IClassLevelAdaptor(clones.classLevelAdaptor()).levelRequirementsMet(character, classId)) {
-            revert Errors.ClassError();
-        }
-
-        uint256 currentLevel = balanceOf(character, classId);
-        uint256 requiredAmount = IClassLevelAdaptor(clones.classLevelAdaptor()).getExperienceForNextLevel(currentLevel);
-
-        //stake appropriate exp
-        classLevels[character][classId] += requiredAmount;
-
-        IExperience(clones.experience()).burnExp(character, requiredAmount);
-
-        //mint another class token
-
-        _mint(character, classId, 1, "");
-
-        uint256 newLevel = balanceOf(character, classId);
-
-        emit ClassLeveled(character, classId, newLevel);
-
-        return newLevel;
+    function getClassExp(address characterAccount, uint256 classId) public view returns (uint256 exp) {
+        exp = _expPerClass[characterAccount][classId];
     }
 
-    function deLevelClass(address characterAccount, uint256 classId, uint256 numberOfLevels) public returns (uint256) {
-        if (clones.classLevelAdaptor() == address(0)) {
-            revert Errors.NotInitialized();
+    /**
+     * @dev See {IERC1155-balanceOf}.
+     */
+    function balanceOf(address account, uint256 classId) public view override returns (uint256) {
+        uint256 balance = super.balanceOf(account, classId);
+        if (balance == 0) {
+            return 0;
+        } else if (balance == 1) {
+            uint256 expAmount = _expPerClass[account][classId];
+            return IClassLevelAdaptor(clones.classLevelAdaptor()).getCurrentLevel(expAmount);
         }
+    }
 
-        if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(characterAccount)) {
-            revert Errors.CharacterError();
-        }
-
-        if (characterAccount != msg.sender && !IHatsAdaptor(clones.hatsAdaptor()).isGameMaster(msg.sender)) {
-            revert Errors.CallerNotApproved();
-        }
-
-        // 1 class token == level 0;
-        uint256 currentLevel = balanceOf(characterAccount, classId) - 1;
-
-        if (currentLevel < numberOfLevels) {
-            revert Errors.InsufficientBalance();
-        }
-
-        uint256 expToRedeem = IClassLevelAdaptor(clones.classLevelAdaptor()).getExpForLevel(currentLevel)
-            - IClassLevelAdaptor(clones.classLevelAdaptor()).getExpForLevel(currentLevel - numberOfLevels);
-
-        //remove level tokens
-        _burn(characterAccount, classId, numberOfLevels);
-
-        //mint replacement exp
-
-        IExperience(clones.experience()).dropExp(characterAccount, expToRedeem);
-
-        //return amount of exp minted
-
-        emit ClassDeLeveled(characterAccount, classId, numberOfLevels);
-        return expToRedeem;
+    function classExpBalance(address characterAccount, uint256 classId) public view returns (uint256 classExp) {
+        return _expPerClass[characterAccount][classId];
     }
 
     /**
@@ -297,9 +263,10 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
         return _baseURI;
     }
 
-    function _createClass(bytes calldata classData, uint256 tokenId) internal {
+    function _createClass(bytes calldata classData) internal returns (uint256 tokenId) {
         (bool claimable, string memory cid) = abi.decode(classData, (bool, string));
-
+        totalClasses++;
+        tokenId = totalClasses;
         _classes[tokenId] = Class({claimable: claimable, supply: 0});
         _classURIs[tokenId] = cid;
     }
@@ -336,7 +303,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     }
 
     function _revokeClass(address character, uint256 classId) internal returns (bool success) {
-        if (classId >= totalClasses) {
+        if (classId > totalClasses) {
             revert Errors.ClassError();
         }
 
