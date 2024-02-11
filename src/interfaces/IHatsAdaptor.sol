@@ -33,4 +33,7 @@ interface IHatsAdaptor {
     function isGameMaster(address wearer) external view returns (bool);
 
     function isAdmin(address wearer) external view returns (bool);
+
+    function addNewGame(address newGame) external;
+    function removeGame(uint256 gameIndex) external;
 }

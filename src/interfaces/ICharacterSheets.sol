@@ -51,4 +51,6 @@ interface ICharacterSheets {
     function supportsInterface(bytes4 interfaceId) external view returns (bool);
 
     function balanceOf(address) external view returns (uint256);
+
+    function addExternalCharacter(address) external returns (uint256);
 }

@@ -13,11 +13,10 @@ import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
 import {ImplementationAddressStorage} from "../ImplementationAddressStorage.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 import {IMultiERC6551HatsEligibilityModule} from "../interfaces/IMultiERC6551HatsEligibilityModule.sol";
-
+import {ICharacterEligibilityAdaptor} from "../interfaces/ICharacterEligibilityAdaptor.sol";
 import {Errors} from "../lib/Errors.sol";
 import {HatsData} from "../lib/Structs.sol";
-
-import "forge-std/console2.sol";
+import {CharacterAccount} from "../CharacterAccount.sol";
 
 /**
  * @title Hats Adaptor
@@ -189,8 +188,8 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         emit NewGameAddedToCharacterModule(characterSheet);
     }
 
-    function removeGame(uint256 moduleIndex) external onlyAdmin {
-        IMultiERC6551HatsEligibilityModule(characterHatEligibilityModule).removeGame(moduleIndex);
+    function removeGame(uint256 gameIndex) external onlyAdmin {
+        IMultiERC6551HatsEligibilityModule(characterHatEligibilityModule).removeGame(gameIndex);
     }
 
     function updateHats(address newHats) external onlyOwner {
@@ -223,7 +222,9 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         if (_hatsData.characterHatId == uint256(0)) {
             revert Errors.VariableNotSet();
         }
+
         (bool eligible,) = checkCharacterHatEligibility(wearer);
+
         if (!eligible) {
             revert Errors.CharacterError();
         }
@@ -236,7 +237,20 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     }
 
     function checkCharacterHatEligibility(address account) public view returns (bool eligible, bool standing) {
-        return IHatsEligibility(characterHatEligibilityModule).getWearerStatus(account, _hatsData.characterHatId);
+        if (clones.characterEligibilityAdaptor() != address(0)) {
+            address owner = CharacterAccount(payable(account)).owner();
+            if (ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(owner)) {
+                (eligible, standing) =
+                    IHatsEligibility(characterHatEligibilityModule).getWearerStatus(account, _hatsData.characterHatId);
+            } else {
+                eligible = false;
+                standing = false;
+                return (eligible, standing);
+            }
+        } else {
+            (eligible, standing) =
+                IHatsEligibility(characterHatEligibilityModule).getWearerStatus(account, _hatsData.characterHatId);
+        }
     }
 
     function checkPlayerHatEligibility(address account) public view returns (bool eligible, bool standing) {

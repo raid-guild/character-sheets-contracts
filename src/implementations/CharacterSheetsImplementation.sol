@@ -212,7 +212,10 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         onlyGameMaster
         returns (uint256 tokenId)
     {
-        if (!ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(playerAddress)) {
+        if (
+            clones.characterEligibilityAdaptor() != address(0)
+                && !ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(playerAddress)
+        ) {
             revert Errors.EligibilityError();
         }
 
@@ -379,7 +382,10 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
             revert Errors.CharacterError();
         }
 
-        if (ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(playerAddress)) {
+        if (
+            clones.characterEligibilityAdaptor() != address(0)
+                && ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(playerAddress)
+        ) {
             revert Errors.EligibilityError();
         }
 

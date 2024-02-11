@@ -74,7 +74,7 @@ contract SetUp is Test, Accounts, TestStructs {
 
     MultiSend public multisend;
 
-    function setUp() public {
+    function setUp() public virtual {
         vm.startPrank(accounts.admin);
         _deployImplementations();
         _deployHatsContracts();

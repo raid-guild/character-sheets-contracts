@@ -16,14 +16,13 @@ import {Errors} from "../../lib/Errors.sol";
  */
 contract MultiERC6551HatsEligibilityModule is HatsModule, HatsEligibilityModule {
     uint256 public totalValidGames;
-    mapping(uint256 => address) ValidGames;
+    mapping(uint256 => address) public validGames;
 
     /// @notice Thrown when a non-admin tries to call an admin restricted function.
     error MultiERC6551_NotHatAdmin();
+    error MultiERC6551_NotAdmin();
     /// @notice Thrown when a class addition is attempted on an immutable hat.
     error MultiERC6551_HatImmutable();
-
-    error foo();
 
     event MultiERC6551Deployed(address MultiERC6551Module);
     event NewGameAdded(address newGame);
@@ -64,7 +63,7 @@ contract MultiERC6551HatsEligibilityModule is HatsModule, HatsEligibilityModule 
 
     function addValidGame(address newGame) public onlyAdmin hatIsMutable {
         totalValidGames++;
-        ValidGames[totalValidGames] = newGame;
+        validGames[totalValidGames] = newGame;
         emit NewGameAdded(newGame);
     }
 
@@ -75,8 +74,8 @@ contract MultiERC6551HatsEligibilityModule is HatsModule, HatsEligibilityModule 
     }
 
     function removeGame(uint256 gameIndex) public onlyAdmin hatIsMutable {
-        address gameAddress = ValidGames[gameIndex];
-        delete ValidGames[gameIndex];
+        address gameAddress = validGames[gameIndex];
+        delete validGames[gameIndex];
         emit GameRemoved(gameAddress, gameIndex);
     }
 
@@ -85,7 +84,7 @@ contract MultiERC6551HatsEligibilityModule is HatsModule, HatsEligibilityModule 
         (address validGame) = abi.decode(_initData, (address));
 
         totalValidGames++;
-        ValidGames[totalValidGames] = validGame;
+        validGames[totalValidGames] = validGame;
 
         // log the deployment & setup
         emit MultiERC6551Deployed(address(this));
@@ -112,12 +111,14 @@ contract MultiERC6551HatsEligibilityModule is HatsModule, HatsEligibilityModule 
         returns (bool eligible, bool standing)
     {
         for (uint256 i = 1; i <= totalValidGames;) {
-            uint256 characterId = ICharacterSheets(ValidGames[i]).getCharacterIdByAccountAddress(_wearer);
-            address createdAddress = IERC6551Registry(ERC6551_REGISTRY()).account(
-                ACCOUNT_IMPLEMENTATION(), block.chainid, ValidGames[i], characterId, characterId
-            );
+            if (validGames[i] != address(0)) {
+                uint256 characterId = ICharacterSheets(validGames[i]).getCharacterIdByAccountAddress(_wearer);
+                address createdAddress = IERC6551Registry(ERC6551_REGISTRY()).account(
+                    ACCOUNT_IMPLEMENTATION(), block.chainid, validGames[i], characterId, characterId
+                );
 
-            eligible = createdAddress == _wearer;
+                eligible = createdAddress == _wearer;
+            }
             standing = true;
             if (eligible) {
                 break;
@@ -152,7 +153,7 @@ contract MultiERC6551HatsEligibilityModule is HatsModule, HatsEligibilityModule 
 
     modifier onlyAdmin() {
         if (!HATS().isWearerOfHat(msg.sender, ADMINHATID())) {
-            revert MultiERC6551_NotHatAdmin();
+            revert MultiERC6551_NotAdmin();
         }
         _;
     }

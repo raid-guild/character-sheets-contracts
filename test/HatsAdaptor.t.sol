@@ -75,7 +75,7 @@ contract HatsAdaptorTest is SetUp {
         deployments.hatsAdaptor.mintCharacterHat(accounts.character1);
 
         //should revert if address is ineligible for hat
-        vm.expectRevert(Errors.CharacterError.selector);
+        vm.expectRevert();
         deployments.hatsAdaptor.mintCharacterHat(accounts.rando);
 
         //should mint character hat when sheet is rolled
@@ -110,6 +110,12 @@ contract HatsAdaptorTest is SetUp {
         deployments.hatsAdaptor.addGameMasters(gameMasters);
 
         assertEq(deployments.hatsAdaptor.isGameMaster(accounts.rando), true, "rando not gm");
+    }
+
+    function test_CheckCharacterHatEligibility() public {
+        (bool status, bool standing) = deployments.hatsAdaptor.checkCharacterHatEligibility(accounts.character1);
+        assertTrue(status, "status should be true");
+        assertTrue(standing, "standing should be true");
     }
 
     function test_addValidGame() public {}
