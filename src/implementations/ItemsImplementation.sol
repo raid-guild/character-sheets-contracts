@@ -10,7 +10,7 @@ import {ERC721HolderUpgradeable} from
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {Errors} from "../lib/Errors.sol";
-import {MultiToken, Asset, Category} from "../lib/MultiToken.sol";
+import {MultiToken, Asset} from "../lib/MultiToken.sol";
 import {IItemsManager} from "../interfaces/IItemsManager.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 //solhint-disable-next-line
@@ -186,9 +186,9 @@ contract ItemsImplementation is
             //burn items
             _burn(msg.sender, itemId, amount);
 
-            return true;
+            success = true;
         } else {
-            return false;
+            success = false;
         }
     }
 
@@ -200,11 +200,7 @@ contract ItemsImplementation is
      * - bytes32 claimable
      * - uint256 supply
      * - string cid
-     * - bytes requiredAssets encoded required assets,
-     *             - uint8[] memory requiredAssetCategories;
-     *             - address[] memory requiredAssetAddresses;
-     *             - uint256[] memory requiredAssetIds;
-     *             - uint256[] memory requiredAssetAmounts;
+     * - bytes requiredAssets encoded required assets or craft items
      * @return _itemId the ERC1155 tokenId
      */
     function createItemType(bytes calldata _itemData) external onlyGameMaster returns (uint256 _itemId) {
@@ -369,34 +365,10 @@ contract ItemsImplementation is
             (craftable, soulbound, claimable, distribution, supply, cid, requiredAssets) =
                 abi.decode(_data, (bool, bool, bytes32, uint256, uint256, string, bytes));
 
-            {
-                uint8[] memory requiredAssetCategories;
-                address[] memory requiredAssetAddresses;
-                uint256[] memory requiredAssetIds;
-                uint256[] memory requiredAssetAmounts;
-
-                {
-                    (requiredAssetCategories, requiredAssetAddresses, requiredAssetIds, requiredAssetAmounts) =
-                        abi.decode(requiredAssets, (uint8[], address[], uint256[], uint256[]));
-
-                    if (
-                        requiredAssetCategories.length != requiredAssetAddresses.length
-                            || requiredAssetAddresses.length != requiredAssetIds.length
-                            || requiredAssetIds.length != requiredAssetAmounts.length
-                    ) {
-                        revert Errors.LengthMismatch();
-                    }
-
-                    for (uint256 i = 0; i < requiredAssetAddresses.length; i++) {
-                        itemsManager.addItemRequirement(
-                            _itemId,
-                            uint8(Category(requiredAssetCategories[i])),
-                            requiredAssetAddresses[i],
-                            requiredAssetIds[i],
-                            requiredAssetAmounts[i]
-                        );
-                    }
-                }
+            if (craftable) {
+                itemsManager.setCraftItems(_itemId, requiredAssets);
+            } else {
+                itemsManager.setItemRequirements(_itemId, requiredAssets);
             }
 
             _items[_itemId] = Item({
