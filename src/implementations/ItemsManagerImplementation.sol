@@ -17,7 +17,7 @@ import {ERC721HolderUpgradeable} from
 
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 
-// import "forge-std/console2.sol";  //remove for launch
+// import "forge-std/console2.sol"; //remove for launch
 
 struct RequirementNode {
     uint8 operator; // 0 = nil, 1 = and, 2 = or, 3 = not
@@ -31,15 +31,25 @@ struct CraftItem {
 }
 
 error InvalidOperator();
+error InvalidNilOperator();
+error InvalidAndOperator();
+error InvalidOrOperator();
+error InvalidNotOperator();
 error InvalidAsset();
 
 library RequirementsTree {
-    function encode(RequirementNode memory node) internal pure returns (bytes memory requirementTree) {
-        bytes[] memory nodes = new bytes[](node.children.length);
-        for (uint256 i; i < node.children.length; i++) {
-            nodes[i] = encode(node.children[i]);
+    function decodeToStorage(bytes memory requirementTree, RequirementNode storage root) internal {
+        bytes[] memory nodes;
+
+        (root.operator, root.asset, nodes) = abi.decode(requirementTree, (uint8, Asset, bytes[]));
+
+        uint256 nodelength = nodes.length;
+
+        for (uint256 i; i < nodelength; i++) {
+            root.children.push();
+            // root.children[i] = decode(node);
+            decodeToStorage(nodes[i], root.children[i]);
         }
-        return abi.encode(node.operator, node.asset, nodes);
     }
 
     function encodeFromStorage(RequirementNode storage node) internal view returns (bytes memory requirementTree) {
@@ -56,38 +66,24 @@ library RequirementsTree {
         bytes[] memory nodes;
 
         (operator, asset, nodes) = abi.decode(requirementTree, (uint8, Asset, bytes[]));
-
         uint256 nodelength = nodes.length;
 
         RequirementNode memory root =
             RequirementNode({operator: operator, children: new RequirementNode[](nodelength), asset: asset});
 
         for (uint256 i; i < nodelength; i++) {
-            bytes memory node;
-            (node) = abi.decode(nodes[i], (bytes));
-            root.children[i] = decode(node);
+            root.children[i] = decode(nodes[i]);
         }
 
         return root;
     }
 
-    function decodeToStorage(bytes memory requirementTree, RequirementNode storage root) internal {
-        bytes[] memory nodes;
-
-        (root.operator, root.asset, nodes) = abi.decode(requirementTree, (uint8, Asset, bytes[]));
-
-        uint256 nodelength = nodes.length;
-
-        // RequirementNode storage root =
-        //     RequirementNode({operator: operator, children: new RequirementNode[](nodelength), asset: asset});
-        // root.children = new RequirementNode[](nodelength);
-
-        for (uint256 i; i < nodelength; i++) {
-            bytes memory node;
-            (node) = abi.decode(nodes[i], (bytes));
-            // root.children[i] = decode(node);
-            decodeToStorage(node, root.children[i]);
+    function encode(RequirementNode memory node) internal pure returns (bytes memory requirementTree) {
+        bytes[] memory nodes = new bytes[](node.children.length);
+        for (uint256 i; i < node.children.length; i++) {
+            nodes[i] = encode(node.children[i]);
         }
+        return abi.encode(node.operator, node.asset, nodes);
     }
 }
 
@@ -256,7 +252,7 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         if (root.operator == 0) {
             // leaf node
             if (root.children.length != 0) {
-                revert InvalidOperator();
+                revert InvalidNilOperator();
             }
             Asset storage asset = root.asset;
 
@@ -265,7 +261,7 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         if (root.operator == 1) {
             // and
             if (root.children.length == 0) {
-                revert InvalidOperator();
+                revert InvalidAndOperator();
             }
             bool result = true;
             for (uint256 i; i < root.children.length; i++) {
@@ -277,7 +273,7 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         if (root.operator == 2) {
             // or
             if (root.children.length == 0) {
-                revert InvalidOperator();
+                revert InvalidOrOperator();
             }
             bool result = false;
             for (uint256 i; i < root.children.length; i++) {
@@ -289,7 +285,7 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         if (root.operator == 3) {
             // not
             if (root.children.length != 1) {
-                revert InvalidOperator();
+                revert InvalidNotOperator();
             }
             return !checkClaimRequirements(characterAccount, amount, root.children[0]);
         }

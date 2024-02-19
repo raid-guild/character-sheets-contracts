@@ -192,9 +192,7 @@ contract ItemsTest is SetUp {
 
         vm.prank(accounts.gameMaster);
         uint256 craftableItemId = deployments.items.createItemType(
-            createNewItem(
-                true, true, bytes32(0), 1, createCraftingRequirement(_itemId, 100)
-            )
+            createNewItem(true, true, bytes32(0), 1, createCraftingRequirement(_itemId, 100))
         );
 
         address[] memory players = new address[](1);
@@ -227,7 +225,6 @@ contract ItemsTest is SetUp {
     }
 
     function testDismantleItems() public {
-
         vm.startPrank(accounts.gameMaster);
 
         uint256 _itemId1 =
@@ -257,7 +254,6 @@ contract ItemsTest is SetUp {
 
         bytes memory requiredAssets;
         {
-
             CraftItem[] memory requirements = new CraftItem[](2);
             requirements[0] = CraftItem(_itemId1, 50);
             requirements[1] = CraftItem(_itemId2, 100);
@@ -359,9 +355,7 @@ contract ItemsTest is SetUp {
 
         vm.prank(accounts.gameMaster);
         uint256 craftableItemId = deployments.items.createItemType(
-            createNewItem(
-                true, true, bytes32(0), 1, createCraftingRequirement(3, 100)
-            )
+            createNewItem(true, true, bytes32(0), 1, createCraftingRequirement(3, 100))
         );
 
         //should revert if requirements not met
@@ -453,5 +447,144 @@ contract ItemsTest is SetUp {
         vm.prank(accounts.character1);
         vm.expectRevert(abi.encodeWithSelector(Errors.CannotClaim.selector, 1));
         deployments.items.claimItems(itemIds2, amounts2, proofs);
+    }
+
+    function testComplexRequirementsClaimRevert() public {
+        uint256 claimableItemId = createComplexClaimableItem();
+
+        vm.startPrank(accounts.character1);
+
+        uint256[] memory itemIds = new uint256[](1);
+        itemIds[0] = claimableItemId;
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = 1;
+        bytes32[][] memory proofs = new bytes32[][](1);
+        proofs[0] = new bytes32[](0);
+
+        vm.expectRevert(Errors.RequirementNotMet.selector);
+        deployments.items.claimItems(itemIds, amounts, proofs);
+
+        vm.stopPrank();
+
+        vm.prank(accounts.gameMaster);
+        deployments.experience.dropExp(accounts.character1, 1500);
+
+        vm.expectRevert(Errors.RequirementNotMet.selector);
+        vm.prank(accounts.character1);
+        deployments.items.claimItems(itemIds, amounts, proofs);
+    }
+
+    function testComplexRequirementsClaimWithItem1() public {
+        uint256 claimableItemId = createComplexClaimableItem();
+
+        vm.startPrank(accounts.gameMaster);
+        deployments.experience.dropExp(accounts.character1, 1500);
+        {
+            address[] memory players = new address[](1);
+            players[0] = accounts.character1;
+            uint256[][] memory itemIds = new uint256[][](1);
+            itemIds[0] = new uint256[](1);
+            itemIds[0][0] = claimableItemId - 2;
+            uint256[][] memory amounts = new uint256[][](1);
+            amounts[0] = new uint256[](1);
+            amounts[0][0] = 100;
+
+            deployments.items.dropLoot(players, itemIds, amounts);
+        }
+        vm.stopPrank();
+
+        assertEq(deployments.items.balanceOf(accounts.character1, claimableItemId - 2), 100, "item not dropped");
+        assertEq(deployments.items.balanceOf(accounts.character1, claimableItemId), 0, "item already claimed");
+
+        vm.startPrank(accounts.character1);
+        {
+            uint256[] memory itemIds = new uint256[](1);
+            itemIds[0] = claimableItemId;
+            uint256[] memory amounts = new uint256[](1);
+            amounts[0] = 1;
+            bytes32[][] memory proofs = new bytes32[][](1);
+            proofs[0] = new bytes32[](0);
+
+            deployments.items.claimItems(itemIds, amounts, proofs);
+        }
+
+        vm.stopPrank();
+        assertEq(deployments.items.balanceOf(accounts.character1, claimableItemId), 1, "item not claimed");
+    }
+
+    function testComplexRequirementsClaimWithItem2() public {
+        uint256 claimableItemId = createComplexClaimableItem();
+
+        vm.startPrank(accounts.gameMaster);
+        deployments.experience.dropExp(accounts.character1, 1500);
+        {
+            address[] memory players = new address[](1);
+            players[0] = accounts.character1;
+            uint256[][] memory itemIds = new uint256[][](1);
+            itemIds[0] = new uint256[](1);
+            itemIds[0][0] = claimableItemId - 1;
+            uint256[][] memory amounts = new uint256[][](1);
+            amounts[0] = new uint256[](1);
+            amounts[0][0] = 200;
+
+            deployments.items.dropLoot(players, itemIds, amounts);
+        }
+        vm.stopPrank();
+
+        assertEq(deployments.items.balanceOf(accounts.character1, claimableItemId - 1), 200, "item not dropped");
+        assertEq(deployments.items.balanceOf(accounts.character1, claimableItemId), 0, "item already claimed");
+
+        vm.startPrank(accounts.character1);
+        {
+            uint256[] memory itemIds = new uint256[](1);
+            itemIds[0] = claimableItemId;
+            uint256[] memory amounts = new uint256[](1);
+            amounts[0] = 1;
+            bytes32[][] memory proofs = new bytes32[][](1);
+            proofs[0] = new bytes32[](0);
+
+            deployments.items.claimItems(itemIds, amounts, proofs);
+        }
+
+        vm.stopPrank();
+        assertEq(deployments.items.balanceOf(accounts.character1, claimableItemId), 1, "item not claimed");
+    }
+
+    function testComplexRequirementsClaimRevertWithTooMuchExp() public {
+        uint256 claimableItemId = createComplexClaimableItem();
+
+        vm.startPrank(accounts.gameMaster);
+        deployments.experience.dropExp(accounts.character1, 3500);
+        {
+            address[] memory players = new address[](1);
+            players[0] = accounts.character1;
+            uint256[][] memory itemIds = new uint256[][](1);
+            itemIds[0] = new uint256[](1);
+            itemIds[0][0] = claimableItemId - 1;
+            uint256[][] memory amounts = new uint256[][](1);
+            amounts[0] = new uint256[](1);
+            amounts[0][0] = 200;
+
+            deployments.items.dropLoot(players, itemIds, amounts);
+        }
+        vm.stopPrank();
+
+        assertEq(deployments.items.balanceOf(accounts.character1, claimableItemId - 1), 200, "item not dropped");
+        assertEq(deployments.items.balanceOf(accounts.character1, claimableItemId), 0, "item already claimed");
+
+        vm.startPrank(accounts.character1);
+        {
+            uint256[] memory itemIds = new uint256[](1);
+            itemIds[0] = claimableItemId;
+            uint256[] memory amounts = new uint256[](1);
+            amounts[0] = 1;
+            bytes32[][] memory proofs = new bytes32[][](1);
+            proofs[0] = new bytes32[](0);
+
+            vm.expectRevert(Errors.RequirementNotMet.selector);
+            deployments.items.claimItems(itemIds, amounts, proofs);
+        }
+
+        vm.stopPrank();
     }
 }

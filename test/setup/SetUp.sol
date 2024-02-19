@@ -15,7 +15,12 @@ import {CharacterSheetsFactory} from "../../src/CharacterSheetsFactory.sol";
 // implementations
 import {CharacterSheetsImplementation} from "../../src/implementations/CharacterSheetsImplementation.sol";
 import {ItemsImplementation} from "../../src/implementations/ItemsImplementation.sol";
-import {ItemsManagerImplementation, CraftItem} from "../../src/implementations/ItemsManagerImplementation.sol";
+import {
+    ItemsManagerImplementation,
+    CraftItem,
+    RequirementNode,
+    RequirementsTree
+} from "../../src/implementations/ItemsManagerImplementation.sol";
 import {ClassesImplementation} from "../../src/implementations/ClassesImplementation.sol";
 import {ExperienceImplementation} from "../../src/implementations/ExperienceImplementation.sol";
 
@@ -388,5 +393,95 @@ contract SetUp is Test, Accounts, TestStructs {
         characterSheetsFactory.initializeContracts(
             clonesStorageAddress, _dao, encodedHatsAddresses, encodedHatsStrings, baseUriData
         );
+    }
+
+    function createComplexClaimableItem() public returns (uint256) {
+        vm.startPrank(accounts.gameMaster);
+
+        uint256 _itemId1 =
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets()));
+
+        uint256 _itemId2 =
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets()));
+
+        // the requirements shall be that the player has 100 of item1 OR 200 of item2 AND between 1000 and 2000 exp
+        //
+        //                                  AND
+        //                 /                                  \
+        //               OR                                   AND
+        //              /   \                                /   \
+        // (100 of item1)   (200 of item2)          (1000 exp)   NOT
+        //                                                         \
+        //                                                         (2000 exp)
+        //
+        RequirementNode memory itemOr;
+
+        {
+            Asset memory assetItem1 = Asset(Category.ERC1155, address(deployments.items), _itemId1, 100);
+            Asset memory assetItem2 = Asset(Category.ERC1155, address(deployments.items), _itemId2, 200);
+
+            RequirementNode memory item1 =
+                RequirementNode({operator: 0, asset: assetItem1, children: new RequirementNode[](0)});
+
+            RequirementNode memory item2 =
+                RequirementNode({operator: 0, asset: assetItem2, children: new RequirementNode[](0)});
+
+            itemOr = RequirementNode({
+                operator: 2,
+                asset: Asset(Category.ERC20, address(0), 0, 0),
+                children: new RequirementNode[](2)
+            });
+
+            itemOr.children[0] = item1;
+            itemOr.children[1] = item2;
+        }
+
+        RequirementNode memory expRange;
+
+        {
+            Asset memory assetExpMin = Asset(Category.ERC20, address(deployments.experience), 0, 1000);
+            Asset memory assetExpMax = Asset(Category.ERC20, address(deployments.experience), 0, 2000);
+
+            RequirementNode memory maxExp =
+                RequirementNode({operator: 0, asset: assetExpMax, children: new RequirementNode[](0)});
+
+            RequirementNode memory notExpMax = RequirementNode({
+                operator: 3,
+                asset: Asset(Category.ERC20, address(0), 0, 0),
+                children: new RequirementNode[](1)
+            });
+
+            RequirementNode memory minExp =
+                RequirementNode({operator: 0, asset: assetExpMin, children: new RequirementNode[](0)});
+
+            notExpMax.children[0] = maxExp;
+
+            expRange = RequirementNode({
+                operator: 1,
+                asset: Asset(Category.ERC20, address(0), 0, 0),
+                children: new RequirementNode[](2)
+            });
+
+            expRange.children[0] = minExp;
+            expRange.children[1] = notExpMax;
+        }
+
+        RequirementNode memory and = RequirementNode({
+            operator: 1,
+            asset: Asset(Category.ERC20, address(0), 0, 0),
+            children: new RequirementNode[](2)
+        });
+
+        and.children[0] = itemOr;
+        and.children[1] = expRange;
+
+        bytes memory requiredAssets = RequirementsTree.encode(and);
+
+        uint256 claimableItemId =
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, requiredAssets));
+
+        vm.stopPrank();
+
+        return claimableItemId;
     }
 }
