@@ -18,7 +18,7 @@ import "../lib/Structs.sol";
 
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 
-//import "forge-std/console2.sol";
+// import "forge-std/console2.sol";
 /**
  * @title Experience and Items
  * @author MrDeadCe11 && dan13ram
@@ -53,7 +53,9 @@ contract ItemsImplementation is
 
     event NewItemTypeCreated(uint256 itemId);
     event BaseURIUpdated(string newUri);
-    event ItemTransfered(address character, uint256 itemId, uint256 amount);
+    event ItemClaimed(address character, uint256 itemId, uint256 amount);
+    event ItemCrafted(address character, uint256 itemId, uint256 amount);
+    event ItemDismantled(address character, uint256 itemId, uint256 amount);
     event ItemClaimableUpdated(uint256 itemId, bytes32 merkleRoot, uint256 newDistribution);
     event ItemDeleted(uint256 itemId);
 
@@ -166,7 +168,7 @@ contract ItemsImplementation is
      * @return success bool if crafting is a success return true, else return false
      */
     function craftItem(uint256 itemId, uint256 amount) external onlyCharacter returns (bool success) {
-        if (!itemsManager.checkRequirements(msg.sender, itemId, amount)) {
+        if (!itemsManager.checkClaimRequirements(msg.sender, itemId, amount)) {
             revert Errors.RequirementNotMet();
         }
         Item memory item = _items[itemId];
@@ -175,6 +177,7 @@ contract ItemsImplementation is
             //transfer item after succesful crafting
             super._safeTransferFrom(address(this), msg.sender, itemId, amount, "");
             success = true;
+            emit ItemCrafted(msg.sender, itemId, amount);
         } else {
             success = false;
         }
@@ -187,6 +190,7 @@ contract ItemsImplementation is
             _burn(msg.sender, itemId, amount);
 
             success = true;
+            emit ItemDismantled(msg.sender, itemId, amount);
         } else {
             success = false;
         }
@@ -366,9 +370,13 @@ contract ItemsImplementation is
                 abi.decode(_data, (bool, bool, bytes32, uint256, uint256, string, bytes));
 
             if (craftable) {
-                itemsManager.setCraftItems(_itemId, requiredAssets);
-            } else {
-                itemsManager.setItemRequirements(_itemId, requiredAssets);
+                if (requiredAssets.length > 0) {
+                    itemsManager.setCraftRequirements(_itemId, requiredAssets);
+                } else {
+                    revert Errors.CraftableError();
+                }
+            } else if (requiredAssets.length > 0) {
+                itemsManager.setClaimRequirements(_itemId, requiredAssets);
             }
 
             _items[_itemId] = Item({
@@ -401,14 +409,14 @@ contract ItemsImplementation is
             revert Errors.ItemError();
         }
 
-        if (!itemsManager.checkRequirements(characterAccount, itemId, amount)) {
+        if (!itemsManager.checkClaimRequirements(characterAccount, itemId, amount)) {
             revert Errors.RequirementNotMet();
         }
 
         super._safeTransferFrom(address(this), characterAccount, itemId, amount, "");
         _items[itemId].supplied += amount;
 
-        emit ItemTransfered(characterAccount, itemId, amount);
+        emit ItemClaimed(characterAccount, itemId, amount);
 
         success = true;
 

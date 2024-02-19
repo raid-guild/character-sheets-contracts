@@ -11,6 +11,7 @@ abstract contract Errors {
     error OwnershipError();
     error InvalidToken();
     error ClaimableError();
+    error CraftableError();
     error TransferError();
     error DuplicateError();
     error GameMasterOnly();

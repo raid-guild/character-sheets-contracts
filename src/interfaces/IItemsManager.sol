@@ -10,11 +10,16 @@ interface IItemsManager {
 
     function dismantleItems(uint256 itemId, uint256 amount, address caller) external returns (bool);
 
-    function setItemRequirements(uint256 itemId, bytes calldata requirements) external;
+    function setClaimRequirements(uint256 itemId, bytes calldata requirements) external;
 
-    function setCraftItems(uint256 itemId, bytes calldata items) external;
+    function setCraftRequirements(uint256 itemId, bytes calldata items) external;
 
-    function checkRequirements(address characterAccount, uint256 itemId, uint256 amount) external view returns (bool);
+    function checkClaimRequirements(address characterAccount, uint256 itemId, uint256 amount)
+        external
+        view
+        returns (bool);
 
-    function getItemRequirements(uint256 itemId) external view returns (bytes memory);
+    function getClaimRequirements(uint256 itemId) external view returns (bytes memory);
+
+    function getCraftRequirements(uint256 itemId) external view returns (bytes memory);
 }

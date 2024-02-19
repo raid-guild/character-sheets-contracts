@@ -15,7 +15,7 @@ import {CharacterSheetsFactory} from "../../src/CharacterSheetsFactory.sol";
 // implementations
 import {CharacterSheetsImplementation} from "../../src/implementations/CharacterSheetsImplementation.sol";
 import {ItemsImplementation} from "../../src/implementations/ItemsImplementation.sol";
-import {ItemsManagerImplementation} from "../../src/implementations/ItemsManagerImplementation.sol";
+import {ItemsManagerImplementation, CraftItem} from "../../src/implementations/ItemsManagerImplementation.sol";
 import {ClassesImplementation} from "../../src/implementations/ClassesImplementation.sol";
 import {ExperienceImplementation} from "../../src/implementations/ExperienceImplementation.sol";
 
@@ -36,7 +36,7 @@ import {CharacterAccount} from "../../src/CharacterAccount.sol";
 
 // multi Send
 import {MultiSend} from "../../src/lib/MultiSend.sol";
-import {Category} from "../../src/lib/MultiToken.sol";
+import {Category, Asset} from "../../src/lib/MultiToken.sol";
 
 // hats imports
 import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
@@ -95,18 +95,24 @@ contract SetUp is Test, Accounts, TestStructs {
         // create a non claimable class
         classData.classId = deployments.classes.createClassType(createNewClass(false));
         bytes memory expRequirement = createRequiredAsset(Category.ERC20, address(deployments.experience), 0, 100);
+
         //create a soulbound item
         itemsData.itemIdSoulbound =
             deployments.items.createItemType(createNewItem(false, true, bytes32(keccak256("null")), 0, expRequirement));
         //create claimable Item
         itemsData.itemIdClaimable =
             deployments.items.createItemType(createNewItem(false, true, bytes32(0), 1, expRequirement));
+
+        bytes memory craftRequirement = createCraftingRequirement(itemsData.itemIdSoulbound, 1);
+
         // create craftable item
-        itemsData.itemIdCraftable =
-            deployments.items.createItemType(createNewItem(true, false, bytes32(keccak256("null")), 1, expRequirement));
+        itemsData.itemIdCraftable = deployments.items.createItemType(
+            createNewItem(true, false, bytes32(keccak256("null")), 1, craftRequirement)
+        );
+
         //create free item
         itemsData.itemIdFree =
-            deployments.items.createItemType(createNewItem(true, false, bytes32(0), 1, createEmptyRequiredAssets()));
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets()));
         mockShares.mint(accounts.player1, 100e18);
         mockShares.mint(accounts.player2, 100e18);
         vm.stopPrank();
@@ -197,17 +203,11 @@ contract SetUp is Test, Accounts, TestStructs {
         bytes memory requiredAssets;
 
         {
-            uint8[] memory requiredAssetCategories = new uint8[](1);
-            requiredAssetCategories[0] = uint8(category);
-            address[] memory requiredAssetAddresses = new address[](1);
-            requiredAssetAddresses[0] = address(assetAddress);
-            uint256[] memory requiredAssetIds = new uint256[](1);
-            requiredAssetIds[0] = assetId;
-            uint256[] memory requiredAssetAmounts = new uint256[](1);
-            requiredAssetAmounts[0] = amount;
+            Asset memory asset = Asset(category, assetAddress, assetId, amount);
 
-            requiredAssets =
-                abi.encode(requiredAssetCategories, requiredAssetAddresses, requiredAssetIds, requiredAssetAmounts);
+            bytes[] memory nodes = new bytes[](0);
+
+            requiredAssets = abi.encode(0, asset, nodes);
         }
 
         return requiredAssets;
@@ -216,17 +216,17 @@ contract SetUp is Test, Accounts, TestStructs {
     function createEmptyRequiredAssets() public pure returns (bytes memory) {
         bytes memory requiredAssets;
 
+        return requiredAssets;
+    }
+
+    function createCraftingRequirement(uint256 itemId, uint256 amount) public pure returns (bytes memory) {
+        bytes memory requiredAssets;
+
         {
-            uint8[] memory requiredAssetCategories = new uint8[](1);
+            CraftItem[] memory requirements = new CraftItem[](1);
+            requirements[0] = CraftItem(itemId, amount);
 
-            address[] memory requiredAssetAddresses = new address[](1);
-
-            uint256[] memory requiredAssetIds = new uint256[](1);
-
-            uint256[] memory requiredAssetAmounts = new uint256[](1);
-
-            requiredAssets =
-                abi.encode(requiredAssetCategories, requiredAssetAddresses, requiredAssetIds, requiredAssetAmounts);
+            requiredAssets = abi.encode(requirements);
         }
 
         return requiredAssets;

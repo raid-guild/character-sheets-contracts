@@ -33,17 +33,75 @@ struct CraftItem {
 error InvalidOperator();
 error InvalidAsset();
 
+library RequirementsTree {
+    function encode(RequirementNode memory node) internal pure returns (bytes memory requirementTree) {
+        bytes[] memory nodes = new bytes[](node.children.length);
+        for (uint256 i; i < node.children.length; i++) {
+            nodes[i] = encode(node.children[i]);
+        }
+        return abi.encode(node.operator, node.asset, nodes);
+    }
+
+    function encodeFromStorage(RequirementNode storage node) internal view returns (bytes memory requirementTree) {
+        bytes[] memory nodes = new bytes[](node.children.length);
+        for (uint256 i; i < node.children.length; i++) {
+            nodes[i] = encodeFromStorage(node.children[i]);
+        }
+        return abi.encode(node.operator, node.asset, nodes);
+    }
+
+    function decode(bytes memory requirementTree) internal pure returns (RequirementNode memory) {
+        uint8 operator;
+        Asset memory asset;
+        bytes[] memory nodes;
+
+        (operator, asset, nodes) = abi.decode(requirementTree, (uint8, Asset, bytes[]));
+
+        uint256 nodelength = nodes.length;
+
+        RequirementNode memory root =
+            RequirementNode({operator: operator, children: new RequirementNode[](nodelength), asset: asset});
+
+        for (uint256 i; i < nodelength; i++) {
+            bytes memory node;
+            (node) = abi.decode(nodes[i], (bytes));
+            root.children[i] = decode(node);
+        }
+
+        return root;
+    }
+
+    function decodeToStorage(bytes memory requirementTree, RequirementNode storage root) internal {
+        bytes[] memory nodes;
+
+        (root.operator, root.asset, nodes) = abi.decode(requirementTree, (uint8, Asset, bytes[]));
+
+        uint256 nodelength = nodes.length;
+
+        // RequirementNode storage root =
+        //     RequirementNode({operator: operator, children: new RequirementNode[](nodelength), asset: asset});
+        // root.children = new RequirementNode[](nodelength);
+
+        for (uint256 i; i < nodelength; i++) {
+            bytes memory node;
+            (node) = abi.decode(nodes[i], (bytes));
+            // root.children[i] = decode(node);
+            decodeToStorage(node, root.children[i]);
+        }
+    }
+}
+
 contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable, ERC721HolderUpgradeable {
     /// @dev clones address storage contract
     IClonesAddressStorage public clones;
 
-    // item requirements storage
+    // item claim requirements storage
     /// @dev a tree of requirements for each item
-    mapping(uint256 => RequirementNode) internal _requirements;
+    mapping(uint256 => RequirementNode) internal _claimRequirements;
 
-    // item crafting storage
+    // item craft requirements storage
     /// @dev a list of craft items required to craft a new item
-    mapping(uint256 => CraftItem[]) internal _craftItems;
+    mapping(uint256 => CraftItem[]) internal _craftRequirements;
 
     event RequirementSet(uint256 itemId, bytes requirements);
     event CraftItemSet(uint256 itemId);
@@ -81,11 +139,13 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         clones = IClonesAddressStorage(clonesAddressStorage);
     }
 
-    function setCraftItems(uint256 itemId, bytes calldata craftItemsBytes) public onlyItemsContract {
-        CraftItem[] memory craftItems;
-        (craftItems) = abi.decode(craftItemsBytes, (CraftItem[]));
+    function setCraftRequirements(uint256 itemId, bytes calldata craftRequirementsBytes) public onlyItemsContract {
+        CraftItem[] memory craftRequirements;
+        (craftRequirements) = abi.decode(craftRequirementsBytes, (CraftItem[]));
 
-        _craftItems[itemId] = craftItems;
+        for (uint256 i; i < craftRequirements.length; i++) {
+            _craftRequirements[itemId].push(craftRequirements[i]);
+        }
         emit CraftItemSet(itemId);
     }
 
@@ -106,8 +166,8 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         }
 
         CraftItem storage requirement;
-        for (uint256 i; i < _craftItems[itemId].length; i++) {
-            requirement = _craftItems[itemId][i];
+        for (uint256 i; i < _craftRequirements[itemId].length; i++) {
+            requirement = _craftRequirements[itemId][i];
             uint256 requiredAmount = requirement.amount * amount;
 
             if (IItems(clones.items()).balanceOf(caller, requirement.itemId) < requiredAmount) {
@@ -127,8 +187,8 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
             revert Errors.InsufficientBalance();
         }
         CraftItem storage requirement;
-        for (uint256 i; i < _craftItems[itemId].length; i++) {
-            requirement = _craftItems[itemId][i];
+        for (uint256 i; i < _craftRequirements[itemId].length; i++) {
+            requirement = _craftRequirements[itemId][i];
             uint256 refundAmount = requirement.amount * amount;
             if (IItems(clones.items()).balanceOf(address(this), requirement.itemId) < refundAmount) {
                 revert Errors.InsufficientBalance();
@@ -140,27 +200,35 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         return true;
     }
 
-    function setItemRequirements(uint256 itemId, bytes calldata requirementTreeBytes) public onlyItemsContract {
-        RequirementNode memory requirementTree = decodeRequirementTree(requirementTreeBytes);
-        _requirements[itemId] = requirementTree;
+    function setClaimRequirements(uint256 itemId, bytes calldata requirementTreeBytes) public onlyItemsContract {
+        RequirementNode storage requirementTree = _claimRequirements[itemId];
+        RequirementsTree.decodeToStorage(requirementTreeBytes, requirementTree);
 
         emit RequirementSet(itemId, requirementTreeBytes);
     }
 
-    function checkRequirements(address characterAccount, uint256 itemId, uint256 amount)
+    function checkClaimRequirements(address characterAccount, uint256 itemId, uint256 amount)
         public
         view
         onlyItemsContract
         returns (bool)
     {
-        RequirementNode storage root = _requirements[itemId];
-        return checkRequirements(characterAccount, amount, root);
+        RequirementNode storage root = _claimRequirements[itemId];
+        if (root.operator == 0 && root.children.length == 0 && root.asset.assetAddress == address(0)) {
+            return true;
+        }
+        return checkClaimRequirements(characterAccount, amount, root);
     }
 
-    function getItemRequirements(uint256 itemId) public pure returns (bytes memory requirementTreeBytes) {
-        // TODO: implement
-        bytes memory zero = abi.encode(itemId);
-        return zero;
+    function getClaimRequirements(uint256 itemId) public view returns (bytes memory requirementTreeBytes) {
+        bytes memory encoded = RequirementsTree.encodeFromStorage(_claimRequirements[itemId]);
+        return encoded;
+    }
+
+    function getCraftRequirements(uint256 itemId) public view returns (bytes memory requirementTreeBytes) {
+        CraftItem[] storage craftRequirements = _craftRequirements[itemId];
+        bytes memory encoded = abi.encode(craftRequirements);
+        return encoded;
     }
 
     function checkAsset(address characterAccount, uint256 amount, Asset storage asset) internal view returns (bool) {
@@ -180,7 +248,7 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         return true;
     }
 
-    function checkRequirements(address characterAccount, uint256 amount, RequirementNode storage root)
+    function checkClaimRequirements(address characterAccount, uint256 amount, RequirementNode storage root)
         internal
         view
         returns (bool)
@@ -202,7 +270,7 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
             bool result = true;
             for (uint256 i; i < root.children.length; i++) {
                 RequirementNode storage node = root.children[i];
-                result = result && checkRequirements(characterAccount, amount, node);
+                result = result && checkClaimRequirements(characterAccount, amount, node);
             }
             return result;
         }
@@ -214,7 +282,7 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
             bool result = false;
             for (uint256 i; i < root.children.length; i++) {
                 RequirementNode storage node = root.children[i];
-                result = result || checkRequirements(characterAccount, amount, node);
+                result = result || checkClaimRequirements(characterAccount, amount, node);
             }
             return result;
         }
@@ -223,30 +291,9 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
             if (root.children.length != 1) {
                 revert InvalidOperator();
             }
-            return !checkRequirements(characterAccount, amount, root.children[0]);
+            return !checkClaimRequirements(characterAccount, amount, root.children[0]);
         }
         revert InvalidOperator();
-    }
-
-    function decodeRequirementTree(bytes memory requirementTree) internal pure returns (RequirementNode memory) {
-        uint8 operator;
-        Asset memory asset;
-        bytes[] memory nodes;
-
-        (operator, asset, nodes) = abi.decode(requirementTree, (uint8, Asset, bytes[]));
-
-        uint256 nodelength = nodes.length;
-
-        RequirementNode memory root =
-            RequirementNode({operator: operator, children: new RequirementNode[](nodelength), asset: asset});
-
-        for (uint256 i; i < nodelength; i++) {
-            bytes memory node;
-            (node) = abi.decode(nodes[i], (bytes));
-            root.children[i] = decodeRequirementTree(node);
-        }
-
-        return root;
     }
 
     //solhint-disable-next-line
