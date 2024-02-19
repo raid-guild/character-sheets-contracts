@@ -108,58 +108,21 @@ contract ClassesTest is SetUp {
         );
     }
 
-    // function testLevelClass() public {
-    //     vm.prank(accounts.character1);
-    //     deployments.classes.claimClass(0);
+    function testFuzz_BalanceOf(uint256 _classExp) public {
+        vm.assume(_classExp < 1_000_000);
 
-    //     vm.prank(accounts.gameMaster);
-    //     deployments.experience.dropExp(accounts.character1, 300);
-
-    //     vm.prank(accounts.gameMaster);
-    //     deployments.classes.levelClass(accounts.character1, 0);
-
-    //     assertEq(deployments.experience.balanceOf(accounts.character1), 0, "incorrect exp balance");
-    //     assertEq(deployments.classes.balanceOf(accounts.character1, 0), 2, "incorrect class level");
-    // }
-
-    // function testFuzz_DeLevelClass(uint256 numberOfLevels) public {
-    //     vm.assume(numberOfLevels < 20);
-    //     uint256 baseExpAmount = 400000;
-    //     //give exp to npc to level
-    //     vm.prank(accounts.gameMaster);
-    //     deployments.experience.dropExp(accounts.character1, baseExpAmount);
-
-    //     assertEq(deployments.experience.balanceOf(accounts.character1), baseExpAmount);
-
-    //     // give class to accounts.character1
-
-    //     vm.startPrank(accounts.gameMaster);
-    //     deployments.classes.assignClass(accounts.character1, 0);
-
-    //     assertEq(deployments.classes.balanceOf(accounts.character1, 0), 1);
-
-    //     // level class
-
-    //     for (uint256 i; i < numberOfLevels; i++) {
-    //         deployments.classes.levelClass(accounts.character1, 0);
-    //     }
-
-    //     assertEq(deployments.classes.balanceOf(accounts.character1, 0), numberOfLevels + 1, "incorrect level");
-
-    //     // check that the remaining exp is correct
-    //     assertEq(
-    //         deployments.experience.balanceOf(accounts.character1),
-    //         baseExpAmount - deployments.classLevels.getExpForLevel(numberOfLevels),
-    //         "incorrect remaining exp"
-    //     );
-    //     vm.stopPrank();
-    //     // delevel class to reclaim exp
-
-    //     vm.prank(accounts.character1);
-    //     deployments.classes.deLevelClass(accounts.character1, 0, numberOfLevels);
-
-    //     //check balances
-    //     assertEq(deployments.classes.balanceOf(accounts.character1, 0), 1, "incorrect final balance");
-    //     assertEq(deployments.experience.balanceOf(accounts.character1), baseExpAmount, "incorrect returned exp");
-    // }
+        //give class & class exp;
+        vm.startPrank(accounts.gameMaster);
+        deployments.classes.assignClass(accounts.character1, 1);
+        deployments.classes.giveClassExp(accounts.character1, 1, _classExp);
+        vm.stopPrank();
+        uint256 desiredLevel = deployments.classLevels.getCurrentLevel(_classExp);
+        if (_classExp < 300) {
+            assertEq(desiredLevel, 1, "incorrect level balance");
+        } else {
+            //check balanceOf;
+            uint256 balance = deployments.classes.balanceOf(accounts.character1, 1);
+            assertEq(desiredLevel, balance, "incorrect level returned");
+        }
+    }
 }

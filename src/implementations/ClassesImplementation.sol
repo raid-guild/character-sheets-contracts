@@ -197,13 +197,13 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     /**
      * @dev See {IERC1155-balanceOf}.
      */
-    function balanceOf(address account, uint256 classId) public view override returns (uint256) {
-        uint256 balance = super.balanceOf(account, classId);
+    function balanceOf(address account, uint256 classId) public view override returns (uint256 balance) {
+        balance = super.balanceOf(account, classId);
         if (balance == 0) {
             return 0;
         } else if (balance == 1) {
             uint256 expAmount = _expPerClass[account][classId];
-            return IClassLevelAdaptor(clones.classLevelAdaptor()).getCurrentLevel(expAmount);
+            balance = IClassLevelAdaptor(clones.classLevelAdaptor()).getCurrentLevel(expAmount);
         }
     }
 
