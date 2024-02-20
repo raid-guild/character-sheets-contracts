@@ -40,7 +40,6 @@ contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
      * @notice Called by game master or an authorized contract to give experience to a character
      * @param to the address of the character that will receive the exp
      */
-
     function dropExp(address to, uint256 amount) public {
         if (!_isAuthorized(msg.sender)) {
             revert Errors.CallerNotApproved();
@@ -82,7 +81,6 @@ contract ExperienceImplementation is ERC20Upgradeable, UUPSUpgradeable {
     /**
      * @notice 0 decimals.  1 exp = 1 exp
      */
-
     function decimals() public pure override returns (uint8) {
         return 0;
     }

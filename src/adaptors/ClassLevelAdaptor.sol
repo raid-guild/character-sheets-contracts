@@ -17,7 +17,6 @@ import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
  * @notice This is an adaptor that allows the classesImplementation to check the requirements to level a class
  * @dev any variation to this contract must implement the levelRequirementsMet and getExperienceForNextLevel functions
  */
-
 contract ClassLevelAdaptor is ERC165, Initializable, UUPSUpgradeable {
     /**
      * @notice erc651 interfaceId

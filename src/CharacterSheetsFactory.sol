@@ -89,7 +89,6 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
      *    @dev check notes on the initializeContracts function to see what needs to be
      *     in the encoded hatsStrings and the encoded sheets strings
      */
-
     function createAndInitialize(
         address dao,
         address[] calldata admins,

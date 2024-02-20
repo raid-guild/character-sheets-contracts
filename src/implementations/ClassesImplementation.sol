@@ -127,7 +127,6 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
      *  - string cid
      * @return tokenId the ERC1155 token id
      */
-
     function createClassType(bytes calldata classData) external onlyGameMaster returns (uint256 tokenId) {
         uint256 _tokenId = totalClasses;
 
@@ -145,7 +144,6 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
      * @param character the tokenId of the player
      * @param classId the classId of the class to be assigned
      */
-
     function assignClass(address character, uint256 classId) public onlyGameMaster {
         if (character == address(0x0)) {
             revert Errors.CharacterError();
@@ -169,7 +167,6 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
      * @param character the token Id of the player who needs a class removed
      * @param classId the class to be removed
      */
-
     function revokeClass(address character, uint256 classId) public onlyGameMaster returns (bool success) {
         return _revokeClass(character, classId);
     }
@@ -251,7 +248,6 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     /**
      * @return an array of all Class structs stored in the _classes mapping
      */
-
     function getAllClasses() public view returns (Class[] memory) {
         Class[] memory allClasses = new Class[](totalClasses);
         for (uint256 i = 1; i <= totalClasses; i++) {
@@ -291,7 +287,6 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
      * - if `_tokenURIs[tokenId]` is NOT set, and if the parents do not have a
      *   uri value set, then the result is empty.
      */
-
     function uri(uint256 tokenId) public view override returns (string memory) {
         string memory tokenURI = _classURIs[tokenId];
         // If token URI is set, concatenate base URI and tokenURI (via abi.encodePacked).

@@ -13,7 +13,6 @@ import {ICharacterSheets} from "../../interfaces/ICharacterSheets.sol";
  * @notice A Hats Protocol eligibility module that checks if a player owns a character sheet with desired number
  * of class Levels of any particular class tokenId
  */
-
 contract CharacterSheetsLevelEligibilityModule is HatsEligibilityModule {
     event ElderEligibilityDeployed(address);
     event ClassesAdded(uint256[], uint256[]);

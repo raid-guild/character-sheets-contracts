@@ -23,7 +23,6 @@ import {HatsData} from "../lib/Structs.sol";
  * character sheets contacts.  It also allows the minting of hats to players and characters
  * and checks if any address is wearing the player or character hat.
  */
-
 struct InitStruct {
     address _owner;
     bytes hatsAddresses;
@@ -40,7 +39,6 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
      * @notice these are the addresses of the eligibility modules after they are created by
      * the hats module factory during contract initialization.
      */
-
     ImplementationAddressStorage public implementations;
     IClonesAddressStorage public clones;
 
@@ -98,7 +96,6 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
      *        9.  string characterUri
      *        10. string characterDescription
      */
-
     function initialize(address _owner, bytes calldata hatsAddresses, bytes calldata hatsStrings)
         external
         initializer
@@ -115,7 +112,6 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
      *  3. player admin hats eligibility Module
      *  4. character admin hats eligibility Module
      */
-
     function initialize(
         address _owner,
         bytes calldata hatsAddresses,
