@@ -168,9 +168,6 @@ contract ItemsImplementation is
      * @return success bool if crafting is a success return true, else return false
      */
     function craftItem(uint256 itemId, uint256 amount) external onlyCharacter returns (bool success) {
-        if (!itemsManager.checkClaimRequirements(msg.sender, itemId, amount)) {
-            revert Errors.RequirementNotMet();
-        }
         Item memory item = _items[itemId];
 
         if (itemsManager.craftItem(item, itemId, amount, msg.sender)) {
