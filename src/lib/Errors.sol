@@ -46,4 +46,11 @@ abstract contract Errors {
     error UnsupportedInterface();
 
     error MustRefundFullReceiptAmount(uint256 amountRequired);
+
+    // Requirement Tree
+    error InvalidOperator();
+    error InvalidNilOperator();
+    error InvalidAndOperator();
+    error InvalidOrOperator();
+    error InvalidNotOperator();
 }

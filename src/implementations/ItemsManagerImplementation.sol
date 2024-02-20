@@ -30,13 +30,6 @@ struct CraftItem {
     uint256 amount;
 }
 
-error InvalidOperator();
-error InvalidNilOperator();
-error InvalidAndOperator();
-error InvalidOrOperator();
-error InvalidNotOperator();
-error InvalidAsset();
-
 library RequirementsTree {
     function decodeToStorage(bytes memory requirementTree, RequirementNode storage root) internal {
         bytes[] memory nodes;
@@ -58,6 +51,36 @@ library RequirementsTree {
             nodes[i] = encodeFromStorage(node.children[i]);
         }
         return abi.encode(node.operator, node.asset, nodes);
+    }
+
+    function validateTreeInStorage(RequirementNode storage node) internal view {
+        if (node.operator == 0) {
+            if (node.children.length != 0 || node.asset.assetAddress == address(0)) {
+                revert Errors.InvalidNilOperator();
+            }
+        } else if (node.operator == 1) {
+            if (node.children.length < 1 || node.asset.assetAddress != address(0)) {
+                revert Errors.InvalidAndOperator();
+            }
+        } else if (node.operator == 2) {
+            if (node.children.length < 1 || node.asset.assetAddress != address(0)) {
+                revert Errors.InvalidOrOperator();
+            }
+        } else if (node.operator == 3) {
+            if (
+                !(
+                    (node.children.length == 1 && node.asset.assetAddress == address(0))
+                        || (node.children.length == 0 && node.asset.assetAddress != address(0))
+                )
+            ) {
+                revert Errors.InvalidNotOperator();
+            }
+        } else {
+            revert Errors.InvalidOperator();
+        }
+        for (uint256 i; i < node.children.length; i++) {
+            validateTree(node.children[i]);
+        }
     }
 
     function decode(bytes memory requirementTree) internal pure returns (RequirementNode memory) {
@@ -84,6 +107,36 @@ library RequirementsTree {
             nodes[i] = encode(node.children[i]);
         }
         return abi.encode(node.operator, node.asset, nodes);
+    }
+
+    function validateTree(RequirementNode memory node) internal pure {
+        if (node.operator == 0) {
+            if (node.children.length != 0 || node.asset.assetAddress == address(0)) {
+                revert Errors.InvalidNilOperator();
+            }
+        } else if (node.operator == 1) {
+            if (node.children.length < 2 || node.asset.assetAddress != address(0)) {
+                revert Errors.InvalidAndOperator();
+            }
+        } else if (node.operator == 2) {
+            if (node.children.length < 2 || node.asset.assetAddress != address(0)) {
+                revert Errors.InvalidOrOperator();
+            }
+        } else if (node.operator == 3) {
+            if (
+                !(
+                    (node.children.length == 1 && node.asset.assetAddress == address(0))
+                        || (node.children.length == 0 && node.asset.assetAddress != address(0))
+                )
+            ) {
+                revert Errors.InvalidNotOperator();
+            }
+        } else {
+            revert Errors.InvalidOperator();
+        }
+        for (uint256 i; i < node.children.length; i++) {
+            validateTree(node.children[i]);
+        }
     }
 }
 
@@ -199,6 +252,7 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
     function setClaimRequirements(uint256 itemId, bytes calldata requirementTreeBytes) public onlyItemsContract {
         RequirementNode storage requirementTree = _claimRequirements[itemId];
         RequirementsTree.decodeToStorage(requirementTreeBytes, requirementTree);
+        RequirementsTree.validateTreeInStorage(requirementTree);
 
         emit RequirementSet(itemId, requirementTreeBytes);
     }
@@ -228,9 +282,6 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
     }
 
     function checkAsset(address characterAccount, uint256 amount, Asset storage asset) internal view returns (bool) {
-        if (asset.assetAddress == address(0)) {
-            revert InvalidAsset();
-        }
         uint256 balance = MultiToken.balanceOf(asset, characterAccount);
 
         // if the required asset is a class check that the balance is not less than the required level.
@@ -251,45 +302,35 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
     {
         if (root.operator == 0) {
             // leaf node
-            if (root.children.length != 0) {
-                revert InvalidNilOperator();
-            }
-            Asset storage asset = root.asset;
-
-            return checkAsset(characterAccount, amount, asset);
+            return checkAsset(characterAccount, amount, root.asset);
         }
         if (root.operator == 1) {
             // and
-            if (root.children.length == 0) {
-                revert InvalidAndOperator();
-            }
             bool result = true;
             for (uint256 i; i < root.children.length; i++) {
-                RequirementNode storage node = root.children[i];
-                result = result && checkClaimRequirements(characterAccount, amount, node);
+                result = result && checkClaimRequirements(characterAccount, amount, root.children[i]);
             }
             return result;
         }
         if (root.operator == 2) {
             // or
-            if (root.children.length == 0) {
-                revert InvalidOrOperator();
-            }
             bool result = false;
             for (uint256 i; i < root.children.length; i++) {
-                RequirementNode storage node = root.children[i];
-                result = result || checkClaimRequirements(characterAccount, amount, node);
+                result = result || checkClaimRequirements(characterAccount, amount, root.children[i]);
             }
             return result;
         }
         if (root.operator == 3) {
             // not
-            if (root.children.length != 1) {
-                revert InvalidNotOperator();
+            if (root.children.length == 1 && root.asset.assetAddress == address(0)) {
+                return !checkClaimRequirements(characterAccount, amount, root.children[0]);
             }
-            return !checkClaimRequirements(characterAccount, amount, root.children[0]);
+            if (root.children.length == 0 && root.asset.assetAddress != address(0)) {
+                return !checkAsset(characterAccount, amount, root.asset);
+            }
+            return false;
         }
-        revert InvalidOperator();
+        return false;
     }
 
     //solhint-disable-next-line
