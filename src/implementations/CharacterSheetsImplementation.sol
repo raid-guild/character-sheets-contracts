@@ -238,21 +238,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         return characterId;
     }
 
-    function _mintSheet(address playerAddress, address characterAccount, uint256 characterId, string memory _tokenURI)
-        internal
-    {
-        _safeMint(playerAddress, characterId);
-        _setTokenURI(characterId, _tokenURI);
-        _playerSheets[playerAddress] = characterId;
-        _characterSheets[characterAccount] = characterId;
-
-        _ifNotPlayerMintHat(playerAddress);
-
-        IHatsAdaptor(clones.hatsAdaptor()).mintCharacterHat(characterAccount);
-
-        totalSheets++;
-    }
-
     /**
      * unequips an item from the character sheet inventory
      * @param characterId the player to have the item type from their inventory
@@ -532,6 +517,21 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         if (!IHatsAdaptor(clones.hatsAdaptor()).isPlayer(wearer)) {
             IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(wearer);
         }
+    }
+
+    function _mintSheet(address playerAddress, address characterAccount, uint256 characterId, string memory _tokenURI)
+        internal
+    {
+        _safeMint(playerAddress, characterId);
+        _setTokenURI(characterId, _tokenURI);
+        _playerSheets[playerAddress] = characterId;
+        _characterSheets[characterAccount] = characterId;
+
+        _ifNotPlayerMintHat(playerAddress);
+
+        IHatsAdaptor(clones.hatsAdaptor()).mintCharacterHat(characterAccount);
+
+        totalSheets++;
     }
 
     //solhint-disable-next-line no-empty-blocks

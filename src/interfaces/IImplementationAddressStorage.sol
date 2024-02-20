@@ -35,5 +35,6 @@ interface IImplementationAddressStorage {
     function erc721HatsEligibilityModule() external view returns (address);
 
     function erc6551HatsEligibilityModule() external view returns (address);
-    function MultiERC6551HatsEligibilityModule() external view returns (address);
+
+    function multiERC6551HatsEligibilityModule() external view returns (address);
 }
