@@ -4,12 +4,9 @@ pragma solidity ^0.8.20;
 import {ERC165} from "openzeppelin-contracts/utils/introspection/ERC165.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
-import {IERC1155} from "openzeppelin-contracts/token/ERC1155/IERC1155.sol";
-import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import {Errors} from "../lib/Errors.sol";
 
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
-import {IClasses} from "../interfaces/IClasses.sol";
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 
 /**

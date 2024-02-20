@@ -12,8 +12,7 @@ import {Errors} from "../lib/Errors.sol";
 import {IClassLevelAdaptor} from "../interfaces/IClassLevelAdaptor.sol";
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
-import {IExperience} from "../interfaces/IExperience.sol";
-import "forge-std/console2.sol";
+// import "forge-std/console2.sol";
 /**
  * @title Experience and Items
  * @author MrDeadCe11 && dan13ram
