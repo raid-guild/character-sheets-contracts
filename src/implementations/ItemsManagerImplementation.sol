@@ -21,8 +21,8 @@ import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 
 struct RequirementNode {
     uint8 operator; // 0 = nil, 1 = and, 2 = or, 3 = not
-    RequirementNode[] children; // if operator is  0, this list must have length 0, else if operator is 3, this list must have length = 1, otherwise it can have any length > 0
-    Asset asset; // Asset is non-zero if operator is 0  only
+    RequirementNode[] children; // if operator is  0, this list must have length 0, else if operator is 3, this list must have length = 1 or 0, otherwise it can have any length > 1
+    Asset asset; // Asset is non-zero if operator is 0/1  only
 }
 
 struct CraftItem {
