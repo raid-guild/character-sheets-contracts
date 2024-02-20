@@ -17,7 +17,6 @@ import {Errors} from "./lib/Errors.sol";
  * @author Mr DeadCe11
  * @notice This is a simple ERC6551 account implementation that can hold ERC1155 tokens
  */
-
 contract CharacterAccount is IERC165, IERC1271, IERC6551Account, IERC6551Executable, ERC1155Holder {
     uint256 public state;
 

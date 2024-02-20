@@ -69,7 +69,6 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
      * @param amount the number of new items to be created
      * @return success bool if crafting is a success return true, else return false
      */
-
     function craftItem(Item memory item, uint256 itemId, uint256 amount, address caller)
         public
         onlyItemsContract

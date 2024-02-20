@@ -28,7 +28,6 @@ import {Errors} from "../lib/Errors.sol";
  * a rpg themed reputation system with experience points awarded by a centralized authority the "GAME_MASTER" and items and classes that can be owned and equipped
  * by the base character account.
  */
-
 contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgradeable {
     string public baseTokenURI;
     string public metadataURI;
@@ -133,7 +132,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
      * - address itemsImplementation: this is the address of the ERC1155 items contract associated
      *      with this contract.  this is assigned at contract creation.
      */
-
     function initialize(bytes calldata _encodedParameters) external initializer {
         __ERC721_init_unchained("CharacterSheet", "CHAS");
         __UUPSUpgradeable_init();
@@ -153,7 +151,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
      * @param _tokenURI the uri of the character sheet metadata
      * if no uri is stored then it will revert to the base uri of the contract
      */
-
     function rollCharacterSheet(string calldata _tokenURI) external returns (uint256) {
         if (erc6551CharacterAccount == address(0) || erc6551Registry == address(0)) {
             revert Errors.NotInitialized();
@@ -216,7 +213,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
      * @param characterId the player to have the item type from their inventory
      * @param characterId the erc1155 token id of the item to be unequipped
      */
-
     function unequipItemFromCharacter(uint256 characterId, uint256 itemId) external onlyCharacter {
         if (msg.sender != _sheets[characterId].accountAddress) {
             revert Errors.OwnershipError();
@@ -260,7 +256,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
      * @param characterId the id of the player receiving the item
      * @param itemId the itemId of the item
      */
-
     function equipItemToCharacter(uint256 characterId, uint256 itemId) external onlyCharacter {
         if (msg.sender != _sheets[characterId].accountAddress) {
             revert Errors.OwnershipError();
@@ -281,7 +276,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
     /**
      * this will burn the nft of the player.  only a player can burn their own token.
      */
-
     function renounceSheet() external onlyPlayer {
         uint256 _characterId = _playerSheets[msg.sender];
 
@@ -298,7 +292,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
      * restores a previously renounced sheet if called by the wrong player and incorrect address will be created that does not control any assets
      * @return the ERC6551 account address
      */
-
     function restoreSheet() external returns (address) {
         uint256 characterId = _playerSheets[msg.sender];
 
@@ -337,7 +330,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
      * Burns a players characterSheet.  can only be done if there is a passing guild kick proposal
      * @param characterId the characterId of the player to be removed.
      */
-
     function removeSheet(uint256 characterId) external onlyGameMaster {
         address playerAddress = _ownerOf(characterId);
         if (playerAddress == address(0)) {
@@ -408,7 +400,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
     /**
      * @dev See {IERC721-approve}.
      */
-
     function approve(address to, uint256 characterId) public virtual override(ERC721Upgradeable, IERC721) {
         return super.approve(to, characterId);
     }
@@ -436,7 +427,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
     /**
      * @dev See {IERC721-safeTransferFrom}.
      */
-
     function safeTransferFrom(address from, address to, uint256 characterId, bytes memory)
         public
         virtual

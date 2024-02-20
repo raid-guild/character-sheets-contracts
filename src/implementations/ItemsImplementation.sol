@@ -26,7 +26,6 @@ import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
  * Each item and class is an 1155 token that can soulbound or not to the erc6551 wallet of each player nft
  * in the characterSheets contract.
  */
-
 contract ItemsImplementation is
     ERC1155HolderUpgradeable,
     ERC1155Upgradeable,
@@ -99,7 +98,6 @@ contract ItemsImplementation is
      * @param itemIds the item Id's of the loot to be dropped  exp is allways Item Id 0;
      * @param amounts the amounts of each item to be dropped this must be in sync with the item ids
      */
-
     function dropLoot(address[] calldata characterAccounts, uint256[][] calldata itemIds, uint256[][] calldata amounts)
         external
         onlyGameMaster
@@ -127,7 +125,6 @@ contract ItemsImplementation is
      * must be in same order as item ids and amounts
      * if claimable of the item is bytes32(0) the proof can be just an empty array.
      */
-
     function claimItems(uint256[] calldata itemIds, uint256[] calldata amounts, bytes32[][] calldata proofs)
         external
         onlyCharacter
@@ -168,7 +165,6 @@ contract ItemsImplementation is
      * @param amount the number of new items to be created
      * @return success bool if crafting is a success return true, else return false
      */
-
     function craftItem(uint256 itemId, uint256 amount) external onlyCharacter returns (bool success) {
         if (!itemsManager.checkRequirements(msg.sender, itemId, amount)) {
             revert Errors.RequirementNotMet();
@@ -211,7 +207,6 @@ contract ItemsImplementation is
      *             - uint256[] memory requiredAssetAmounts;
      * @return _itemId the ERC1155 tokenId
      */
-
     function createItemType(bytes calldata _itemData) external onlyGameMaster returns (uint256 _itemId) {
         _itemId = totalItemTypes;
 
@@ -229,7 +224,6 @@ contract ItemsImplementation is
      * @param itemId the item id of the item to be updated
      * @param merkleRoot the merkle root of the addresses and amounts that can be claimed of this item
      */
-
     function updateItemClaimable(uint256 itemId, bytes32 merkleRoot, uint256 newDistribution) external onlyGameMaster {
         if (_items[itemId].supply == 0) {
             revert Errors.ItemError();
@@ -251,7 +245,6 @@ contract ItemsImplementation is
     /**
      * @notice this item will delete the Item Struct from the items mapping and burn the remaining supply it will also set the enabled bool to false;
      */
-
     function deleteItem(uint256 itemId) external onlyGameMaster {
         // cannot delete an Item that has been supplied to anyone.
         if (_items[itemId].supplied != 0) {
@@ -270,7 +263,6 @@ contract ItemsImplementation is
     /**
      * @dev Sets `tokenURI` as the tokenURI of `tokenId`.
      */
-
     function setURI(uint256 tokenId, string memory tokenURI) external onlyGameMaster {
         _itemURIs[tokenId] = tokenURI;
         emit URI(uri(tokenId), tokenId);
@@ -334,7 +326,6 @@ contract ItemsImplementation is
      * - if `_tokenURI` is NOT set, and if the parents do not have a
      *   uri value set, then the result is empty.
      */
-
     function uri(uint256 _itemId) public view override returns (string memory) {
         string memory _tokenURI = _itemURIs[_itemId];
 
@@ -428,7 +419,6 @@ contract ItemsImplementation is
      * @param itemId the erc1155 Id of the item to be transfered
      * @param amount the number of items to be transfered
      */
-
     function _transferItem(address characterAccount, uint256 itemId, uint256 amount) internal returns (bool success) {
         if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(characterAccount)) {
             revert Errors.CharacterOnly();
