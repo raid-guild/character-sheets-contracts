@@ -236,9 +236,8 @@ contract HatsEligibilityModulesTest is SetUp {
 
         //level class 2
         vm.startPrank(accounts.gameMaster);
-        deployments.experience.dropExp(accounts.character1, 2000);
-        deployments.classes.levelClass(accounts.character1, 1);
-        deployments.classes.levelClass(accounts.character1, 1);
+        deployments.classes.giveClassExp(accounts.character1, 1, 2000);
+
         vm.stopPrank();
 
         // mint hat to elder

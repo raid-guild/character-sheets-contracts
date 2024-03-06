@@ -19,13 +19,9 @@ interface IClasses {
     function revokeClass(address character, uint256 classId) external returns (bool success);
 
     function renounceClass(uint256 classId) external returns (bool success);
-
-    function levelClass(address character, uint256 classId) external returns (uint256);
-
-    function deLevelClass(address characterAccount, uint256 classId, uint256 numberOfLevels)
-        external
-        returns (uint256);
-
+    function giveClassExp(address characterAccount, uint256 classId, uint256 amountOfExp) external;
+    function revokeClassExp(address characterAccount, uint256 classId, uint256 amountOfExp) external;
+    function getClassExp(address characterAccount, uint256 classId) external returns (uint256);
     function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes memory data) external;
 
     function safeBatchTransferFrom(
