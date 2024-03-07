@@ -59,7 +59,7 @@
     "network": "sepolia",
     "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
     "CharacterAccount": "",
-    "CharacterSheetsImplementation": "",
+    "CharacterSheetsImplementation": "0x28805623a91a3b0815AB606F1e12A1F8381Cb2f2",
     "ClassesImplementation": "",
     "CharacterSheetsFactory": "",
     "CharacterEligibilityAdaptor": "",

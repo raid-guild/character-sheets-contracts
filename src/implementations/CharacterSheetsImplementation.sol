@@ -54,7 +54,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
     event Erc6551CharacterAccountUpdated(address newERC6551CharacterAccount);
     event Erc6551RegistryUpdated(address newERC6551Registry);
     event CharacterRemoved(uint256 characterId);
-    event Erc6551AddressesUpdated(address newErc6551Storage);
     event ClonesAddressStorageUpdated(address newClonesStorageAddress);
     event ItemEquipped(uint256 characterId, uint256 itemId);
     event ItemUnequipped(uint256 characterId, uint256 itemId);
@@ -62,13 +61,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
     event PlayerJailed(address playerAddress, bool thrownInJail);
     event CharacterRestored(address player, address account, uint256 characterId);
     event ExternalCharacterAdded(address player, address account, uint256 characterId);
-
-    modifier onlyContract() {
-        if (msg.sender != clones.items()) {
-            revert Errors.CallerNotApproved();
-        }
-        _;
-    }
 
     modifier onlyAdmin() {
         if (!IHatsAdaptor(clones.hatsAdaptor()).isAdmin(msg.sender)) {
@@ -153,29 +145,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
      * if no uri is stored then it will revert to the base uri of the contract
      */
     function rollCharacterSheet(string calldata _tokenURI) external returns (uint256) {
-        if (erc6551CharacterAccount == address(0) || erc6551Registry == address(0)) {
-            revert Errors.NotInitialized();
-        }
-
-        // check the eligibility adaptor to see if the player is eligible to roll a character sheet
-        if (
-            clones.characterEligibilityAdaptor() != address(0)
-                && !ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(msg.sender)
-        ) {
-            revert Errors.EligibilityError();
-        }
-        // a character cannot be a character
-        if (_characterSheets[msg.sender] != 0) {
-            revert Errors.CharacterError();
-        }
-
-        if (jailed[msg.sender]) {
-            revert Errors.Jailed();
-        }
-
-        if (balanceOf(msg.sender) != 0) {
-            revert Errors.TokenBalanceError();
-        }
+        _checkRollReverts(msg.sender);
 
         uint256 existingCharacterId = _playerSheets[msg.sender];
 
@@ -209,16 +179,9 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
      */
     function addExternalCharacter(address playerAddress, address payable characterAccount, string calldata _tokenURI)
         external
-        onlyGameMaster
         returns (uint256 tokenId)
     {
-        if (
-            clones.characterEligibilityAdaptor() != address(0)
-                && !ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(playerAddress)
-        ) {
-            revert Errors.EligibilityError();
-        }
-
+        _checkRollReverts(playerAddress);
         if (CharacterAccount(characterAccount).owner() != playerAddress) {
             revert Errors.CharacterError();
         }
@@ -539,5 +502,31 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
 
     function _baseURI() internal view virtual override returns (string memory) {
         return baseTokenURI;
+    }
+
+    function _checkRollReverts(address sender) internal view {
+        if (erc6551CharacterAccount == address(0) || erc6551Registry == address(0)) {
+            revert Errors.NotInitialized();
+        }
+
+        // check the eligibility adaptor to see if the player is eligible to roll a character sheet
+        if (
+            clones.characterEligibilityAdaptor() != address(0)
+                && !ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(sender)
+        ) {
+            revert Errors.EligibilityError();
+        }
+        // a character cannot be a character
+        if (_characterSheets[sender] != 0) {
+            revert Errors.CharacterError();
+        }
+
+        if (jailed[sender]) {
+            revert Errors.Jailed();
+        }
+
+        if (balanceOf(sender) != 0) {
+            revert Errors.TokenBalanceError();
+        }
     }
 }
