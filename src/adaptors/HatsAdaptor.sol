@@ -12,9 +12,11 @@ import {IAddressEligibilityModule} from "../interfaces/IAddressEligibilityModule
 import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
 import {ImplementationAddressStorage} from "../ImplementationAddressStorage.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
-
+import {IMultiERC6551HatsEligibilityModule} from "../interfaces/IMultiERC6551HatsEligibilityModule.sol";
+import {ICharacterEligibilityAdaptor} from "../interfaces/ICharacterEligibilityAdaptor.sol";
 import {Errors} from "../lib/Errors.sol";
 import {HatsData} from "../lib/Structs.sol";
+import {CharacterAccount} from "../CharacterAccount.sol";
 
 /**
  * @title Hats Adaptor
@@ -63,6 +65,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     event GameMasterHatEligibilityModuleUpdated(address newGameMasterHatEligibilityModule);
     event PlayerHatEligibilityModuleUpdated(address newPlayerHatEligibilityModule);
     event CharacterHatEligibilityModuleUpdated(address newCharacterHatEligibilityModule);
+    event NewGameAddedToCharacterModule(address newCharacterSheet);
     event AdminEligibilityModuleUpdated(address newAdminEligibilityModule);
     event HatTreeInitialized(address owner, bytes hatsAddresses, bytes hatsStrings, bytes customModuleImplementations);
 
@@ -171,12 +174,22 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         emit PlayerHatEligibilityModuleUpdated(playerHatEligibilityModule);
     }
 
-    function updateCharacterHatEligibilityModule(uint256 characterHatId, address characterImplementation)
+    function updateCharacterHatEligibilityModule(uint256 characterHatId, address characterModuleImplementation)
         external
-        onlyOwner
+        onlyAdmin
     {
-        characterHatEligibilityModule = _createCharacterHatEligibilityModule(characterHatId, characterImplementation);
+        characterHatEligibilityModule =
+            _createCharacterHatEligibilityModule(characterHatId, characterModuleImplementation);
         emit CharacterHatEligibilityModuleUpdated(characterHatEligibilityModule);
+    }
+
+    function addNewGame(address characterSheet) external onlyAdmin {
+        IMultiERC6551HatsEligibilityModule(characterHatEligibilityModule).addValidGame(characterSheet);
+        emit NewGameAddedToCharacterModule(characterSheet);
+    }
+
+    function removeGame(uint256 gameIndex) external onlyAdmin {
+        IMultiERC6551HatsEligibilityModule(characterHatEligibilityModule).removeGame(gameIndex);
     }
 
     function updateHats(address newHats) external onlyOwner {
@@ -209,7 +222,9 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         if (_hatsData.characterHatId == uint256(0)) {
             revert Errors.VariableNotSet();
         }
+
         (bool eligible,) = checkCharacterHatEligibility(wearer);
+
         if (!eligible) {
             revert Errors.CharacterError();
         }
@@ -222,7 +237,20 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     }
 
     function checkCharacterHatEligibility(address account) public view returns (bool eligible, bool standing) {
-        return IHatsEligibility(characterHatEligibilityModule).getWearerStatus(account, _hatsData.characterHatId);
+        if (clones.characterEligibilityAdaptor() != address(0)) {
+            address owner = CharacterAccount(payable(account)).owner();
+            if (ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(owner)) {
+                (eligible, standing) =
+                    IHatsEligibility(characterHatEligibilityModule).getWearerStatus(account, _hatsData.characterHatId);
+            } else {
+                eligible = false;
+                standing = false;
+                return (eligible, standing);
+            }
+        } else {
+            (eligible, standing) =
+                IHatsEligibility(characterHatEligibilityModule).getWearerStatus(account, _hatsData.characterHatId);
+        }
     }
 
     function checkPlayerHatEligibility(address account) public view returns (bool eligible, bool standing) {
@@ -499,10 +527,12 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         private
         returns (uint256 characterHatId)
     {
+        //todo update this to work with multi erc6551 modue
         (,,,,,,,, string memory characterUri, string memory characterDescription) =
             abi.decode(hatsStrings, (string, string, string, string, string, string, string, string, string, string));
         (,,, address customCharacterModule) =
             abi.decode(customModuleImplementations, (address, address, address, address));
+
         characterHatId = _hats.getNextId(_hatsData.gameMasterHatId);
 
         characterHatEligibilityModule = _createCharacterHatEligibilityModule(characterHatId, customCharacterModule);
@@ -532,13 +562,17 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         ) {
             revert Errors.VariableNotSet();
         }
+
         bytes memory characterModuleData = abi.encodePacked(
-            implementations.erc6551Registry(), implementations.erc6551AccountImplementation(), clones.characterSheets()
+            _hatsData.adminHatId, implementations.erc6551Registry(), implementations.erc6551AccountImplementation()
         );
-        customCharacterModule =
-            customCharacterModule == address(0) ? implementations.erc6551HatsEligibilityModule() : customCharacterModule;
+
+        bytes memory characterModuleInitData = abi.encode(address(clones.characterSheets()));
+        customCharacterModule = customCharacterModule == address(0)
+            ? implementations.multiERC6551HatsEligibilityModule()
+            : customCharacterModule;
         address characterHatsModule = HatsModuleFactory(implementations.hatsModuleFactory()).createHatsModule(
-            customCharacterModule, characterHatId, characterModuleData, ""
+            customCharacterModule, characterHatId, characterModuleData, characterModuleInitData
         );
         return characterHatsModule;
     }

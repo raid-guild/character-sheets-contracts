@@ -9,6 +9,8 @@ import {ICharacterSheets} from "../../interfaces/ICharacterSheets.sol";
 import {IERC6551Registry} from "../../interfaces/IERC6551Registry.sol";
 import {Errors} from "../../lib/Errors.sol";
 
+import "forge-std/console2.sol";
+
 /**
  * @title ERC6551 eligibility module
  * @author MrDeadCe11

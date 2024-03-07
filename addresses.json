@@ -15,6 +15,7 @@
     "AddressHatsEligibilityModule": "0x9AaF0df5657b634131784523F4F5e83459c61986",
     "ERC721HatsEligibilityModule": "0x6bAa65D3E024D8ebA717085691dd8A985e9F267E",
     "ERC6551HatsEligibilityModule": "0x36C55610d6043703bF7Ae29a8aa5768FC4772738",
+    "MultiERC6511HatsEligibilityModule": "",
     "ExperienceImplementation": "0x66467555734aa5E89336DD99822DfF9Dcf09bAd7",
     "ItemsManagerImplementation": "0x2355D357164F64dAb43A776aE7637d35B61E9a53",
     "ClonesAddressStorage": "",
@@ -50,6 +51,7 @@
     "CharacterSheetsLevelEligibilityModule": "0x6f52b30a4730C5Cb765E7c762249dc4Ae02fB8eD",
     "ERC721HatsEligibilityModule": "0x6bAa65D3E024D8ebA717085691dd8A985e9F267E",
     "ERC6551HatsEligibilityModule": "0xa25B005B82209B2D2dC6E86006ae75649b1dAb5b",
+    "MultiERC6511HatsEligibilityModule": "",
     "ClonesAddressStorageImplementation": "0xfFE77f170cEFcC2248e6697c32ef665FcF685E14"
   },
   "sepolia": {
@@ -57,7 +59,7 @@
     "network": "sepolia",
     "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
     "CharacterAccount": "",
-    "CharacterSheetsImplementation": "",
+    "CharacterSheetsImplementation": "0x28805623a91a3b0815AB606F1e12A1F8381Cb2f2",
     "ClassesImplementation": "",
     "CharacterSheetsFactory": "",
     "CharacterEligibilityAdaptor": "",
@@ -66,6 +68,7 @@
     "AddressHatsEligibilityModule": "",
     "ERC721HatsEligibilityModule": "",
     "ERC6551HatsEligibilityModule": "",
+    "MultiERC6511HatsEligibilityModule": "",
     "CharacterSheetsLevelEligibilityModule": "",
     "ExperienceImplementation": "",
     "ItemsManagerImplementation": "",
@@ -99,6 +102,7 @@
     "AddressHatsEligibilityModule": "0x9AaF0df5657b634131784523F4F5e83459c61986",
     "CharacterSheetsLevelEligibilityModule": "",
     "ERC721HatsEligibilityModule": "0x6bAa65D3E024D8ebA717085691dd8A985e9F267E",
-    "ERC6551HatsEligibilityModule": ""
+    "ERC6551HatsEligibilityModule": "",
+    "MultiERC6511HatsEligibilityModule": ""
   }
 }

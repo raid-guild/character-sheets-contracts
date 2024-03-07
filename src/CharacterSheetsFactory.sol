@@ -97,7 +97,8 @@ contract CharacterSheetsFactory is Initializable, OwnableUpgradeable {
         bytes calldata sheetsStrings
     ) public returns (address) {
         address clones = create(dao);
-        bytes memory encodedHatsAddresses = abi.encode(admins, dungeonMasters, implementations, clones);
+        bytes memory encodedHatsAddresses =
+            abi.encode(admins, dungeonMasters, address(implementations), address(clones));
 
         initializeContracts(clones, dao, encodedHatsAddresses, encodedHatsStrings, sheetsStrings);
 

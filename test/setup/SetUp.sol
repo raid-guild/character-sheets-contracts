@@ -46,7 +46,7 @@ import {Hats} from "hats-protocol/Hats.sol";
 import {AddressHatsEligibilityModule} from "../../src/mocks/AddressHatsEligibilityModule.sol";
 import {ERC721HatsEligibilityModule} from "../../src/mocks/ERC721HatsEligibilityModule.sol";
 import {ERC6551HatsEligibilityModule} from "../../src/adaptors/hats-modules/ERC6551HatsEligibilityModule.sol";
-
+import {MultiERC6551HatsEligibilityModule} from "../../src/adaptors/hats-modules/MultiERC6551HatsEligibilityModule.sol";
 //test and mocks
 import {IMolochDAOV2} from "../../src/interfaces/IMolochDAOV2.sol";
 import {MockMolochV2} from "../../src/mocks/MockMoloch.sol";
@@ -74,13 +74,11 @@ contract SetUp is Test, Accounts, TestStructs {
 
     MultiSend public multisend;
 
-    function setUp() public {
+    function setUp() public virtual {
         vm.startPrank(accounts.admin);
         _deployImplementations();
         _deployHatsContracts();
         _deployErc6551Contracts();
-
-        implementationStorage = new ImplementationAddressStorage();
 
         _deployCharacterSheetsFactory();
         _createContracts();
@@ -274,6 +272,7 @@ contract SetUp is Test, Accounts, TestStructs {
         implementations.addressModule = new AddressHatsEligibilityModule("v 0.1");
         implementations.erc721Module = new ERC721HatsEligibilityModule("v 0.1");
         implementations.erc6551Module = new ERC6551HatsEligibilityModule("v 0.1");
+        implementations.multiErc6551Module = new MultiERC6551HatsEligibilityModule("v 0.1");
 
         vm.label(address(dao), "Moloch Implementation");
         vm.label(address(merkle), "Merkle Implementation");
@@ -289,6 +288,7 @@ contract SetUp is Test, Accounts, TestStructs {
         vm.label(address(implementations.addressModule), "Admin Hats Eligibility adaptor Implementation");
         vm.label(address(implementations.erc721Module), "Player Hats Eligibility adaptor Implementation");
         vm.label(address(implementations.erc6551Module), "Character Hats Eligibility adaptor Implementation");
+        vm.label(address(implementations.multiErc6551Module), "MULTI Character Hats Eligibility adaptor Implementation");
     }
 
     function _deployHatsContracts() internal {
@@ -329,7 +329,8 @@ contract SetUp is Test, Accounts, TestStructs {
         bytes memory encodedModuleAddresses = abi.encode(
             address(implementations.addressModule),
             address(implementations.erc721Module),
-            address(implementations.erc6551Module)
+            address(implementations.erc6551Module),
+            address(implementations.multiErc6551Module)
         );
 
         bytes memory encodedAdaptorAddresses = abi.encode(

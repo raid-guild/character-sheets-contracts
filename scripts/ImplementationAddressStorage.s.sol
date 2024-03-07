@@ -30,6 +30,7 @@ struct HatsAddresses {
     address addressHatsEligibilityModule;
     address erc721HatsEligibilityModule;
     address erc6551HatsEligitbilityModule;
+    address multiErc6551HatsEligitbilityModule;
     address erc6551Registry;
 }
 
@@ -124,6 +125,8 @@ contract DeployImplementationAddressStorage is BaseDeployer {
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".ERC721HatsEligibilityModule")));
         hatsAddresses.erc6551HatsEligitbilityModule =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".ERC6511HatsEligibilityModule")));
+        hatsAddresses.multiErc6551HatsEligitbilityModule =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".MultiERC6511HatsEligibilityModule")));
     }
 
     function _loadExternalAddresses(string memory json, string memory targetEnv) internal {
@@ -167,7 +170,8 @@ contract DeployImplementationAddressStorage is BaseDeployer {
         bytes memory encodedModuleAddresses = abi.encode(
             hatsAddresses.addressHatsEligibilityModule,
             hatsAddresses.erc721HatsEligibilityModule,
-            hatsAddresses.characterHatsEligibilityModule
+            hatsAddresses.characterHatsEligibilityModule,
+            hatsAddresses.multiErc6551HatsEligitbilityModule
         );
 
         return encodedModuleAddresses;

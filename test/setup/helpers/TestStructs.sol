@@ -37,6 +37,8 @@ import {Hats} from "hats-protocol/Hats.sol";
 import {AddressHatsEligibilityModule} from "../../../src/mocks/AddressHatsEligibilityModule.sol";
 import {ERC721HatsEligibilityModule} from "../../../src/mocks/ERC721HatsEligibilityModule.sol";
 import {ERC6551HatsEligibilityModule} from "../../../src/adaptors/hats-modules/ERC6551HatsEligibilityModule.sol";
+import {MultiERC6551HatsEligibilityModule} from
+    "../../../src/adaptors/hats-modules/MultiERC6551HatsEligibilityModule.sol";
 
 import "murky/src/Merkle.sol";
 
@@ -95,6 +97,7 @@ interface TestStructs {
         AddressHatsEligibilityModule addressModule;
         ERC721HatsEligibilityModule erc721Module;
         ERC6551HatsEligibilityModule erc6551Module;
+        MultiERC6551HatsEligibilityModule multiErc6551Module;
     }
 
     struct Adaptors {

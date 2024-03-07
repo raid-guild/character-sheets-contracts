@@ -94,6 +94,7 @@ struct ImplementationAddresses {
     address addressHatsEligibilityModule;
     address erc721HatsEligibilityModule;
     address erc6551HatsEligibilityModule;
+    address multiERC6551HatsEligibilityModule;
 }
 
 struct AdaptorImplementations {
