@@ -11,6 +11,7 @@ import {Errors} from "../lib/Errors.sol";
 
 import {IClassLevelAdaptor} from "../interfaces/IClassLevelAdaptor.sol";
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
+import {IExperience} from "../interfaces/IExperience.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 // import "forge-std/console2.sol";
 /**
@@ -141,6 +142,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
             revert Errors.CharacterError();
         }
         _expPerClass[characterAccount][classId] += amountOfExp;
+        IExperience(clones.experience()).dropExp(characterAccount, amountOfExp);
         emit ClassExpGiven(characterAccount, classId, amountOfExp);
     }
 
@@ -149,6 +151,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
             revert Errors.CharacterError();
         }
         _expPerClass[characterAccount][classId] -= amountOfExp;
+        IExperience(clones.experience()).burnExp(characterAccount, amountOfExp);
         emit ClassExpRevoked(characterAccount, classId, amountOfExp);
     }
 

@@ -108,6 +108,28 @@ contract ClassesTest is SetUp {
         );
     }
 
+    function testClassExp() public {
+        vm.startPrank(accounts.gameMaster);
+        deployments.classes.assignClass(accounts.character1, 1);
+        vm.stopPrank();
+
+        uint256 generalExp = deployments.experience.balanceOf(accounts.character1);
+
+        uint256 classExp = 100;
+        vm.prank(accounts.gameMaster);
+        deployments.classes.giveClassExp(accounts.character1, 1, classExp);
+
+        assertEq(deployments.classes.getClassExp(accounts.character1, 1), classExp, "incorrect class exp");
+        assertEq(deployments.experience.balanceOf(accounts.character1), generalExp + classExp, "incorrect general exp");
+
+        // revoke
+        vm.prank(accounts.gameMaster);
+        deployments.classes.revokeClassExp(accounts.character1, 1, classExp);
+
+        assertEq(deployments.classes.getClassExp(accounts.character1, 1), 0, "incorrect class exp");
+        assertEq(deployments.experience.balanceOf(accounts.character1), generalExp, "incorrect general exp");
+    }
+
     function testFuzz_BalanceOf(uint256 _classExp) public {
         vm.assume(_classExp < 1_000_000);
 
