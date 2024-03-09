@@ -152,8 +152,8 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
     /// @dev a list of craft items required to craft a new item
     mapping(uint256 => CraftItem[]) internal _craftRequirements;
 
-    event RequirementSet(uint256 itemId, bytes requirements);
-    event CraftItemSet(uint256 itemId);
+    event ClaimRequirementsSet(uint256 itemId, bytes requirementsBytes);
+    event CraftRequirementsSet(uint256 itemId, bytes requirementsBytes);
     // event RequirementRemoved(uint256 itemId, address assetAddress, uint256 assetId);
     event ItemsDismantled(uint256 itemId, uint256 amount, address caller);
 
@@ -192,10 +192,11 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         CraftItem[] memory craftRequirements;
         (craftRequirements) = abi.decode(craftRequirementsBytes, (CraftItem[]));
 
+        delete _craftRequirements[itemId];
         for (uint256 i; i < craftRequirements.length; i++) {
             _craftRequirements[itemId].push(craftRequirements[i]);
         }
-        emit CraftItemSet(itemId);
+        emit CraftRequirementsSet(itemId, craftRequirementsBytes);
     }
 
     /**
@@ -250,11 +251,12 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
     }
 
     function setClaimRequirements(uint256 itemId, bytes calldata requirementTreeBytes) public onlyItemsContract {
+        delete _claimRequirements[itemId];
         RequirementNode storage requirementTree = _claimRequirements[itemId];
         RequirementsTree.decodeToStorage(requirementTreeBytes, requirementTree);
         RequirementsTree.validateTreeInStorage(requirementTree);
 
-        emit RequirementSet(itemId, requirementTreeBytes);
+        emit ClaimRequirementsSet(itemId, requirementTreeBytes);
     }
 
     function checkClaimRequirements(address characterAccount, uint256 itemId, uint256 amount)

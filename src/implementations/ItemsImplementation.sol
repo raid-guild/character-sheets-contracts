@@ -265,6 +265,30 @@ contract ItemsImplementation is
         emit URI(uri(tokenId), tokenId);
     }
 
+    /**
+     * @dev Sets claim requirements for an item
+     */
+    function setClaimRequirements(uint256 itemId, bytes memory requiredAssets) external onlyGameMaster {
+        // cannot set claim requirements for an item that has been supplied to anyone.
+        if (_items[itemId].supplied != 0) {
+            revert Errors.ItemError();
+        }
+
+        itemsManager.setClaimRequirements(itemId, requiredAssets);
+    }
+
+    /**
+     * @dev Sets craft requirements for an item
+     */
+    function setCraftRequirements(uint256 itemId, bytes memory requiredAssets) external onlyGameMaster {
+        // cannot set craft requirements for an item that has been supplied to anyone.
+        if (_items[itemId].supplied != 0) {
+            revert Errors.ItemError();
+        }
+
+        itemsManager.setCraftRequirements(itemId, requiredAssets);
+    }
+
     function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes memory data)
         public
         override

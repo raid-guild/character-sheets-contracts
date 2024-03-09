@@ -867,4 +867,107 @@ contract ItemsTest is SetUp {
 
         vm.stopPrank();
     }
+
+    function testUpdateClaimableItemRequirements() public {
+        assertEq(itemsData.itemIdClaimable, 1, "incorrect item ID");
+        Item memory returnedItem = deployments.items.getItem(itemsData.itemIdClaimable);
+        bytes memory itemRequirements = deployments.itemsManager.getClaimRequirements(itemsData.itemIdClaimable);
+        RequirementNode memory node = RequirementsTree.decode(itemRequirements);
+
+        assertEq(node.operator, 0, "incorrect operator");
+        assertEq(node.children.length, 0, "incorrect number of children");
+        Asset memory asset = node.asset;
+        assertEq(uint8(asset.category), uint8(Category.ERC20), "incorrect asset category");
+        assertEq(asset.assetAddress, address(deployments.experience), "incorrect asset address");
+        assertEq(asset.id, 0, "incorrect asset ID");
+        assertEq(asset.amount, 100, "incorrect amount");
+
+        // set new requirements
+        RequirementNode memory expRange;
+
+        {
+            Asset memory assetExpMin = Asset(Category.ERC20, address(deployments.experience), 0, 3000);
+            Asset memory assetExpMax = Asset(Category.ERC20, address(deployments.experience), 0, 4000);
+
+            RequirementNode memory notExpMax =
+                RequirementNode({operator: 3, asset: assetExpMax, children: new RequirementNode[](0)});
+
+            RequirementNode memory minExp =
+                RequirementNode({operator: 0, asset: assetExpMin, children: new RequirementNode[](0)});
+
+            expRange = RequirementNode({
+                operator: 1,
+                asset: Asset(Category.ERC20, address(0), 0, 0),
+                children: new RequirementNode[](2)
+            });
+
+            expRange.children[0] = minExp;
+            expRange.children[1] = notExpMax;
+        }
+
+        bytes memory requiredAssets = RequirementsTree.encode(expRange);
+
+        //prank
+        vm.prank(accounts.gameMaster);
+        deployments.items.setClaimRequirements(itemsData.itemIdClaimable, requiredAssets);
+
+        itemRequirements = deployments.itemsManager.getClaimRequirements(itemsData.itemIdClaimable);
+        node = RequirementsTree.decode(itemRequirements);
+
+        assertEq(node.operator, 1, "incorrect operator");
+        assertEq(node.children.length, 2, "incorrect number of children");
+        asset = node.asset;
+        assertEq(uint8(asset.category), uint8(Category.ERC20), "incorrect asset category");
+        assertEq(asset.assetAddress, address(0), "incorrect asset address");
+        assertEq(asset.id, 0, "incorrect asset ID");
+        assertEq(asset.amount, 0, "incorrect amount");
+
+        assertEq(node.children[0].operator, 0, "incorrect operator");
+        assertEq(node.children[0].children.length, 0, "incorrect number of children");
+        asset = node.children[0].asset;
+        assertEq(uint8(asset.category), uint8(Category.ERC20), "incorrect asset category");
+        assertEq(asset.assetAddress, address(deployments.experience), "incorrect asset address");
+        assertEq(asset.id, 0, "incorrect asset ID");
+        assertEq(asset.amount, 3000, "incorrect amount");
+
+        assertEq(node.children[1].operator, 3, "incorrect operator");
+        assertEq(node.children[1].children.length, 0, "incorrect number of children");
+        asset = node.children[1].asset;
+        assertEq(uint8(asset.category), uint8(Category.ERC20), "incorrect asset category");
+        assertEq(asset.assetAddress, address(deployments.experience), "incorrect asset address");
+        assertEq(asset.id, 0, "incorrect asset ID");
+        assertEq(asset.amount, 4000, "incorrect amount");
+    }
+
+    function testUpdateCraftableItemRequirements() public {
+        Item memory returnedItem = deployments.items.getItem(itemsData.itemIdCraftable);
+        bytes memory itemRequirements = deployments.itemsManager.getCraftRequirements(itemsData.itemIdCraftable);
+        CraftItem[] memory craftRequirements = abi.decode(itemRequirements, (CraftItem[]));
+
+        assertEq(itemsData.itemIdCraftable, 2, "incorrect item ID");
+        assertEq(craftRequirements.length, 1, "incorrect number of craft requirements");
+        assertEq(craftRequirements[0].amount, 1, "incorrect amount");
+        assertEq(craftRequirements[0].itemId, itemsData.itemIdSoulbound, "incorrect item ID");
+
+        // set new requirements
+
+        CraftItem[] memory requirements = new CraftItem[](2);
+        requirements[0] = CraftItem(itemsData.itemIdSoulbound, 1);
+        requirements[1] = CraftItem(itemsData.itemIdClaimable, 1);
+
+        bytes memory requiredAssets = abi.encode(requirements);
+
+        //prank
+        vm.prank(accounts.gameMaster);
+        deployments.items.setCraftRequirements(itemsData.itemIdCraftable, requiredAssets);
+
+        itemRequirements = deployments.itemsManager.getCraftRequirements(itemsData.itemIdCraftable);
+        craftRequirements = abi.decode(itemRequirements, (CraftItem[]));
+
+        assertEq(craftRequirements.length, 2, "incorrect number of craft requirements");
+        assertEq(craftRequirements[0].amount, 1, "incorrect amount");
+        assertEq(craftRequirements[0].itemId, itemsData.itemIdSoulbound, "incorrect item ID");
+        assertEq(craftRequirements[1].amount, 1, "incorrect amount");
+        assertEq(craftRequirements[1].itemId, itemsData.itemIdClaimable, "incorrect item ID");
+    }
 }
