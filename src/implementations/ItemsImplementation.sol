@@ -10,7 +10,7 @@ import {ERC721HolderUpgradeable} from
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {Errors} from "../lib/Errors.sol";
-import {MultiToken, Asset, Category} from "../lib/MultiToken.sol";
+import {MultiToken, Asset} from "../lib/MultiToken.sol";
 import {IItemsManager} from "../interfaces/IItemsManager.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 //solhint-disable-next-line
@@ -18,7 +18,7 @@ import "../lib/Structs.sol";
 
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 
-//import "forge-std/console2.sol";
+// import "forge-std/console2.sol";
 /**
  * @title Experience and Items
  * @author MrDeadCe11 && dan13ram
@@ -53,7 +53,9 @@ contract ItemsImplementation is
 
     event NewItemTypeCreated(uint256 itemId);
     event BaseURIUpdated(string newUri);
-    event ItemTransfered(address character, uint256 itemId, uint256 amount);
+    event ItemClaimed(address character, uint256 itemId, uint256 amount);
+    event ItemCrafted(address character, uint256 itemId, uint256 amount);
+    event ItemDismantled(address character, uint256 itemId, uint256 amount);
     event ItemClaimableUpdated(uint256 itemId, bytes32 merkleRoot, uint256 newDistribution);
     event ItemDeleted(uint256 itemId);
 
@@ -166,15 +168,13 @@ contract ItemsImplementation is
      * @return success bool if crafting is a success return true, else return false
      */
     function craftItem(uint256 itemId, uint256 amount) external onlyCharacter returns (bool success) {
-        if (!itemsManager.checkRequirements(msg.sender, itemId, amount)) {
-            revert Errors.RequirementNotMet();
-        }
         Item memory item = _items[itemId];
 
         if (itemsManager.craftItem(item, itemId, amount, msg.sender)) {
             //transfer item after succesful crafting
             super._safeTransferFrom(address(this), msg.sender, itemId, amount, "");
             success = true;
+            emit ItemCrafted(msg.sender, itemId, amount);
         } else {
             success = false;
         }
@@ -186,9 +186,10 @@ contract ItemsImplementation is
             //burn items
             _burn(msg.sender, itemId, amount);
 
-            return true;
+            success = true;
+            emit ItemDismantled(msg.sender, itemId, amount);
         } else {
-            return false;
+            success = false;
         }
     }
 
@@ -200,11 +201,7 @@ contract ItemsImplementation is
      * - bytes32 claimable
      * - uint256 supply
      * - string cid
-     * - bytes requiredAssets encoded required assets,
-     *             - uint8[] memory requiredAssetCategories;
-     *             - address[] memory requiredAssetAddresses;
-     *             - uint256[] memory requiredAssetIds;
-     *             - uint256[] memory requiredAssetAmounts;
+     * - bytes requiredAssets encoded required assets or craft items
      * @return _itemId the ERC1155 tokenId
      */
     function createItemType(bytes calldata _itemData) external onlyGameMaster returns (uint256 _itemId) {
@@ -266,6 +263,30 @@ contract ItemsImplementation is
     function setURI(uint256 tokenId, string memory tokenURI) external onlyGameMaster {
         _itemURIs[tokenId] = tokenURI;
         emit URI(uri(tokenId), tokenId);
+    }
+
+    /**
+     * @dev Sets claim requirements for an item
+     */
+    function setClaimRequirements(uint256 itemId, bytes memory requiredAssets) external onlyGameMaster {
+        // cannot set claim requirements for an item that has been supplied to anyone.
+        if (_items[itemId].supplied != 0) {
+            revert Errors.ItemError();
+        }
+
+        itemsManager.setClaimRequirements(itemId, requiredAssets);
+    }
+
+    /**
+     * @dev Sets craft requirements for an item
+     */
+    function setCraftRequirements(uint256 itemId, bytes memory requiredAssets) external onlyGameMaster {
+        // cannot set craft requirements for an item that has been supplied to anyone.
+        if (_items[itemId].supplied != 0) {
+            revert Errors.ItemError();
+        }
+
+        itemsManager.setCraftRequirements(itemId, requiredAssets);
     }
 
     function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes memory data)
@@ -369,34 +390,14 @@ contract ItemsImplementation is
             (craftable, soulbound, claimable, distribution, supply, cid, requiredAssets) =
                 abi.decode(_data, (bool, bool, bytes32, uint256, uint256, string, bytes));
 
-            {
-                uint8[] memory requiredAssetCategories;
-                address[] memory requiredAssetAddresses;
-                uint256[] memory requiredAssetIds;
-                uint256[] memory requiredAssetAmounts;
-
-                {
-                    (requiredAssetCategories, requiredAssetAddresses, requiredAssetIds, requiredAssetAmounts) =
-                        abi.decode(requiredAssets, (uint8[], address[], uint256[], uint256[]));
-
-                    if (
-                        requiredAssetCategories.length != requiredAssetAddresses.length
-                            || requiredAssetAddresses.length != requiredAssetIds.length
-                            || requiredAssetIds.length != requiredAssetAmounts.length
-                    ) {
-                        revert Errors.LengthMismatch();
-                    }
-
-                    for (uint256 i = 0; i < requiredAssetAddresses.length; i++) {
-                        itemsManager.addItemRequirement(
-                            _itemId,
-                            uint8(Category(requiredAssetCategories[i])),
-                            requiredAssetAddresses[i],
-                            requiredAssetIds[i],
-                            requiredAssetAmounts[i]
-                        );
-                    }
+            if (craftable) {
+                if (requiredAssets.length > 0) {
+                    itemsManager.setCraftRequirements(_itemId, requiredAssets);
+                } else {
+                    revert Errors.CraftableError();
                 }
+            } else if (requiredAssets.length > 0) {
+                itemsManager.setClaimRequirements(_itemId, requiredAssets);
             }
 
             _items[_itemId] = Item({
@@ -429,14 +430,14 @@ contract ItemsImplementation is
             revert Errors.ItemError();
         }
 
-        if (!itemsManager.checkRequirements(characterAccount, itemId, amount)) {
+        if (!itemsManager.checkClaimRequirements(characterAccount, itemId, amount)) {
             revert Errors.RequirementNotMet();
         }
 
         super._safeTransferFrom(address(this), characterAccount, itemId, amount, "");
         _items[itemId].supplied += amount;
 
-        emit ItemTransfered(characterAccount, itemId, amount);
+        emit ItemClaimed(characterAccount, itemId, amount);
 
         success = true;
 
