@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Category} from "./MultiToken.sol";
+import {Category, Asset} from "./MultiToken.sol";
 
 struct ClonesAddresses {
     address characterSheets;
@@ -12,6 +12,17 @@ struct ClonesAddresses {
     address characterEligibilityAdaptor;
     address classLevelAdaptor;
     address hatsAdaptor;
+}
+
+struct RequirementNode {
+    uint8 operator; // 0 = nil, 1 = and, 2 = or, 3 = not
+    RequirementNode[] children; // if operator is  0, this list must have length 0, else if operator is 3, this list must have length = 1 or 0, otherwise it can have any length > 1
+    Asset asset; // Asset is non-zero if operator is 0/1  only
+}
+
+struct CraftItem {
+    uint256 itemId;
+    uint256 amount;
 }
 
 struct Item {
