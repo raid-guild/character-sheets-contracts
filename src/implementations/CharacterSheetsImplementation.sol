@@ -192,8 +192,14 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
             // must restore sheet
             revert Errors.PlayerError();
         }
-
         uint256 characterId = totalSheets;
+
+        _sheets[characterId] = CharacterSheet({
+            accountAddress: characterAccount,
+            playerAddress: playerAddress,
+            inventory: new uint256[](0)
+        });
+
         _mintSheet(playerAddress, characterAccount, characterId, _tokenURI);
 
         emit ExternalCharacterAdded(playerAddress, characterAccount, characterId);
