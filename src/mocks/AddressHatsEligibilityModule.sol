@@ -10,8 +10,7 @@ import {HatsEligibilityModule, HatsModule} from "hats-module/HatsEligibilityModu
  * @notice A Hats Protocol eligibility module that allows admin's of a hat to whitelist eligible addresses for that hat
  * this is set so the admin will be the Top Hat and all admins will be set be that top hat.  Ideally this will be A guild or multisig.
  */
-
-contract AdminHatEligibilityModule is HatsEligibilityModule {
+contract AddressHatsEligibilityModule is HatsEligibilityModule {
     /*//////////////////////////////////////////////////////////////
                             CUSTOM ERRORS
     //////////////////////////////////////////////////////////////*/

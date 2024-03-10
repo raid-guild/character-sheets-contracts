@@ -38,6 +38,8 @@ interface ICharacterSheets {
 
     function safeTransferFrom(address from, address to, uint256 characterId, bytes memory) external;
 
+    function addExternalCharacter(address) external returns (uint256);
+
     function isItemEquipped(uint256 characterId, uint256 itemId) external view returns (bool);
 
     function getCharacterSheetByCharacterId(uint256 characterId) external view returns (CharacterSheet memory);
@@ -49,4 +51,6 @@ interface ICharacterSheets {
     function tokenURI(uint256 characterId) external view returns (string memory);
 
     function supportsInterface(bytes4 interfaceId) external view returns (bool);
+
+    function balanceOf(address) external view returns (uint256);
 }

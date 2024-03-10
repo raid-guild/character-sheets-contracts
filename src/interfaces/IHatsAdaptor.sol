@@ -7,7 +7,6 @@ pragma solidity ^0.8.20;
  * @notice This is an adaptor interface that allows contracts to  mint hats to players and characters
  * and check which accounts are wearing which hats.
  */
-
 interface IHatsAdaptor {
     function updateHatsAddress(address newHatsAddress) external;
 
@@ -22,6 +21,10 @@ interface IHatsAdaptor {
     function mintCharacterHat(address wearer) external returns (bool);
 
     function mintPlayerHat(address wearer) external returns (bool);
+
+    function addNewGame(address newGame) external;
+
+    function removeGame(uint256 gameIndex) external;
 
     function checkCharacterHatEligibility(address account) external view returns (bool eligible, bool standing);
 

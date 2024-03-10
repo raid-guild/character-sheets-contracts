@@ -147,4 +147,14 @@ contract CharacterAccountTest is SetUp {
         sheet = deployments.characterSheets.getCharacterSheetByCharacterId(tokenId);
         assertEq(sheet.inventory.length, 0, "item still assigned");
     }
+
+    function test_Owner() public {
+        dao.addMember(accounts.rando);
+        vm.prank(accounts.rando);
+        uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+        assertEq(tokenId, 2, "characterId not assigned");
+        address char = deployments.characterSheets.getCharacterSheetByCharacterId(tokenId).accountAddress;
+        CharacterAccount account = CharacterAccount(payable(char));
+        assertEq(account.owner(), accounts.rando, "incorrect owner");
+    }
 }

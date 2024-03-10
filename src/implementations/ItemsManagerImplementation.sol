@@ -2,13 +2,14 @@
 pragma solidity ^0.8.20;
 
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-// import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
-import {MultiToken, Asset, Category} from "../lib/MultiToken.sol";
+import {MultiToken, Asset} from "../lib/MultiToken.sol";
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 import {IItems} from "../interfaces/IItems.sol";
+
 //solhint-disable-next-line
 import "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
+import {RequirementsTree} from "../lib/RequirementsTree.sol";
 
 import {ERC1155HolderUpgradeable} from
     "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
@@ -17,17 +18,22 @@ import {ERC721HolderUpgradeable} from
 
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
 
-// import "forge-std/console2.sol";  //remove for launch
+// import "forge-std/console2.sol"; //remove for launch
 
 contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable, ERC721HolderUpgradeable {
     /// @dev clones address storage contract
     IClonesAddressStorage public clones;
 
-    // item requirements storage
-    /// @dev an array of requirements to transfer this item
-    mapping(uint256 => Asset[]) internal _requirements;
+    // item claim requirements storage
+    /// @dev a tree of requirements for each item
+    mapping(uint256 => RequirementNode) internal _claimRequirements;
 
-    event RequirementAdded(uint256 itemId, uint8 category, address assetAddress, uint256 assetId, uint256 amount);
+    // item craft requirements storage
+    /// @dev a list of craft items required to craft a new item
+    mapping(uint256 => CraftItem[]) internal _craftRequirements;
+
+    event ClaimRequirementsSet(uint256 itemId, bytes requirementsBytes);
+    event CraftRequirementsSet(uint256 itemId, bytes requirementsBytes);
     // event RequirementRemoved(uint256 itemId, address assetAddress, uint256 assetId);
     event ItemsDismantled(uint256 itemId, uint256 amount, address caller);
 
@@ -62,6 +68,17 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         clones = IClonesAddressStorage(clonesAddressStorage);
     }
 
+    function setCraftRequirements(uint256 itemId, bytes calldata craftRequirementsBytes) public onlyItemsContract {
+        CraftItem[] memory craftRequirements;
+        (craftRequirements) = abi.decode(craftRequirementsBytes, (CraftItem[]));
+
+        delete _craftRequirements[itemId];
+        for (uint256 i; i < craftRequirements.length; i++) {
+            _craftRequirements[itemId].push(craftRequirements[i]);
+        }
+        emit CraftRequirementsSet(itemId, craftRequirementsBytes);
+    }
+
     /**
      * @notice Checks the item requirements to create a new item then transfers the requirements in the character's inventory to this contract to create the new item
      * @dev Explain to a developer any extra details
@@ -69,7 +86,6 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
      * @param amount the number of new items to be created
      * @return success bool if crafting is a success return true, else return false
      */
-
     function craftItem(Item memory item, uint256 itemId, uint256 amount, address caller)
         public
         onlyItemsContract
@@ -79,17 +95,17 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
             revert Errors.ItemError();
         }
 
-        Asset memory newRequirement;
-        for (uint256 i; i < _requirements[itemId].length; i++) {
-            newRequirement = _requirements[itemId][i];
-            //if required item is a class skip token transfer  TODO add, if this is a soulbound token.
-            if (newRequirement.assetAddress != clones.classes()) {
-                //add asset amounts
-                newRequirement.amount = newRequirement.amount * amount;
+        CraftItem storage requirement;
+        for (uint256 i; i < _craftRequirements[itemId].length; i++) {
+            requirement = _craftRequirements[itemId][i];
+            uint256 requiredAmount = requirement.amount * amount;
 
-                //transfer assets to this contract must have approval
-                MultiToken.safeTransferAssetFrom(newRequirement, caller, address(this));
+            if (IItems(clones.items()).balanceOf(caller, requirement.itemId) < requiredAmount) {
+                revert Errors.InsufficientBalance();
             }
+
+            //transfer assets to this contract must have approval
+            IItems(clones.items()).safeTransferFrom(caller, address(this), requirement.itemId, requiredAmount, "");
         }
 
         success = true;
@@ -100,84 +116,107 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         if (IItems(clones.items()).balanceOf(caller, itemId) < amount) {
             revert Errors.InsufficientBalance();
         }
-        Asset memory requirement;
-        for (uint256 i; i < _requirements[itemId].length; i++) {
-            requirement = _requirements[itemId][i];
-            if (requirement.assetAddress != address(clones.classes())) {
-                Asset memory refund = _calculateRefund(_requirements[itemId][i], amount);
-                if (MultiToken.balanceOf(requirement, address(this)) < refund.amount) {
-                    return false;
-                }
-                // transfer token
-                MultiToken.safeTransferAssetFrom(refund, address(this), caller);
+        CraftItem storage requirement;
+        for (uint256 i; i < _craftRequirements[itemId].length; i++) {
+            requirement = _craftRequirements[itemId][i];
+            uint256 refundAmount = requirement.amount * amount;
+            if (IItems(clones.items()).balanceOf(address(this), requirement.itemId) < refundAmount) {
+                revert Errors.InsufficientBalance();
             }
+
+            IItems(clones.items()).safeTransferFrom(address(this), caller, requirement.itemId, refundAmount, "");
         }
         emit ItemsDismantled(itemId, amount, caller);
         return true;
     }
 
-    function addItemRequirement(uint256 itemId, uint8 category, address assetAddress, uint256 assetId, uint256 amount)
-        public
-        onlyItemsContract
-        returns (bool success)
-    {
-        Asset memory newRequirement =
-            Asset({category: Category(category), assetAddress: assetAddress, id: assetId, amount: amount});
+    function setClaimRequirements(uint256 itemId, bytes calldata requirementTreeBytes) public onlyItemsContract {
+        delete _claimRequirements[itemId];
+        RequirementNode storage requirementTree = _claimRequirements[itemId];
+        RequirementsTree.decodeToStorage(requirementTreeBytes, requirementTree);
+        RequirementsTree.validateTreeInStorage(requirementTree);
 
-        _requirements[itemId].push(newRequirement);
-        success = true;
-
-        emit RequirementAdded(itemId, category, assetAddress, assetId, amount);
-        return success;
+        emit ClaimRequirementsSet(itemId, requirementTreeBytes);
     }
 
-    function checkRequirements(address characterAccount, uint256 itemId, uint256 amount)
+    function checkClaimRequirements(address characterAccount, uint256 itemId, uint256 amount)
         public
         view
         onlyItemsContract
         returns (bool)
     {
-        Asset[] storage itemRequirements = _requirements[itemId];
-        if (itemRequirements.length == 0) {
+        RequirementNode storage root = _claimRequirements[itemId];
+        if (root.operator == 0 && root.children.length == 0 && root.asset.assetAddress == address(0)) {
             return true;
         }
+        return checkClaimRequirements(characterAccount, amount, root);
+    }
 
-        Asset storage newRequirement;
+    function getClaimRequirements(uint256 itemId) public view returns (bytes memory requirementTreeBytes) {
+        bytes memory encoded = RequirementsTree.encodeFromStorage(_claimRequirements[itemId]);
+        return encoded;
+    }
 
-        for (uint256 i; i < itemRequirements.length; i++) {
-            newRequirement = itemRequirements[i];
+    function getCraftRequirements(uint256 itemId) public view returns (bytes memory requirementTreeBytes) {
+        CraftItem[] storage craftRequirements = _craftRequirements[itemId];
+        bytes memory encoded = abi.encode(craftRequirements);
+        return encoded;
+    }
 
-            uint256 balance = MultiToken.balanceOf(newRequirement, characterAccount);
+    function checkAsset(address characterAccount, uint256 amount, Asset storage asset) internal view returns (bool) {
+        uint256 balance = MultiToken.balanceOf(asset, characterAccount);
 
-            // if the required asset is a class check that the balance is not less than the required level.
-            if (newRequirement.assetAddress == clones.classes()) {
-                if (balance < newRequirement.amount) {
-                    return false;
-                }
-            } else if (balance < newRequirement.amount * amount) {
+        // if the required asset is a class check that the balance is not less than the required level.
+        if (asset.assetAddress == clones.classes()) {
+            if (balance < asset.amount) {
                 return false;
             }
+        } else if (balance < asset.amount * amount) {
+            return false;
         }
         return true;
     }
 
-    function getItemRequirements(uint256 itemId) public view returns (Asset[] memory) {
-        return _requirements[itemId];
+    function checkClaimRequirements(address characterAccount, uint256 amount, RequirementNode storage root)
+        internal
+        view
+        returns (bool)
+    {
+        if (root.operator == 0) {
+            // leaf node
+            return checkAsset(characterAccount, amount, root.asset);
+        }
+        if (root.operator == 1) {
+            // and
+            bool result = true;
+            for (uint256 i; i < root.children.length; i++) {
+                result = result && checkClaimRequirements(characterAccount, amount, root.children[i]);
+            }
+            return result;
+        }
+        if (root.operator == 2) {
+            // or
+            bool result = false;
+            for (uint256 i; i < root.children.length; i++) {
+                result = result || checkClaimRequirements(characterAccount, amount, root.children[i]);
+            }
+            return result;
+        }
+        if (root.operator == 3) {
+            // not
+            if (root.children.length == 1 && root.asset.assetAddress == address(0)) {
+                return !checkClaimRequirements(characterAccount, amount, root.children[0]);
+            }
+            if (root.children.length == 0 && root.asset.assetAddress != address(0)) {
+                return !checkAsset(characterAccount, amount, root.asset);
+            }
+            return false;
+        }
+        return false;
     }
 
     //solhint-disable-next-line
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {
         //empty block
-    }
-
-    function _calculateRefund(Asset memory requirement, uint256 amount) private pure returns (Asset memory refund) {
-        refund = Asset({
-            category: requirement.category,
-            assetAddress: requirement.assetAddress,
-            id: requirement.id,
-            amount: amount * requirement.amount
-        });
-
-        return refund;
     }
 }

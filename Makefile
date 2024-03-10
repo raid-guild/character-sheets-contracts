@@ -54,10 +54,8 @@ MolochV2EligibilityAdaptor \
 MolochV3EligibilityAdaptor \
 ClassLevelAdaptor \
 HatsAdaptor \
-AdminHatEligibilityModule \
-GameMasterHatEligibilityModule \
-PlayerHatEligibilityModule \
-CharacterHatEligibilityModule \
+CharacterSheetsLevelEligibilityModule \
+ERC6551HatsEligibilityModule \
 ClonesAddressStorageImplementation \
 ImplementationAddressStorage \
 CharacterSheetsFactory

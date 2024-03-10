@@ -8,12 +8,15 @@ import {IHats} from "hats-protocol/Interfaces/IHats.sol";
 import {ERC1155HolderUpgradeable} from
     "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import {IHatsEligibility} from "hats-protocol/Interfaces/IHatsEligibility.sol";
+import {IAddressEligibilityModule} from "../interfaces/IAddressEligibilityModule.sol";
 import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
 import {ImplementationAddressStorage} from "../ImplementationAddressStorage.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
-
+import {IMultiERC6551HatsEligibilityModule} from "../interfaces/IMultiERC6551HatsEligibilityModule.sol";
+import {ICharacterEligibilityAdaptor} from "../interfaces/ICharacterEligibilityAdaptor.sol";
 import {Errors} from "../lib/Errors.sol";
 import {HatsData} from "../lib/Structs.sol";
+import {CharacterAccount} from "../CharacterAccount.sol";
 
 /**
  * @title Hats Adaptor
@@ -22,7 +25,6 @@ import {HatsData} from "../lib/Structs.sol";
  * character sheets contacts.  It also allows the minting of hats to players and characters
  * and checks if any address is wearing the player or character hat.
  */
-
 struct InitStruct {
     address _owner;
     bytes hatsAddresses;
@@ -39,7 +41,6 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
      * @notice these are the addresses of the eligibility modules after they are created by
      * the hats module factory during contract initialization.
      */
-
     ImplementationAddressStorage public implementations;
     IClonesAddressStorage public clones;
 
@@ -64,8 +65,16 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     event GameMasterHatEligibilityModuleUpdated(address newGameMasterHatEligibilityModule);
     event PlayerHatEligibilityModuleUpdated(address newPlayerHatEligibilityModule);
     event CharacterHatEligibilityModuleUpdated(address newCharacterHatEligibilityModule);
+    event NewGameAddedToCharacterModule(address newCharacterSheet);
     event AdminEligibilityModuleUpdated(address newAdminEligibilityModule);
     event HatTreeInitialized(address owner, bytes hatsAddresses, bytes hatsStrings, bytes customModuleImplementations);
+
+    modifier onlyAdmin() {
+        if (!_hats.isWearerOfHat(msg.sender, _hatsData.adminHatId)) {
+            revert Errors.AdminOnly();
+        }
+        _;
+    }
 
     constructor() {
         _disableInitializers();
@@ -90,7 +99,6 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
      *        9.  string characterUri
      *        10. string characterDescription
      */
-
     function initialize(address _owner, bytes calldata hatsAddresses, bytes calldata hatsStrings)
         external
         initializer
@@ -107,7 +115,6 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
      *  3. player admin hats eligibility Module
      *  4. character admin hats eligibility Module
      */
-
     function initialize(
         address _owner,
         bytes calldata hatsAddresses,
@@ -167,17 +174,35 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         emit PlayerHatEligibilityModuleUpdated(playerHatEligibilityModule);
     }
 
-    function updateCharacterHatEligibilityModule(uint256 characterHatId, address characterImplementation)
+    function updateCharacterHatEligibilityModule(uint256 characterHatId, address characterModuleImplementation)
         external
-        onlyOwner
+        onlyAdmin
     {
-        characterHatEligibilityModule = _createCharacterHatEligibilityModule(characterHatId, characterImplementation);
+        characterHatEligibilityModule =
+            _createCharacterHatEligibilityModule(characterHatId, characterModuleImplementation);
         emit CharacterHatEligibilityModuleUpdated(characterHatEligibilityModule);
+    }
+
+    function addNewGame(address characterSheet) external onlyAdmin {
+        IMultiERC6551HatsEligibilityModule(characterHatEligibilityModule).addValidGame(characterSheet);
+        emit NewGameAddedToCharacterModule(characterSheet);
+    }
+
+    function removeGame(uint256 gameIndex) external onlyAdmin {
+        IMultiERC6551HatsEligibilityModule(characterHatEligibilityModule).removeGame(gameIndex);
     }
 
     function updateHats(address newHats) external onlyOwner {
         _hats = IHats(newHats);
         emit HatsUpdated(newHats);
+    }
+
+    function addGameMasters(address[] calldata newGameMasters) external onlyAdmin {
+        IAddressEligibilityModule(gameMasterHatEligibilityModule).addEligibleAddresses(newGameMasters);
+        //check eligibility module for emitted event
+        for (uint256 i = 0; i < newGameMasters.length; i++) {
+            _ifNotHatMint(newGameMasters[i], _hatsData.gameMasterHatId);
+        }
     }
 
     function mintPlayerHat(address wearer) external returns (bool) {
@@ -197,7 +222,9 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         if (_hatsData.characterHatId == uint256(0)) {
             revert Errors.VariableNotSet();
         }
+
         (bool eligible,) = checkCharacterHatEligibility(wearer);
+
         if (!eligible) {
             revert Errors.CharacterError();
         }
@@ -210,7 +237,20 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     }
 
     function checkCharacterHatEligibility(address account) public view returns (bool eligible, bool standing) {
-        return IHatsEligibility(characterHatEligibilityModule).getWearerStatus(account, _hatsData.characterHatId);
+        if (clones.characterEligibilityAdaptor() != address(0)) {
+            address owner = CharacterAccount(payable(account)).owner();
+            if (ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(owner)) {
+                (eligible, standing) =
+                    IHatsEligibility(characterHatEligibilityModule).getWearerStatus(account, _hatsData.characterHatId);
+            } else {
+                eligible = false;
+                standing = false;
+                return (eligible, standing);
+            }
+        } else {
+            (eligible, standing) =
+                IHatsEligibility(characterHatEligibilityModule).getWearerStatus(account, _hatsData.characterHatId);
+        }
     }
 
     function checkPlayerHatEligibility(address account) public view returns (bool eligible, bool standing) {
@@ -243,6 +283,12 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
             revert Errors.VariableNotSet();
         }
         return _hats.balanceOf(wearer, _hatsData.gameMasterHatId) > 0;
+    }
+
+    function _ifNotHatMint(address wearer, uint256 hatId) internal {
+        if (!_hats.isWearerOfHat(wearer, hatId)) {
+            _hats.mintHat(hatId, wearer);
+        }
     }
 
     //solhint-disable-next-line no-empty-blocks
@@ -382,7 +428,8 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     {
         bytes memory encodedHatsAddress = abi.encode(implementations.hatsContract());
         customAdminModule =
-            customAdminModule == address(0) ? implementations.adminHatsEligibilityModule() : customAdminModule;
+            customAdminModule == address(0) ? implementations.addressHatsEligibilityModule() : customAdminModule;
+
         return HatsModuleFactory(implementations.hatsModuleFactory()).createHatsModule(
             customAdminModule, adminId, encodedHatsAddress, encodedAdmins
         );
@@ -440,8 +487,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     ) private returns (address) {
         bytes memory encodedHatsAddress = abi.encode(implementations.hatsContract());
 
-        customDmModule =
-            customDmModule == address(0) ? implementations.gameMasterHatsEligibilityModule() : customDmModule;
+        customDmModule = customDmModule == address(0) ? implementations.addressHatsEligibilityModule() : customDmModule;
 
         return HatsModuleFactory(implementations.hatsModuleFactory()).createHatsModule(
             customDmModule, gameMasterId, encodedHatsAddress, gameMasters
@@ -481,10 +527,12 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         private
         returns (uint256 characterHatId)
     {
+        //todo update this to work with multi erc6551 modue
         (,,,,,,,, string memory characterUri, string memory characterDescription) =
             abi.decode(hatsStrings, (string, string, string, string, string, string, string, string, string, string));
         (,,, address customCharacterModule) =
             abi.decode(customModuleImplementations, (address, address, address, address));
+
         characterHatId = _hats.getNextId(_hatsData.gameMasterHatId);
 
         characterHatEligibilityModule = _createCharacterHatEligibilityModule(characterHatId, customCharacterModule);
@@ -510,18 +558,21 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     {
         if (
             implementations.hatsModuleFactory() == address(0)
-                || implementations.characterHatsEligibilityModule() == address(0)
+                || implementations.erc6551HatsEligibilityModule() == address(0)
         ) {
             revert Errors.VariableNotSet();
         }
+
         bytes memory characterModuleData = abi.encodePacked(
-            implementations.erc6551Registry(), implementations.erc6551AccountImplementation(), clones.characterSheets()
+            _hatsData.adminHatId, implementations.erc6551Registry(), implementations.erc6551AccountImplementation()
         );
+
+        bytes memory characterModuleInitData = abi.encode(address(clones.characterSheets()));
         customCharacterModule = customCharacterModule == address(0)
-            ? implementations.characterHatsEligibilityModule()
+            ? implementations.multiERC6551HatsEligibilityModule()
             : customCharacterModule;
         address characterHatsModule = HatsModuleFactory(implementations.hatsModuleFactory()).createHatsModule(
-            customCharacterModule, characterHatId, characterModuleData, ""
+            customCharacterModule, characterHatId, characterModuleData, characterModuleInitData
         );
         return characterHatsModule;
     }
@@ -532,14 +583,14 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     {
         if (
             implementations.hatsModuleFactory() == address(0)
-                || implementations.playerHatsEligibilityModule() == address(0)
+                || implementations.erc721HatsEligibilityModule() == address(0)
         ) {
             revert Errors.VariableNotSet();
         }
 
         bytes memory playerModuleData = abi.encodePacked(characterSheets, uint256(1));
         customPlayerModule =
-            customPlayerModule == address(0) ? implementations.playerHatsEligibilityModule() : customPlayerModule;
+            customPlayerModule == address(0) ? implementations.erc721HatsEligibilityModule() : customPlayerModule;
         address playerHatsModule = HatsModuleFactory(implementations.hatsModuleFactory()).createHatsModule(
             customPlayerModule, playerHatId, playerModuleData, ""
         );

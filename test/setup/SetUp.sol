@@ -15,7 +15,12 @@ import {CharacterSheetsFactory} from "../../src/CharacterSheetsFactory.sol";
 // implementations
 import {CharacterSheetsImplementation} from "../../src/implementations/CharacterSheetsImplementation.sol";
 import {ItemsImplementation} from "../../src/implementations/ItemsImplementation.sol";
-import {ItemsManagerImplementation} from "../../src/implementations/ItemsManagerImplementation.sol";
+import {
+    ItemsManagerImplementation,
+    CraftItem,
+    RequirementNode,
+    RequirementsTree
+} from "../../src/implementations/ItemsManagerImplementation.sol";
 import {ClassesImplementation} from "../../src/implementations/ClassesImplementation.sol";
 import {ExperienceImplementation} from "../../src/implementations/ExperienceImplementation.sol";
 
@@ -36,18 +41,17 @@ import {CharacterAccount} from "../../src/CharacterAccount.sol";
 
 // multi Send
 import {MultiSend} from "../../src/lib/MultiSend.sol";
-import {Category} from "../../src/lib/MultiToken.sol";
+import {Category, Asset} from "../../src/lib/MultiToken.sol";
 
 // hats imports
 import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
 import {Hats} from "hats-protocol/Hats.sol";
 
 // hats eligibility modules
-import {AdminHatEligibilityModule} from "../../src/adaptors/hats-modules/AdminHatEligibilityModule.sol";
-import {GameMasterHatEligibilityModule} from "../../src/adaptors/hats-modules/GameMasterHatEligibilityModule.sol";
-import {PlayerHatEligibilityModule} from "../../src/adaptors/hats-modules/PlayerHatEligibilityModule.sol";
-import {CharacterHatEligibilityModule} from "../../src/adaptors/hats-modules/CharacterHatEligibilityModule.sol";
-
+import {AddressHatsEligibilityModule} from "../../src/mocks/AddressHatsEligibilityModule.sol";
+import {ERC721HatsEligibilityModule} from "../../src/mocks/ERC721HatsEligibilityModule.sol";
+import {ERC6551HatsEligibilityModule} from "../../src/adaptors/hats-modules/ERC6551HatsEligibilityModule.sol";
+import {MultiERC6551HatsEligibilityModule} from "../../src/adaptors/hats-modules/MultiERC6551HatsEligibilityModule.sol";
 //test and mocks
 import {IMolochDAOV2} from "../../src/interfaces/IMolochDAOV2.sol";
 import {MockMolochV2} from "../../src/mocks/MockMoloch.sol";
@@ -75,13 +79,11 @@ contract SetUp is Test, Accounts, TestStructs {
 
     MultiSend public multisend;
 
-    function setUp() public {
+    function setUp() public virtual {
         vm.startPrank(accounts.admin);
         _deployImplementations();
         _deployHatsContracts();
         _deployErc6551Contracts();
-
-        implementationStorage = new ImplementationAddressStorage();
 
         _deployCharacterSheetsFactory();
         _createContracts();
@@ -98,18 +100,24 @@ contract SetUp is Test, Accounts, TestStructs {
         // create a non claimable class
         classData.classId = deployments.classes.createClassType(createNewClass(false));
         bytes memory expRequirement = createRequiredAsset(Category.ERC20, address(deployments.experience), 0, 100);
+
         //create a soulbound item
         itemsData.itemIdSoulbound =
             deployments.items.createItemType(createNewItem(false, true, bytes32(keccak256("null")), 0, expRequirement));
         //create claimable Item
         itemsData.itemIdClaimable =
             deployments.items.createItemType(createNewItem(false, true, bytes32(0), 1, expRequirement));
+
+        bytes memory craftRequirement = createCraftingRequirement(itemsData.itemIdSoulbound, 1);
+
         // create craftable item
-        itemsData.itemIdCraftable =
-            deployments.items.createItemType(createNewItem(true, false, bytes32(keccak256("null")), 1, expRequirement));
+        itemsData.itemIdCraftable = deployments.items.createItemType(
+            createNewItem(true, false, bytes32(keccak256("null")), 1, craftRequirement)
+        );
+
         //create free item
         itemsData.itemIdFree =
-            deployments.items.createItemType(createNewItem(true, false, bytes32(0), 1, createEmptyRequiredAssets()));
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets()));
         mockShares.mint(accounts.player1, 100e18);
         mockShares.mint(accounts.player2, 100e18);
         vm.stopPrank();
@@ -200,17 +208,11 @@ contract SetUp is Test, Accounts, TestStructs {
         bytes memory requiredAssets;
 
         {
-            uint8[] memory requiredAssetCategories = new uint8[](1);
-            requiredAssetCategories[0] = uint8(category);
-            address[] memory requiredAssetAddresses = new address[](1);
-            requiredAssetAddresses[0] = address(assetAddress);
-            uint256[] memory requiredAssetIds = new uint256[](1);
-            requiredAssetIds[0] = assetId;
-            uint256[] memory requiredAssetAmounts = new uint256[](1);
-            requiredAssetAmounts[0] = amount;
+            Asset memory asset = Asset(category, assetAddress, assetId, amount);
 
-            requiredAssets =
-                abi.encode(requiredAssetCategories, requiredAssetAddresses, requiredAssetIds, requiredAssetAmounts);
+            bytes[] memory nodes = new bytes[](0);
+
+            requiredAssets = abi.encode(0, asset, nodes);
         }
 
         return requiredAssets;
@@ -219,17 +221,17 @@ contract SetUp is Test, Accounts, TestStructs {
     function createEmptyRequiredAssets() public pure returns (bytes memory) {
         bytes memory requiredAssets;
 
+        return requiredAssets;
+    }
+
+    function createCraftingRequirement(uint256 itemId, uint256 amount) public pure returns (bytes memory) {
+        bytes memory requiredAssets;
+
         {
-            uint8[] memory requiredAssetCategories = new uint8[](1);
+            CraftItem[] memory requirements = new CraftItem[](1);
+            requirements[0] = CraftItem(itemId, amount);
 
-            address[] memory requiredAssetAddresses = new address[](1);
-
-            uint256[] memory requiredAssetIds = new uint256[](1);
-
-            uint256[] memory requiredAssetAmounts = new uint256[](1);
-
-            requiredAssets =
-                abi.encode(requiredAssetCategories, requiredAssetAddresses, requiredAssetIds, requiredAssetAmounts);
+            requiredAssets = abi.encode(requirements);
         }
 
         return requiredAssets;
@@ -272,10 +274,10 @@ contract SetUp is Test, Accounts, TestStructs {
         adaptors.molochV3EligibilityAdaptor = new MolochV3EligibilityAdaptor();
         adaptors.classLevelAdaptor = new ClassLevelAdaptor();
         adaptors.hatsAdaptor = new HatsAdaptor();
-        implementations.adminModule = new AdminHatEligibilityModule("v 0.1");
-        implementations.dmModule = new GameMasterHatEligibilityModule("v 0.1");
-        implementations.playerModule = new PlayerHatEligibilityModule("v 0.1");
-        implementations.characterModule = new CharacterHatEligibilityModule("v 0.1");
+        implementations.addressModule = new AddressHatsEligibilityModule("v 0.1");
+        implementations.erc721Module = new ERC721HatsEligibilityModule("v 0.1");
+        implementations.erc6551Module = new ERC6551HatsEligibilityModule("v 0.1");
+        implementations.multiErc6551Module = new MultiERC6551HatsEligibilityModule("v 0.1");
 
         vm.label(address(dao), "Moloch Implementation");
         vm.label(address(merkle), "Merkle Implementation");
@@ -288,10 +290,10 @@ contract SetUp is Test, Accounts, TestStructs {
         vm.label(address(adaptors.molochV2EligibilityAdaptor), "Character Eligibility adaptor V2 Implementation");
         vm.label(address(adaptors.classLevelAdaptor), "Class Level adaptor Implementation");
         vm.label(address(adaptors.hatsAdaptor), "Hats adaptor Implementation");
-        vm.label(address(implementations.adminModule), "Admin Hats Eligibility adaptor Implementation");
-        vm.label(address(implementations.dmModule), "Game Master Hats Eligibility adaptor Implementation");
-        vm.label(address(implementations.playerModule), "Player Hats Eligibility adaptor Implementation");
-        vm.label(address(implementations.characterModule), "Character Hats Eligibility adaptor Implementation");
+        vm.label(address(implementations.addressModule), "Admin Hats Eligibility adaptor Implementation");
+        vm.label(address(implementations.erc721Module), "Player Hats Eligibility adaptor Implementation");
+        vm.label(address(implementations.erc6551Module), "Character Hats Eligibility adaptor Implementation");
+        vm.label(address(implementations.multiErc6551Module), "MULTI Character Hats Eligibility adaptor Implementation");
     }
 
     function _deployHatsContracts() internal {
@@ -330,10 +332,10 @@ contract SetUp is Test, Accounts, TestStructs {
         );
 
         bytes memory encodedModuleAddresses = abi.encode(
-            address(implementations.adminModule),
-            address(implementations.dmModule),
-            address(implementations.playerModule),
-            address(implementations.characterModule)
+            address(implementations.addressModule),
+            address(implementations.erc721Module),
+            address(implementations.erc6551Module),
+            address(implementations.multiErc6551Module)
         );
 
         bytes memory encodedAdaptorAddresses = abi.encode(
@@ -391,5 +393,177 @@ contract SetUp is Test, Accounts, TestStructs {
         characterSheetsFactory.initializeContracts(
             clonesStorageAddress, _dao, encodedHatsAddresses, encodedHatsStrings, baseUriData
         );
+    }
+
+    function createComplexClaimableItem() public returns (uint256) {
+        vm.startPrank(accounts.gameMaster);
+
+        uint256 _itemId1 =
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets()));
+
+        uint256 _itemId2 =
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets()));
+
+        // the requirements shall be that the player has 100 of item1 OR 200 of item2 AND between 1000 and 2000 exp
+        //
+        //                                  AND
+        //                 /                                  \
+        //               OR                                   AND
+        //              /   \                                /   \
+        // (100 of item1)   (200 of item2)          (1000 exp)   NOT
+        //                                                         \
+        //                                                         (2000 exp)
+        //
+        RequirementNode memory itemOr;
+
+        {
+            Asset memory assetItem1 = Asset(Category.ERC1155, address(deployments.items), _itemId1, 100);
+            Asset memory assetItem2 = Asset(Category.ERC1155, address(deployments.items), _itemId2, 200);
+
+            RequirementNode memory item1 =
+                RequirementNode({operator: 0, asset: assetItem1, children: new RequirementNode[](0)});
+
+            RequirementNode memory item2 =
+                RequirementNode({operator: 0, asset: assetItem2, children: new RequirementNode[](0)});
+
+            itemOr = RequirementNode({
+                operator: 2,
+                asset: Asset(Category.ERC20, address(0), 0, 0),
+                children: new RequirementNode[](2)
+            });
+
+            itemOr.children[0] = item1;
+            itemOr.children[1] = item2;
+        }
+
+        RequirementNode memory expRange;
+
+        {
+            Asset memory assetExpMin = Asset(Category.ERC20, address(deployments.experience), 0, 1000);
+            Asset memory assetExpMax = Asset(Category.ERC20, address(deployments.experience), 0, 2000);
+
+            RequirementNode memory maxExp =
+                RequirementNode({operator: 0, asset: assetExpMax, children: new RequirementNode[](0)});
+
+            RequirementNode memory notExpMax = RequirementNode({
+                operator: 3,
+                asset: Asset(Category.ERC20, address(0), 0, 0),
+                children: new RequirementNode[](1)
+            });
+
+            RequirementNode memory minExp =
+                RequirementNode({operator: 0, asset: assetExpMin, children: new RequirementNode[](0)});
+
+            notExpMax.children[0] = maxExp;
+
+            expRange = RequirementNode({
+                operator: 1,
+                asset: Asset(Category.ERC20, address(0), 0, 0),
+                children: new RequirementNode[](2)
+            });
+
+            expRange.children[0] = minExp;
+            expRange.children[1] = notExpMax;
+        }
+
+        RequirementNode memory and = RequirementNode({
+            operator: 1,
+            asset: Asset(Category.ERC20, address(0), 0, 0),
+            children: new RequirementNode[](2)
+        });
+
+        and.children[0] = itemOr;
+        and.children[1] = expRange;
+
+        bytes memory requiredAssets = RequirementsTree.encode(and);
+
+        uint256 claimableItemId =
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, requiredAssets));
+
+        vm.stopPrank();
+
+        return claimableItemId;
+    }
+
+    function createComplexClaimableItemWithShallowNot() public returns (uint256) {
+        vm.startPrank(accounts.gameMaster);
+
+        uint256 _itemId1 =
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets()));
+
+        uint256 _itemId2 =
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets()));
+
+        // the requirements shall be that the player has 100 of item1 OR 200 of item2 AND between 1000 and 2000 exp
+        //
+        //                                  AND
+        //                 /                                  \
+        //               OR                                   AND
+        //              /   \                                /   \
+        // (100 of item1)   (200 of item2)          (1000 exp)   NOT
+        //                                                         \
+        //                                                         (2000 exp)
+        //
+        RequirementNode memory itemOr;
+
+        {
+            Asset memory assetItem1 = Asset(Category.ERC1155, address(deployments.items), _itemId1, 100);
+            Asset memory assetItem2 = Asset(Category.ERC1155, address(deployments.items), _itemId2, 200);
+
+            RequirementNode memory item1 =
+                RequirementNode({operator: 0, asset: assetItem1, children: new RequirementNode[](0)});
+
+            RequirementNode memory item2 =
+                RequirementNode({operator: 0, asset: assetItem2, children: new RequirementNode[](0)});
+
+            itemOr = RequirementNode({
+                operator: 2,
+                asset: Asset(Category.ERC20, address(0), 0, 0),
+                children: new RequirementNode[](2)
+            });
+
+            itemOr.children[0] = item1;
+            itemOr.children[1] = item2;
+        }
+
+        RequirementNode memory expRange;
+
+        {
+            Asset memory assetExpMin = Asset(Category.ERC20, address(deployments.experience), 0, 1000);
+            Asset memory assetExpMax = Asset(Category.ERC20, address(deployments.experience), 0, 2000);
+
+            RequirementNode memory notExpMax =
+                RequirementNode({operator: 3, asset: assetExpMax, children: new RequirementNode[](0)});
+
+            RequirementNode memory minExp =
+                RequirementNode({operator: 0, asset: assetExpMin, children: new RequirementNode[](0)});
+
+            expRange = RequirementNode({
+                operator: 1,
+                asset: Asset(Category.ERC20, address(0), 0, 0),
+                children: new RequirementNode[](2)
+            });
+
+            expRange.children[0] = minExp;
+            expRange.children[1] = notExpMax;
+        }
+
+        RequirementNode memory and = RequirementNode({
+            operator: 1,
+            asset: Asset(Category.ERC20, address(0), 0, 0),
+            children: new RequirementNode[](2)
+        });
+
+        and.children[0] = itemOr;
+        and.children[1] = expRange;
+
+        bytes memory requiredAssets = RequirementsTree.encode(and);
+
+        uint256 claimableItemId =
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, requiredAssets));
+
+        vm.stopPrank();
+
+        return claimableItemId;
     }
 }

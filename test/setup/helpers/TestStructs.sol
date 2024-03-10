@@ -33,10 +33,12 @@ import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
 import {Hats} from "hats-protocol/Hats.sol";
 
 // hats eligibility modules
-import {AdminHatEligibilityModule} from "../../../src/adaptors/hats-modules/AdminHatEligibilityModule.sol";
-import {GameMasterHatEligibilityModule} from "../../../src/adaptors/hats-modules/GameMasterHatEligibilityModule.sol";
-import {PlayerHatEligibilityModule} from "../../../src/adaptors/hats-modules/PlayerHatEligibilityModule.sol";
-import {CharacterHatEligibilityModule} from "../../../src/adaptors/hats-modules/CharacterHatEligibilityModule.sol";
+// hats eligibility modules
+import {AddressHatsEligibilityModule} from "../../../src/mocks/AddressHatsEligibilityModule.sol";
+import {ERC721HatsEligibilityModule} from "../../../src/mocks/ERC721HatsEligibilityModule.sol";
+import {ERC6551HatsEligibilityModule} from "../../../src/adaptors/hats-modules/ERC6551HatsEligibilityModule.sol";
+import {MultiERC6551HatsEligibilityModule} from
+    "../../../src/adaptors/hats-modules/MultiERC6551HatsEligibilityModule.sol";
 
 import "murky/src/Merkle.sol";
 
@@ -92,10 +94,10 @@ interface TestStructs {
         ItemsManagerImplementation itemsManager;
         ClassesImplementation classes;
         ClonesAddressStorageImplementation clonesAddressStorage;
-        AdminHatEligibilityModule adminModule;
-        GameMasterHatEligibilityModule dmModule;
-        PlayerHatEligibilityModule playerModule;
-        CharacterHatEligibilityModule characterModule;
+        AddressHatsEligibilityModule addressModule;
+        ERC721HatsEligibilityModule erc721Module;
+        ERC6551HatsEligibilityModule erc6551Module;
+        MultiERC6551HatsEligibilityModule multiErc6551Module;
     }
 
     struct Adaptors {

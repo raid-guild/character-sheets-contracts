@@ -11,7 +11,6 @@ import {HatsEligibilityModule, HatsModule} from "hats-module/HatsEligibilityModu
  * the admins of this contract will be the admins set by the admin contract.  This was to allow a more flexible set of game masters
  * controlled by a more difficult to change set of admins.
  */
-
 contract GameMasterHatEligibilityModule is HatsEligibilityModule {
     /*//////////////////////////////////////////////////////////////
                             CUSTOM ERRORS

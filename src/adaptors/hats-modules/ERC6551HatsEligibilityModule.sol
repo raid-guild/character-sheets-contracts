@@ -12,13 +12,11 @@ import {Errors} from "../../lib/Errors.sol";
 import "forge-std/console2.sol";
 
 /**
- * @title character hat eligibility module
+ * @title ERC6551 eligibility module
  * @author MrDeadCe11
- * @notice A Hats Protocol eligibility module that checks if the address of the wearer is the
- * correct address of the ERC6551 account implementation used in the character sheets contract.
- * if a player is removed, or renounces their sheet the character retains it's character hat.
+ * @notice A Hats Protocol eligibility module that checks if the address is the correct address of an ERC6551 account according to the inputs
  */
-contract CharacterHatEligibilityModule is HatsModule, HatsEligibilityModule {
+contract ERC6551HatsEligibilityModule is HatsModule, HatsEligibilityModule {
     /*//////////////////////////////////////////////////////////////
                           PUBLIC CONSTANTS
     //////////////////////////////////////////////////////////////*/

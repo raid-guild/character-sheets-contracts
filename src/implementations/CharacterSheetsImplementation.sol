@@ -9,14 +9,13 @@ import {
 import {IERC721} from "openzeppelin-contracts/token/ERC721/IERC721.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {IERC1155} from "openzeppelin-contracts/token/ERC1155/IERC1155.sol";
-
+import {CharacterAccount} from "../CharacterAccount.sol";
 import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
 import {ICharacterEligibilityAdaptor} from "../interfaces/ICharacterEligibilityAdaptor.sol";
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 import {IItems} from "../interfaces/IItems.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
-
-import {ImplementationAddressStorage} from "../ImplementationAddressStorage.sol";
+import {IImplementationAddressStorage} from "../interfaces/IImplementationAddressStorage.sol";
 
 import {CharacterSheet} from "../lib/Structs.sol";
 import {Errors} from "../lib/Errors.sol";
@@ -25,12 +24,10 @@ import {Errors} from "../lib/Errors.sol";
  * @title Character Sheets
  * @author MrDeadCe11 && dan13ram
  * @notice This is a gamified reputation managment system desgigned for raid guild but
- * left composable for use with any dao or organization
- * @dev this is an erc721 contract that calculates the erc6551 address of every token at token creation and then uses that address as the character for
+ * left composable for use with any dao or organization.  This is an erc721 contract that calculates the erc6551 address of every token at token creation and then uses that address as the character for
  * a rpg themed reputation system with experience points awarded by a centralized authority the "GAME_MASTER" and items and classes that can be owned and equipped
  * by the base character account.
  */
-
 contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgradeable {
     string public baseTokenURI;
     string public metadataURI;
@@ -57,20 +54,13 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
     event Erc6551CharacterAccountUpdated(address newERC6551CharacterAccount);
     event Erc6551RegistryUpdated(address newERC6551Registry);
     event CharacterRemoved(uint256 characterId);
-    event Erc6551AddressesUpdated(address newErc6551Storage);
     event ClonesAddressStorageUpdated(address newClonesStorageAddress);
     event ItemEquipped(uint256 characterId, uint256 itemId);
     event ItemUnequipped(uint256 characterId, uint256 itemId);
     event CharacterUpdated(uint256 characterId);
     event PlayerJailed(address playerAddress, bool thrownInJail);
     event CharacterRestored(address player, address account, uint256 characterId);
-
-    modifier onlyContract() {
-        if (msg.sender != clones.items()) {
-            revert Errors.CallerNotApproved();
-        }
-        _;
-    }
+    event ExternalCharacterAdded(address player, address account, uint256 characterId);
 
     modifier onlyAdmin() {
         if (!IHatsAdaptor(clones.hatsAdaptor()).isAdmin(msg.sender)) {
@@ -111,7 +101,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         _playerSheets[to] = characterId;
         _sheets[characterId].playerAddress = to;
 
-        IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(to);
+        _ifNotPlayerMintHat(to);
     }
 
     constructor() {
@@ -135,7 +125,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
      * - address itemsImplementation: this is the address of the ERC1155 items contract associated
      *      with this contract.  this is assigned at contract creation.
      */
-
     function initialize(bytes calldata _encodedParameters) external initializer {
         __ERC721_init_unchained("CharacterSheet", "CHAS");
         __UUPSUpgradeable_init();
@@ -146,8 +135,8 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         (clonesStorage, implementationStorage, metadataURI, baseTokenURI) =
             abi.decode(_encodedParameters, (address, address, string, string));
         clones = IClonesAddressStorage(clonesStorage);
-        erc6551Registry = ImplementationAddressStorage(implementationStorage).erc6551Registry();
-        erc6551CharacterAccount = ImplementationAddressStorage(implementationStorage).erc6551AccountImplementation();
+        erc6551Registry = IImplementationAddressStorage(implementationStorage).erc6551Registry();
+        erc6551CharacterAccount = IImplementationAddressStorage(implementationStorage).erc6551AccountImplementation();
     }
 
     /**
@@ -155,31 +144,8 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
      * @param _tokenURI the uri of the character sheet metadata
      * if no uri is stored then it will revert to the base uri of the contract
      */
-
     function rollCharacterSheet(string calldata _tokenURI) external returns (uint256) {
-        if (erc6551CharacterAccount == address(0) || erc6551Registry == address(0)) {
-            revert Errors.NotInitialized();
-        }
-
-        // check the eligibility adaptor to see if the player is eligible to roll a character sheet
-        if (
-            clones.characterEligibilityAdaptor() != address(0)
-                && !ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(msg.sender)
-        ) {
-            revert Errors.EligibilityError();
-        }
-        // a character cannot be a character
-        if (_characterSheets[msg.sender] != 0) {
-            revert Errors.CharacterError();
-        }
-
-        if (jailed[msg.sender]) {
-            revert Errors.Jailed();
-        }
-
-        if (balanceOf(msg.sender) != 0) {
-            revert Errors.TokenBalanceError();
-        }
+        _checkRollReverts(msg.sender);
 
         uint256 existingCharacterId = _playerSheets[msg.sender];
 
@@ -199,16 +165,39 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         _sheets[characterId] =
             CharacterSheet({accountAddress: characterAccount, playerAddress: msg.sender, inventory: new uint256[](0)});
 
-        _safeMint(msg.sender, characterId);
-        _setTokenURI(characterId, _tokenURI);
-        _playerSheets[msg.sender] = characterId;
-        _characterSheets[characterAccount] = characterId;
+        _mintSheet(msg.sender, characterAccount, characterId, _tokenURI);
 
-        IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(msg.sender);
-        IHatsAdaptor(clones.hatsAdaptor()).mintCharacterHat(characterAccount);
-
-        totalSheets++;
         emit NewCharacterSheetRolled(msg.sender, characterAccount, characterId);
+        return characterId;
+    }
+
+    /**
+     * adds an account from an external game to this game.
+     * @param playerAddress the address of the player to join the game
+     * @param characterAccount the erc6651 account address of the character associated with this player
+     * @param _tokenURI the address of the token metadata
+     */
+    function addExternalCharacter(address playerAddress, address payable characterAccount, string calldata _tokenURI)
+        external
+        returns (uint256 tokenId)
+    {
+        _checkRollReverts(playerAddress);
+        if (CharacterAccount(characterAccount).owner() != playerAddress) {
+            revert Errors.CharacterError();
+        }
+
+        uint256 existingCharacterId = _playerSheets[playerAddress];
+
+        if (existingCharacterId != 0 || _sheets[existingCharacterId].playerAddress == playerAddress) {
+            // must restore sheet
+            revert Errors.PlayerError();
+        }
+
+        uint256 characterId = totalSheets;
+        _mintSheet(playerAddress, characterAccount, characterId, _tokenURI);
+
+        emit ExternalCharacterAdded(playerAddress, characterAccount, characterId);
+
         return characterId;
     }
 
@@ -217,7 +206,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
      * @param characterId the player to have the item type from their inventory
      * @param characterId the erc1155 token id of the item to be unequipped
      */
-
     function unequipItemFromCharacter(uint256 characterId, uint256 itemId) external onlyCharacter {
         if (msg.sender != _sheets[characterId].accountAddress) {
             revert Errors.OwnershipError();
@@ -261,7 +249,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
      * @param characterId the id of the player receiving the item
      * @param itemId the itemId of the item
      */
-
     function equipItemToCharacter(uint256 characterId, uint256 itemId) external onlyCharacter {
         if (msg.sender != _sheets[characterId].accountAddress) {
             revert Errors.OwnershipError();
@@ -282,7 +269,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
     /**
      * this will burn the nft of the player.  only a player can burn their own token.
      */
-
     function renounceSheet() external onlyPlayer {
         uint256 _characterId = _playerSheets[msg.sender];
 
@@ -297,9 +283,9 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
 
     /**
      * restores a previously renounced sheet if called by the wrong player and incorrect address will be created that does not control any assets
+     * does not work with imported characters.  must be done in original game.
      * @return the ERC6551 account address
      */
-
     function restoreSheet() external returns (address) {
         uint256 characterId = _playerSheets[msg.sender];
 
@@ -338,7 +324,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
      * Burns a players characterSheet.  can only be done if there is a passing guild kick proposal
      * @param characterId the characterId of the player to be removed.
      */
-
     function removeSheet(uint256 characterId) external onlyGameMaster {
         address playerAddress = _ownerOf(characterId);
         if (playerAddress == address(0)) {
@@ -412,7 +397,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
     /**
      * @dev See {IERC721-approve}.
      */
-
     function approve(address to, uint256 characterId) public virtual override(ERC721Upgradeable, IERC721) {
         return super.approve(to, characterId);
     }
@@ -440,7 +424,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
     /**
      * @dev See {IERC721-safeTransferFrom}.
      */
-
     function safeTransferFrom(address from, address to, uint256 characterId, bytes memory)
         public
         virtual
@@ -452,9 +435,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
     }
 
     function getCharacterSheetByCharacterId(uint256 characterId) public view returns (CharacterSheet memory) {
-        if (_ownerOf(characterId) == address(0)) {
-            revert Errors.CharacterError();
-        }
         return _sheets[characterId];
     }
 
@@ -471,10 +451,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
     }
 
     function isItemEquipped(uint256 characterId, uint256 itemId) public view returns (bool) {
-        if (_ownerOf(characterId) == address(0)) {
-            revert Errors.CharacterError();
-        }
-
         CharacterSheet storage sheet = _sheets[characterId];
         if (sheet.inventory.length == 0) {
             return false;
@@ -500,10 +476,57 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         return super.supportsInterface(interfaceId);
     }
 
+    function _ifNotPlayerMintHat(address wearer) internal {
+        if (!IHatsAdaptor(clones.hatsAdaptor()).isPlayer(wearer)) {
+            IHatsAdaptor(clones.hatsAdaptor()).mintPlayerHat(wearer);
+        }
+    }
+
+    function _mintSheet(address playerAddress, address characterAccount, uint256 characterId, string memory _tokenURI)
+        internal
+    {
+        _safeMint(playerAddress, characterId);
+        _setTokenURI(characterId, _tokenURI);
+        _playerSheets[playerAddress] = characterId;
+        _characterSheets[characterAccount] = characterId;
+
+        _ifNotPlayerMintHat(playerAddress);
+
+        IHatsAdaptor(clones.hatsAdaptor()).mintCharacterHat(characterAccount);
+
+        totalSheets++;
+    }
+
     //solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
 
     function _baseURI() internal view virtual override returns (string memory) {
         return baseTokenURI;
+    }
+
+    function _checkRollReverts(address sender) internal view {
+        if (erc6551CharacterAccount == address(0) || erc6551Registry == address(0)) {
+            revert Errors.NotInitialized();
+        }
+
+        // check the eligibility adaptor to see if the player is eligible to roll a character sheet
+        if (
+            clones.characterEligibilityAdaptor() != address(0)
+                && !ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(sender)
+        ) {
+            revert Errors.EligibilityError();
+        }
+        // a character cannot be a character
+        if (_characterSheets[sender] != 0) {
+            revert Errors.CharacterError();
+        }
+
+        if (jailed[sender]) {
+            revert Errors.Jailed();
+        }
+
+        if (balanceOf(sender) != 0) {
+            revert Errors.TokenBalanceError();
+        }
     }
 }
