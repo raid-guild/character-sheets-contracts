@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "./Structs.sol";
-import "./Errors.sol";
+import {RequirementNode, Asset} from "./Structs.sol";
+import {Errors} from "./Errors.sol";
 
 library RequirementsTree {
     function decodeToStorage(bytes memory requirementTree, RequirementNode storage root) internal {
