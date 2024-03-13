@@ -7,7 +7,7 @@ import "forge-std/Test.sol";
 import "../src/implementations/ItemsImplementation.sol";
 import "../src/lib/Structs.sol";
 import "../src/lib/Errors.sol";
-import "./setup/SetUp.sol";
+import "./setup/SetUp.t.sol";
 
 contract ExperienceTest is SetUp {
     function testExperienceDeployment() public {

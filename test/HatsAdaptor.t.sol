@@ -6,7 +6,7 @@ import "forge-std/Test.sol";
 
 import "../src/lib/Structs.sol";
 import {Errors} from "../src/lib/Errors.sol";
-import {SetUp} from "./setup/SetUp.sol";
+import {SetUp} from "./setup/SetUp.t.sol";
 import {HatsErrors} from "hats-protocol/Interfaces/HatsErrors.sol";
 
 contract HatsAdaptorTest is SetUp {

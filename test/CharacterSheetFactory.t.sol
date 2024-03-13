@@ -4,7 +4,7 @@ pragma abicoder v2;
 
 import "forge-std/Test.sol";
 
-import "./setup/SetUp.sol";
+import "./setup/SetUp.t.sol";
 
 // import "forge-std/console2.sol";
 

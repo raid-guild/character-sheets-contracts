@@ -4,7 +4,7 @@ pragma abicoder v2;
 
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";
-import {TestStructs} from "./TestStructs.sol";
+import {TestStructs} from "./TestStructs.t.sol";
 
 contract Accounts is Test {
     TestStructs.Accounts public accounts;

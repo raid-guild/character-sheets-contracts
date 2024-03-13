@@ -7,8 +7,8 @@ import {console2} from "forge-std/console2.sol";
 import "../../src/lib/Structs.sol";
 import "../../src/lib/Errors.sol";
 
-import {TestStructs} from "./helpers/TestStructs.sol";
-import {Accounts} from "./helpers/Accounts.sol";
+import {TestStructs} from "./helpers/TestStructs.t.sol";
+import {Accounts} from "./helpers/Accounts.t.sol";
 
 //fatory
 import {CharacterSheetsFactory} from "../../src/CharacterSheetsFactory.sol";

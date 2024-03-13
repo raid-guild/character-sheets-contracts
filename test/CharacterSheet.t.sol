@@ -5,7 +5,7 @@ pragma abicoder v2;
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";
 
-import "./setup/SetUp.sol";
+import "./setup/SetUp.t.sol";
 
 import {IERC721Errors} from "openzeppelin-contracts/interfaces/draft-IERC6093.sol";
 

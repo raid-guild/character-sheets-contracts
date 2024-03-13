@@ -12,7 +12,6 @@ import {IAddressEligibilityModule} from "../interfaces/IAddressEligibilityModule
 import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
 import {ImplementationAddressStorage} from "../ImplementationAddressStorage.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
-import {IMultiERC6551HatsEligibilityModule} from "../interfaces/IMultiERC6551HatsEligibilityModule.sol";
 import {ICharacterEligibilityAdaptor} from "../interfaces/ICharacterEligibilityAdaptor.sol";
 import {Errors} from "../lib/Errors.sol";
 import {HatsData} from "../lib/Structs.sol";

@@ -17,7 +17,7 @@ update:; forge update
 
 compile:; forge compile
 
-build:; forge build --sizes
+build:; forge build --sizes --skip test
 
 test :; forge test
 

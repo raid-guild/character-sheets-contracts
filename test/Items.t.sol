@@ -10,7 +10,7 @@ import "forge-std/console2.sol";
 import "../src/implementations/ItemsImplementation.sol";
 import {RequirementsTree, RequirementNode} from "../src/implementations/ItemsManagerImplementation.sol";
 import "../src/lib/Structs.sol";
-import "./setup/SetUp.sol";
+import "./setup/SetUp.t.sol";
 
 contract ItemsTest is SetUp {
     event ItemDeleted(uint256 itemId);

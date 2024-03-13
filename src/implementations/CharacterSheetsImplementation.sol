@@ -9,7 +9,6 @@ import {
 import {IERC721} from "openzeppelin-contracts/token/ERC721/IERC721.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {IERC1155} from "openzeppelin-contracts/token/ERC1155/IERC1155.sol";
-import {CharacterAccount} from "../CharacterAccount.sol";
 import {IERC6551Registry} from "../interfaces/IERC6551Registry.sol";
 import {ICharacterEligibilityAdaptor} from "../interfaces/ICharacterEligibilityAdaptor.sol";
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
@@ -170,7 +169,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         emit NewCharacterSheetRolled(msg.sender, characterAccount, characterId);
         return characterId;
     }
-
 
     /**
      * unequips an item from the character sheet inventory

@@ -5,7 +5,7 @@ pragma abicoder v2;
 import "forge-std/Test.sol";
 // import "forge-std/console2.sol";
 
-import "./setup/SetUp.sol";
+import "./setup/SetUp.t.sol";
 
 contract CharacterAccountTest is SetUp {
     function testEquipItemToCharacter() public {
