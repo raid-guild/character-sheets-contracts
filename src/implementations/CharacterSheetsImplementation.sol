@@ -171,41 +171,6 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         return characterId;
     }
 
-    /**
-     * adds an account from an external game to this game.
-     * @param playerAddress the address of the player to join the game
-     * @param characterAccount the erc6651 account address of the character associated with this player
-     * @param _tokenURI the address of the token metadata
-     */
-    function addExternalCharacter(address playerAddress, address payable characterAccount, string calldata _tokenURI)
-        external
-        returns (uint256 tokenId)
-    {
-        _checkRollReverts(playerAddress);
-        if (CharacterAccount(characterAccount).owner() != playerAddress) {
-            revert Errors.CharacterError();
-        }
-
-        uint256 existingCharacterId = _playerSheets[playerAddress];
-
-        if (existingCharacterId != 0 || _sheets[existingCharacterId].playerAddress == playerAddress) {
-            // must restore sheet
-            revert Errors.PlayerError();
-        }
-        uint256 characterId = totalSheets;
-
-        _sheets[characterId] = CharacterSheet({
-            accountAddress: characterAccount,
-            playerAddress: playerAddress,
-            inventory: new uint256[](0)
-        });
-
-        _mintSheet(playerAddress, characterAccount, characterId, _tokenURI);
-
-        emit ExternalCharacterAdded(playerAddress, characterAccount, characterId);
-
-        return characterId;
-    }
 
     /**
      * unequips an item from the character sheet inventory

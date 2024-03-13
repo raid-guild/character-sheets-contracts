@@ -346,108 +346,87 @@ contract Test_ElderEligibilityModule is Base {
     }
 }
 
-contract Test_MultiErc6551HatsEligibilityModule is Base {
-    address public newCharacterSheets;
-    address public newClonesStorage;
-    IClonesAddressStorage public newClones;
-    ICharacterSheets public newSheets;
-    uint256 public newCharId;
-    address public newCharAccount;
-    IMultiERC6551HatsEligibilityModule public multiERC6551Module;
+// contract Test_MultiErc6551HatsEligibilityModule is Base {
+//     address public newCharacterSheets;
+//     address public newClonesStorage;
+//     IClonesAddressStorage public newClones;
+//     ICharacterSheets public newSheets;
+//     uint256 public newCharId;
+//     address public newCharAccount;
+//     IMultiERC6551HatsEligibilityModule public multiERC6551Module;
 
-    function setUp() public override {
-        super.setUp();
+//     function setUp() public override {
+//         super.setUp();
 
-        (address _newClones) = _deployNewCharacterSheets();
+//         (address _newClones) = _deployNewCharacterSheets();
 
-        newClones = IClonesAddressStorage(_newClones);
-        newSheets = ICharacterSheets(newClones.characterSheets());
+//         newClones = IClonesAddressStorage(_newClones);
+//         newSheets = ICharacterSheets(newClones.characterSheets());
 
-        vm.prank(accounts.rando);
-        (newCharAccount, newCharId) = _rollNewCharacter(address(newSheets));
+//         vm.prank(accounts.rando);
+//         (newCharAccount, newCharId) = _rollNewCharacter(address(newSheets));
 
-        mockShares.mint(accounts.rando, 100e18);
-        dao.addMember(accounts.rando);
+//         vm.prank(accounts.gameMaster);
+//         multiERC6551Module = IMultiERC6551HatsEligibilityModule(deployments.hatsAdaptor.characterHatEligibilityModule());
+//     }
 
-        vm.prank(accounts.admin);
-        deployments.hatsAdaptor.addNewGame(address(newSheets));
+//     function _deployNewCharacterSheets() internal returns (address _clonesStorage) {
+//         bytes memory encodedHatsStrings = abi.encode(
+//             "new_new_test_hats_base_img",
+//             "new_test tophat description",
+//             "new_test_admin_uri",
+//             "new_test_admin_description",
+//             "new_test_game_uri",
+//             "new_test_game_description",
+//             "new_test_player_uri",
+//             "new_test_player_description",
+//             "new_test_character_uri",
+//             "new_test_character_description"
+//         );
 
-        vm.prank(accounts.gameMaster);
-        deployments.characterSheets.addExternalCharacter(accounts.rando, payable(newCharAccount), "2new_test_uri");
-        multiERC6551Module = IMultiERC6551HatsEligibilityModule(deployments.hatsAdaptor.characterHatEligibilityModule());
-    }
+//         bytes memory encodedSheetsStrings = abi.encode(
+//             "new_test_metadata_uri_character_sheets/",
+//             "new_test_base_uri_character_sheets/",
+//             "new_test_base_uri_items/",
+//             "new_test_base_uri_classes/"
+//         );
 
-    function _deployNewCharacterSheets() internal returns (address _clonesStorage) {
-        bytes memory encodedHatsStrings = abi.encode(
-            "new_new_test_hats_base_img",
-            "new_test tophat description",
-            "new_test_admin_uri",
-            "new_test_admin_description",
-            "new_test_game_uri",
-            "new_test_game_description",
-            "new_test_player_uri",
-            "new_test_player_description",
-            "new_test_character_uri",
-            "new_test_character_description"
-        );
+//         address[] memory adminArray = createAddressMemoryArray(1);
+//         adminArray[0] = adminHatWearer;
 
-        bytes memory encodedSheetsStrings = abi.encode(
-            "new_test_metadata_uri_character_sheets/",
-            "new_test_base_uri_character_sheets/",
-            "new_test_base_uri_items/",
-            "new_test_base_uri_classes/"
-        );
+//         address[] memory gameMastersArray = createAddressMemoryArray(1);
+//         gameMastersArray[0] = dmHatWearer;
 
-        address[] memory adminArray = createAddressMemoryArray(1);
-        adminArray[0] = adminHatWearer;
+//         vm.prank(accounts.admin);
+//         _clonesStorage = characterSheetsFactory.createAndInitialize(
+//             address(0), adminArray, gameMastersArray, encodedHatsStrings, encodedSheetsStrings
+//         );
+//     }
 
-        address[] memory gameMastersArray = createAddressMemoryArray(1);
-        gameMastersArray[0] = dmHatWearer;
+//     function _rollNewCharacter(address _sheets) internal returns (address charAccount, uint256 charId) {
+//         ICharacterSheets sheets = ICharacterSheets(_sheets);
+//         charId = sheets.rollCharacterSheet("new_test_uri");
+//         charAccount = sheets.getCharacterSheetByCharacterId(charId).accountAddress;
+//     }
 
-        vm.prank(accounts.admin);
-        _clonesStorage = characterSheetsFactory.createAndInitialize(
-            address(0), adminArray, gameMastersArray, encodedHatsStrings, encodedSheetsStrings
-        );
-    }
+//     function test_checkEligAfterGameIsRemoved() public {
+//         (address _newClones) = _deployNewCharacterSheets();
+//         IClonesAddressStorage anotherClones = IClonesAddressStorage(_newClones);
+//         address newSheetsAddress = anotherClones.characterSheets();
 
-    function _rollNewCharacter(address _sheets) internal returns (address charAccount, uint256 charId) {
-        ICharacterSheets sheets = ICharacterSheets(_sheets);
-        charId = sheets.rollCharacterSheet("new_test_uri");
-        charAccount = sheets.getCharacterSheetByCharacterId(charId).accountAddress;
-    }
+//         vm.prank(accounts.admin);
+//         multiERC6551Module.addValidGame(newSheetsAddress);
 
-    function test_AddValidGame() public {
-        assertEq(multiERC6551Module.totalValidGames(), 2, "game not added");
-        assertEq(multiERC6551Module.validGames(2), address(newSheets), "incorrect sheet added");
-    }
+//         assertEq(multiERC6551Module.totalValidGames(), 3, "game not added");
 
-    function test_RemoveGame() public {
-        vm.prank(accounts.admin);
-        multiERC6551Module.removeGame(1);
-        assertEq(multiERC6551Module.validGames(1), address(0), "game not removed");
-    }
+//         address newRando = address(11111);
 
-    function test_checkEligAfterGameIsRemoved() public {
-        (address _newClones) = _deployNewCharacterSheets();
-        IClonesAddressStorage anotherClones = IClonesAddressStorage(_newClones);
-        address newSheetsAddress = anotherClones.characterSheets();
+//         dao.addMember(newRando);
 
-        vm.prank(accounts.admin);
-        multiERC6551Module.addValidGame(newSheetsAddress);
+//         vm.prank(newRando);
+//         (address charAcc, uint256 charTokenId) = _rollNewCharacter(newSheetsAddress);
+//         vm.prank(accounts.admin);
 
-        assertEq(multiERC6551Module.totalValidGames(), 3, "game not added");
-
-        address newRando = address(11111);
-
-        dao.addMember(newRando);
-
-        vm.prank(newRando);
-        (address charAcc, uint256 charTokenId) = _rollNewCharacter(newSheetsAddress);
-        vm.prank(accounts.admin);
-
-        multiERC6551Module.removeGame(2);
-
-        vm.prank(accounts.gameMaster);
-        deployments.characterSheets.addExternalCharacter(newRando, payable(charAcc), "fart");
-    }
-}
+//         multiERC6551Module.removeGame(2);
+//     }
+// }

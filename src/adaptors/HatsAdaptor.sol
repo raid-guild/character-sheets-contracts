@@ -183,15 +183,6 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         emit CharacterHatEligibilityModuleUpdated(characterHatEligibilityModule);
     }
 
-    function addNewGame(address characterSheet) external onlyAdmin {
-        IMultiERC6551HatsEligibilityModule(characterHatEligibilityModule).addValidGame(characterSheet);
-        emit NewGameAddedToCharacterModule(characterSheet);
-    }
-
-    function removeGame(uint256 gameIndex) external onlyAdmin {
-        IMultiERC6551HatsEligibilityModule(characterHatEligibilityModule).removeGame(gameIndex);
-    }
-
     function updateHats(address newHats) external onlyOwner {
         _hats = IHats(newHats);
         emit HatsUpdated(newHats);
@@ -527,12 +518,10 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         private
         returns (uint256 characterHatId)
     {
-        //todo update this to work with multi erc6551 modue
         (,,,,,,,, string memory characterUri, string memory characterDescription) =
             abi.decode(hatsStrings, (string, string, string, string, string, string, string, string, string, string));
         (,,, address customCharacterModule) =
             abi.decode(customModuleImplementations, (address, address, address, address));
-
         characterHatId = _hats.getNextId(_hatsData.gameMasterHatId);
 
         characterHatEligibilityModule = _createCharacterHatEligibilityModule(characterHatId, customCharacterModule);
@@ -564,15 +553,12 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         }
 
         bytes memory characterModuleData = abi.encodePacked(
-            _hatsData.adminHatId, implementations.erc6551Registry(), implementations.erc6551AccountImplementation()
+            implementations.erc6551Registry(), implementations.erc6551AccountImplementation(), clones.characterSheets()
         );
-
-        bytes memory characterModuleInitData = abi.encode(address(clones.characterSheets()));
-        customCharacterModule = customCharacterModule == address(0)
-            ? implementations.multiERC6551HatsEligibilityModule()
-            : customCharacterModule;
+        customCharacterModule =
+            customCharacterModule == address(0) ? implementations.erc6551HatsEligibilityModule() : customCharacterModule;
         address characterHatsModule = HatsModuleFactory(implementations.hatsModuleFactory()).createHatsModule(
-            customCharacterModule, characterHatId, characterModuleData, characterModuleInitData
+            customCharacterModule, characterHatId, characterModuleData, ""
         );
         return characterHatsModule;
     }
