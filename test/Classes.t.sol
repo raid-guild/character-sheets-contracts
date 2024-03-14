@@ -119,14 +119,14 @@ contract ClassesTest is SetUp {
         vm.prank(accounts.gameMaster);
         deployments.classes.giveClassExp(accounts.character1, 1, classExp);
 
-        assertEq(deployments.classes.getClassExp(accounts.character1, 1), classExp, "incorrect class exp");
+        assertEq(deployments.classes.classExp(accounts.character1, 1), classExp, "incorrect class exp");
         assertEq(deployments.experience.balanceOf(accounts.character1), generalExp + classExp, "incorrect general exp");
 
         // revoke
         vm.prank(accounts.gameMaster);
         deployments.classes.revokeClassExp(accounts.character1, 1, classExp);
 
-        assertEq(deployments.classes.getClassExp(accounts.character1, 1), 0, "incorrect class exp");
+        assertEq(deployments.classes.classExp(accounts.character1, 1), 0, "incorrect class exp");
         assertEq(deployments.experience.balanceOf(accounts.character1), generalExp, "incorrect general exp");
     }
 

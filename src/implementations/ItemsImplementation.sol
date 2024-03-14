@@ -58,6 +58,7 @@ contract ItemsImplementation is
     event ItemDismantled(address character, uint256 itemId, uint256 amount);
     event ItemClaimableUpdated(uint256 itemId, bytes32 merkleRoot, uint256 newDistribution);
     event ItemDeleted(uint256 itemId);
+    event ItemsManagerUpdated(address newItemsManager);
 
     modifier onlyAdmin() {
         if (!IHatsAdaptor(clones.hatsAdaptor()).isAdmin(msg.sender)) {
@@ -324,8 +325,13 @@ contract ItemsImplementation is
         super.safeBatchTransferFrom(from, to, ids, amounts, data);
     }
 
-    function withdrawAsset(Asset calldata asset, address to) public onlyAdmin {
+    function withdrawAsset(Asset calldata asset, address to) public onlyGameMaster {
         MultiToken.safeTransferAssetFrom(asset, address(this), to);
+    }
+
+    function updateItemsManager(address newItemsManager) public onlyGameMaster {
+        itemsManager = IItemsManager(newItemsManager);
+        emit ItemsManagerUpdated(newItemsManager);
     }
 
     /**

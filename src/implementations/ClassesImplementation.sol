@@ -32,12 +32,12 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
     /// @dev mapping of class token types.  the class Id is the location in this mapping of the class.
     mapping(uint256 => Class) private _classes;
 
-    mapping(address account => mapping(uint256 classId => uint256 classExp)) private _expPerClass;
-
     /// @dev the total number of class types that have been created
     uint256 public totalClasses;
 
     IClonesAddressStorage public clones;
+
+    mapping(address account => mapping(uint256 classId => uint256 classExp)) public classExp;
 
     event NewClassCreated(uint256 tokenId);
     event BaseURIUpdated(string newUri);
@@ -141,7 +141,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
         if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(characterAccount)) {
             revert Errors.CharacterError();
         }
-        _expPerClass[characterAccount][classId] += amountOfExp;
+        classExp[characterAccount][classId] += amountOfExp;
         IExperience(clones.experience()).dropExp(characterAccount, amountOfExp);
         emit ClassExpGiven(characterAccount, classId, amountOfExp);
     }
@@ -150,7 +150,7 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
         if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(characterAccount)) {
             revert Errors.CharacterError();
         }
-        _expPerClass[characterAccount][classId] -= amountOfExp;
+        classExp[characterAccount][classId] -= amountOfExp;
         IExperience(clones.experience()).burnExp(characterAccount, amountOfExp);
         emit ClassExpRevoked(characterAccount, classId, amountOfExp);
     }
@@ -192,10 +192,6 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
         return _revokeClass(msg.sender, classId);
     }
 
-    function getClassExp(address characterAccount, uint256 classId) public view returns (uint256 exp) {
-        exp = _expPerClass[characterAccount][classId];
-    }
-
     /**
      * @dev See {IERC1155-balanceOf}.
      */
@@ -204,13 +200,9 @@ contract ClassesImplementation is ERC1155HolderUpgradeable, ERC1155Upgradeable, 
         if (balance == 0) {
             return 0;
         } else if (balance == 1) {
-            uint256 expAmount = _expPerClass[account][classId];
+            uint256 expAmount = classExp[account][classId];
             balance = IClassLevelAdaptor(clones.classLevelAdaptor()).getCurrentLevel(expAmount);
         }
-    }
-
-    function classExpBalance(address characterAccount, uint256 classId) public view returns (uint256 classExp) {
-        return _expPerClass[characterAccount][classId];
     }
 
     /**
