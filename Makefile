@@ -56,6 +56,7 @@ ClassLevelAdaptor \
 HatsAdaptor \
 CharacterSheetsLevelEligibilityModule \
 ERC6551HatsEligibilityModule \
+MultiERC6551HatsEligibilityModule \
 ClonesAddressStorageImplementation \
 ImplementationAddressStorage \
 CharacterSheetsFactory

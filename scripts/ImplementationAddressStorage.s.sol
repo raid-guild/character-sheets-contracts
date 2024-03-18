@@ -124,9 +124,9 @@ contract DeployImplementationAddressStorage is BaseDeployer {
         hatsAddresses.erc721HatsEligibilityModule =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".ERC721HatsEligibilityModule")));
         hatsAddresses.erc6551HatsEligitbilityModule =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".ERC6511HatsEligibilityModule")));
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".ERC6551HatsEligibilityModule")));
         hatsAddresses.multiErc6551HatsEligitbilityModule =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".MultiERC6511HatsEligibilityModule")));
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".MultiERC6551HatsEligibilityModule")));
     }
 
     function _loadExternalAddresses(string memory json, string memory targetEnv) internal {
@@ -170,7 +170,7 @@ contract DeployImplementationAddressStorage is BaseDeployer {
         bytes memory encodedModuleAddresses = abi.encode(
             hatsAddresses.addressHatsEligibilityModule,
             hatsAddresses.erc721HatsEligibilityModule,
-            hatsAddresses.characterHatsEligibilityModule,
+            hatsAddresses.erc6551HatsEligitbilityModule,
             hatsAddresses.multiErc6551HatsEligitbilityModule
         );
 
