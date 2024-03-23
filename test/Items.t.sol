@@ -969,5 +969,16 @@ contract ItemsTest is SetUp {
         assertEq(craftRequirements[0].itemId, itemsData.itemIdSoulbound, "incorrect item ID");
         assertEq(craftRequirements[1].amount, 1, "incorrect amount");
         assertEq(craftRequirements[1].itemId, itemsData.itemIdClaimable, "incorrect item ID");
+
+
+        requirements[1] = CraftItem(itemsData.itemIdCraftable, 1);
+        requirements[0] = CraftItem(itemsData.itemIdSoulbound, 2);
+
+        bytes memory requiredAssets2 = abi.encode(requirements);
+
+        //prank
+        vm.prank(accounts.gameMaster);
+        vm.expectRevert(Errors.CraftItemError.selector);
+        deployments.items.setCraftRequirements(itemsData.itemIdCraftable, requiredAssets2);
     }
 }

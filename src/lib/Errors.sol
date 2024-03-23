@@ -23,6 +23,8 @@ abstract contract Errors {
     error ItemError();
     error LengthMismatch();
 
+    error CraftItemError();
+
     error Jailed();
     error InsufficientBalance();
     error CallerNotApproved();

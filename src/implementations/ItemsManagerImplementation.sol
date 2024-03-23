@@ -73,7 +73,16 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         (craftRequirements) = abi.decode(craftRequirementsBytes, (CraftItem[]));
 
         delete _craftRequirements[itemId];
+
+        uint256 lastItemId = 0;
         for (uint256 i; i < craftRequirements.length; i++) {
+            if (craftRequirements[i].itemId == itemId) {
+                revert Errors.CraftItemError();
+            }
+            if (i != 0 && craftRequirements[i].itemId <= lastItemId) {
+                revert Errors.CraftItemError();
+            }
+            lastItemId = craftRequirements[i].itemId;
             _craftRequirements[itemId].push(craftRequirements[i]);
         }
         emit CraftRequirementsSet(itemId, craftRequirementsBytes);
