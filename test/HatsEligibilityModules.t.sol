@@ -221,7 +221,7 @@ contract Test_ElderEligibilityModule is Base {
         bytes memory initData = abi.encode(tokenIds, balances);
 
         elderModAddress = hatsContracts.hatsModuleFactory.createHatsModule(
-            elderModuleImplementation, elderModId, immutableArgs, initData
+            elderModuleImplementation, elderModId, immutableArgs, initData, uint256(0)
         );
     }
 

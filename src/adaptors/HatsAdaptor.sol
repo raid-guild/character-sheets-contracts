@@ -421,7 +421,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
             customAdminModule == address(0) ? implementations.addressHatsEligibilityModule() : customAdminModule;
 
         return HatsModuleFactory(implementations.hatsModuleFactory()).createHatsModule(
-            customAdminModule, adminId, encodedHatsAddress, encodedAdmins
+            customAdminModule, adminId, encodedHatsAddress, encodedAdmins, uint256(bytes32("admin"))
         );
     }
 
@@ -480,7 +480,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         customDmModule = customDmModule == address(0) ? implementations.addressHatsEligibilityModule() : customDmModule;
 
         return HatsModuleFactory(implementations.hatsModuleFactory()).createHatsModule(
-            customDmModule, gameMasterId, encodedHatsAddress, gameMasters
+            customDmModule, gameMasterId, encodedHatsAddress, gameMasters, uint256(bytes32("gameMaster"))
         );
     }
 
@@ -557,7 +557,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         customCharacterModule =
             customCharacterModule == address(0) ? implementations.erc6551HatsEligibilityModule() : customCharacterModule;
         address characterHatsModule = HatsModuleFactory(implementations.hatsModuleFactory()).createHatsModule(
-            customCharacterModule, characterHatId, characterModuleData, ""
+            customCharacterModule, characterHatId, characterModuleData, "", uint256(bytes32("character"))
         );
         return characterHatsModule;
     }
@@ -577,7 +577,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         customPlayerModule =
             customPlayerModule == address(0) ? implementations.erc721HatsEligibilityModule() : customPlayerModule;
         address playerHatsModule = HatsModuleFactory(implementations.hatsModuleFactory()).createHatsModule(
-            customPlayerModule, playerHatId, playerModuleData, ""
+            customPlayerModule, playerHatId, playerModuleData, "", uint256(bytes32("player"))
         );
         return playerHatsModule;
     }

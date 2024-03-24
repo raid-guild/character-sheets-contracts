@@ -32,7 +32,7 @@ jobs:
         run: forge build --sizes --skip test
 
       - name: Check gas snapshots
-        run: forge snapshot --check
+        run: forge snapshot --nmt "testFuzz_\w{1,}?" --check
 
       - name: Run tests
         run: forge test

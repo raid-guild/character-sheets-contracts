@@ -8,7 +8,7 @@ all: clean remove install update build
 clean  :; forge clean
 
 # Remove modules
-remove :; rm -rf .gitmodules && rm -rf lib
+remove :; rm -rf lib
 
 install :; forge install --no-commit foundry-rs/forge-std openzeppelin/openzeppelin-contracts https://github.com/Hats-Protocol/hats-protocol.git https://github.com/Hats-Protocol/hats-module https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable.git https://github.com/dmfxyz/murky.git
 
