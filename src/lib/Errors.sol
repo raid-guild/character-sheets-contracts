@@ -31,9 +31,11 @@ abstract contract Errors {
     error SoulboundToken();
     error RequirementNotMet();
 
+    error CannotObtain(uint256);
+
     //merkle proof erros
-    error CannotClaim(uint256);
     error InvalidProof();
+
     // CharacterAccount.sol
     error InvalidSigner();
     error InvalidOperation();

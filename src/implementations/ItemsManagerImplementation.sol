@@ -35,7 +35,7 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
     event ClaimRequirementsSet(uint256 itemId, bytes requirementsBytes);
     event CraftRequirementsSet(uint256 itemId, bytes requirementsBytes);
     // event RequirementRemoved(uint256 itemId, address assetAddress, uint256 assetId);
-    event ItemsDismantled(uint256 itemId, uint256 amount, address caller);
+    event ItemsDismantled(uint256 itemId, uint256 amount, address character);
 
     modifier onlyItemsContract() {
         if (msg.sender != clones.items()) {
@@ -95,34 +95,34 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
      * @param amount the number of new items to be created
      * @return success bool if crafting is a success return true, else return false
      */
-    function craftItem(Item memory item, uint256 itemId, uint256 amount, address caller)
+    function craftItems(uint256 itemId, uint256 amount, address character)
         public
         onlyItemsContract
         returns (bool success)
     {
-        if (!item.craftable) {
-            revert Errors.ItemError();
-        }
-
         CraftItem storage requirement;
         for (uint256 i; i < _craftRequirements[itemId].length; i++) {
             requirement = _craftRequirements[itemId][i];
             uint256 requiredAmount = requirement.amount * amount;
 
-            if (IItems(clones.items()).balanceOf(caller, requirement.itemId) < requiredAmount) {
+            if (IItems(clones.items()).balanceOf(character, requirement.itemId) < requiredAmount) {
                 revert Errors.InsufficientBalance();
             }
 
             //transfer assets to this contract must have approval
-            IItems(clones.items()).safeTransferFrom(caller, address(this), requirement.itemId, requiredAmount, "");
+            IItems(clones.items()).safeTransferFrom(character, address(this), requirement.itemId, requiredAmount, "");
         }
 
         success = true;
         return success;
     }
 
-    function dismantleItems(uint256 itemId, uint256 amount, address caller) public onlyItemsContract returns (bool) {
-        if (IItems(clones.items()).balanceOf(caller, itemId) < amount) {
+    function dismantleItems(uint256 itemId, uint256 amount, address character)
+        public
+        onlyItemsContract
+        returns (bool)
+    {
+        if (IItems(clones.items()).balanceOf(character, itemId) < amount) {
             revert Errors.InsufficientBalance();
         }
         CraftItem storage requirement;
@@ -133,9 +133,9 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
                 revert Errors.InsufficientBalance();
             }
 
-            IItems(clones.items()).safeTransferFrom(address(this), caller, requirement.itemId, refundAmount, "");
+            IItems(clones.items()).safeTransferFrom(address(this), character, requirement.itemId, refundAmount, "");
         }
-        emit ItemsDismantled(itemId, amount, caller);
+        emit ItemsDismantled(itemId, amount, character);
         return true;
     }
 
@@ -148,7 +148,7 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         emit ClaimRequirementsSet(itemId, requirementTreeBytes);
     }
 
-    function checkClaimRequirements(address characterAccount, uint256 itemId, uint256 amount)
+    function checkClaimRequirements(address character, uint256 itemId, uint256 amount)
         public
         view
         onlyItemsContract
@@ -158,7 +158,7 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         if (root.operator == 0 && root.children.length == 0 && root.asset.assetAddress == address(0)) {
             return true;
         }
-        return checkClaimRequirements(characterAccount, amount, root);
+        return checkClaimRequirements(character, amount, root);
     }
 
     function getClaimRequirements(uint256 itemId) public view returns (bytes memory requirementTreeBytes) {
@@ -172,8 +172,8 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         return encoded;
     }
 
-    function checkAsset(address characterAccount, uint256 amount, Asset storage asset) internal view returns (bool) {
-        uint256 balance = MultiToken.balanceOf(asset, characterAccount);
+    function checkAsset(address character, uint256 amount, Asset storage asset) internal view returns (bool) {
+        uint256 balance = MultiToken.balanceOf(asset, character);
 
         // if the required asset is a class check that the balance is not less than the required level.
         if (asset.assetAddress == clones.classes()) {
@@ -186,20 +186,20 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         return true;
     }
 
-    function checkClaimRequirements(address characterAccount, uint256 amount, RequirementNode storage root)
+    function checkClaimRequirements(address character, uint256 amount, RequirementNode storage root)
         internal
         view
         returns (bool)
     {
         if (root.operator == 0) {
             // leaf node
-            return checkAsset(characterAccount, amount, root.asset);
+            return checkAsset(character, amount, root.asset);
         }
         if (root.operator == 1) {
             // and
             bool result = true;
             for (uint256 i; i < root.children.length; i++) {
-                result = result && checkClaimRequirements(characterAccount, amount, root.children[i]);
+                result = result && checkClaimRequirements(character, amount, root.children[i]);
             }
             return result;
         }
@@ -207,17 +207,17 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
             // or
             bool result = false;
             for (uint256 i; i < root.children.length; i++) {
-                result = result || checkClaimRequirements(characterAccount, amount, root.children[i]);
+                result = result || checkClaimRequirements(character, amount, root.children[i]);
             }
             return result;
         }
         if (root.operator == 3) {
             // not
             if (root.children.length == 1 && root.asset.assetAddress == address(0)) {
-                return !checkClaimRequirements(characterAccount, amount, root.children[0]);
+                return !checkClaimRequirements(character, amount, root.children[0]);
             }
             if (root.children.length == 0 && root.asset.assetAddress != address(0)) {
-                return !checkAsset(characterAccount, amount, root.asset);
+                return !checkAsset(character, amount, root.asset);
             }
             return false;
         }

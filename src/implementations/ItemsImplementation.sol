@@ -97,23 +97,23 @@ contract ItemsImplementation is
 
     /**
      * drops loot and/or exp after a completed quest items dropped through dropLoot do cost exp.
-     * @param characterAccounts the tokenbound accounts of the character CHARACTER to receive the item
+     * @param characters the tokenbound accounts of the character CHARACTER to receive the item
      * @param itemIds the item Id's of the loot to be dropped  exp is allways Item Id 0;
      * @param amounts the amounts of each item to be dropped this must be in sync with the item ids
      */
-    function dropLoot(address[] calldata characterAccounts, uint256[][] calldata itemIds, uint256[][] calldata amounts)
+    function dropLoot(address[] calldata characters, uint256[][] calldata itemIds, uint256[][] calldata amounts)
         external
         onlyGameMaster
         returns (bool success)
     {
-        if (characterAccounts.length != itemIds.length || itemIds.length != amounts.length) {
+        if (characters.length != itemIds.length || itemIds.length != amounts.length) {
             revert Errors.LengthMismatch();
         }
-        for (uint256 i; i < characterAccounts.length; i++) {
+        for (uint256 i; i < characters.length; i++) {
             for (uint256 j; j < itemIds[i].length; j++) {
                 // dm should be able to drop loot without requirements being met.
                 // requirements should be checked when equipping the item.
-                super._safeTransferFrom(address(this), characterAccounts[i], itemIds[i][j], amounts[i][j], "");
+                super._safeTransferFrom(address(this), characters[i], itemIds[i][j], amounts[i][j], "");
                 _items[itemIds[i][j]].supplied += amounts[i][j];
             }
         }
@@ -122,66 +122,48 @@ contract ItemsImplementation is
 
     /**
      * @dev this function must be called from the ERC6551 wallet of the player sheet (character account).
-     * @param itemIds an array of item ids
-     * @param amounts an array of amounts to claim, must match the order of item ids
-     * @param proofs an array of proofs allowing this address to claim the item,
+     * @param itemId of the item
+     * @param amount to claim
+     * @param proof allowing this address to claim the item,
      * must be in same order as item ids and amounts
      * if claimable of the item is bytes32(0) the proof can be just an empty array.
      */
-    function claimItems(uint256[] calldata itemIds, uint256[] calldata amounts, bytes32[][] calldata proofs)
+    function obtainItems(uint256 itemId, uint256 amount, bytes32[] calldata proof)
         external
         onlyCharacter
         returns (bool success)
     {
-        if (itemIds.length != amounts.length || itemIds.length != proofs.length) {
-            revert Errors.LengthMismatch();
+        Item storage item = _items[itemId];
+
+        if (item.supply < amount) {
+            revert Errors.InventoryError();
         }
-        for (uint256 i = 0; i < itemIds.length; i++) {
-            Item storage claimableItem = _items[itemIds[i]];
-            // if item is craftable this item must be claimed by calling the (craftItem) function
-            if (claimableItem.craftable) {
-                revert Errors.ClaimableError();
-            }
 
-            if (balanceOf(msg.sender, itemIds[i]) + amounts[i] > claimableItem.distribution) {
-                revert Errors.CannotClaim(claimableItem.distribution);
-            }
-
-            if (claimableItem.claimable == bytes32(0)) {
-                // can only posses a max balance of Item.distribution
-                _transferItem(msg.sender, itemIds[i], amounts[i]);
-            } else {
-                if (!_verifyMerkle(proofs[i], claimableItem.claimable, itemIds[i], amounts[i], msg.sender)) {
-                    revert Errors.InvalidProof();
-                }
-                _claimNonce[itemIds[i]][msg.sender]++;
-                _transferItem(msg.sender, itemIds[i], amounts[i]);
-            }
+        if (balanceOf(msg.sender, itemId) + amount > item.distribution) {
+            revert Errors.CannotObtain(item.distribution);
         }
-        success = true;
-    }
 
-    /**
-     * @notice Checks the item requirements to create a new item then transfers the requirements in the character's inventory to this contract to create the new item
-     * @dev Explain to a developer any extra details
-     * @param itemId the itemId of the item to be crafted
-     * @param amount the number of new items to be created
-     * @return success bool if crafting is a success return true, else return false
-     */
-    function craftItem(uint256 itemId, uint256 amount) external onlyCharacter returns (bool success) {
-        Item memory item = _items[itemId];
-
-        if (itemsManager.craftItem(item, itemId, amount, msg.sender)) {
-            //transfer item after succesful crafting
-            super._safeTransferFrom(address(this), msg.sender, itemId, amount, "");
-            success = true;
-            emit ItemCrafted(msg.sender, itemId, amount);
-        } else {
-            success = false;
+        if (item.claimable != bytes32(0)) {
+            if (!_verifyMerkle(proof, item.claimable, itemId, amount, msg.sender)) {
+                revert Errors.InvalidProof();
+            }
+            _claimNonce[itemId][msg.sender]++;
         }
+
+        if (item.craftable) {
+            return _craftItem(msg.sender, itemId, amount);
+        }
+
+        return _claimItem(msg.sender, itemId, amount);
     }
 
     function dismantleItems(uint256 itemId, uint256 amount) external onlyCharacter returns (bool success) {
+        Item storage item = _items[itemId];
+
+        if (!item.craftable) {
+            revert Errors.CraftableError();
+        }
+
         // require a successfull dismantle before items can be burnt.
         if (itemsManager.dismantleItems(itemId, amount, msg.sender)) {
             //burn items
@@ -378,6 +360,7 @@ contract ItemsImplementation is
     {
         return super.supportsInterface(interfaceId);
     }
+
     /// end overrides
 
     function getItem(uint256 itemId) public view returns (Item memory) {
@@ -421,33 +404,39 @@ contract ItemsImplementation is
     }
 
     /**
-     * transfers an item that has requirements.
-     * @param characterAccount the address of the token bound account of the player nft
+     * transfers an item that has claim requirements.
+     * @param character the address of the token bound account of the player nft
      * @param itemId the erc1155 Id of the item to be transfered
      * @param amount the number of items to be transfered
      */
-    function _transferItem(address characterAccount, uint256 itemId, uint256 amount) internal returns (bool success) {
-        if (!IHatsAdaptor(clones.hatsAdaptor()).isCharacter(characterAccount)) {
-            revert Errors.CharacterOnly();
-        }
-
-        Item storage item = _items[itemId];
-        if (item.supply == 0) {
-            revert Errors.ItemError();
-        }
-
-        if (!itemsManager.checkClaimRequirements(characterAccount, itemId, amount)) {
+    function _claimItem(address character, uint256 itemId, uint256 amount) internal returns (bool success) {
+        if (!itemsManager.checkClaimRequirements(character, itemId, amount)) {
             revert Errors.RequirementNotMet();
         }
 
-        super._safeTransferFrom(address(this), characterAccount, itemId, amount, "");
+        super._safeTransferFrom(address(this), character, itemId, amount, "");
         _items[itemId].supplied += amount;
 
-        emit ItemClaimed(characterAccount, itemId, amount);
+        emit ItemClaimed(character, itemId, amount);
 
         success = true;
+    }
 
-        return success;
+    /**
+     * transfers an item that has craft requirements.
+     * @param character the address of the token bound account of the player nft
+     * @param itemId the erc1155 Id of the item to be transfered
+     * @param amount the number of items to be transfered
+     */
+    function _craftItem(address character, uint256 itemId, uint256 amount) internal returns (bool success) {
+        if (!itemsManager.craftItems(itemId, amount, character)) {
+            revert Errors.RequirementNotMet();
+        }
+        // transfer item after succesful crafting
+        super._safeTransferFrom(address(this), msg.sender, itemId, amount, "");
+        _items[itemId].supplied += amount;
+        emit ItemCrafted(msg.sender, itemId, amount);
+        success = true;
     }
 
     //solhint-disable-next-line

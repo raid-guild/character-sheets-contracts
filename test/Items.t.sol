@@ -141,12 +141,6 @@ contract ItemsTest is SetUp {
 
         deployments.items.updateItemClaimable(_itemId1, root, 1);
 
-        uint256[] memory itemIds2 = new uint256[](1);
-        bytes32[][] memory proofs = new bytes32[][](1);
-        uint256[] memory amounts2 = new uint256[](1);
-        itemIds2[0] = _itemId1;
-        amounts2[0] = 1;
-        proofs[0] = proof;
         vm.stopPrank();
 
         vm.prank(accounts.gameMaster);
@@ -156,7 +150,7 @@ contract ItemsTest is SetUp {
         deployments.classes.assignClass(accounts.character1, classData.classId);
 
         vm.prank(accounts.character1);
-        deployments.items.claimItems(itemIds2, amounts2, proofs);
+        deployments.items.obtainItems(_itemId1, 1, proof);
 
         assertEq(deployments.items.balanceOf(accounts.character1, _itemId1), 1, "Balance not equal");
 
@@ -216,7 +210,9 @@ contract ItemsTest is SetUp {
         // must approve item manager to transfer items
         deployments.items.setApprovalForAll(address(deployments.itemsManager), true);
 
-        deployments.items.craftItem(craftableItemId, 1);
+        bytes32[] memory proof = new bytes32[](0);
+
+        deployments.items.obtainItems(craftableItemId, 1, proof);
 
         vm.stopPrank();
 
@@ -262,7 +258,7 @@ contract ItemsTest is SetUp {
         }
 
         uint256 craftableItemId =
-            deployments.items.createItemType(createNewItem(true, true, bytes32(0), 1, requiredAssets));
+            deployments.items.createItemType(createNewItem(true, true, bytes32(0), 2, requiredAssets));
 
         vm.stopPrank();
 
@@ -271,13 +267,15 @@ contract ItemsTest is SetUp {
         // approve the spending of required items
         deployments.items.setApprovalForAll(address(deployments.itemsManager), true);
 
-        deployments.items.craftItem(craftableItemId, 2);
+        bytes32[] memory proof = new bytes32[](0);
+
+        deployments.items.obtainItems(craftableItemId, 2, proof);
 
         assertEq(deployments.items.balanceOf(accounts.character1, _itemId1), 0, "item1 not consumed in crafting");
         assertEq(deployments.items.balanceOf(accounts.character1, _itemId2), 0, "item2 not consumed in crafting");
 
         // should revert if trying to dismantle un-crafted item
-        vm.expectRevert(Errors.InsufficientBalance.selector);
+        vm.expectRevert(Errors.CraftableError.selector);
         deployments.items.dismantleItems(0, 1);
 
         //should revert if trying to dismantle more than have been crafted
@@ -351,7 +349,8 @@ contract ItemsTest is SetUp {
         // should revert if item is not set to craftable
         vm.prank(accounts.character1);
         vm.expectRevert();
-        deployments.items.craftItem(0, 1);
+        bytes32[] memory proof = new bytes32[](0);
+        deployments.items.obtainItems(0, 1, proof);
 
         vm.prank(accounts.gameMaster);
         uint256 craftableItemId = deployments.items.createItemType(
@@ -361,7 +360,7 @@ contract ItemsTest is SetUp {
         //should revert if requirements not met
         vm.prank(accounts.character1);
         vm.expectRevert(Errors.InsufficientBalance.selector);
-        deployments.items.craftItem(craftableItemId, 1);
+        deployments.items.obtainItems(craftableItemId, 1, proof);
     }
 
     function testClaimItemRevert() public {
@@ -401,18 +400,13 @@ contract ItemsTest is SetUp {
 
         deployments.items.updateItemClaimable(_itemId1, root, 1);
 
-        uint256[] memory itemIds2 = new uint256[](1);
-        bytes32[][] memory proofs = new bytes32[][](1);
-        uint256[] memory amounts2 = new uint256[](1);
-        itemIds2[0] = _itemId2;
-        amounts2[0] = 1;
-        proofs[0] = new bytes32[](2);
+        bytes32[] memory proof2 = new bytes32[](2);
         vm.stopPrank();
 
         // revert with not enough req items
         vm.prank(accounts.character1);
         vm.expectRevert(Errors.RequirementNotMet.selector);
-        deployments.items.claimItems(itemIds2, amounts2, proofs);
+        deployments.items.obtainItems(_itemId2, 1, proof2);
 
         vm.prank(accounts.gameMaster);
         deployments.experience.dropExp(accounts.character1, 1000);
@@ -420,49 +414,38 @@ contract ItemsTest is SetUp {
         // revert wrong class
         vm.prank(accounts.character1);
         vm.expectRevert(Errors.RequirementNotMet.selector);
-        deployments.items.claimItems(itemIds2, amounts2, proofs);
+        deployments.items.obtainItems(_itemId2, 1, proof2);
 
         vm.prank(accounts.gameMaster);
         deployments.classes.assignClass(accounts.character1, classData.classId);
 
-        itemIds2[0] = _itemId1;
         //revert invalid proof
         vm.prank(accounts.character1);
         vm.expectRevert(Errors.InvalidProof.selector);
-        deployments.items.claimItems(itemIds2, amounts2, proofs);
-
-        proofs[0] = proof;
+        deployments.items.obtainItems(_itemId1, 1, proof2);
 
         vm.prank(accounts.character1);
-        deployments.items.claimItems(itemIds2, amounts2, proofs);
+        deployments.items.obtainItems(_itemId1, 1, proof);
 
-        //revert on second attempt to claim
+        //revert on second attempt to obtain
         vm.prank(accounts.character1);
-        vm.expectRevert(abi.encodeWithSelector(Errors.CannotClaim.selector, 1));
-        deployments.items.claimItems(itemIds2, amounts2, proofs);
+        vm.expectRevert(abi.encodeWithSelector(Errors.CannotObtain.selector, 1));
+        deployments.items.obtainItems(_itemId1, 1, proof);
 
-        itemIds2[0] = _itemId3;
-        amounts2[0] = 5;
-        //revert if trying to claim more than allowed amount
+        //revert if trying to obtain more than allowed amount
         vm.prank(accounts.character1);
-        vm.expectRevert(abi.encodeWithSelector(Errors.CannotClaim.selector, 1));
-        deployments.items.claimItems(itemIds2, amounts2, proofs);
+        vm.expectRevert(abi.encodeWithSelector(Errors.CannotObtain.selector, 1));
+        deployments.items.obtainItems(_itemId3, 5, proof);
     }
 
     function testComplexRequirementsClaimRevert() public {
         uint256 claimableItemId = createComplexClaimableItem();
 
         vm.startPrank(accounts.character1);
-
-        uint256[] memory itemIds = new uint256[](1);
-        itemIds[0] = claimableItemId;
-        uint256[] memory amounts = new uint256[](1);
-        amounts[0] = 1;
-        bytes32[][] memory proofs = new bytes32[][](1);
-        proofs[0] = new bytes32[](0);
+        bytes32[] memory proof = new bytes32[](0);
 
         vm.expectRevert(Errors.RequirementNotMet.selector);
-        deployments.items.claimItems(itemIds, amounts, proofs);
+        deployments.items.obtainItems(claimableItemId, 1, proof);
 
         vm.stopPrank();
 
@@ -471,7 +454,7 @@ contract ItemsTest is SetUp {
 
         vm.expectRevert(Errors.RequirementNotMet.selector);
         vm.prank(accounts.character1);
-        deployments.items.claimItems(itemIds, amounts, proofs);
+        deployments.items.obtainItems(claimableItemId, 1, proof);
     }
 
     function testComplexRequirementsClaimWithItem1() public {
@@ -498,14 +481,9 @@ contract ItemsTest is SetUp {
 
         vm.startPrank(accounts.character1);
         {
-            uint256[] memory itemIds = new uint256[](1);
-            itemIds[0] = claimableItemId;
-            uint256[] memory amounts = new uint256[](1);
-            amounts[0] = 1;
-            bytes32[][] memory proofs = new bytes32[][](1);
-            proofs[0] = new bytes32[](0);
+            bytes32[] memory proof = new bytes32[](0);
 
-            deployments.items.claimItems(itemIds, amounts, proofs);
+            deployments.items.obtainItems(claimableItemId, 1, proof);
         }
 
         vm.stopPrank();
@@ -536,14 +514,9 @@ contract ItemsTest is SetUp {
 
         vm.startPrank(accounts.character1);
         {
-            uint256[] memory itemIds = new uint256[](1);
-            itemIds[0] = claimableItemId;
-            uint256[] memory amounts = new uint256[](1);
-            amounts[0] = 1;
-            bytes32[][] memory proofs = new bytes32[][](1);
-            proofs[0] = new bytes32[](0);
+            bytes32[] memory proof = new bytes32[](0);
 
-            deployments.items.claimItems(itemIds, amounts, proofs);
+            deployments.items.obtainItems(claimableItemId, 1, proof);
         }
 
         vm.stopPrank();
@@ -574,14 +547,9 @@ contract ItemsTest is SetUp {
 
         vm.startPrank(accounts.character1);
         {
-            uint256[] memory itemIds = new uint256[](1);
-            itemIds[0] = claimableItemId;
-            uint256[] memory amounts = new uint256[](1);
-            amounts[0] = 1;
-            bytes32[][] memory proofs = new bytes32[][](1);
-            proofs[0] = new bytes32[](0);
+            bytes32[] memory proof = new bytes32[](0);
 
-            deployments.items.claimItems(itemIds, amounts, proofs);
+            deployments.items.obtainItems(claimableItemId, 1, proof);
         }
 
         vm.stopPrank();
@@ -612,15 +580,10 @@ contract ItemsTest is SetUp {
 
         vm.startPrank(accounts.character1);
         {
-            uint256[] memory itemIds = new uint256[](1);
-            itemIds[0] = claimableItemId;
-            uint256[] memory amounts = new uint256[](1);
-            amounts[0] = 1;
-            bytes32[][] memory proofs = new bytes32[][](1);
-            proofs[0] = new bytes32[](0);
-
             vm.expectRevert(Errors.RequirementNotMet.selector);
-            deployments.items.claimItems(itemIds, amounts, proofs);
+            bytes32[] memory proof = new bytes32[](0);
+
+            deployments.items.obtainItems(claimableItemId, 1, proof);
         }
 
         vm.stopPrank();
@@ -969,7 +932,6 @@ contract ItemsTest is SetUp {
         assertEq(craftRequirements[0].itemId, itemsData.itemIdSoulbound, "incorrect item ID");
         assertEq(craftRequirements[1].amount, 1, "incorrect amount");
         assertEq(craftRequirements[1].itemId, itemsData.itemIdClaimable, "incorrect item ID");
-
 
         requirements[1] = CraftItem(itemsData.itemIdCraftable, 1);
         requirements[0] = CraftItem(itemsData.itemIdSoulbound, 2);
