@@ -9,15 +9,13 @@ interface IItems {
         external
         returns (bool success);
 
-    function claimItems(uint256[] calldata itemIds, uint256[] calldata amounts, bytes32[][] calldata proofs)
+    function obtainItems(uint256 itemId, uint256 amount, bytes32[] calldata proof)
         external
         returns (bool success);
 
     function dismantleItems(uint256 itemId, uint256 amount) external returns (bool success);
 
     function updateItemClaimable(uint256 itemId, bytes32 merkleRoot, uint256 newDistribution) external;
-
-    function craftItem(uint256 itemId, uint256 amount) external returns (bool);
 
     function setURI(uint256 tokenId, string memory tokenURI) external;
 
