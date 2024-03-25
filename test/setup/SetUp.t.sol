@@ -395,6 +395,30 @@ contract SetUp is Test, Accounts, TestStructs {
         );
     }
 
+    function createSimpleClaimableItem() public returns (uint256) {
+        vm.startPrank(accounts.gameMaster);
+
+        uint256 _itemId1 =
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets()));
+
+        RequirementNode memory item = RequirementNode({
+            operator: 0,
+            asset: Asset(Category.ERC1155, address(deployments.items), _itemId1, 100),
+            children: new RequirementNode[](0)
+        });
+
+        bytes memory requiredAssets = RequirementsTree.encode(item);
+
+        console2.logBytes(requiredAssets);
+
+        uint256 claimableItemId =
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, requiredAssets));
+
+        vm.stopPrank();
+
+        return claimableItemId;
+    }
+
     function createComplexClaimableItem() public returns (uint256) {
         vm.startPrank(accounts.gameMaster);
 

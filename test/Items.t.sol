@@ -943,4 +943,36 @@ contract ItemsTest is SetUp {
         vm.expectRevert(Errors.CraftItemError.selector);
         deployments.items.setCraftRequirements(itemsData.itemIdCraftable, requiredAssets2);
     }
+
+    function testSimpleRequirementsClaimWithItem1() public {
+        uint256 claimableItemId = createSimpleClaimableItem();
+
+        vm.startPrank(accounts.gameMaster);
+        {
+            address[] memory players = new address[](1);
+            players[0] = accounts.character1;
+            uint256[][] memory itemIds = new uint256[][](1);
+            itemIds[0] = new uint256[](1);
+            itemIds[0][0] = claimableItemId - 1;
+            uint256[][] memory amounts = new uint256[][](1);
+            amounts[0] = new uint256[](1);
+            amounts[0][0] = 100;
+
+            deployments.items.dropLoot(players, itemIds, amounts);
+        }
+        vm.stopPrank();
+
+        assertEq(deployments.items.balanceOf(accounts.character1, claimableItemId - 1), 100, "item not dropped");
+        assertEq(deployments.items.balanceOf(accounts.character1, claimableItemId), 0, "item already claimed");
+
+        vm.startPrank(accounts.character1);
+        {
+            bytes32[] memory proof = new bytes32[](0);
+
+            deployments.items.obtainItems(claimableItemId, 1, proof);
+        }
+
+        vm.stopPrank();
+        assertEq(deployments.items.balanceOf(accounts.character1, claimableItemId), 1, "item not claimed");
+    }
 }
