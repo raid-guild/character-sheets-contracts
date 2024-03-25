@@ -9,9 +9,7 @@ interface IItems {
         external
         returns (bool success);
 
-    function obtainItems(uint256 itemId, uint256 amount, bytes32[] calldata proof)
-        external
-        returns (bool success);
+    function obtainItems(uint256 itemId, uint256 amount, bytes32[] calldata proof) external returns (bool success);
 
     function dismantleItems(uint256 itemId, uint256 amount) external returns (bool success);
 

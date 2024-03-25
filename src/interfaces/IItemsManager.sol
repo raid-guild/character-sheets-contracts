@@ -10,7 +10,7 @@ interface IItemsManager {
 
     function setCraftRequirements(uint256 itemId, bytes calldata items) external;
 
-    function checkClaimRequirements(address character, uint256 itemId, uint256 amount) external view returns (bool);
+    function checkClaimRequirements(address character, uint256 itemId) external view returns (bool);
 
     function getClaimRequirements(uint256 itemId) external view returns (bytes memory);
 

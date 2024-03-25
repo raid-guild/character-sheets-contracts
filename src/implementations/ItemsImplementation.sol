@@ -410,7 +410,7 @@ contract ItemsImplementation is
      * @param amount the number of items to be transfered
      */
     function _claimItem(address character, uint256 itemId, uint256 amount) internal returns (bool success) {
-        if (!itemsManager.checkClaimRequirements(character, itemId, amount)) {
+        if (!itemsManager.checkClaimRequirements(character, itemId)) {
             revert Errors.RequirementNotMet();
         }
 

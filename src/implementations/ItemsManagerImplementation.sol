@@ -148,17 +148,12 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         emit ClaimRequirementsSet(itemId, requirementTreeBytes);
     }
 
-    function checkClaimRequirements(address character, uint256 itemId, uint256 amount)
-        public
-        view
-        onlyItemsContract
-        returns (bool)
-    {
+    function checkClaimRequirements(address character, uint256 itemId) public view onlyItemsContract returns (bool) {
         RequirementNode storage root = _claimRequirements[itemId];
         if (root.operator == 0 && root.children.length == 0 && root.asset.assetAddress == address(0)) {
             return true;
         }
-        return checkClaimRequirements(character, amount, root);
+        return checkClaimRequirements(character, root);
     }
 
     function getClaimRequirements(uint256 itemId) public view returns (bytes memory requirementTreeBytes) {
@@ -172,34 +167,25 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
         return encoded;
     }
 
-    function checkAsset(address character, uint256 amount, Asset storage asset) internal view returns (bool) {
+    function checkAsset(address character, Asset storage asset) internal view returns (bool) {
         uint256 balance = MultiToken.balanceOf(asset, character);
 
-        // if the required asset is a class check that the balance is not less than the required level.
-        if (asset.assetAddress == clones.classes()) {
-            if (balance < asset.amount) {
-                return false;
-            }
-        } else if (balance < asset.amount * amount) {
+        if (balance < asset.amount) {
             return false;
         }
         return true;
     }
 
-    function checkClaimRequirements(address character, uint256 amount, RequirementNode storage root)
-        internal
-        view
-        returns (bool)
-    {
+    function checkClaimRequirements(address character, RequirementNode storage root) internal view returns (bool) {
         if (root.operator == 0) {
             // leaf node
-            return checkAsset(character, amount, root.asset);
+            return checkAsset(character, root.asset);
         }
         if (root.operator == 1) {
             // and
             bool result = true;
             for (uint256 i; i < root.children.length; i++) {
-                result = result && checkClaimRequirements(character, amount, root.children[i]);
+                result = result && checkClaimRequirements(character, root.children[i]);
             }
             return result;
         }
@@ -207,17 +193,17 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
             // or
             bool result = false;
             for (uint256 i; i < root.children.length; i++) {
-                result = result || checkClaimRequirements(character, amount, root.children[i]);
+                result = result || checkClaimRequirements(character, root.children[i]);
             }
             return result;
         }
         if (root.operator == 3) {
             // not
             if (root.children.length == 1 && root.asset.assetAddress == address(0)) {
-                return !checkClaimRequirements(character, amount, root.children[0]);
+                return !checkClaimRequirements(character, root.children[0]);
             }
             if (root.children.length == 0 && root.asset.assetAddress != address(0)) {
-                return !checkAsset(character, amount, root.asset);
+                return !checkAsset(character, root.asset);
             }
             return false;
         }
