@@ -167,15 +167,19 @@ contract ItemsTest is SetUp {
         vm.startPrank(accounts.gameMaster);
         uint256 newItemId = deployments.items.createItemType(
             createNewItem(
-                true, true, bytes32(0), 1, createRequiredAsset(Category.ERC20, address(deployments.experience), 0, 100)
+                false,
+                false,
+                bytes32(0),
+                1,
+                createRequiredAsset(Category.ERC20, address(deployments.experience), 0, 100)
             )
         );
         vm.expectEmit();
         emit ItemDeleted(newItemId);
         deployments.items.deleteItem(newItemId);
         vm.stopPrank();
-        Item memory deleted = deployments.items.getItem(newItemId);
 
+        Item memory deleted = deployments.items.getItem(newItemId);
         assertEq(deleted.enabled, false, "item enabled");
     }
 

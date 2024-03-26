@@ -23,6 +23,7 @@ abstract contract Errors {
     error ItemError();
     error LengthMismatch();
 
+    error CraftItemsError();
     error CraftItemError();
 
     error Jailed();
@@ -39,6 +40,8 @@ abstract contract Errors {
     // CharacterAccount.sol
     error InvalidSigner();
     error InvalidOperation();
+
+    error DeletedItem();
 
     // Common
     error NotInitialized();

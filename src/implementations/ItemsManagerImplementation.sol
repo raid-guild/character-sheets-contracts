@@ -74,6 +74,10 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
 
         delete _craftRequirements[itemId];
 
+        if (craftRequirements.length == 0) {
+            revert Errors.CraftItemsError();
+        }
+
         uint256 lastItemId = 0;
         for (uint256 i; i < craftRequirements.length; i++) {
             if (craftRequirements[i].itemId == itemId) {

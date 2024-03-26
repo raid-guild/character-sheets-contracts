@@ -113,7 +113,7 @@ contract ItemsImplementation is
             for (uint256 j; j < itemIds[i].length; j++) {
                 // dm should be able to drop loot without requirements being met.
                 // requirements should be checked when equipping the item.
-                super._safeTransferFrom(address(this), characters[i], itemIds[i][j], amounts[i][j], "");
+                _safeTransferFrom(address(this), characters[i], itemIds[i][j], amounts[i][j], "");
                 _items[itemIds[i][j]].supplied += amounts[i][j];
             }
         }
@@ -133,6 +133,9 @@ contract ItemsImplementation is
         onlyCharacter
         returns (bool success)
     {
+        if (_items[itemId].enabled == false) {
+            revert Errors.DeletedItem();
+        }
         Item storage item = _items[itemId];
 
         if (item.supply < amount) {
@@ -154,6 +157,9 @@ contract ItemsImplementation is
     }
 
     function dismantleItems(uint256 itemId, uint256 amount) external onlyCharacter returns (bool success) {
+        if (_items[itemId].enabled == false) {
+            revert Errors.DeletedItem();
+        }
         Item storage item = _items[itemId];
 
         if (!item.craftable) {
@@ -204,6 +210,9 @@ contract ItemsImplementation is
         if (_items[itemId].supply == 0) {
             revert Errors.ItemError();
         }
+        if (_items[itemId].enabled == false) {
+            revert Errors.DeletedItem();
+        }
         _items[itemId].claimable = merkleRoot;
         _items[itemId].distribution = newDistribution;
 
@@ -225,6 +234,9 @@ contract ItemsImplementation is
         // cannot delete an Item that has been supplied to anyone.
         if (_items[itemId].supplied != 0) {
             revert Errors.ItemError();
+        }
+        if (_items[itemId].enabled == false) {
+            revert Errors.DeletedItem();
         }
 
         //burn supply
@@ -252,6 +264,12 @@ contract ItemsImplementation is
         if (_items[itemId].supplied != 0) {
             revert Errors.ItemError();
         }
+        if (_items[itemId].craftable == true) {
+            revert Errors.CraftableError();
+        }
+        if (_items[itemId].enabled == false) {
+            revert Errors.DeletedItem();
+        }
 
         itemsManager.setClaimRequirements(itemId, requiredAssets);
     }
@@ -263,6 +281,12 @@ contract ItemsImplementation is
         // cannot set craft requirements for an item that has been supplied to anyone.
         if (_items[itemId].supplied != 0) {
             revert Errors.ItemError();
+        }
+        if (_items[itemId].craftable == false) {
+            revert Errors.CraftableError();
+        }
+        if (_items[itemId].enabled == false) {
+            revert Errors.DeletedItem();
         }
 
         itemsManager.setCraftRequirements(itemId, requiredAssets);
@@ -409,6 +433,9 @@ contract ItemsImplementation is
         if (to != address(0) && to != address(clones.itemsManager()) && to != address(this)) {
             for (uint256 i; i < ids.length; i++) {
                 Item storage item = _items[ids[i]];
+                if (item.enabled == false) {
+                    revert Errors.DeletedItem();
+                }
                 uint256 newBalance = balanceOf(to, ids[i]);
                 if (newBalance > item.distribution) {
                     revert Errors.ExceedsDistribution();
@@ -428,7 +455,7 @@ contract ItemsImplementation is
             revert Errors.RequirementNotMet();
         }
 
-        super._safeTransferFrom(address(this), character, itemId, amount, "");
+        _safeTransferFrom(address(this), character, itemId, amount, "");
         _items[itemId].supplied += amount;
 
         emit ItemClaimed(character, itemId, amount);
@@ -447,7 +474,7 @@ contract ItemsImplementation is
             revert Errors.RequirementNotMet();
         }
         // transfer item after succesful crafting
-        super._safeTransferFrom(address(this), msg.sender, itemId, amount, "");
+        _safeTransferFrom(address(this), msg.sender, itemId, amount, "");
         _items[itemId].supplied += amount;
         emit ItemCrafted(msg.sender, itemId, amount);
         success = true;
