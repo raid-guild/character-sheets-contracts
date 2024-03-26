@@ -126,7 +126,7 @@ contract SetUp is Test, Accounts, TestStructs {
         //add player to dao
         dao.addMember(accounts.player1);
         // roll characterSheet for player 1
-        sheetsData.characterId1 = deployments.characterSheets.rollCharacterSheet("player1_test_uri");
+        sheetsData.characterId1 = deployments.characterSheets.rollCharacterSheet(accounts.player1, "player1_test_uri");
 
         //store character address
         accounts.character1 =
@@ -138,7 +138,7 @@ contract SetUp is Test, Accounts, TestStructs {
         //add player to dao
         dao.addMember(accounts.player2);
         // roll characterSheet for player 2
-        sheetsData.characterId2 = deployments.characterSheets.rollCharacterSheet("player2_test_uri");
+        sheetsData.characterId2 = deployments.characterSheets.rollCharacterSheet(accounts.player2, "player2_test_uri");
 
         //store character address
         accounts.character2 =

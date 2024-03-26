@@ -61,7 +61,7 @@ contract ItemsTest is SetUp {
         dao.addMember(accounts.rando);
 
         vm.prank(accounts.rando);
-        uint256 randoId = deployments.characterSheets.rollCharacterSheet("test_token_uri1/");
+        uint256 randoId = deployments.characterSheets.rollCharacterSheet(accounts.rando, "test_token_uri1/");
 
         vm.startPrank(accounts.gameMaster);
 

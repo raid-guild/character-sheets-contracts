@@ -143,12 +143,12 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
      * @param _tokenURI the uri of the character sheet metadata
      * if no uri is stored then it will revert to the base uri of the contract
      */
-    function rollCharacterSheet(string calldata _tokenURI) external returns (uint256) {
-        _checkRollReverts(msg.sender);
+    function rollCharacterSheet(address player, string calldata _tokenURI) external returns (uint256) {
+        _checkRollReverts(player);
 
-        uint256 existingCharacterId = _playerSheets[msg.sender];
+        uint256 existingCharacterId = _playerSheets[player];
 
-        if (existingCharacterId != 0 || _sheets[existingCharacterId].playerAddress == msg.sender) {
+        if (existingCharacterId != 0 || _sheets[existingCharacterId].playerAddress == player) {
             // must restore sheet
             revert Errors.PlayerError();
         }
@@ -162,11 +162,11 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         // setting salt as characterId
 
         _sheets[characterId] =
-            CharacterSheet({accountAddress: characterAccount, playerAddress: msg.sender, inventory: new uint256[](0)});
+            CharacterSheet({accountAddress: characterAccount, playerAddress: player, inventory: new uint256[](0)});
 
-        _mintSheet(msg.sender, characterAccount, characterId, _tokenURI);
+        _mintSheet(player, characterAccount, characterId, _tokenURI);
 
-        emit NewCharacterSheetRolled(msg.sender, characterAccount, characterId);
+        emit NewCharacterSheetRolled(player, characterAccount, characterId);
         return characterId;
     }
 
@@ -473,7 +473,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         return baseTokenURI;
     }
 
-    function _checkRollReverts(address sender) internal view {
+    function _checkRollReverts(address player) internal view {
         if (erc6551CharacterAccount == address(0) || erc6551Registry == address(0)) {
             revert Errors.NotInitialized();
         }
@@ -481,20 +481,20 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
         // check the eligibility adaptor to see if the player is eligible to roll a character sheet
         if (
             clones.characterEligibilityAdaptor() != address(0)
-                && !ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(sender)
+                && !ICharacterEligibilityAdaptor(clones.characterEligibilityAdaptor()).isEligible(player)
         ) {
             revert Errors.EligibilityError();
         }
         // a character cannot be a character
-        if (_characterSheets[sender] != 0) {
+        if (_characterSheets[player] != 0) {
             revert Errors.CharacterError();
         }
 
-        if (jailed[sender]) {
+        if (jailed[player]) {
             revert Errors.Jailed();
         }
 
-        if (balanceOf(sender) != 0) {
+        if (balanceOf(player) != 0) {
             revert Errors.TokenBalanceError();
         }
     }

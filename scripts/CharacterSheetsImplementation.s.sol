@@ -43,7 +43,7 @@ contract ExecuteCharacterSheetsImplementation is BaseExecutor {
         console2.log("SHEET URI: ", sheetUri);
 
         vm.broadcast(deployerPrivateKey);
-        uint256 tokenId = sheetsImp.rollCharacterSheet(sheetUri);
+        uint256 tokenId = sheetsImp.rollCharacterSheet(memberAddress, sheetUri);
         console.log("Character Id:", tokenId);
     }
 }

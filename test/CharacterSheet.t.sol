@@ -15,7 +15,7 @@ contract CharacterSheetsTest is SetUp {
     function testRollCharacterSheet() public {
         dao.addMember(accounts.admin);
         vm.prank(accounts.admin);
-        uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+        uint256 tokenId = deployments.characterSheets.rollCharacterSheet(accounts.admin, "test_token_uri/");
 
         assertEq(tokenId, 2, "Incorrect tokenId");
         assertEq(deployments.characterSheets.tokenURI(2), "test_base_uri_character_sheets/test_token_uri/");
@@ -90,7 +90,7 @@ contract CharacterSheetsTest is SetUp {
         dao.addMember(accounts.rando);
 
         vm.prank(accounts.rando);
-        uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+        uint256 tokenId = deployments.characterSheets.rollCharacterSheet(accounts.rando, "test_token_uri/");
         assertEq(tokenId, 2, "characterId not assigned");
 
         vm.prank(accounts.rando);
@@ -137,7 +137,7 @@ contract CharacterSheetsTest is SetUp {
         dao.addMember(accounts.rando);
 
         vm.prank(accounts.rando);
-        uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+        uint256 tokenId = deployments.characterSheets.rollCharacterSheet(accounts.rando, "test_token_uri/");
         assertEq(tokenId, 2, "characterId not assigned");
 
         vm.prank(accounts.gameMaster);
@@ -153,7 +153,7 @@ contract CharacterSheetsTest is SetUp {
 
         vm.prank(accounts.rando);
         vm.expectRevert();
-        deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+        deployments.characterSheets.rollCharacterSheet(accounts.rando, "test_token_uri/");
     }
 
     function testRestoreSheetAfterRemove() public {
@@ -192,7 +192,7 @@ contract CharacterSheetsTest is SetUp {
         dao.addMember(accounts.rando);
 
         vm.prank(accounts.rando);
-        uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+        uint256 tokenId = deployments.characterSheets.rollCharacterSheet(accounts.rando, "test_token_uri/");
         assertEq(tokenId, 2, "characterId not assigned");
 
         vm.prank(accounts.gameMaster);
@@ -282,13 +282,13 @@ contract CharacterSheetsTest is SetUp {
     function testRollCharacterSheetFailNonMember() public {
         vm.prank(accounts.rando);
         vm.expectRevert(Errors.EligibilityError.selector);
-        deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+        deployments.characterSheets.rollCharacterSheet(accounts.rando, "test_token_uri/");
     }
 
     function testRollCharacterSheetRevertAlreadyACharacter() public {
         vm.prank(accounts.player1);
         vm.expectRevert(Errors.TokenBalanceError.selector);
-        deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+        deployments.characterSheets.rollCharacterSheet(accounts.player1, "test_token_uri/");
     }
 
     function testChangeBaseUriRevertNotAdmin() public {
@@ -339,7 +339,7 @@ contract CharacterSheetsTest is SetUp {
 
         vm.prank(accounts.player1);
         vm.expectRevert();
-        deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+        deployments.characterSheets.rollCharacterSheet(accounts.player1, "test_token_uri/");
     }
 
     function testTransferFrom() public {

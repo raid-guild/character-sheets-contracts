@@ -84,7 +84,8 @@ contract Base is SetUp {
 
         dao.addMember(playerHatWearer);
         vm.prank(playerHatWearer);
-        uint256 testCharacterId = deployments.characterSheets.rollCharacterSheet("test_player_hat_wearer_uri");
+        uint256 testCharacterId =
+            deployments.characterSheets.rollCharacterSheet(playerHatWearer, "test_player_hat_wearer_uri");
 
         characterHatWearer = deployments.characterSheets.getCharacterSheetByCharacterId(testCharacterId).accountAddress;
 

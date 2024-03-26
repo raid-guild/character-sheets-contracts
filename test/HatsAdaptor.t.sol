@@ -61,7 +61,7 @@ contract HatsAdaptorTest is SetUp {
         dao.addMember(accounts.rando);
 
         vm.prank(accounts.rando);
-        deployments.characterSheets.rollCharacterSheet("rando_token_uri");
+        deployments.characterSheets.rollCharacterSheet(accounts.rando, "rando_token_uri");
 
         assertTrue(hatsContracts.hats.isWearerOfHat(accounts.rando, _hatsData.playerHatId), "not wearing player hat");
     }
