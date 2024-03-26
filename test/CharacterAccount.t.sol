@@ -11,7 +11,7 @@ contract CharacterAccountTest is SetUp {
     function testEquipItemToCharacter() public {
         dao.addMember(accounts.rando);
         vm.prank(accounts.rando);
-        uint256 tokenId = deployments.characterSheets.rollCharacterSheet("new_test_token_uri/");
+        uint256 tokenId = deployments.characterSheets.rollCharacterSheet(accounts.rando, "new_test_token_uri/");
         assertEq(tokenId, 2, "characterId not assigned");
 
         assertEq(deployments.characterSheets.tokenURI(tokenId), "test_base_uri_character_sheets/new_test_token_uri/");
@@ -39,7 +39,7 @@ contract CharacterAccountTest is SetUp {
     function testUnequipItemToCharacter() public {
         dao.addMember(accounts.rando);
         vm.prank(accounts.rando);
-        uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+        uint256 tokenId = deployments.characterSheets.rollCharacterSheet(accounts.rando, "test_token_uri/");
         assertEq(tokenId, 2, "characterId not assigned");
 
         assertEq(deployments.characterSheets.tokenURI(tokenId), "test_base_uri_character_sheets/test_token_uri/");
@@ -76,7 +76,7 @@ contract CharacterAccountTest is SetUp {
     function testEquipViaMultiSendDelegateCall() public {
         dao.addMember(accounts.rando);
         vm.prank(accounts.rando);
-        uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+        uint256 tokenId = deployments.characterSheets.rollCharacterSheet(accounts.rando, "test_token_uri/");
         assertEq(tokenId, 2, "characterId not assigned");
 
         assertEq(deployments.characterSheets.tokenURI(tokenId), "test_base_uri_character_sheets/test_token_uri/");
@@ -110,7 +110,7 @@ contract CharacterAccountTest is SetUp {
     function testEquipAndUnequipViaMultiSendDelegateCall() public {
         dao.addMember(accounts.rando);
         vm.prank(accounts.rando);
-        uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+        uint256 tokenId = deployments.characterSheets.rollCharacterSheet(accounts.rando, "test_token_uri/");
         assertEq(tokenId, 2, "characterId not assigned");
 
         assertEq(deployments.characterSheets.tokenURI(tokenId), "test_base_uri_character_sheets/test_token_uri/");
@@ -151,7 +151,7 @@ contract CharacterAccountTest is SetUp {
     function test_Owner() public {
         dao.addMember(accounts.rando);
         vm.prank(accounts.rando);
-        uint256 tokenId = deployments.characterSheets.rollCharacterSheet("test_token_uri/");
+        uint256 tokenId = deployments.characterSheets.rollCharacterSheet(accounts.rando, "test_token_uri/");
         assertEq(tokenId, 2, "characterId not assigned");
         address char = deployments.characterSheets.getCharacterSheetByCharacterId(tokenId).accountAddress;
         CharacterAccount account = CharacterAccount(payable(char));
