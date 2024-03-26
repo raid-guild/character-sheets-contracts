@@ -31,7 +31,7 @@ abstract contract Errors {
     error SoulboundToken();
     error RequirementNotMet();
 
-    error CannotObtain(uint256);
+    error ExceedsDistribution();
 
     //merkle proof erros
     error InvalidProof();

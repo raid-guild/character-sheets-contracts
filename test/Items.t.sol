@@ -67,12 +67,13 @@ contract ItemsTest is SetUp {
 
         address randoNPC = deployments.characterSheets.getCharacterSheetByCharacterId(randoId).accountAddress;
 
-        uint256 _itemId =
-            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets()));
+        uint256 _itemId = deployments.items.createItemType(
+            createNewItem(false, false, bytes32(0), 30000, createEmptyRequiredAssets())
+        );
         assertEq(_itemId, 4, "incorrect itemId1");
 
         uint256 _itemId2 =
-            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets()));
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 10, createEmptyRequiredAssets()));
         assertEq(_itemId2, 5, "incorrect itemId2");
 
         address[] memory players = new address[](2);
@@ -180,13 +181,14 @@ contract ItemsTest is SetUp {
 
     function testCraftItem() public {
         vm.prank(accounts.gameMaster);
-        uint256 _itemId =
-            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets()));
+        uint256 _itemId = deployments.items.createItemType(
+            createNewItem(false, false, bytes32(0), 10000, createEmptyRequiredAssets())
+        );
         assertEq(_itemId, 4, "incorrect itemId");
 
         vm.prank(accounts.gameMaster);
         uint256 craftableItemId = deployments.items.createItemType(
-            createNewItem(true, true, bytes32(0), 1, createCraftingRequirement(_itemId, 100))
+            createNewItem(true, true, bytes32(0), 10, createCraftingRequirement(_itemId, 100))
         );
 
         address[] memory players = new address[](1);
@@ -224,11 +226,11 @@ contract ItemsTest is SetUp {
         vm.startPrank(accounts.gameMaster);
 
         uint256 _itemId1 =
-            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets()));
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1000, createEmptyRequiredAssets()));
         assertEq(_itemId1, 4, "incorrect itemId");
 
         uint256 _itemId2 =
-            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets()));
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1000, createEmptyRequiredAssets()));
         assertEq(_itemId2, 5, "incorrect itemId");
 
         address[] memory players = new address[](1);
@@ -258,7 +260,7 @@ contract ItemsTest is SetUp {
         }
 
         uint256 craftableItemId =
-            deployments.items.createItemType(createNewItem(true, true, bytes32(0), 2, requiredAssets));
+            deployments.items.createItemType(createNewItem(true, true, bytes32(0), 20, requiredAssets));
 
         vm.stopPrank();
 
@@ -298,9 +300,111 @@ contract ItemsTest is SetUp {
         vm.stopPrank();
     }
 
+    function testDismantleItemsRevert() public {
+        vm.startPrank(accounts.gameMaster);
+
+        uint256 _itemId1 =
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 10, createEmptyRequiredAssets()));
+        assertEq(_itemId1, 4, "incorrect itemId");
+
+        uint256 _itemId2 =
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 20, createEmptyRequiredAssets()));
+        assertEq(_itemId2, 5, "incorrect itemId");
+
+        {
+            address[] memory players = new address[](1);
+            players[0] = accounts.character1;
+
+            uint256[][] memory itemIds = new uint256[][](1);
+            itemIds[0] = new uint256[](2);
+            itemIds[0][0] = _itemId1;
+            itemIds[0][1] = _itemId2;
+
+            uint256[][] memory amounts = new uint256[][](1);
+            amounts[0] = new uint256[](2);
+            amounts[0][0] = 10;
+            amounts[0][1] = 20;
+
+            deployments.items.dropLoot(players, itemIds, amounts);
+            assertEq(deployments.items.balanceOf(accounts.character1, _itemId1), 10, "item1 not dropped");
+            assertEq(deployments.items.balanceOf(accounts.character1, _itemId2), 20, "item2 not dropped");
+        }
+
+        bytes memory requiredAssets;
+        {
+            CraftItem[] memory requirements = new CraftItem[](2);
+            requirements[0] = CraftItem(_itemId1, 5);
+            requirements[1] = CraftItem(_itemId2, 10);
+
+            requiredAssets = abi.encode(requirements);
+        }
+
+        uint256 craftableItemId =
+            deployments.items.createItemType(createNewItem(true, true, bytes32(0), 2, requiredAssets));
+
+        vm.stopPrank();
+
+        // should succeed with requirements met
+        vm.startPrank(accounts.character1);
+        // approve the spending of required items
+        deployments.items.setApprovalForAll(address(deployments.itemsManager), true);
+
+        bytes32[] memory proof = new bytes32[](0);
+
+        deployments.items.obtainItems(craftableItemId, 2, proof);
+
+        assertEq(deployments.items.balanceOf(accounts.character1, _itemId1), 0, "item1 not consumed in crafting");
+        assertEq(deployments.items.balanceOf(accounts.character1, _itemId2), 0, "item2 not consumed in crafting");
+
+        // should revert if trying to dismantle un-crafted item
+        vm.expectRevert(Errors.CraftableError.selector);
+        deployments.items.dismantleItems(0, 1);
+
+        //should revert if trying to dismantle more than have been crafted
+        vm.expectRevert(Errors.InsufficientBalance.selector);
+        deployments.items.dismantleItems(craftableItemId, 4);
+
+        //should succeed
+        deployments.items.dismantleItems(craftableItemId, 1);
+
+        assertEq(deployments.items.balanceOf(accounts.character1, craftableItemId), 1, "item not burnt");
+        assertEq(deployments.items.balanceOf(accounts.character1, _itemId1), 5, "item1 not returned");
+        assertEq(deployments.items.balanceOf(accounts.character1, _itemId2), 10, "item2 not returned");
+
+        vm.stopPrank();
+
+        {
+            address[] memory players = new address[](1);
+            players[0] = accounts.character1;
+
+            uint256[][] memory itemIds = new uint256[][](1);
+            itemIds[0] = new uint256[](2);
+            itemIds[0][0] = _itemId1;
+            itemIds[0][1] = _itemId2;
+
+            uint256[][] memory amounts = new uint256[][](1);
+            amounts[0] = new uint256[](2);
+            amounts[0][0] = 1;
+            amounts[0][1] = 2;
+
+            vm.prank(accounts.gameMaster);
+            deployments.items.dropLoot(players, itemIds, amounts);
+            assertEq(deployments.items.balanceOf(accounts.character1, _itemId1), 6, "item1 not dropped");
+            assertEq(deployments.items.balanceOf(accounts.character1, _itemId2), 12, "item2 not dropped");
+        }
+
+        vm.startPrank(accounts.character1);
+
+        //should revert dismantle remaining items
+        vm.expectRevert(Errors.ExceedsDistribution.selector);
+        deployments.items.dismantleItems(craftableItemId, 1);
+
+        vm.stopPrank();
+    }
+
     // UNHAPPY PATH
     function testCreateItemTypeRevert() public {
-        bytes memory newItem = createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets());
+        bytes memory newItem = createNewItem(false, false, bytes32(0), 10, createEmptyRequiredAssets());
 
         vm.startPrank(accounts.player2);
         vm.expectRevert(Errors.GameMasterOnly.selector);
@@ -311,7 +415,7 @@ contract ItemsTest is SetUp {
     function testDropLootRevert() public {
         vm.prank(accounts.gameMaster);
         uint256 _itemId = deployments.items.createItemType(
-            createNewItem(false, false, bytes32(keccak256("null")), 0, createEmptyRequiredAssets())
+            createNewItem(false, false, bytes32(keccak256("null")), 20, createEmptyRequiredAssets())
         );
         assertEq(_itemId, 4);
 
@@ -354,7 +458,7 @@ contract ItemsTest is SetUp {
 
         vm.prank(accounts.gameMaster);
         uint256 craftableItemId = deployments.items.createItemType(
-            createNewItem(true, true, bytes32(0), 1, createCraftingRequirement(3, 100))
+            createNewItem(true, true, bytes32(0), 10, createCraftingRequirement(3, 100))
         );
 
         //should revert if requirements not met
@@ -367,7 +471,11 @@ contract ItemsTest is SetUp {
         vm.startPrank(accounts.gameMaster);
         uint256 _itemId1 = deployments.items.createItemType(
             createNewItem(
-                false, true, bytes32(0), 1, createRequiredAsset(Category.ERC20, address(deployments.experience), 0, 100)
+                false,
+                true,
+                bytes32(0),
+                10,
+                createRequiredAsset(Category.ERC20, address(deployments.experience), 0, 100)
             )
         );
         uint256 _itemId2 = deployments.items.createItemType(
@@ -375,13 +483,13 @@ contract ItemsTest is SetUp {
                 false,
                 true,
                 bytes32(0),
-                1,
+                10,
                 createRequiredAsset(Category.ERC1155, address(deployments.classes), classData.classId, 1)
             )
         );
         uint256 _itemId3 = deployments.items.createItemType(
             createNewItem(
-                false, true, bytes32(0), 1, createRequiredAsset(Category.ERC20, address(deployments.experience), 0, 100)
+                false, true, bytes32(0), 4, createRequiredAsset(Category.ERC20, address(deployments.experience), 0, 100)
             )
         );
 
@@ -427,14 +535,9 @@ contract ItemsTest is SetUp {
         vm.prank(accounts.character1);
         deployments.items.obtainItems(_itemId1, 1, proof);
 
-        //revert on second attempt to obtain
-        vm.prank(accounts.character1);
-        vm.expectRevert(abi.encodeWithSelector(Errors.CannotObtain.selector, 1));
-        deployments.items.obtainItems(_itemId1, 1, proof);
-
         //revert if trying to obtain more than allowed amount
         vm.prank(accounts.character1);
-        vm.expectRevert(abi.encodeWithSelector(Errors.CannotObtain.selector, 1));
+        vm.expectRevert(abi.encodeWithSelector(Errors.ExceedsDistribution.selector));
         deployments.items.obtainItems(_itemId3, 5, proof);
     }
 
@@ -594,11 +697,11 @@ contract ItemsTest is SetUp {
         //////////////////////////////
         {
             uint256 _itemId1 = deployments.items.createItemType(
-                createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets())
+                createNewItem(false, false, bytes32(0), 10, createEmptyRequiredAssets())
             );
 
             uint256 _itemId2 = deployments.items.createItemType(
-                createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets())
+                createNewItem(false, false, bytes32(0), 10, createEmptyRequiredAssets())
             );
 
             // The following tree should fail
@@ -667,7 +770,7 @@ contract ItemsTest is SetUp {
             bytes memory requiredAssets = RequirementsTree.encode(and);
 
             vm.expectRevert(Errors.InvalidNotOperator.selector);
-            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, requiredAssets));
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 10, requiredAssets));
         }
         vm.stopPrank();
     }
@@ -677,11 +780,11 @@ contract ItemsTest is SetUp {
         //////////////////////////////////////////////////
         {
             uint256 _itemId1 = deployments.items.createItemType(
-                createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets())
+                createNewItem(false, false, bytes32(0), 10, createEmptyRequiredAssets())
             );
 
             uint256 _itemId2 = deployments.items.createItemType(
-                createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets())
+                createNewItem(false, false, bytes32(0), 10, createEmptyRequiredAssets())
             );
 
             // The following tree should fail
@@ -750,7 +853,7 @@ contract ItemsTest is SetUp {
             bytes memory requiredAssets = RequirementsTree.encode(and);
 
             vm.expectRevert(Errors.InvalidOrOperator.selector);
-            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, requiredAssets));
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 10, requiredAssets));
         }
         vm.stopPrank();
     }
@@ -760,7 +863,7 @@ contract ItemsTest is SetUp {
         //////////////////////////////////////////////////
         {
             uint256 _itemId1 = deployments.items.createItemType(
-                createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets())
+                createNewItem(false, false, bytes32(0), 10, createEmptyRequiredAssets())
             );
 
             // The following tree should fail
@@ -824,7 +927,7 @@ contract ItemsTest is SetUp {
             bytes memory requiredAssets = RequirementsTree.encode(and);
 
             vm.expectRevert(Errors.InvalidAndOperator.selector);
-            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, requiredAssets));
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 10, requiredAssets));
         }
         //////////////////////////////
 

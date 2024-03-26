@@ -399,7 +399,7 @@ contract SetUp is Test, Accounts, TestStructs {
         vm.startPrank(accounts.gameMaster);
 
         uint256 _itemId1 =
-            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets()));
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1000, createEmptyRequiredAssets()));
 
         RequirementNode memory item = RequirementNode({
             operator: 0,
@@ -412,7 +412,7 @@ contract SetUp is Test, Accounts, TestStructs {
         console2.logBytes(requiredAssets);
 
         uint256 claimableItemId =
-            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, requiredAssets));
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 10, requiredAssets));
 
         vm.stopPrank();
 
@@ -422,11 +422,13 @@ contract SetUp is Test, Accounts, TestStructs {
     function createComplexClaimableItem() public returns (uint256) {
         vm.startPrank(accounts.gameMaster);
 
-        uint256 _itemId1 =
-            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets()));
+        uint256 _itemId1 = deployments.items.createItemType(
+            createNewItem(false, false, bytes32(0), 10000, createEmptyRequiredAssets())
+        );
 
-        uint256 _itemId2 =
-            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets()));
+        uint256 _itemId2 = deployments.items.createItemType(
+            createNewItem(false, false, bytes32(0), 10000, createEmptyRequiredAssets())
+        );
 
         // the requirements shall be that the player has 100 of item1 OR 200 of item2 AND between 1000 and 2000 exp
         //
@@ -502,7 +504,7 @@ contract SetUp is Test, Accounts, TestStructs {
         bytes memory requiredAssets = RequirementsTree.encode(and);
 
         uint256 claimableItemId =
-            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, requiredAssets));
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 10, requiredAssets));
 
         vm.stopPrank();
 
@@ -512,11 +514,13 @@ contract SetUp is Test, Accounts, TestStructs {
     function createComplexClaimableItemWithShallowNot() public returns (uint256) {
         vm.startPrank(accounts.gameMaster);
 
-        uint256 _itemId1 =
-            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets()));
+        uint256 _itemId1 = deployments.items.createItemType(
+            createNewItem(false, false, bytes32(0), 10000, createEmptyRequiredAssets())
+        );
 
-        uint256 _itemId2 =
-            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, createEmptyRequiredAssets()));
+        uint256 _itemId2 = deployments.items.createItemType(
+            createNewItem(false, false, bytes32(0), 10000, createEmptyRequiredAssets())
+        );
 
         // the requirements shall be that the player has 100 of item1 OR 200 of item2 AND between 1000 and 2000 exp
         //
@@ -584,7 +588,7 @@ contract SetUp is Test, Accounts, TestStructs {
         bytes memory requiredAssets = RequirementsTree.encode(and);
 
         uint256 claimableItemId =
-            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1, requiredAssets));
+            deployments.items.createItemType(createNewItem(false, false, bytes32(0), 10, requiredAssets));
 
         vm.stopPrank();
 

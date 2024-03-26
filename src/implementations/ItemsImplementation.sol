@@ -139,10 +139,6 @@ contract ItemsImplementation is
             revert Errors.InventoryError();
         }
 
-        if (balanceOf(msg.sender, itemId) + amount > item.distribution) {
-            revert Errors.CannotObtain(item.distribution);
-        }
-
         if (item.claimable != bytes32(0)) {
             if (!_verifyMerkle(proof, item.claimable, itemId, amount, msg.sender)) {
                 revert Errors.InvalidProof();
@@ -400,6 +396,24 @@ contract ItemsImplementation is
             });
             _mint(address(this), _itemId, supply, "");
             _itemURIs[_itemId] = cid;
+        }
+    }
+
+    function _update(address from, address to, uint256[] memory ids, uint256[] memory values)
+        internal
+        virtual
+        override
+    {
+        super._update(from, to, ids, values);
+
+        if (to != address(0) && to != address(clones.itemsManager()) && to != address(this)) {
+            for (uint256 i; i < ids.length; i++) {
+                Item storage item = _items[ids[i]];
+                uint256 newBalance = balanceOf(to, ids[i]);
+                if (newBalance > item.distribution) {
+                    revert Errors.ExceedsDistribution();
+                }
+            }
         }
     }
 
