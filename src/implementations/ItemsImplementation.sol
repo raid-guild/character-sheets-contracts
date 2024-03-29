@@ -190,7 +190,7 @@ contract ItemsImplementation is
      * @return _itemId the ERC1155 tokenId
      */
     function createItemType(bytes calldata _itemData) external onlyGameMaster returns (uint256 _itemId) {
-        _itemId = totalItemTypes;
+        _itemId = totalItemTypes + 1;
 
         _createItem(_itemData, _itemId);
 

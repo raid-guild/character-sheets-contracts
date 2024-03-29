@@ -10,11 +10,11 @@ import "../src/lib/Errors.sol";
 import "./setup/SetUp.t.sol";
 
 contract CharacterEligibilityAdaptorTest is SetUp {
-    function testSupportsInterface() public {
+    function testSupportsInterface() public view {
         assertTrue(deployments.characterEligibility.supportsInterface(0x01ffc9a7));
     }
 
-    function testIsEligible() public {
+    function testIsEligible() public view {
         //player 1 should be eligible
         assertEq(deployments.characterEligibility.isEligible(accounts.player1), true, "player one not eligible");
         // rando should be ineligible

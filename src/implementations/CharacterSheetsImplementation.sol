@@ -153,7 +153,7 @@ contract CharacterSheetsImplementation is ERC721URIStorageUpgradeable, UUPSUpgra
             revert Errors.PlayerError();
         }
 
-        uint256 characterId = totalSheets;
+        uint256 characterId = totalSheets + 1;
 
         // calculate ERC6551 account address
         address characterAccount = IERC6551Registry(erc6551Registry).createAccount(

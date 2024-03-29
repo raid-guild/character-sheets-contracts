@@ -12,11 +12,11 @@ import "../src/lib/Errors.sol";
 import "./setup/SetUp.t.sol";
 
 contract ClassLevelAdaptorTest is SetUp {
-    function testSupportsInterface() public {
+    function testSupportsInterface() public view {
         assertTrue(deployments.classLevels.supportsInterface(0x01ffc9a7));
     }
 
-    function testFuzz_GetCurrentLevel(uint256 exp) public {
+    function testFuzz_GetCurrentLevel(uint256 exp) public view {
         exp = bound(exp, 0, 455000);
         uint256 currentLevel = deployments.classLevels.getCurrentLevel(exp);
         uint256 desiredLevelExp = deployments.classLevels.getExpForLevel(currentLevel - 1);

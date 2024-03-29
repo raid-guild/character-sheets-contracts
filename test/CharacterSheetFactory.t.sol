@@ -30,7 +30,7 @@ contract CharacterSheetsFactoryTest is Test, SetUp {
 
     // HAPPY PATH
 
-    function testDeployment() public {
+    function testDeployment() public view {
         address _implementationStorage = address(characterSheetsFactory.implementations());
 
         assertEq(_implementationStorage, address(implementationStorage), "wrong implementations");
