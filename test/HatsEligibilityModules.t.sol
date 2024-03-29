@@ -151,7 +151,7 @@ contract Test_GameMasterEligibilityModule is Base {
         createNewHatsAdaptorSetup();
     }
 
-    function testNewModuleSetup() public {
+    function testNewModuleSetup() public view {
         assertEq(newAdaptor.isAdmin(adminHatWearer), true, "admin is not admin");
         assertEq(newAdaptor.isGameMaster(dmHatWearer), true, "dm is not dm");
         assertEq(newAdaptor.isPlayer(playerHatWearer), true, "player is not player");

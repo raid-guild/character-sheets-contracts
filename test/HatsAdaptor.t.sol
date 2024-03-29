@@ -84,20 +84,20 @@ contract HatsAdaptorTest is SetUp {
         );
     }
 
-    function testIsPlayer() public {
+    function testIsPlayer() public view {
         assertTrue(deployments.hatsAdaptor.isPlayer(accounts.player1), "player one should be a player");
         assertFalse(deployments.hatsAdaptor.isPlayer(accounts.rando), "player two should not be a player.");
         assertFalse(deployments.hatsAdaptor.isPlayer(accounts.character1), "npc1 should not be a player.");
         assertFalse(deployments.hatsAdaptor.isPlayer(accounts.admin), "admin should not be a player.");
     }
 
-    function testIsCharacter() public {
+    function testIsCharacter() public view {
         assertTrue(deployments.hatsAdaptor.isCharacter(accounts.character1), "npc one should be a character");
         assertFalse(deployments.hatsAdaptor.isCharacter(accounts.player1), "player one should not be a character.");
         assertFalse(deployments.hatsAdaptor.isCharacter(accounts.admin), "admin should not be a character.");
     }
 
-    function testIsGameMaster() public {
+    function testIsGameMaster() public view {
         assertTrue(deployments.hatsAdaptor.isGameMaster(accounts.gameMaster), "admin should be a GameMaster");
         assertFalse(deployments.hatsAdaptor.isGameMaster(accounts.player1), "player one should not be a GameMaster.");
         assertFalse(deployments.hatsAdaptor.isGameMaster(accounts.character1), "npc1 should not be a GameMaster.");
@@ -112,7 +112,7 @@ contract HatsAdaptorTest is SetUp {
         assertEq(deployments.hatsAdaptor.isGameMaster(accounts.rando), true, "rando not gm");
     }
 
-    function test_CheckCharacterHatEligibility() public {
+    function test_CheckCharacterHatEligibility() public view {
         (bool status, bool standing) = deployments.hatsAdaptor.checkCharacterHatEligibility(accounts.character1);
         assertTrue(status, "status should be true");
         assertTrue(standing, "standing should be true");

@@ -15,13 +15,13 @@ import "./setup/SetUp.t.sol";
 contract ItemsTest is SetUp {
     event ItemDeleted(uint256 itemId);
 
-    function testCreateClaimableItem() public {
+    function testCreateClaimableItem() public view {
         Item memory returnedItem = deployments.items.getItem(itemsData.itemIdClaimable);
         bytes memory itemRequirements = deployments.itemsManager.getClaimRequirements(itemsData.itemIdClaimable);
         RequirementNode memory node = RequirementsTree.decode(itemRequirements);
         string memory cid = deployments.items.uri(itemsData.itemIdClaimable);
 
-        assertEq(itemsData.itemIdClaimable, 1, "incorrect item ID");
+        assertEq(itemsData.itemIdClaimable, 2, "incorrect item ID");
         assertEq(deployments.items.totalItemTypes(), 4, "incorrect number of items");
         assertEq(returnedItem.supply, 10 ** 18, "incorrect supply");
         assertEq(returnedItem.supplied, 0, "incorrect supplied amount");
@@ -38,13 +38,13 @@ contract ItemsTest is SetUp {
         assertEq(cid, "test_base_uri_items/test_item_cid/", "incorrect CID");
     }
 
-    function testCreateCraftableItem() public {
+    function testCreateCraftableItem() public view {
         Item memory returnedItem = deployments.items.getItem(itemsData.itemIdCraftable);
         bytes memory itemRequirements = deployments.itemsManager.getCraftRequirements(itemsData.itemIdCraftable);
         CraftItem[] memory craftRequirements = abi.decode(itemRequirements, (CraftItem[]));
         string memory cid = deployments.items.uri(itemsData.itemIdCraftable);
 
-        assertEq(itemsData.itemIdCraftable, 2, "incorrect item ID");
+        assertEq(itemsData.itemIdCraftable, 3, "incorrect item ID");
         assertEq(deployments.items.totalItemTypes(), 4, "incorrect number of items");
         assertEq(returnedItem.supply, 10 ** 18, "incorrect supply");
         assertEq(returnedItem.supplied, 0, "incorrect supplied amount");
@@ -70,11 +70,11 @@ contract ItemsTest is SetUp {
         uint256 _itemId = deployments.items.createItemType(
             createNewItem(false, false, bytes32(0), 30000, createEmptyRequiredAssets())
         );
-        assertEq(_itemId, 4, "incorrect itemId1");
+        assertEq(_itemId, 5, "incorrect itemId1");
 
         uint256 _itemId2 =
             deployments.items.createItemType(createNewItem(false, false, bytes32(0), 10, createEmptyRequiredAssets()));
-        assertEq(_itemId2, 5, "incorrect itemId2");
+        assertEq(_itemId2, 6, "incorrect itemId2");
 
         address[] memory players = new address[](2);
         players[0] = accounts.character1;
@@ -158,8 +158,8 @@ contract ItemsTest is SetUp {
         assertEq(deployments.experience.balanceOf(accounts.character1), 1000);
     }
 
-    function testURI() public {
-        string memory _uri = deployments.items.uri(0);
+    function testURI() public view {
+        string memory _uri = deployments.items.uri(1);
         assertEq(_uri, "test_base_uri_items/test_item_cid/", "incorrect uri returned");
     }
 
@@ -188,7 +188,7 @@ contract ItemsTest is SetUp {
         uint256 _itemId = deployments.items.createItemType(
             createNewItem(false, false, bytes32(0), 10000, createEmptyRequiredAssets())
         );
-        assertEq(_itemId, 4, "incorrect itemId");
+        assertEq(_itemId, 5, "incorrect itemId");
 
         vm.prank(accounts.gameMaster);
         uint256 craftableItemId = deployments.items.createItemType(
@@ -231,11 +231,11 @@ contract ItemsTest is SetUp {
 
         uint256 _itemId1 =
             deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1000, createEmptyRequiredAssets()));
-        assertEq(_itemId1, 4, "incorrect itemId");
+        assertEq(_itemId1, 5, "incorrect itemId");
 
         uint256 _itemId2 =
             deployments.items.createItemType(createNewItem(false, false, bytes32(0), 1000, createEmptyRequiredAssets()));
-        assertEq(_itemId2, 5, "incorrect itemId");
+        assertEq(_itemId2, 6, "incorrect itemId");
 
         address[] memory players = new address[](1);
         players[0] = accounts.character1;
@@ -282,7 +282,7 @@ contract ItemsTest is SetUp {
 
         // should revert if trying to dismantle un-crafted item
         vm.expectRevert(Errors.CraftableError.selector);
-        deployments.items.dismantleItems(0, 1);
+        deployments.items.dismantleItems(1, 1);
 
         //should revert if trying to dismantle more than have been crafted
         vm.expectRevert(Errors.InsufficientBalance.selector);
@@ -309,11 +309,11 @@ contract ItemsTest is SetUp {
 
         uint256 _itemId1 =
             deployments.items.createItemType(createNewItem(false, false, bytes32(0), 10, createEmptyRequiredAssets()));
-        assertEq(_itemId1, 4, "incorrect itemId");
+        assertEq(_itemId1, 5, "incorrect itemId");
 
         uint256 _itemId2 =
             deployments.items.createItemType(createNewItem(false, false, bytes32(0), 20, createEmptyRequiredAssets()));
-        assertEq(_itemId2, 5, "incorrect itemId");
+        assertEq(_itemId2, 6, "incorrect itemId");
 
         {
             address[] memory players = new address[](1);
@@ -362,7 +362,7 @@ contract ItemsTest is SetUp {
 
         // should revert if trying to dismantle un-crafted item
         vm.expectRevert(Errors.CraftableError.selector);
-        deployments.items.dismantleItems(0, 1);
+        deployments.items.dismantleItems(1, 1);
 
         //should revert if trying to dismantle more than have been crafted
         vm.expectRevert(Errors.InsufficientBalance.selector);
@@ -421,7 +421,7 @@ contract ItemsTest is SetUp {
         uint256 _itemId = deployments.items.createItemType(
             createNewItem(false, false, bytes32(keccak256("null")), 20, createEmptyRequiredAssets())
         );
-        assertEq(_itemId, 4);
+        assertEq(_itemId, 5);
 
         address[] memory players = new address[](1);
         players[0] = accounts.character1;
@@ -939,8 +939,8 @@ contract ItemsTest is SetUp {
     }
 
     function testUpdateClaimableItemRequirements() public {
-        assertEq(itemsData.itemIdClaimable, 1, "incorrect item ID");
-        Item memory returnedItem = deployments.items.getItem(itemsData.itemIdClaimable);
+        assertEq(itemsData.itemIdClaimable, 2, "incorrect item ID");
+        // Item memory returnedItem = deployments.items.getItem(itemsData.itemIdClaimable);
         bytes memory itemRequirements = deployments.itemsManager.getClaimRequirements(itemsData.itemIdClaimable);
         RequirementNode memory node = RequirementsTree.decode(itemRequirements);
 
@@ -1010,11 +1010,11 @@ contract ItemsTest is SetUp {
     }
 
     function testUpdateCraftableItemRequirements() public {
-        Item memory returnedItem = deployments.items.getItem(itemsData.itemIdCraftable);
+        // Item memory returnedItem = deployments.items.getItem(itemsData.itemIdCraftable);
         bytes memory itemRequirements = deployments.itemsManager.getCraftRequirements(itemsData.itemIdCraftable);
         CraftItem[] memory craftRequirements = abi.decode(itemRequirements, (CraftItem[]));
 
-        assertEq(itemsData.itemIdCraftable, 2, "incorrect item ID");
+        assertEq(itemsData.itemIdCraftable, 3, "incorrect item ID");
         assertEq(craftRequirements.length, 1, "incorrect number of craft requirements");
         assertEq(craftRequirements[0].amount, 1, "incorrect amount");
         assertEq(craftRequirements[0].itemId, itemsData.itemIdSoulbound, "incorrect item ID");

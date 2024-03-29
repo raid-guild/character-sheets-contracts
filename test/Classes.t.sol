@@ -84,7 +84,7 @@ contract ClassesTest is SetUp {
 
         vm.prank(accounts.rando);
         uint256 randoId = deployments.characterSheets.rollCharacterSheet(accounts.rando, "test");
-        assertEq(randoId, 2, "incorrect character id");
+        assertEq(randoId, 3, "incorrect character id");
 
         address character3 = deployments.characterSheets.getCharacterSheetByCharacterId(randoId).accountAddress;
 
