@@ -5,6 +5,7 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UU
 import {MultiToken, Asset} from "../lib/MultiToken.sol";
 import {IHatsAdaptor} from "../interfaces/IHatsAdaptor.sol";
 import {IItems} from "../interfaces/IItems.sol";
+import {ICharacterSheets} from "../interfaces/ICharacterSheets.sol";
 
 //solhint-disable-next-line
 import "../lib/Structs.sol";
@@ -111,6 +112,13 @@ contract ItemsManagerImplementation is UUPSUpgradeable, ERC1155HolderUpgradeable
 
             if (IItems(clones.items()).balanceOf(character, requirement.itemId) < requiredAmount) {
                 revert Errors.InsufficientBalance();
+            }
+
+            // getCharacterIdByAccountAddress
+            uint256 characterId = ICharacterSheets(clones.characterSheets()).getCharacterIdByAccountAddress(character);
+
+            if (ICharacterSheets(clones.characterSheets()).isItemEquipped(characterId, requirement.itemId)) {
+                revert Errors.ItemEquipped();
             }
 
             //transfer assets to this contract must have approval

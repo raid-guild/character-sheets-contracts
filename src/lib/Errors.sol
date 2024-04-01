@@ -25,6 +25,7 @@ abstract contract Errors {
 
     error CraftItemsError();
     error CraftItemError();
+    error ItemEquipped();
 
     error Jailed();
     error InsufficientBalance();
