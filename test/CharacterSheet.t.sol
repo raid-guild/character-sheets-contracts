@@ -304,21 +304,21 @@ contract CharacterSheetsTest is SetUp {
         vm.expectRevert(Errors.CharacterOnly.selector);
         deployments.characterSheets.equipItemToCharacter(1, 1);
 
-        CharacterSheet memory sheet = deployments.characterSheets.getCharacterSheetByCharacterId(0);
+        CharacterSheet memory sheet = deployments.characterSheets.getCharacterSheetByCharacterId(1);
         assertEq(sheet.inventory.length, 0, "item should not be assigned");
 
         vm.prank(accounts.character2);
         vm.expectRevert(Errors.OwnershipError.selector);
         deployments.characterSheets.equipItemToCharacter(1, 1);
 
-        sheet = deployments.characterSheets.getCharacterSheetByCharacterId(0);
+        sheet = deployments.characterSheets.getCharacterSheetByCharacterId(1);
         assertEq(sheet.inventory.length, 0, "item should not be assigned");
 
         vm.prank(accounts.character1);
         vm.expectRevert(Errors.InsufficientBalance.selector);
         deployments.characterSheets.equipItemToCharacter(1, 1);
 
-        sheet = deployments.characterSheets.getCharacterSheetByCharacterId(0);
+        sheet = deployments.characterSheets.getCharacterSheetByCharacterId(1);
         assertEq(sheet.inventory.length, 0, "item should not be assigned");
     }
 
