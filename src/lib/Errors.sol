@@ -22,6 +22,7 @@ abstract contract Errors {
     error RequirementError();
     error ItemError();
     error LengthMismatch();
+    error PlayerOrGameMasterOnly();
 
     error CraftItemsError();
     error CraftItemError();

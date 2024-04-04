@@ -162,6 +162,10 @@ contract CharacterSheetsImplementation is
     address player,
     string calldata _tokenURI
   ) external returns (uint256) {
+    if (msg.sender != player && !IHatsAdaptor(clones.hatsAdaptor()).isGameMaster(msg.sender)) {
+      revert Errors.PlayerOrGameMasterOnly();
+    }
+
     _checkRollReverts(player);
 
     uint256 existingCharacterId = _playerSheets[player];

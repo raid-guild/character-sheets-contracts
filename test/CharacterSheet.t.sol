@@ -21,6 +21,15 @@ contract CharacterSheetsTest is SetUp {
         assertEq(deployments.characterSheets.tokenURI(3), "test_base_uri_character_sheets/test_token_uri/");
     }
 
+    function testRollCharacterSheetAsGameMaster() public {
+        dao.addMember(accounts.admin);
+        vm.prank(accounts.gameMaster);
+        uint256 tokenId = deployments.characterSheets.rollCharacterSheet(accounts.admin, "test_token_uri/");
+
+        assertEq(tokenId, 3, "Incorrect tokenId");
+        assertEq(deployments.characterSheets.tokenURI(3), "test_base_uri_character_sheets/test_token_uri/");
+    }
+
     function testChangeBaseUri() public {
         string memory newBaseUri = "new_base_uri/";
         vm.prank(accounts.admin);
