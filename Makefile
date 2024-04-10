@@ -61,6 +61,7 @@ ClonesAddressStorageImplementation \
 ImplementationAddressStorage \
 CharacterSheetsFactory
 
+
 deploy-contracts :; 
 	@for contract in ${CONTRACTS}; do \
 		make deploy network=${network} force=${force} contract=$$contract; \
