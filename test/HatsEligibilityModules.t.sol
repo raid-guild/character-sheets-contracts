@@ -16,6 +16,7 @@ import {Hats} from "hats-protocol/Hats.sol";
 
 // hats eligibility modules
 import {AddressHatsEligibilityModule} from "../src/mocks/AddressHatsEligibilityModule.sol";
+import {AllowlistEligibility} from "../src/mocks/AllowlistHatsEligibilityModule.sol";
 import {ERC721HatsEligibilityModule} from "../src/mocks/ERC721HatsEligibilityModule.sol";
 import {ERC6551HatsEligibilityModule} from "../src/adaptors/hats-modules/ERC6551HatsEligibilityModule.sol";
 import {MultiERC6551HatsEligibilityModule} from "../src/adaptors/hats-modules/MultiERC6551HatsEligibilityModule.sol";
@@ -27,8 +28,8 @@ import {IMultiERC6551HatsEligibilityModule} from "../src/interfaces/IMultiERC655
 
 contract Base is SetUp {
     HatsAdaptor public newAdaptor;
-    AddressHatsEligibilityModule public adminModule;
-    AddressHatsEligibilityModule public dmModule;
+    AllowlistEligibility public adminModule;
+    AllowlistEligibility public dmModule;
     ERC721HatsEligibilityModule public playerModule;
     ERC6551HatsEligibilityModule public characterModule;
     CharacterSheetsLevelEligibilityModule public elderModule;
@@ -74,8 +75,8 @@ contract Base is SetUp {
 
         newAdaptor.initialize(topHatWearer, encodedHatsAddresses, encodedHatsStrings, customModuleAddresses);
 
-        adminModule = AddressHatsEligibilityModule(newAdaptor.adminHatEligibilityModule());
-        dmModule = AddressHatsEligibilityModule(newAdaptor.gameMasterHatEligibilityModule());
+        adminModule = AllowlistEligibility(newAdaptor.adminHatEligibilityModule());
+        dmModule = AllowlistEligibility(newAdaptor.gameMasterHatEligibilityModule());
         characterModule = ERC6551HatsEligibilityModule(newAdaptor.characterHatEligibilityModule());
         playerModule = ERC721HatsEligibilityModule(newAdaptor.playerHatEligibilityModule());
 
@@ -109,13 +110,15 @@ contract Test_AdminEligibilityModule is Base {
         testAdmins[0] = dmHatWearer;
 
         //should revert if called by wrong EOA
-        vm.prank(address(420));
+        vm.startPrank(address(420));
         vm.expectRevert();
-        adminModule.addEligibleAddresses(testAdmins);
-
+        bool[] memory standings = _createStandings(testAdmins.length);
+        adminModule.addAccounts(testAdmins);
+        vm.stopPrank();
         //should succeed if called by topHatWearer;
         vm.startPrank(topHatWearer);
-        adminModule.addEligibleAddresses(testAdmins);
+        adminModule.addAccounts(testAdmins);
+        adminModule.setStandingForAccounts(testAdmins, standings);
         hatsContracts.hats.mintHat(newAdminHatId, dmHatWearer);
         vm.stopPrank();
 
@@ -128,18 +131,20 @@ contract Test_AdminEligibilityModule is Base {
 
         //add new admin
         vm.startPrank(topHatWearer);
-        adminModule.addEligibleAddresses(testAdmins);
+        bool[] memory standings = _createStandings(testAdmins.length);
+        adminModule.addAccounts(testAdmins);
+        adminModule.setStandingForAccounts(testAdmins, standings);
         hatsContracts.hats.mintHat(newAdminHatId, dmHatWearer);
         vm.stopPrank();
 
         //should revert if called by wrong EOA
         vm.expectRevert();
         vm.prank(adminHatWearer);
-        adminModule.removeEligibleAddresses(testAdmins);
+        adminModule.removeAccounts(testAdmins);
 
         //should succeed if called by top hat wearer;
         vm.prank(topHatWearer);
-        adminModule.removeEligibleAddresses(testAdmins);
+        adminModule.removeAccounts(testAdmins);
 
         assertEq(newAdaptor.isAdmin(dmHatWearer), false, "admin hat not removed");
     }
@@ -160,42 +165,44 @@ contract Test_GameMasterEligibilityModule is Base {
 
     function testAddNewGameMaster() public {
         address[] memory testAdmins = new address[](1);
-        testAdmins[0] = adminHatWearer;
+        testAdmins[0] = address(420);
 
         //should revert if called by wrong EOA
-        vm.prank(address(420));
+        vm.startPrank(address(420));
         vm.expectRevert();
-        dmModule.addEligibleAddresses(testAdmins);
-
+        dmModule.addAccounts(testAdmins);
+        vm.stopPrank();
         //should succeed if called by topHatWearer;
-        vm.startPrank(topHatWearer);
-        dmModule.addEligibleAddresses(testAdmins);
-        hatsContracts.hats.mintHat(newGameMasterHatId, adminHatWearer);
+        bool[] memory standings = _createStandings(testAdmins.length);
+        vm.startPrank(adminHatWearer);
+        dmModule.addAccounts(testAdmins);
+        dmModule.setStandingForAccounts(testAdmins, standings);
+        hatsContracts.hats.mintHat(newGameMasterHatId, testAdmins[0]);
         vm.stopPrank();
 
-        assertEq(newAdaptor.isAdmin(adminHatWearer), true, "new admin not assigned");
+        assertEq(newAdaptor.isGameMaster(testAdmins[0]), true, "new admin not assigned");
     }
 
     function testRemoveGameMaster() public {
         address[] memory testAdmins = new address[](1);
-        testAdmins[0] = adminHatWearer;
+        testAdmins[0] = address(420);
 
-        //add new admin
-        vm.startPrank(topHatWearer);
-        dmModule.addEligibleAddresses(testAdmins);
-        hatsContracts.hats.mintHat(newGameMasterHatId, adminHatWearer);
+        vm.startPrank(adminHatWearer);
+        bool[] memory standings = _createStandings(testAdmins.length);
+        dmModule.addAccounts(testAdmins);
+        dmModule.setStandingForAccounts(testAdmins, standings);
         vm.stopPrank();
 
         //should revert if called by wrong EOA
         vm.expectRevert();
         vm.prank(dmHatWearer);
-        dmModule.removeEligibleAddresses(testAdmins);
+        dmModule.removeAccounts(testAdmins);
 
         //should succeed if called by admin hat wearer;
         vm.prank(adminHatWearer);
-        dmModule.removeEligibleAddresses(testAdmins);
+        dmModule.removeAccounts(testAdmins);
 
-        assertEq(newAdaptor.isGameMaster(adminHatWearer), false, "admin hat not removed");
+        assertEq(newAdaptor.isGameMaster(testAdmins[0]), false, "admin hat not removed");
     }
 }
 

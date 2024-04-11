@@ -8,7 +8,6 @@ import {IHats} from "hats-protocol/Interfaces/IHats.sol";
 import {ERC1155HolderUpgradeable} from
     "openzeppelin-contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import {IHatsEligibility} from "hats-protocol/Interfaces/IHatsEligibility.sol";
-import {IAddressEligibilityModule} from "../interfaces/IAddressEligibilityModule.sol";
 import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
 import {ImplementationAddressStorage} from "../ImplementationAddressStorage.sol";
 import {IClonesAddressStorage} from "../interfaces/IClonesAddressStorage.sol";
@@ -146,21 +145,21 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
 
     /// @notice the following update functions will use the base implementation addresses stored in the implementationAddressStorage contract.
 
-    function updateAdminEligibilityModule(uint256 adminId, bytes calldata encodedAdmins, address adminImplementation)
+    function updateAdminEligibilityModule(uint256 adminId, uint256 arbitratorHatId, address adminImplementation)
         external
         onlyOwner
     {
-        adminHatEligibilityModule = _createAllowlistHatEligibilityModule(adminId, encodedAdmins, adminImplementation);
+        adminHatEligibilityModule = _createAllowlistHatEligibilityModule(adminId, arbitratorHatId, adminImplementation);
         emit AdminEligibilityModuleUpdated(adminHatEligibilityModule);
     }
 
     function updateGameMasterHatEligibilityModule(
-        uint256 gameMasterId,
-        bytes calldata gameMasters,
+        uint256 gameMasterHatId,
+        uint256 arbitratorHatId,
         address dmImplementation
     ) external onlyOwner {
         gameMasterHatEligibilityModule =
-            _createGameMasterHatEligibilityModule(gameMasterId, gameMasters, dmImplementation);
+            _createAllowlistHatEligibilityModule(gameMasterHatId, arbitratorHatId, dmImplementation);
         emit GameMasterHatEligibilityModuleUpdated(gameMasterHatEligibilityModule);
     }
 
@@ -189,7 +188,12 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
     }
 
     function addGameMasters(address[] calldata newGameMasters) external onlyAdmin {
-        IAddressEligibilityModule(gameMasterHatEligibilityModule).addEligibleAddresses(newGameMasters);
+        AllowlistEligibility(gameMasterHatEligibilityModule).addAccounts(newGameMasters);
+        bool[] memory standings = new bool[](newGameMasters.length);
+        for (uint256 i; i < newGameMasters.length; i++) {
+            standings[i] = true;
+        }
+        AllowlistEligibility(gameMasterHatEligibilityModule).setStandingForAccounts(newGameMasters, standings);
         //check eligibility module for emitted event
         for (uint256 i = 0; i < newGameMasters.length; i++) {
             _ifNotHatMint(newGameMasters[i], _hatsData.gameMasterHatId);
@@ -419,7 +423,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         private
         returns (address)
     {
-        bytes memory encodedAllowlistData = abi.encodePacked(adminId, arbitratorId);
+        bytes memory encodedAllowlistData = abi.encodePacked(arbitratorId, arbitratorId);
         customAdminModule =
             customAdminModule == address(0) ? implementations.addressHatsEligibilityModule() : customAdminModule;
 
@@ -453,11 +457,9 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
 
         // predict gameMaster hat ID.
         gameMasterId = _hats.getNextId(_hatsData.adminHatId);
-        // encode game masters array for module creation
-        bytes memory encodedGameMasters = abi.encode(gameMasters);
         // create gameMaster hat Eligibility module
         gameMasterHatEligibilityModule =
-            _createAllowlistHatEligibilityModule(gameMasterId, _hatsData.adminHatId, customModuleImplementations);
+            _createAllowlistHatEligibilityModule(gameMasterId, _hatsData.adminHatId, customDmModule);
 
         // create gameMaster hat with eligibility module
         _hatsData.gameMasterHatId = _hats.createHat(

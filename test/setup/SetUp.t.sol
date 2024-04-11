@@ -48,7 +48,7 @@ import {HatsModuleFactory} from "hats-module/HatsModuleFactory.sol";
 import {Hats} from "hats-protocol/Hats.sol";
 
 // hats eligibility modules
-import {AddressHatsEligibilityModule} from "../../src/mocks/AddressHatsEligibilityModule.sol";
+import {AllowlistEligibility} from "../../src/mocks/AllowlistHatsEligibilityModule.sol";
 import {ERC721HatsEligibilityModule} from "../../src/mocks/ERC721HatsEligibilityModule.sol";
 import {ERC6551HatsEligibilityModule} from "../../src/adaptors/hats-modules/ERC6551HatsEligibilityModule.sol";
 import {MultiERC6551HatsEligibilityModule} from "../../src/adaptors/hats-modules/MultiERC6551HatsEligibilityModule.sol";
@@ -274,7 +274,7 @@ contract SetUp is Test, Accounts, TestStructs {
         adaptors.molochV3EligibilityAdaptor = new MolochV3EligibilityAdaptor();
         adaptors.classLevelAdaptor = new ClassLevelAdaptor();
         adaptors.hatsAdaptor = new HatsAdaptor();
-        implementations.addressModule = new AddressHatsEligibilityModule("v 0.1");
+        implementations.addressModule = new AllowlistEligibility("v 0.1");
         implementations.erc721Module = new ERC721HatsEligibilityModule("v 0.1");
         implementations.erc6551Module = new ERC6551HatsEligibilityModule("v 0.1");
         implementations.multiErc6551Module = new MultiERC6551HatsEligibilityModule("v 0.1");
@@ -593,5 +593,12 @@ contract SetUp is Test, Accounts, TestStructs {
         vm.stopPrank();
 
         return claimableItemId;
+    }
+
+    function _createStandings(uint256 _length) internal returns (bool[] memory standings) {
+        standings = new bool[](_length);
+        for (uint256 i; i < _length; i++) {
+            standings[i] = true;
+        }
     }
 }
