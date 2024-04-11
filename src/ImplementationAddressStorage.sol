@@ -243,9 +243,8 @@ contract ImplementationAddressStorage is Initializable, OwnableUpgradeable {
         (
             _implementationsAddresses.addressHatsEligibilityModule,
             _implementationsAddresses.erc721HatsEligibilityModule,
-            _implementationsAddresses.erc6551HatsEligibilityModule,
-            _implementationsAddresses.multiERC6551HatsEligibilityModule
-        ) = abi.decode(encodedModuleAddresses, (address, address, address, address));
+            _implementationsAddresses.erc6551HatsEligibilityModule
+        ) = abi.decode(encodedModuleAddresses, (address, address, address));
     }
 
     function _initAdaptors(bytes calldata encodedAdaptorAddresses) internal {
