@@ -15,10 +15,15 @@ contract DeployHatsAdaptor is BaseDeployer {
     function deploy() internal override returns (address) {
         vm.startBroadcast(deployerPrivateKey);
 
-        hatsAdaptor = new HatsAdaptor();
+        address newContractAddress = getDeploymentAddress(type(HatsAdaptor).creationCode);
+
+        if (!isContract(newContractAddress)) {
+            hatsAdaptor = new HatsAdaptor{salt: SALT}();
+            assert(address(hatsAdaptor) == newContractAddress);
+        }
 
         vm.stopBroadcast();
 
-        return address(hatsAdaptor);
+        return newContractAddress;
     }
 }

@@ -27,7 +27,7 @@ struct HatsAddresses {
     address hatsContract;
     address hatsModuleFactory;
     //eligibility modules
-    address addressHatsEligibilityModule;
+    address allowListHatsEligibilityModule;
     address erc721HatsEligibilityModule;
     address erc6551HatsEligitbilityModule;
     address multiErc6551HatsEligitbilityModule;
@@ -49,7 +49,7 @@ struct HatsAddresses {
  *
  *     function _initAdaptorsAndModules(bytes calldata encodedAdaptorsAndModuleAddresses) internal {
  *         (
- *             _implementationsAddresses.addressHatsEligibilityModule,
+ *             _implementationsAddresses.allowListHatsEligibilityModule,
  *             _implementationsAddresses.gameMasterHatsEligibilityModule,
  *             _implementationsAddresses.erc721HatsEligibilityModule,
  *             _implementationsAddresses.erc6551HatsEligitbilityModule,
@@ -87,16 +87,22 @@ contract DeployImplementationAddressStorage is BaseDeployer {
     function deploy() internal override returns (address) {
         vm.startBroadcast(deployerPrivateKey);
 
-        implementationAddressStorage = new ImplementationAddressStorage();
-        implementationAddressStorage.initialize(
-            _encodeImplementationAddresses(),
-            _encodeModuleAddresses(),
-            _encodeAdaptorAddresses(),
-            _encodeExternalAddresses()
-        );
+        address newContractAddress = getDeploymentAddress(type(ImplementationAddressStorage).creationCode);
+
+        if (!isContract(newContractAddress)) {
+            implementationAddressStorage = new ImplementationAddressStorage{salt: SALT}();
+            implementationAddressStorage.initialize(
+                _encodeImplementationAddresses(),
+                _encodeModuleAddresses(),
+                _encodeAdaptorAddresses(),
+                _encodeExternalAddresses()
+            );
+            assert(address(implementationAddressStorage) == newContractAddress);
+        }
+
         vm.stopBroadcast();
 
-        return address(implementationAddressStorage);
+        return newContractAddress;
     }
 
     function _loadImplementationaddresses(string memory json, string memory targetEnv) internal {
@@ -119,8 +125,8 @@ contract DeployImplementationAddressStorage is BaseDeployer {
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".MolochV2EligibilityAdaptor")));
         implementationAddresses.molochV3EligibilityAdaptorImplementation =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".MolochV3EligibilityAdaptor")));
-        hatsAddresses.addressHatsEligibilityModule =
-            json.readAddress(string(abi.encodePacked(".", targetEnv, ".AddressHatsEligibilityModule")));
+        hatsAddresses.allowListHatsEligibilityModule =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".AllowListHatsEligibilityModule")));
         hatsAddresses.erc721HatsEligibilityModule =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".ERC721HatsEligibilityModule")));
         hatsAddresses.erc6551HatsEligitbilityModule =
@@ -168,7 +174,7 @@ contract DeployImplementationAddressStorage is BaseDeployer {
 
     function _encodeModuleAddresses() internal view returns (bytes memory) {
         bytes memory encodedModuleAddresses = abi.encode(
-            hatsAddresses.addressHatsEligibilityModule,
+            hatsAddresses.allowListHatsEligibilityModule,
             hatsAddresses.erc721HatsEligibilityModule,
             hatsAddresses.erc6551HatsEligitbilityModule,
             hatsAddresses.multiErc6551HatsEligitbilityModule

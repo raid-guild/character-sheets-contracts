@@ -10,15 +10,23 @@ import "forge-std/StdJson.sol";
 contract DeployMultiERC6551HatsEligibilityModule is BaseDeployer {
     using stdJson for string;
 
-    MultiERC6551HatsEligibilityModule public erc6551HatsEligibilityModule;
+    MultiERC6551HatsEligibilityModule public multiERC6551HatsEligibilityModule;
 
     function deploy() internal override returns (address) {
         vm.startBroadcast(deployerPrivateKey);
 
-        erc6551HatsEligibilityModule = new MultiERC6551HatsEligibilityModule(_version);
+        address newContractAddress = getDeploymentAddress(type(MultiERC6551HatsEligibilityModule).creationCode, abi.encode(_version));
+
+        bytes memory params = abi.encode(_version);
+        console2.logBytes32(bytes32(params));
+
+        if (!isContract(newContractAddress)) {
+            multiERC6551HatsEligibilityModule = new MultiERC6551HatsEligibilityModule{salt: SALT}(_version);
+            assert(address(multiERC6551HatsEligibilityModule) == newContractAddress);
+        }
 
         vm.stopBroadcast();
 
-        return address(erc6551HatsEligibilityModule);
+        return newContractAddress;
     }
 }

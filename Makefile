@@ -25,7 +25,7 @@ snapshot :; forge snapshot
 
 slither :; slither --config-file slither.config.json src/.
 
-format :; forge fmt
+format :; forge fmt src/**/*.sol && forge fmt scripts/**/*.sol && forge fmt test/**/*.sol
 
 # solhint should be installed globally
 lint :; solhint "src/**/*.sol"
@@ -44,15 +44,6 @@ deploy :;
 verify :; ./scripts/verify.sh ${network} ${contract}
 
 CONTRACTS = \
-CharacterAccount \
-CharacterSheetsImplementation \
-ExperienceImplementation \
-ItemsImplementation \
-ItemsManagerImplementation \
-ClassesImplementation \
-MolochV2EligibilityAdaptor \
-MolochV3EligibilityAdaptor \
-ClassLevelAdaptor \
 HatsAdaptor \
 CharacterSheetsLevelEligibilityModule \
 ERC6551HatsEligibilityModule \

@@ -17,11 +17,16 @@ contract DeployItemsImplementation is BaseDeployer {
     function deploy() internal override returns (address) {
         vm.startBroadcast(deployerPrivateKey);
 
-        itemsImplementation = new ItemsImplementation();
+        address newContractAddress = getDeploymentAddress(type(ItemsImplementation).creationCode);
+
+        if (!isContract(newContractAddress)) {
+            itemsImplementation = new ItemsImplementation{salt: SALT}();
+            assert(address(itemsImplementation) == newContractAddress);
+        }
 
         vm.stopBroadcast();
 
-        return address(itemsImplementation);
+        return newContractAddress;
     }
 }
 

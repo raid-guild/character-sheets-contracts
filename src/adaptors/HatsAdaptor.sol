@@ -192,11 +192,6 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
 
     function addGameMasters(address[] calldata newGameMasters) external onlyAdmin {
         AllowlistEligibility(gameMasterHatEligibilityModule).addAccounts(newGameMasters);
-        bool[] memory standings = new bool[](newGameMasters.length);
-        for (uint256 i; i < newGameMasters.length; i++) {
-            standings[i] = true;
-        }
-        AllowlistEligibility(gameMasterHatEligibilityModule).setStandingForAccounts(newGameMasters, standings);
         //check eligibility module for emitted event
         for (uint256 i = 0; i < newGameMasters.length; i++) {
             _ifNotHatMint(newGameMasters[i], _hatsData.gameMasterHatId);

@@ -17,10 +17,15 @@ contract DeployCharacterAccount is BaseDeployer {
     function deploy() internal override returns (address) {
         vm.startBroadcast(deployerPrivateKey);
 
-        characterAccount = new CharacterAccount();
+        address newContractAddress = getDeploymentAddress(type(CharacterAccount).creationCode);
+
+        if (!isContract(newContractAddress)) {
+            characterAccount = new CharacterAccount{salt: SALT}();
+            assert(address(characterAccount) == newContractAddress);
+        }
 
         vm.stopBroadcast();
 
-        return address(characterAccount);
+        return newContractAddress;
     }
 }

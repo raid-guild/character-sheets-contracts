@@ -16,10 +16,15 @@ contract DeployCharacterSheetsLevelEligibilityModule is BaseDeployer {
     function deploy() internal override returns (address) {
         vm.startBroadcast(deployerPrivateKey);
 
-        characterSheetsLevelEligibilityModule = new CharacterSheetsLevelEligibilityModule(_version);
+        address newContractAddress = getDeploymentAddress(type(CharacterSheetsLevelEligibilityModule).creationCode, abi.encode(_version));
+
+        if (!isContract(newContractAddress)) {
+            characterSheetsLevelEligibilityModule = new CharacterSheetsLevelEligibilityModule{salt: SALT}(_version);
+            assert(address(characterSheetsLevelEligibilityModule) == newContractAddress);
+        }
 
         vm.stopBroadcast();
 
-        return address(characterSheetsLevelEligibilityModule);
+        return newContractAddress;
     }
 }

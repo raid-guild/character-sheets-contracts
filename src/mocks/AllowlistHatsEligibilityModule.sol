@@ -28,6 +28,20 @@ error AllowlistEligibility_NotWearer();
  */
 contract AllowlistEligibility is HatsEligibilityModule {
     /*//////////////////////////////////////////////////////////////
+                            DATA MODELS
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Eligibility and standing data for an account
+     * @param eligible Whether the account is eligible to wear the hat. Defaults to not eligible.
+     * @param badStanding Whether the account is in bad standing for the hat. Defaults to good standing.
+     */
+    struct EligibilityData {
+        bool eligible;
+        bool badStanding;
+    }
+
+    /*//////////////////////////////////////////////////////////////
                               EVENTS
     //////////////////////////////////////////////////////////////*/
 
@@ -43,20 +57,6 @@ contract AllowlistEligibility is HatsEligibilityModule {
     event AccountStandingChanged(address account, bool standing);
     /// @notice Emitted when multiple accounts' standing are changed
     event AccountsStandingChanged(address[] accounts, bool[] standing);
-
-    /*//////////////////////////////////////////////////////////////
-                            DATA MODELS
-    //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @notice Eligibility and standing data for an account
-     * @param eligible Whether the account is eligible to wear the hat. Defaults to not eligible.
-     * @param badStanding Whether the account is in bad standing for the hat. Defaults to good standing.
-     */
-    struct EligibilityData {
-        bool eligible;
-        bool badStanding;
-    }
 
     /*//////////////////////////////////////////////////////////////
                             CONSTANTS 
@@ -87,12 +87,14 @@ contract AllowlistEligibility is HatsEligibilityModule {
 
     /// @notice The hat ID for the owner hat. The wearer(s) of this hat are authorized to add and remove accounts from the
     /// allowlist
+    // solhint-disable-next-line func-name-mixedcase
     function OWNER_HAT() public pure returns (uint256) {
         return _getArgUint256(72);
     }
 
     /// @notice The hat ID for the arbitrator hat. The wearer(s) of this hat are authorized to set the standing for
     /// accounts.
+    // solhint-disable-next-line func-name-mixedcase
     function ARBITRATOR_HAT() public pure returns (uint256) {
         return _getArgUint256(104);
     }
@@ -106,6 +108,7 @@ contract AllowlistEligibility is HatsEligibilityModule {
      * @custom:param account The account to get eligibility data for
      * @custom:return eligibility The eligibility data for the account
      */
+    // solhint-disable-next-line ordering
     mapping(address account => EligibilityData eligibility) public allowlist;
 
     /*//////////////////////////////////////////////////////////////

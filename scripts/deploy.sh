@@ -64,13 +64,14 @@ CALLDATA=$(cast calldata "run(string)" $1)
 CONFIRMATION="n"
 
 if [[ $FORCE == false ]]; then
-    PRIVATE_KEY=$PRIVATE_KEY forge script scripts/$2.s.sol:Deploy$2 -s $CALLDATA --rpc-url $NETWORK
+    MNEMONIC=$MNEMONIC PRIVATE_KEY=$PRIVATE_KEY forge script scripts/$2.s.sol:Deploy$2 -s $CALLDATA --rpc-url $NETWORK
     read -p "Please verify the data and confirm the deployment (y/n):" CONFIRMATION
 fi
 
 if [[ $CONFIRMATION == "y" || $CONFIRMATION == "Y" || $FORCE == true ]]; then
-    FORGE_OUTPUT=$(PRIVATE_KEY=$PRIVATE_KEY forge script scripts/$2.s.sol:Deploy$2 --broadcast -s $CALLDATA --rpc-url $NETWORK)
-    DEPLOYED_ADDRESS=$(echo "$FORGE_OUTPUT" | grep "Contract Address:" | sed -n 's/.*: \(0x[0-9a-hA-H]\{40\}\)/\1/p')
+    FORGE_OUTPUT=$(MNEMONIC=$MNEMONIC PRIVATE_KEY=$PRIVATE_KEY forge script scripts/$2.s.sol:Deploy$2 --broadcast -s $CALLDATA --rpc-url $NETWORK)
+    echo "$FORGE_OUTPUT"
+    DEPLOYED_ADDRESS=$(echo "$FORGE_OUTPUT" | grep "New Deployment Address:" | sed -n 's/.*: \(0x[0-9a-hA-H]\{40\}\)/\1/p')
     TX_HASH=$(echo "$FORGE_OUTPUT" | grep "Hash:" | head -1 | sed -n 's/.*: \(0x[0-9a-hA-H]\{64\}\)/\1/p')
 else
     echo "Deployment skipped..."
@@ -80,6 +81,11 @@ fi
 echo "Deployment completed: $DEPLOYED_ADDRESS"
 echo "Transaction hash: $TX_HASH"
 echo ""
+
+if [[ $DEPLOYED_ADDRESS == "" || $TX_HASH == "" ]]; then
+    echo "Deployment failed. Exiting script"
+    exit 1
+fi
 
 node scripts/helpers/saveAddress.js $1 $2 $DEPLOYED_ADDRESS
 
@@ -125,14 +131,14 @@ fi
 
 
 if [[ $2 == *"Implementation" ]]; then
-    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $API_KEY --num-of-optimizations 20000 $DEPLOYED_ADDRESS src/implementations/$2.sol:$2 
+    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.25+commit.b61c2a91 --etherscan-api-key $API_KEY --num-of-optimizations 20000 $DEPLOYED_ADDRESS src/implementations/$2.sol:$2 
 elif [[ $2 == *"Adaptor" ]]; then
-    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $API_KEY --num-of-optimizations 20000 $DEPLOYED_ADDRESS src/adaptors/$2.sol:$2 
+    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.25+commit.b61c2a91 --etherscan-api-key $API_KEY --num-of-optimizations 20000 $DEPLOYED_ADDRESS src/adaptors/$2.sol:$2 
 elif [[ $2 == *"EligibilityModule" ]]; then
-    CONSTRUCTOR_ARGS="0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000b76657273696f6e20302e31000000000000000000000000000000000000000000"
-    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $API_KEY --num-of-optimizations 20000 --constructor-args $CONSTRUCTOR_ARGS $DEPLOYED_ADDRESS src/adaptors/hats-modules/$2.sol:$2 
+    CONSTRUCTOR_ARGS="00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000005302e302e31000000000000000000000000000000000000000000000000000000"
+    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.25+commit.b61c2a91 --etherscan-api-key $API_KEY --num-of-optimizations 20000 --constructor-args $CONSTRUCTOR_ARGS $DEPLOYED_ADDRESS src/adaptors/hats-modules/$2.sol:$2 
 else
-    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.20+commit.a1b79de6 --etherscan-api-key $API_KEY  --num-of-optimizations 20000 $DEPLOYED_ADDRESS src/$2.sol:$2
+    forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.25+commit.b61c2a91 --etherscan-api-key $API_KEY  --num-of-optimizations 20000 $DEPLOYED_ADDRESS src/$2.sol:$2
 fi
 
 echo "end verification"
