@@ -8,6 +8,7 @@ import "forge-std/Test.sol";
 import "./setup/SetUp.t.sol";
 
 contract CharacterAccountTest is SetUp {
+
     function testEquipItemToCharacter() public {
         dao.addMember(accounts.rando);
         vm.prank(accounts.rando);

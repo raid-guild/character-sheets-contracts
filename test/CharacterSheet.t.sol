@@ -272,8 +272,8 @@ contract CharacterSheetsTest is SetUp {
         vm.startPrank(accounts.admin);
         //admin adds player1 to eligible addresses array in admins module.
         AllowlistEligibility(dungHatElig).addAccounts(newAdmins);
-        bool[] memory standings = _createStandings(newAdmins.length);
-        AllowlistEligibility(dungHatElig).setStandingForAccounts(newAdmins, standings);
+        // bool[] memory standings = _createStandings(newAdmins.length);
+        // AllowlistEligibility(dungHatElig).setStandingForAccounts(newAdmins, standings);
 
         // admin mints dmHat to player1
         hatsContracts.hats.mintHat(hatsData.gameMasterHatId, accounts.player1);

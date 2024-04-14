@@ -112,13 +112,13 @@ contract Test_AdminEligibilityModule is Base {
         //should revert if called by wrong EOA
         vm.startPrank(address(420));
         vm.expectRevert();
-        bool[] memory standings = _createStandings(testAdmins.length);
+        // bool[] memory standings = _createStandings(testAdmins.length);
         adminModule.addAccounts(testAdmins);
         vm.stopPrank();
         //should succeed if called by topHatWearer;
         vm.startPrank(topHatWearer);
         adminModule.addAccounts(testAdmins);
-        adminModule.setStandingForAccounts(testAdmins, standings);
+        // adminModule.setStandingForAccounts(testAdmins, standings);
         hatsContracts.hats.mintHat(newAdminHatId, dmHatWearer);
         vm.stopPrank();
 
@@ -131,9 +131,9 @@ contract Test_AdminEligibilityModule is Base {
 
         //add new admin
         vm.startPrank(topHatWearer);
-        bool[] memory standings = _createStandings(testAdmins.length);
+        // bool[] memory standings = _createStandings(testAdmins.length);
         adminModule.addAccounts(testAdmins);
-        adminModule.setStandingForAccounts(testAdmins, standings);
+        // adminModule.setStandingForAccounts(testAdmins, standings);
         hatsContracts.hats.mintHat(newAdminHatId, dmHatWearer);
         vm.stopPrank();
 
@@ -173,10 +173,10 @@ contract Test_GameMasterEligibilityModule is Base {
         dmModule.addAccounts(testAdmins);
         vm.stopPrank();
         //should succeed if called by topHatWearer;
-        bool[] memory standings = _createStandings(testAdmins.length);
+        // bool[] memory standings = _createStandings(testAdmins.length);
         vm.startPrank(adminHatWearer);
         dmModule.addAccounts(testAdmins);
-        dmModule.setStandingForAccounts(testAdmins, standings);
+        // dmModule.setStandingForAccounts(testAdmins, standings);
         hatsContracts.hats.mintHat(newGameMasterHatId, testAdmins[0]);
         vm.stopPrank();
 
@@ -188,9 +188,9 @@ contract Test_GameMasterEligibilityModule is Base {
         testAdmins[0] = address(420);
 
         vm.startPrank(adminHatWearer);
-        bool[] memory standings = _createStandings(testAdmins.length);
+        // bool[] memory standings = _createStandings(testAdmins.length);
         dmModule.addAccounts(testAdmins);
-        dmModule.setStandingForAccounts(testAdmins, standings);
+        // dmModule.setStandingForAccounts(testAdmins, standings);
         vm.stopPrank();
 
         //should revert if called by wrong EOA

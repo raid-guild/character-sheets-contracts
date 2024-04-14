@@ -149,7 +149,9 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         external
         onlyOwner
     {
-        adminHatEligibilityModule = _createAllowlistHatEligibilityModule(adminId, arbitratorHatId, adminImplementation);
+        adminHatEligibilityModule = _createAllowlistHatEligibilityModule(
+            adminId, arbitratorHatId, adminImplementation, "", uint256(bytes32("admin"))
+        );
         emit AdminEligibilityModuleUpdated(adminHatEligibilityModule);
     }
 
@@ -158,8 +160,9 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         uint256 arbitratorHatId,
         address dmImplementation
     ) external onlyOwner {
-        gameMasterHatEligibilityModule =
-            _createAllowlistHatEligibilityModule(gameMasterHatId, arbitratorHatId, dmImplementation);
+        gameMasterHatEligibilityModule = _createAllowlistHatEligibilityModule(
+            gameMasterHatId, arbitratorHatId, dmImplementation, "", uint256(bytes32("gameMaster"))
+        );
         emit GameMasterHatEligibilityModuleUpdated(gameMasterHatEligibilityModule);
     }
 
@@ -318,7 +321,6 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         if (address(_hats) == address(0) || address(implementations) == address(0)) {
             revert Errors.VariableNotSet();
         }
-
         //mint tophat to this contract
         _hatsData.topHatId = _initTopHat(_initStruct.hatsStrings);
 
@@ -340,6 +342,7 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
             _initStruct._owner,
             _initStruct.customModuleImplementations
         );
+
         // init player hats
         _initPlayerHat(_initStruct.hatsStrings, _initStruct._owner, _initStruct.customModuleImplementations);
 
@@ -373,34 +376,26 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         (,, adminUri, adminDescription,,,,,,) =
             abi.decode(hatsStrings, (string, string, string, string, string, string, string, string, string, string));
 
-        address[] memory newAdmins;
-        bool[] memory standings;
         (address customAdminModule,,,) = abi.decode(customModuleImplementations, (address, address, address, address));
 
-        {
-            address[] memory admins;
+        address[] memory admins;
 
-            (admins,,) = abi.decode(hatsAddresses, (address[], address[], address));
+        (admins,,) = abi.decode(hatsAddresses, (address[], address[], address));
 
-            // add this address to admins array
-            newAdmins = new address[](admins.length + 1);
-            standings = new bool[](admins.length + 1);
-
-            for (uint256 i; i < admins.length; i++) {
-                newAdmins[i] = admins[i];
-                standings[i] = true;
-            }
-
-            //add this address to last place
-            newAdmins[newAdmins.length - 1] = address(this);
-            standings[standings.length - 1] = true;
+        address[] memory newAdmins = new address[](admins.length + 1);
+        for (uint256 i; i < admins.length; i++) {
+            newAdmins[i] = admins[i];
         }
+        newAdmins[admins.length] = address(this);
 
         // predict admin hat ID.
         adminId = _hats.getNextId(_hatsData.topHatId);
 
         // create admin hat Eligibility module
-        adminHatEligibilityModule = _createAllowlistHatEligibilityModule(adminId, _hatsData.topHatId, customAdminModule);
+        bytes memory encodedAdmins = abi.encode(newAdmins);
+        adminHatEligibilityModule = _createAllowlistHatEligibilityModule(
+            _hatsData.topHatId, _hatsData.topHatId, customAdminModule, encodedAdmins, uint256(bytes32("admin"))
+        );
 
         // create admin hat with eligibility module
         _hatsData.adminHatId = _hats.createHat(
@@ -410,26 +405,25 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
         // check that predicted Id equals created Id
         assert(_hatsData.adminHatId == adminId);
 
-        AllowlistEligibility(adminHatEligibilityModule).addAccounts(newAdmins);
-        AllowlistEligibility(adminHatEligibilityModule).setStandingForAccounts(newAdmins, standings);
-
         //mint admin hats for the admins
         for (uint256 i; i < newAdmins.length; i++) {
             _hats.mintHat(adminId, newAdmins[i]);
         }
     }
 
-    function _createAllowlistHatEligibilityModule(uint256 adminId, uint256 arbitratorId, address customAdminModule)
-        private
-        returns (address)
-    {
-        bytes memory encodedAllowlistData = abi.encodePacked(arbitratorId, arbitratorId);
+    function _createAllowlistHatEligibilityModule(
+        uint256 adminId,
+        uint256 arbitratorId,
+        address customAdminModule,
+        bytes memory encodedAdmins,
+        uint256 saltNonce
+    ) private returns (address) {
+        bytes memory encodedAllowlistData = abi.encodePacked(adminId, arbitratorId);
         customAdminModule =
             customAdminModule == address(0) ? implementations.addressHatsEligibilityModule() : customAdminModule;
 
         return HatsModuleFactory(implementations.hatsModuleFactory()).createHatsModule(
-            // customAdminModule, adminId, encodedHatsAddress, encodedAdmins, uint256(bytes32("admin"))
-            customAdminModule, adminId, encodedAllowlistData, ""
+            customAdminModule, adminId, encodedAllowlistData, encodedAdmins, saltNonce
         );
     }
 
@@ -445,21 +439,21 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
             abi.decode(hatsStrings, (string, string, string, string, string, string, string, string, string, string));
 
         address[] memory gameMasters;
-        bool[] memory standings;
         (, gameMasters,) = abi.decode(hatsAddresses, (address[], address[], address));
-        standings = new bool[](gameMasters.length);
 
-        // set standings
-        for (uint256 i; i < gameMasters.length; i++) {
-            standings[i] = true;
-        }
         (, address customDmModule,,) = abi.decode(customModuleImplementations, (address, address, address, address));
 
         // predict gameMaster hat ID.
         gameMasterId = _hats.getNextId(_hatsData.adminHatId);
         // create gameMaster hat Eligibility module
-        gameMasterHatEligibilityModule =
-            _createAllowlistHatEligibilityModule(gameMasterId, _hatsData.adminHatId, customDmModule);
+        bytes memory encodedGameMasters = abi.encode(gameMasters);
+        gameMasterHatEligibilityModule = _createAllowlistHatEligibilityModule(
+            _hatsData.adminHatId,
+            _hatsData.adminHatId,
+            customDmModule,
+            encodedGameMasters,
+            uint256(bytes32("gameMaster"))
+        );
 
         // create gameMaster hat with eligibility module
         _hatsData.gameMasterHatId = _hats.createHat(
@@ -474,27 +468,11 @@ contract HatsAdaptor is Initializable, OwnableUpgradeable, UUPSUpgradeable, ERC1
 
         //check that Ids match
         assert(_hatsData.gameMasterHatId == gameMasterId);
-        AllowlistEligibility(gameMasterHatEligibilityModule).addAccounts(gameMasters);
-        AllowlistEligibility(gameMasterHatEligibilityModule).setStandingForAccounts(gameMasters, standings);
 
         //mint gameMaster hats for the gameMasters
         for (uint256 i; i < gameMasters.length; i++) {
             _hats.mintHat(gameMasterId, gameMasters[i]);
         }
-    }
-
-    function _createGameMasterHatEligibilityModule(
-        uint256 gameMasterId,
-        bytes memory gameMasters,
-        address customDmModule
-    ) private returns (address) {
-        bytes memory encodedHatsAddress = abi.encode(implementations.hatsContract());
-
-        customDmModule = customDmModule == address(0) ? implementations.addressHatsEligibilityModule() : customDmModule;
-
-        return HatsModuleFactory(implementations.hatsModuleFactory()).createHatsModule(
-            customDmModule, gameMasterId, encodedHatsAddress, gameMasters, uint256(bytes32("gameMaster"))
-        );
     }
 
     function _initPlayerHat(bytes memory hatsStrings, address _owner, bytes memory customModuleImplementations)

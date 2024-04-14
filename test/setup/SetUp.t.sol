@@ -90,6 +90,7 @@ contract SetUp is Test, Accounts, TestStructs {
 
         _initializeContracts(address(deployments.clones), address(dao));
         _activateContracts(address(deployments.clones));
+
         mockShares = new MockSharesToken();
         // dao.setSharesToken(address(mockShares));
         vm.stopPrank();
@@ -277,7 +278,7 @@ contract SetUp is Test, Accounts, TestStructs {
         implementations.addressModule = new AllowlistEligibility("v 0.1");
         implementations.erc721Module = new ERC721HatsEligibilityModule("v 0.1");
         implementations.erc6551Module = new ERC6551HatsEligibilityModule("v 0.1");
-        // implementations.multiErc6551Module = new MultiERC6551HatsEligibilityModule("v 0.1");
+        implementations.multiErc6551Module = new MultiERC6551HatsEligibilityModule("v 0.1");
 
         vm.label(address(dao), "Moloch Implementation");
         vm.label(address(merkle), "Merkle Implementation");
@@ -334,8 +335,8 @@ contract SetUp is Test, Accounts, TestStructs {
         bytes memory encodedModuleAddresses = abi.encode(
             address(implementations.addressModule),
             address(implementations.erc721Module),
-            address(implementations.erc6551Module)
-            // address(implementations.multiErc6551Module)
+            address(implementations.erc6551Module),
+            address(implementations.multiErc6551Module)
         );
 
         bytes memory encodedAdaptorAddresses = abi.encode(
@@ -595,10 +596,10 @@ contract SetUp is Test, Accounts, TestStructs {
         return claimableItemId;
     }
 
-    function _createStandings(uint256 _length) internal returns (bool[] memory standings) {
-        standings = new bool[](_length);
-        for (uint256 i; i < _length; i++) {
-            standings[i] = true;
-        }
-    }
+    // function _createStandings(uint256 _length) internal returns (bool[] memory standings) {
+    //     standings = new bool[](_length);
+    //     for (uint256 i; i < _length; i++) {
+    //         standings[i] = true;
+    //     }
+    // }
 }
