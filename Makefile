@@ -44,6 +44,15 @@ deploy :;
 verify :; ./scripts/verify.sh ${network} ${contract}
 
 CONTRACTS = \
+CharacterAccount \
+CharacterSheetsImplementation \
+ExperienceImplementation \
+ItemsImplementation \
+ItemsManagerImplementation \
+ClassesImplementation \
+MolochV2EligibilityAdaptor \
+MolochV3EligibilityAdaptor \
+ClassLevelAdaptor \
 HatsAdaptor \
 CharacterSheetsLevelEligibilityModule \
 ERC6551HatsEligibilityModule \
@@ -51,7 +60,6 @@ MultiERC6551HatsEligibilityModule \
 ClonesAddressStorageImplementation \
 ImplementationAddressStorage \
 CharacterSheetsFactory
-
 
 deploy-contracts :; 
 	@for contract in ${CONTRACTS}; do \

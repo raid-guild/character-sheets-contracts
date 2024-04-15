@@ -29,8 +29,8 @@ struct HatsAddresses {
     //eligibility modules
     address allowListHatsEligibilityModule;
     address erc721HatsEligibilityModule;
-    address erc6551HatsEligitbilityModule;
-    address multiErc6551HatsEligitbilityModule;
+    address erc6551HatsEligibilityModule;
+    address multiErc6551HatsEligibilityModule;
     address erc6551Registry;
 }
 
@@ -52,7 +52,7 @@ struct HatsAddresses {
  *             _implementationsAddresses.allowListHatsEligibilityModule,
  *             _implementationsAddresses.gameMasterHatsEligibilityModule,
  *             _implementationsAddresses.erc721HatsEligibilityModule,
- *             _implementationsAddresses.erc6551HatsEligitbilityModule,
+ *             _implementationsAddresses.erc6551HatsEligibilityModule,
  *             _implementationsAddresses.hatsAdaptorImplementation,
  *             _implementationsAddresses.characterEligibilityAdaptorImplementation,
  *             _implementationsAddresses.classLevelAdaptorImplementation
@@ -129,9 +129,9 @@ contract DeployImplementationAddressStorage is BaseDeployer {
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".AllowListHatsEligibilityModule")));
         hatsAddresses.erc721HatsEligibilityModule =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".ERC721HatsEligibilityModule")));
-        hatsAddresses.erc6551HatsEligitbilityModule =
+        hatsAddresses.erc6551HatsEligibilityModule =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".ERC6551HatsEligibilityModule")));
-        hatsAddresses.multiErc6551HatsEligitbilityModule =
+        hatsAddresses.multiErc6551HatsEligibilityModule =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".MultiERC6551HatsEligibilityModule")));
     }
 
@@ -176,8 +176,8 @@ contract DeployImplementationAddressStorage is BaseDeployer {
         bytes memory encodedModuleAddresses = abi.encode(
             hatsAddresses.allowListHatsEligibilityModule,
             hatsAddresses.erc721HatsEligibilityModule,
-            hatsAddresses.erc6551HatsEligitbilityModule,
-            hatsAddresses.multiErc6551HatsEligitbilityModule
+            hatsAddresses.erc6551HatsEligibilityModule,
+            hatsAddresses.multiErc6551HatsEligibilityModule
         );
 
         return encodedModuleAddresses;

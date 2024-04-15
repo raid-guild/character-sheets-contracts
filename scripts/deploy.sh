@@ -55,7 +55,8 @@ if [[ $SAVED_ADDRESS != "" && $FORCE == false ]]; then
 fi
 
 if [[ $1 == "anvil" ]]; then
-   PRIVATE_KEY="ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+   MNEMONIC=""
+   PRIVATE_KEY="0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
    NETWORK="http://localhost:8545"
 fi
 
@@ -78,14 +79,15 @@ else
     exit 0
 fi
 
+echo ""
+if [[ $DEPLOYED_ADDRESS == "" || $TX_HASH == "" ]]; then
+    echo "Deployment failed or already deployed. Exiting script"
+    exit 1
+fi
+
 echo "Deployment completed: $DEPLOYED_ADDRESS"
 echo "Transaction hash: $TX_HASH"
 echo ""
-
-if [[ $DEPLOYED_ADDRESS == "" || $TX_HASH == "" ]]; then
-    echo "Deployment failed. Exiting script"
-    exit 1
-fi
 
 node scripts/helpers/saveAddress.js $1 $2 $DEPLOYED_ADDRESS
 
@@ -94,7 +96,7 @@ if [[ $3 == "--verify" || $4 == "--verify" ]]; then
     VERIFY=true
 fi
 
-if [[ $VERIFY == false || $NETWORK == "anvil" ]]; then
+if [[ $VERIFY == false || $1 == "anvil" ]]; then
     echo "Skipping verification"
     exit 0
 fi
@@ -129,6 +131,20 @@ if [[ $NETWORK == "gnosis" ]]; then
     export VERIFIER_URL="https://api.gnosisscan.io/api/"
 fi
 
+if [[ $NETWORK == "polygon" ]]; then
+    API_KEY=$POLYGONSCAN_API_KEY
+    export VERIFIER_URL="https://api.polygonscan.com/api/"
+fi
+
+if [[ $NETWORK == "optimism" ]]; then
+    API_KEY=$OPTIMISTIC_ETHERSCAN_API_KEY
+    export VERIFIER_URL="https://api-optimistic.etherscan.io/api/"
+fi
+
+if [[ $NETWORK == "base" ]]; then
+    API_KEY=$BASESCAN_API_KEY
+    export VERIFIER_URL="https://api.basescan.org/api/"
+fi
 
 if [[ $2 == *"Implementation" ]]; then
     forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.25+commit.b61c2a91 --etherscan-api-key $API_KEY --num-of-optimizations 20000 $DEPLOYED_ADDRESS src/implementations/$2.sol:$2 

@@ -72,6 +72,22 @@ if [[ $NETWORK == "gnosis" ]]; then
     export VERIFIER_URL="https://api.gnosisscan.io/api/"
 fi
 
+if [[ $NETWORK == "polygon" ]]; then
+    API_KEY=$POLYGONSCAN_API_KEY
+    export VERIFIER_URL="https://api.polygonscan.com/api/"
+fi
+
+if [[ $NETWORK == "optimism" ]]; then
+    API_KEY=$OPTIMISTIC_ETHERSCAN_API_KEY
+    export VERIFIER_URL="https://api-optimistic.etherscan.io/api/"
+fi
+
+if [[ $NETWORK == "base" ]]; then
+    API_KEY=$BASESCAN_API_KEY
+    export VERIFIER_URL="https://api.basescan.org/api/"
+fi
+
+
 if [[ $2 == *"Implementation" ]]; then
     forge verify-contract --watch --chain-id $CHAIN_ID --compiler-version v0.8.25+commit.b61c2a91 --etherscan-api-key $API_KEY --num-of-optimizations 20000 $SAVED_ADDRESS src/implementations/$2.sol:$2 
 elif [[ $2 == *"Adaptor" ]]; then
