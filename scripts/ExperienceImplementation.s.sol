@@ -17,11 +17,16 @@ contract DeployExperienceImplementation is BaseDeployer {
     function deploy() internal override returns (address) {
         vm.startBroadcast(deployerPrivateKey);
 
-        experienceImplementation = new ExperienceImplementation();
+        address newContractAddress = getDeploymentAddress(type(ExperienceImplementation).creationCode);
+
+        if (!isContract(newContractAddress)) {
+            experienceImplementation = new ExperienceImplementation{salt: SALT}();
+            assert(address(experienceImplementation) == newContractAddress);
+        }
 
         vm.stopBroadcast();
 
-        return address(experienceImplementation);
+        return newContractAddress;
     }
 }
 

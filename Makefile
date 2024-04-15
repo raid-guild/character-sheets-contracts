@@ -25,7 +25,7 @@ snapshot :; forge snapshot
 
 slither :; slither --config-file slither.config.json src/.
 
-format :; forge fmt
+format :; forge fmt src/**/*.sol && forge fmt scripts/**/*.sol && forge fmt test/**/*.sol
 
 # solhint should be installed globally
 lint :; solhint "src/**/*.sol"

@@ -15,10 +15,15 @@ contract DeployMolochV3EligibilityAdaptor is BaseDeployer {
     function deploy() internal override returns (address) {
         vm.startBroadcast(deployerPrivateKey);
 
-        molochV3EligibilityAdaptor = new MolochV3EligibilityAdaptor();
+        address newContractAddress = getDeploymentAddress(type(MolochV3EligibilityAdaptor).creationCode);
+
+        if (!isContract(newContractAddress)) {
+            molochV3EligibilityAdaptor = new MolochV3EligibilityAdaptor{salt: SALT}();
+            assert(address(molochV3EligibilityAdaptor) == newContractAddress);
+        }
 
         vm.stopBroadcast();
 
-        return address(molochV3EligibilityAdaptor);
+        return newContractAddress;
     }
 }

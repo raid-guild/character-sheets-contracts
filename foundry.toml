@@ -1,5 +1,6 @@
 [profile.default]
-  solc = "0.8.20"
+  solc_version = "0.8.25"
+  evm_version = "cancun"
   bytecode_hash = "none"
   optimizer = true
   optimizer_runs = 20_000
@@ -30,13 +31,16 @@
 [rpc_endpoints]
   gnosis = "${GNOSIS_RPC_URL}"
   sepolia = "${SEPOLIA_RPC_URL}"
-  goerli = "${GOERLI_RPC_URL}"
+  polygon = "${POLYGON_RPC_URL}"
+  optimism = "${OPTIMISM_RPC_URL}"
+  base = "${BASE_RPC_URL}"
 
 [etherscan]
   arbitrum = { key = "${ARBISCAN_API_KEY}" }
-  goerli = { key = "${ETHERSCAN_API_KEY}" }
   mainnet = { key = "${ETHERSCAN_API_KEY}" }
   optimism = { key = "${OPTIMISTIC_ETHERSCAN_API_KEY}" }
-  polygon = { key = "${POLYGONSCAN_API_KEY}" }
+  polygon = { key = "${POLYGONSCAN_API_KEY}", url = "https://api.polygonscan.com/api/" }
   sepolia = { key = "${ETHERSCAN_API_KEY}" }
   gnosis = { key = "${GNOSISSCAN_API_KEY}", url = "https://api.gnosisscan.io/api/" }
+  base = { key = "${BASESCAN_API_KEY}", url = "https://api.basescan.org/api/" }
+

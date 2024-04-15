@@ -48,13 +48,18 @@ contract DeployCharacterSheetsFactory is BaseDeployer {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        characterSheetsFactory = new CharacterSheetsFactory();
+        address newContractAddress = getDeploymentAddress(type(CharacterSheetsFactory).creationCode);
 
-        characterSheetsFactory.initialize(implementationAddressStorage);
+        if (!isContract(newContractAddress)) {
+            characterSheetsFactory = new CharacterSheetsFactory{salt: SALT}();
+
+            characterSheetsFactory.initialize(implementationAddressStorage);
+            assert(address(characterSheetsFactory) == newContractAddress);
+        }
 
         vm.stopBroadcast();
 
-        return address(characterSheetsFactory);
+        return newContractAddress;
     }
 }
 
@@ -80,7 +85,8 @@ contract Create is BaseExecutor {
     function loadBaseData(string memory json, string memory targetEnv) internal override {
         // addresses
         dao = json.readAddress(string(abi.encodePacked(".", targetEnv, ".Dao")));
-        address characterSheetsFactory = json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterSheetsFactory")));
+        address characterSheetsFactory =
+            json.readAddress(string(abi.encodePacked(".", targetEnv, ".CharacterSheetsFactory")));
         gameMasters = json.readAddressArray(string(abi.encodePacked(".", targetEnv, ".GameMasters")));
         implementationStorageAddress =
             json.readAddress(string(abi.encodePacked(".", targetEnv, ".ImplementationAddressStorage")));
@@ -110,12 +116,12 @@ contract Create is BaseExecutor {
         // init and encode
         factory = CharacterSheetsFactory(characterSheetsFactory);
         encodedSheetsStrings = "";
-            // abi.encode(characterSheetsMetadataUri, characterSheetsBaseUri, itemsBaseUri, classesBaseUri);
-        encodedHatsAddresses =  "";
-          // abi.encode(arg);
+        // abi.encode(characterSheetsMetadataUri, characterSheetsBaseUri, itemsBaseUri, classesBaseUri);
+        encodedHatsAddresses = "";
+        // abi.encode(arg);
     }
 
-    function execute() internal override  {
+    function execute() internal override {
         vm.startBroadcast(deployerPrivateKey);
         clonesAddressStorage = factory.create(dao);
         vm.stopBroadcast();

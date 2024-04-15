@@ -18,11 +18,16 @@ contract DeployClassesImplementation is BaseDeployer {
     function deploy() internal override returns (address) {
         vm.startBroadcast(deployerPrivateKey);
 
-        classesImplementation = new ClassesImplementation();
+        address newContractAddress = getDeploymentAddress(type(ClassesImplementation).creationCode);
+
+        if (!isContract(newContractAddress)) {
+            classesImplementation = new ClassesImplementation{salt: SALT}();
+            assert(address(classesImplementation) == newContractAddress);
+        }
 
         vm.stopBroadcast();
 
-        return address(classesImplementation);
+        return newContractAddress;
     }
 }
 

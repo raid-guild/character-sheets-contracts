@@ -15,10 +15,15 @@ contract DeployERC6551HatsEligibilityModule is BaseDeployer {
     function deploy() internal override returns (address) {
         vm.startBroadcast(deployerPrivateKey);
 
-        erc6551HatsEligibilityModule = new ERC6551HatsEligibilityModule(_version);
+        address newContractAddress = getDeploymentAddress(type(ERC6551HatsEligibilityModule).creationCode, abi.encode(_version));
+
+        if (!isContract(newContractAddress)) {
+            erc6551HatsEligibilityModule = new ERC6551HatsEligibilityModule{salt: SALT}(_version);
+            assert(address(erc6551HatsEligibilityModule) == newContractAddress);
+        }
 
         vm.stopBroadcast();
 
-        return address(erc6551HatsEligibilityModule);
+        return newContractAddress;
     }
 }

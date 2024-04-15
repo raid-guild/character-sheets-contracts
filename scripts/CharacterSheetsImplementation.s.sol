@@ -56,10 +56,15 @@ contract DeployCharacterSheetsImplementation is BaseDeployer {
     function deploy() internal override returns (address) {
         vm.startBroadcast(deployerPrivateKey);
 
-        characterSheetsImplementation = new CharacterSheetsImplementation();
+        address newContractAddress = getDeploymentAddress(type(CharacterSheetsImplementation).creationCode);
+
+        if (!isContract(newContractAddress)) {
+            characterSheetsImplementation = new CharacterSheetsImplementation{salt: SALT}();
+            assert(address(characterSheetsImplementation) == newContractAddress);
+        }
 
         vm.stopBroadcast();
 
-        return address(characterSheetsImplementation);
+        return newContractAddress;
     }
 }

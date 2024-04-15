@@ -15,10 +15,15 @@ contract DeployClassLevelAdaptor is BaseDeployer {
     function deploy() internal override returns (address) {
         vm.startBroadcast(deployerPrivateKey);
 
-        classLevelAdaptor = new ClassLevelAdaptor();
+        address newContractAddress = getDeploymentAddress(type(ClassLevelAdaptor).creationCode);
+
+        if (!isContract(newContractAddress)) {
+            classLevelAdaptor = new ClassLevelAdaptor{salt: SALT}();
+            assert(address(classLevelAdaptor) == newContractAddress);
+        }
 
         vm.stopBroadcast();
 
-        return address(classLevelAdaptor);
+        return newContractAddress;
     }
 }

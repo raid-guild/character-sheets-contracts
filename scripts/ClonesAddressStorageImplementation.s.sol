@@ -15,10 +15,15 @@ contract DeployClonesAddressStorageImplementation is BaseDeployer {
     function deploy() internal override returns (address) {
         vm.startBroadcast(deployerPrivateKey);
 
-        clonesAddressStorage = new ClonesAddressStorageImplementation();
+        address newContractAddress = getDeploymentAddress(type(ClonesAddressStorageImplementation).creationCode);
+
+        if (!isContract(newContractAddress)) {
+            clonesAddressStorage = new ClonesAddressStorageImplementation{salt: SALT}();
+            assert(address(clonesAddressStorage) == newContractAddress);
+        }
 
         vm.stopBroadcast();
 
-        return address(clonesAddressStorage);
+        return newContractAddress;
     }
 }
