@@ -21,7 +21,7 @@
     "ImplementationAddressStorage": "0xB554A4Cc89047419cf8Eb6230d6fea6Fd37C6c42",
     "ItemsImplementation": "0x19386B06d2182a25CfB90b283Ec2F226BFf08389",
     "HatsContract": "0x3bc1A0Ad72417f2d411118085256fC53CBdDd137",
-    "HatsModuleFactory": "0xfE661c01891172046feE16D3a57c3Cf456729efA",
+    "HatsModuleFactory": "0x0a3f85fa597B6a967271286aA0724811acDF5CD9",
     "MolochV2EligibilityAdaptor": "0x465887988A5542fFD9252985Efa0C0e2341Df741",
     "MolochV3EligibilityAdaptor": "0x620646b1E1b27b56afDaf87eE13CA727F4E87cC8",
     "ClonesAddressStorageImplementation": "0x20C270dD8F5F8A341AA90fB8Eb0B3bc44237cc29"
@@ -49,7 +49,7 @@
     "ImplementationAddressStorage": "",
     "ItemsImplementation": "",
     "HatsContract": "0x3bc1A0Ad72417f2d411118085256fC53CBdDd137",
-    "HatsModuleFactory": "0xfE661c01891172046feE16D3a57c3Cf456729efA",
+    "HatsModuleFactory": "0x0a3f85fa597B6a967271286aA0724811acDF5CD9",
     "MolochV2EligibilityAdaptor": "",
     "MolochV3EligibilityAdaptor": "",
     "ClonesAddressStorageImplementation": ""
@@ -77,7 +77,7 @@
     "ImplementationAddressStorage": "",
     "ItemsImplementation": "",
     "HatsContract": "0x3bc1A0Ad72417f2d411118085256fC53CBdDd137",
-    "HatsModuleFactory": "0xfE661c01891172046feE16D3a57c3Cf456729efA",
+    "HatsModuleFactory": "0x0a3f85fa597B6a967271286aA0724811acDF5CD9",
     "MolochV2EligibilityAdaptor": "",
     "MolochV3EligibilityAdaptor": "",
     "ClonesAddressStorageImplementation": ""
@@ -105,7 +105,7 @@
     "ImplementationAddressStorage": "",
     "ItemsImplementation": "",
     "HatsContract": "0x3bc1A0Ad72417f2d411118085256fC53CBdDd137",
-    "HatsModuleFactory": "0xfE661c01891172046feE16D3a57c3Cf456729efA",
+    "HatsModuleFactory": "0x0a3f85fa597B6a967271286aA0724811acDF5CD9",
     "MolochV2EligibilityAdaptor": "",
     "MolochV3EligibilityAdaptor": "",
     "ClonesAddressStorageImplementation": ""
@@ -117,7 +117,7 @@
     "AllowListHatsEligibilityModule": "0xaC208e6668DE569C6ea1db76DeCea70430335Ed5",
     "ERC721HatsEligibilityModule": "0xF37cf12fB4493D29270806e826fDDf50dd722bab",
     "HatsContract": "0x3bc1A0Ad72417f2d411118085256fC53CBdDd137",
-    "HatsModuleFactory": "0xfE661c01891172046feE16D3a57c3Cf456729efA",
+    "HatsModuleFactory": "0x0a3f85fa597B6a967271286aA0724811acDF5CD9",
     "CharacterAccount": "0x936aa7A9882725D6678751BCe43b834cFEB104d6",
     "CharacterSheetsImplementation": "0xF925c147EB2d829693Dbd396ECFe0370627e7513",
     "ExperienceImplementation": "0xd4d0f703a1B1205EC1a6C45499d2a8b7292B726c",
@@ -140,7 +140,7 @@
     "network": "anvil",
     "Erc6551Registry": "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
     "HatsContract": "0x3bc1A0Ad72417f2d411118085256fC53CBdDd137",
-    "HatsModuleFactory": "0xfE661c01891172046feE16D3a57c3Cf456729efA",
+    "HatsModuleFactory": "0x0a3f85fa597B6a967271286aA0724811acDF5CD9",
     "Erc6551RegistryOld": "0x4e59b44847b379578588920ca78fbf26c0b4956c",
     "CharacterAccount": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
     "ExperienceImplementation": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
